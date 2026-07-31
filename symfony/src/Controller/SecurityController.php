@@ -10,8 +10,10 @@ use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Security\LocaleSubscriber;
 use Merisu\Inventory\Store\Store;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
 
 /** §7.1 — Connexion, choix du poste et sélecteur de langue. */
@@ -21,9 +23,20 @@ final class SecurityController extends AbstractController
         private readonly ConsultantServiceInterface $consultants,
         private readonly CurrentUser $currentUser,
         private readonly Store $store,
+        #[Autowire(service: 'limiter.login_ip')]
+        private readonly RateLimiterFactory $loginIpLimiter,
+        #[Autowire(service: 'limiter.login_global')]
+        private readonly RateLimiterFactory $loginGlobalLimiter,
     ) {
     }
 
+    /**
+     * Connexion par code PIN à 6 chiffres, sans identifiant : c'est le geste
+     * réel au poste de travail.
+     *
+     * Le code étant le SEUL facteur, les tentatives sont limitées par IP et
+     * globalement — 10^6 combinaisons se parcourent vite sans cela.
+     */
     #[Route('/connexion', name: 'login', methods: ['GET', 'POST'])]
     public function login(Request $request): Response
     {
@@ -34,11 +47,25 @@ final class SecurityController extends AbstractController
         $error = null;
 
         if ($request->isMethod('POST')) {
-            $login = trim((string) $request->request->get('login'));
-            $secret = (string) $request->request->get('secret');
+            $secret = trim((string) $request->request->get('secret'));
             $workstationId = trim((string) $request->request->get('workstationId'));
 
-            $consultant = $this->consultants->authenticate($login, $secret);
+            $byIp = $this->loginIpLimiter->create($request->getClientIp() ?? 'unknown');
+            $global = $this->loginGlobalLimiter->create('login');
+
+            if (!$byIp->consume()->isAccepted() || !$global->consume()->isAccepted()) {
+                // Journalisé : une salve de tentatives doit être visible en audit.
+                $this->store->audit('anonyme', 'ANONYMOUS', 'LOGIN_THROTTLED', null, null, [
+                    'ip' => $request->getClientIp(),
+                ]);
+
+                return $this->render('security/login.html.twig', [
+                    'workstations' => $this->consultants->workstations(),
+                    'error' => 'TOO_MANY_ATTEMPTS',
+                ], new Response('', Response::HTTP_TOO_MANY_REQUESTS));
+            }
+
+            $consultant = $this->consultants->authenticateByPin($secret);
 
             if ($consultant === null) {
                 $error = 'INVALID_CREDENTIALS';

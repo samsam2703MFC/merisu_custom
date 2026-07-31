@@ -14,11 +14,16 @@ use Merisu\Inventory\Domain\Role;
  */
 final class LocalConsultantService implements ConsultantServiceInterface
 {
-    /** @var array<string, array{name: string, role: Role, workstation: ?string, secret: string}> */
+    /**
+     * Codes PIN à 6 chiffres, UNIQUES entre comptes : ils constituent à eux
+     * seuls l'identité, comme sur l'écran de connexion.
+     *
+     * @var array<string, array{name: string, role: Role, workstation: ?string, secret: string}>
+     */
     private const ACCOUNTS = [
-        'admin' => ['name' => 'Admin MERISU', 'role' => Role::Admin, 'workstation' => 'ws-1', 'secret' => '0000'],
-        'consultant1' => ['name' => 'Consultant 1', 'role' => Role::Consultant, 'workstation' => 'ws-1', 'secret' => '1111'],
-        'consultant2' => ['name' => 'Consultant 2', 'role' => Role::Consultant, 'workstation' => 'ws-2', 'secret' => '2222'],
+        'admin' => ['name' => 'Admin MERISU', 'role' => Role::Admin, 'workstation' => 'ws-1', 'secret' => '000000'],
+        'consultant1' => ['name' => 'Consultant 1', 'role' => Role::Consultant, 'workstation' => 'ws-1', 'secret' => '111111'],
+        'consultant2' => ['name' => 'Consultant 2', 'role' => Role::Consultant, 'workstation' => 'ws-2', 'secret' => '222222'],
     ];
 
     private const WORKSTATIONS = [
@@ -38,6 +43,27 @@ final class LocalConsultantService implements ConsultantServiceInterface
         }
 
         return $this->consultant($key);
+    }
+
+    /**
+     * Connexion par code PIN seul.
+     *
+     * Tous les comptes sont parcourus sans interruption anticipée : sortir dès
+     * la correspondance trouvée rendrait le temps de réponse dépendant de la
+     * position du compte, ce qui laisse fuir de l'information.
+     */
+    public function authenticateByPin(string $pin): ?Consultant
+    {
+        $pin = trim($pin);
+        $matched = null;
+
+        foreach (self::ACCOUNTS as $id => $account) {
+            if (hash_equals($account['secret'], $pin)) {
+                $matched = $id;
+            }
+        }
+
+        return $matched === null ? null : $this->consultant($matched);
     }
 
     public function consultant(string $id): ?Consultant

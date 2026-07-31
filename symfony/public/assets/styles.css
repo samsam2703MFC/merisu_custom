@@ -1,49 +1,55 @@
 /*
  * MERISU — Inventaire & Production
  * ════════════════════════════════════════════════════════════════════════════
- * FEUILLE DE STYLE UNIQUE.
+ * FEUILLE DE STYLE UNIQUE — restylée sur le design system Merisù.
  *
- * Ce fichier peut être REMPLACÉ INTÉGRALEMENT lors d'un restylage : aucun style
- * ne vit dans les templates Twig. Les noms de classes utilisés par les gabarits
- * sont listés ci-dessous et doivent être conservés.
+ * Fondations : crème #F8F3E8 en fond, encre café #6F4E37, framboise #C4306A
+ * comme SEULE couleur d'action (boutons primaires, état actif, focus),
+ * pilules pour tout élément interactif, ombres chaudes teintées brun.
+ * Serif d'apparat (Playfair Display) pour les titres ; Montserrat pour tout
+ * le fonctionnel. Les capitales sont toujours espacées (.10em).
  *
- *   Structure : app, app-header, app-nav, app-main, admin-nav, identity-bar
- *   Blocs     : card, card__header, card__title, card-grid, page-header,
- *               banner (--info/--ok/--warn/--danger), badge (--neutral/--ok/
- *               --warn/--danger), muted, separator
- *   Formulaire: form, field, field__label, field__input, field__hint,
- *               field-grid, checkbox-row, form-actions, filters
- *   Boutons   : button (--primary/--secondary/--ghost/--danger/--block/--large)
- *   Comptage  : count-list, count-item (--invalid), count-item__name, qty,
- *               qty__step, qty__input, produce-item, photo-strip
- *   Tableaux  : table-scroll, table (--matrix), table__cell--alert,
- *               table__cell--partial, table__cell--editable, table__input
- *   Réseau    : connectivity, connectivity__dot
- *
+ * Les noms de classes des gabarits Twig sont conservés à l'identique.
  * Trois cibles (§2) : mobile < 600 px, tablette ≥ 600 px, desktop ≥ 1024 px.
- * Toute cible tactile fait au moins 44 px : le consultant compte debout, au poste.
+ * Toute cible tactile fait au moins 44 px.
  * ════════════════════════════════════════════════════════════════════════════
  */
 
+/* Polices hébergées localement : l'application doit rester lisible hors-ligne (§2).
+   Un appel à fonts.googleapis.com retomberait sur Georgia sans réseau. */
+@import url("fonts/fonts.css");
+
 :root {
-  --brand: #7b3f00;
-  --brand-dark: #5a2d00;
-  --brand-light: #f3e6d8;
-  --bg: #faf7f2;
+  /* Merisù */
+  --brand: #C4306A;          /* framboise — seule couleur d'action */
+  --brand-dark: #A82859;     /* survol / appui */
+  --brand-light: #FBEEF3;    /* fonds teintés framboise */
+  --coffee: #6F4E37;
+  --coffee-800: #5B443C;
+  --latte: #8C715F;
+  --gold: #FFCB1D;
+  --cream-outline: #F7F0DC;  /* pilule "secondaire" Merisù */
+  --bg: #F8F3E8;
   --surface: #ffffff;
-  --text: #241a12;
-  --text-muted: #6d6157;
-  --border: #e2d7c9;
-  --ok: #1c7a4a;
-  --ok-bg: #e6f4ec;
-  --warn: #a06800;
-  --warn-bg: #fdf3e0;
-  --danger: #b3261e;
-  --danger-bg: #fdecea;
-  --radius: 12px;
+  --text: #6F4E37;
+  --text-muted: #8C715F;
+  --border: #F2E6CC;
+  --border-soft: #EFE7DA;
+  --ok: #1F7A4D;
+  --ok-bg: #E6F4EC;
+  --warn: #A06800;
+  --warn-bg: #FDF3E0;
+  --danger: #B3261E;
+  --danger-bg: #FDECEA;
+  --radius: 16px;
+  --radius-pill: 999px;
   --touch: 44px;
-  --shadow: 0 1px 3px rgba(36, 26, 18, .08), 0 4px 14px rgba(36, 26, 18, .06);
-  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --shadow: 0 4px 16px rgba(111, 78, 55, .07);
+  --shadow-lg: 0 12px 32px rgba(111, 78, 55, .10);
+  --shadow-accent: 0 6px 20px rgba(196, 48, 106, .30);
+  --font: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Playfair Display", Georgia, serif;
+  --ease: cubic-bezier(.4, 0, .2, 1);
 }
 
 * { box-sizing: border-box; }
@@ -55,9 +61,9 @@ body {
   background: var(--bg);
   color: var(--text);
   font-size: 16px;
-  line-height: 1.5;
-  /* Évite le zoom automatique iOS à la saisie. */
+  line-height: 1.55;
   -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -65,9 +71,10 @@ body {
 }
 
 h1, h2, h3 { margin: 0 0 .25rem; line-height: 1.25; }
+h1, h2 { font-family: var(--font-display); font-weight: 500; letter-spacing: -.01em; color: var(--coffee); }
 p { margin: 0 0 .5rem; }
 
-.muted { color: var(--text-muted); font-size: .9rem; }
+.muted { color: var(--latte); font-size: .9rem; }
 
 .visually-hidden {
   position: absolute;
@@ -81,12 +88,14 @@ p { margin: 0 0 .5rem; }
 
 /* ── Structure ───────────────────────────────────────────────────────────── */
 
+/* Entête blanc Merisù, ombre chaude en filet. */
 .app-header {
   position: sticky;
   top: 0;
   z-index: 20;
-  background: var(--brand);
-  color: #fff;
+  background: var(--surface);
+  color: var(--coffee);
+  box-shadow: 0 1px 0 rgba(111, 78, 55, .06);
   padding: .6rem 1rem;
   display: flex;
   align-items: center;
@@ -94,12 +103,28 @@ p { margin: 0 0 .5rem; }
   flex-wrap: wrap;
 }
 
-.app-header__brand { font-weight: 700; margin-right: auto; font-size: 1rem; }
+.app-header__brand {
+  margin-right: auto;
+  height: 34px;
+  width: auto;
+  display: block;
+}
+
+.login-logo { margin: 0 0 .75rem; }
+.login-logo img { height: 52px; width: auto; display: block; }
+
+/* Champ code PIN à 6 chiffres */
+.field__input--pin {
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: .35em;
+  color: var(--coffee);
+}
 
 /*
  * Barre d'onglets ancrée en bas sur mobile : le pouce y accède sans lâcher
- * l'appareil. `fixed` et non `sticky` — la navigation étant en tête de
- * document, `sticky` la ferait défiler hors écran au premier défilement.
+ * l'appareil. `fixed` et non `sticky`.
  */
 .app-nav {
   position: fixed;
@@ -107,7 +132,7 @@ p { margin: 0 0 .5rem; }
   z-index: 20;
   display: flex;
   background: var(--surface);
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--border-soft);
   padding-bottom: env(safe-area-inset-bottom);
 }
 
@@ -119,11 +144,16 @@ p { margin: 0 0 .5rem; }
   justify-content: center;
   padding: .4rem .25rem;
   text-decoration: none;
-  color: var(--text-muted);
-  font-size: .8rem;
+  color: var(--latte);
+  font-size: .74rem;
   font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
   text-align: center;
+  transition: color .25s var(--ease);
 }
+
+.app-nav__link:hover { color: var(--brand); }
 
 .app-nav__link.is-active {
   color: var(--brand);
@@ -134,7 +164,6 @@ p { margin: 0 0 .5rem; }
 .app-main {
   flex: 1;
   padding: 1rem;
-  /* Réserve la hauteur de la barre d'onglets fixée en bas. */
   padding-bottom: calc(var(--touch) + 2.5rem + env(safe-area-inset-bottom));
   max-width: 1200px;
   width: 100%;
@@ -145,20 +174,32 @@ p { margin: 0 0 .5rem; }
 
 .admin-nav { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1rem; }
 
+/* Pilules Merisù : crème par défaut, framboise = section active. */
 .admin-nav__link {
   min-height: var(--touch);
   display: inline-flex;
   align-items: center;
-  padding: .5rem .9rem;
-  border-radius: var(--radius);
-  background: var(--brand);
-  color: #fff;
+  padding: .5rem 1.1rem;
+  border-radius: var(--radius-pill);
+  background: var(--cream-outline);
+  border: 1px solid var(--border);
+  color: var(--coffee-800);
   text-decoration: none;
-  font-weight: 650;
-  font-size: .95rem;
+  font-weight: 600;
+  font-size: .82rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  transition: background .25s var(--ease), color .25s var(--ease);
 }
 
-.admin-nav__link.is-active { background: var(--brand-light); color: var(--brand-dark); }
+.admin-nav__link:hover { background: var(--border); }
+
+.admin-nav__link.is-active {
+  background: var(--brand);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: var(--shadow-accent);
+}
 
 .identity-bar {
   display: flex;
@@ -174,16 +215,16 @@ p { margin: 0 0 .5rem; }
 
 .card {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1rem;
+  border: none;
+  border-radius: 24px;
+  padding: 1.25rem;
   margin-bottom: 1rem;
   box-shadow: var(--shadow);
 }
 
-.card--login { width: 100%; max-width: 420px; }
-.card--link { display: block; text-decoration: none; color: inherit; }
-.card--link:hover { border-color: var(--brand); }
+.card--login { width: 100%; max-width: 420px; padding: 2rem 1.5rem; }
+.card--link { display: block; text-decoration: none; color: inherit; transition: transform .25s cubic-bezier(.16, 1, .3, 1), box-shadow .25s var(--ease); }
+.card--link:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
 
 .card__header {
   display: flex;
@@ -194,25 +235,25 @@ p { margin: 0 0 .5rem; }
   margin-bottom: .75rem;
 }
 
-.card__title { font-size: 1.15rem; }
+.card__title { font-family: var(--font-display); font-weight: 500; font-size: 1.3rem; color: var(--coffee); }
 
 .card-grid { display: grid; gap: 1rem; grid-template-columns: 1fr; }
 
-.page-header { margin-bottom: 1rem; }
-.page-header__title { font-size: 1.4rem; }
-.page-header__subtitle { color: var(--text-muted); font-size: .95rem; }
+.page-header { margin-bottom: 1.25rem; }
+.page-header__title { font-family: var(--font-display); font-weight: 500; font-size: 1.7rem; letter-spacing: -.01em; color: var(--coffee); }
+.page-header__subtitle { color: var(--latte); font-size: .95rem; }
 
 /* ── Bandeaux et pastilles ───────────────────────────────────────────────── */
 
 .banner {
   border-radius: var(--radius);
-  padding: .7rem .9rem;
+  padding: .7rem 1rem;
   margin-bottom: .9rem;
   font-size: .92rem;
   border: 1px solid transparent;
 }
 
-.banner--info { background: var(--brand-light); border-color: var(--border); color: var(--brand-dark); }
+.banner--info { background: var(--brand-light); border-color: #F3D9E4; color: var(--coffee-800); }
 .banner--ok { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); }
 .banner--warn { background: var(--warn-bg); border-color: var(--warn); color: var(--warn); }
 .banner--danger { background: var(--danger-bg); border-color: var(--danger); color: var(--danger); }
@@ -223,40 +264,53 @@ p { margin: 0 0 .5rem; }
   display: inline-flex;
   align-items: center;
   gap: .3rem;
-  padding: .2rem .55rem;
-  border-radius: 999px;
-  font-size: .78rem;
+  padding: .25rem .65rem;
+  border-radius: var(--radius-pill);
+  font-size: .72rem;
   font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
-.badge--neutral { background: var(--brand-light); color: var(--brand-dark); }
+.badge--neutral { background: var(--cream-outline); color: var(--coffee-800); }
 .badge--ok { background: var(--ok-bg); color: var(--ok); }
 .badge--warn { background: var(--warn-bg); color: var(--warn); }
 .badge--danger { background: var(--danger-bg); color: var(--danger); }
 
-/* Indicateur en/hors-ligne (§2). */
+/* Indicateur en/hors-ligne (§2) — pastille crème sur l'entête blanc. */
 .connectivity {
   display: inline-flex;
   align-items: center;
   gap: .35rem;
-  font-size: .78rem;
+  font-size: .72rem;
   font-weight: 700;
-  padding: .25rem .6rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, .18);
-  color: #fff;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: .25rem .7rem;
+  border-radius: var(--radius-pill);
+  background: var(--cream-outline);
+  border: 1px solid var(--border);
+  color: var(--coffee-800);
   min-height: 32px;
 }
 
-.connectivity__dot { width: 9px; height: 9px; border-radius: 50%; background: #7ee2a8; }
-.connectivity.is-offline .connectivity__dot { background: #ffcf6b; }
+.connectivity__dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ok); }
+.connectivity.is-offline .connectivity__dot { background: var(--gold); }
 
 /* ── Formulaires ─────────────────────────────────────────────────────────── */
 
 .field { margin-bottom: .75rem; }
-.field__label { display: block; font-size: .85rem; font-weight: 600; color: var(--text-muted); margin-bottom: .2rem; }
-.field__hint { font-size: .82rem; color: var(--text-muted); margin: .2rem 0 0; }
+.field__label {
+  display: block;
+  font-size: .74rem;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--latte);
+  margin-bottom: .3rem;
+}
+.field__hint { font-size: .82rem; color: var(--latte); margin: .2rem 0 0; }
 
 .field__input,
 input[type="text"], input[type="password"], input[type="number"],
@@ -264,14 +318,17 @@ input[type="date"], input[type="time"], input[type="file"],
 select, textarea {
   font-family: inherit;
   font-size: 1rem;
-  padding: .55rem .7rem;
+  padding: .55rem .85rem;
   min-height: var(--touch);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: #fff;
-  color: var(--text);
+  color: var(--coffee-800);
   width: 100%;
+  transition: border-color .25s var(--ease);
 }
+
+.field__input:focus, input:focus, select:focus, textarea:focus { border-color: var(--brand); }
 
 input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-color: var(--brand); }
 
@@ -288,17 +345,20 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 
 .locale-switcher, .workstation-switcher { display: flex; align-items: center; gap: .4rem; margin: 0; }
 .locale-switcher__select, .workstation-switcher__select { width: auto; min-width: 130px; }
-.workstation-switcher__label { font-size: .85rem; color: var(--text-muted); margin: 0; }
+.workstation-switcher__label { font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; color: var(--latte); margin: 0; }
 
 /* ── Boutons ─────────────────────────────────────────────────────────────── */
 
+/* Pilule Merisù : capitales espacées, framboise = primaire uniquement. */
 .button {
   font-family: inherit;
-  font-size: 1rem;
-  font-weight: 650;
+  font-size: .85rem;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
   min-height: var(--touch);
-  padding: .6rem 1rem;
-  border-radius: var(--radius);
+  padding: .6rem 1.4rem;
+  border-radius: var(--radius-pill);
   border: 1px solid transparent;
   background: var(--brand);
   color: #fff;
@@ -308,15 +368,20 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
   align-items: center;
   justify-content: center;
   text-decoration: none;
+  transition: background .25s var(--ease), color .25s var(--ease), transform .15s var(--ease), box-shadow .25s var(--ease);
 }
 
-.button:disabled { opacity: .5; cursor: not-allowed; }
-.button--primary { background: var(--brand); color: #fff; }
-.button--secondary { background: var(--surface); color: var(--brand-dark); border-color: var(--border); }
-.button--ghost { background: transparent; color: inherit; border-color: currentColor; }
-.button--danger { background: var(--danger); color: #fff; }
+.button:active { transform: translateY(1px); }
+.button:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+.button--primary, .button { background: var(--brand); color: #fff; box-shadow: var(--shadow-accent); }
+.button--primary:hover { background: var(--brand-dark); }
+.button--secondary { background: var(--cream-outline); color: var(--coffee-800); border-color: var(--border); box-shadow: none; }
+.button--secondary:hover { background: var(--border); border-color: #E7D6B4; }
+.button--ghost { background: transparent; color: var(--coffee-800); border-color: transparent; box-shadow: none; }
+.button--ghost:hover { background: rgba(111, 78, 55, .06); }
+.button--danger { background: var(--danger); color: #fff; box-shadow: none; }
 .button--block { width: 100%; }
-.button--large { min-height: 56px; font-size: 1.1rem; }
+.button--large { min-height: 56px; font-size: .95rem; }
 
 /* ── Saisie rapide au doigt (§2) ─────────────────────────────────────────── */
 
@@ -324,9 +389,10 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 
 .count-item {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: var(--radius);
-  padding: .75rem;
+  padding: .85rem;
+  box-shadow: var(--shadow);
   display: grid;
   gap: .6rem;
 }
@@ -334,44 +400,46 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 .count-item--invalid { border-color: var(--danger); background: var(--danger-bg); }
 
 .count-item__header { display: flex; align-items: center; gap: .5rem; }
-.count-item__name { font-weight: 650; font-size: 1.05rem; }
+.count-item__name { font-weight: 600; font-size: 1.05rem; color: var(--coffee-800); }
 .count-item__unit { margin-left: auto; }
 .count-item__net { margin: 0; }
 
 .qty { display: grid; grid-template-columns: var(--touch) 1fr var(--touch); gap: .5rem; align-items: center; }
 
+/* Boutons − / + : pilules crème ; framboise à l'appui. */
 .qty__step {
   min-width: var(--touch);
   min-height: calc(var(--touch) + 8px);
   font-size: 1.5rem;
   font-weight: 700;
-  border-radius: var(--radius);
+  border-radius: var(--radius-pill);
   border: 1px solid var(--border);
-  background: var(--brand-light);
-  color: var(--brand-dark);
+  background: var(--cream-outline);
+  color: var(--coffee-800);
   cursor: pointer;
-  /* Évite la sélection de texte lors des appuis répétés. */
   user-select: none;
   touch-action: manipulation;
+  transition: background .15s var(--ease), color .15s var(--ease);
 }
 
-.qty__step:active { background: var(--brand); color: #fff; }
+.qty__step:active { background: var(--brand); border-color: transparent; color: #fff; }
 
 .qty__input {
   min-height: calc(var(--touch) + 8px);
   text-align: center;
   font-size: 1.5rem;
   font-weight: 700;
+  color: var(--coffee);
 }
 
 .produce-item__qty { margin: 0; }
-.produce-item__value { font-size: 2rem; font-weight: 800; }
+.produce-item__value { font-family: var(--font-display); font-size: 2.2rem; font-weight: 600; color: var(--coffee); }
 
 .photo-strip { display: flex; gap: .4rem; flex-wrap: wrap; }
 .photo-strip__thumb {
   width: 56px; height: 56px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 12px;
   border: 1px solid var(--border);
 }
 
@@ -382,17 +450,18 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 .table-scroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--radius);
   background: var(--surface);
+  box-shadow: var(--shadow);
 }
 
 .table { border-collapse: collapse; width: 100%; min-width: 520px; font-size: .92rem; }
 
 .table th, .table td {
-  padding: .5rem .6rem;
+  padding: .55rem .7rem;
   text-align: right;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-soft);
   white-space: nowrap;
 }
 
@@ -403,15 +472,16 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
   left: 0;
   background: var(--surface);
   z-index: 1;
-  border-right: 1px solid var(--border);
+  border-right: 1px solid var(--border-soft);
 }
 
 .table thead th {
-  background: var(--brand-light);
-  color: var(--brand-dark);
-  font-size: .82rem;
+  background: var(--bg);
+  color: var(--coffee-800);
+  font-size: .72rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: .03em;
+  letter-spacing: .1em;
   position: sticky;
   top: 0;
   z-index: 2;
@@ -421,7 +491,7 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 .table tbody tr:last-child td { border-bottom: none; }
 
 .table__cell--alert { background: var(--danger-bg); color: var(--danger); font-weight: 700; }
-.table__cell--partial { color: var(--text-muted); font-style: italic; }
+.table__cell--partial { color: var(--latte); font-style: italic; }
 .table__cell--wrap { white-space: normal; max-width: 280px; }
 .table__subvalue { font-size: .75rem; }
 
@@ -446,7 +516,7 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
   .qty { grid-template-columns: 56px 1fr 56px; }
   .field-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .page-header__title { font-size: 1.6rem; }
+  .page-header__title { font-size: 2rem; }
 }
 
 /* ── Desktop ─────────────────────────────────────────────────────────────── */
@@ -456,17 +526,17 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
   .app-nav {
     position: static;
     border-top: none;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--border-soft);
     justify-content: center;
     gap: .25rem;
-    padding: .25rem 1rem;
+    padding: .35rem 1rem;
   }
 
   .app-nav__link {
     flex: 0 0 auto;
     min-width: 140px;
-    border-radius: var(--radius);
-    font-size: .95rem;
+    border-radius: var(--radius-pill);
+    font-size: .8rem;
   }
 
   .app-nav__link.is-active { box-shadow: none; }
@@ -479,7 +549,7 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 
 /* ── Accessibilité ───────────────────────────────────────────────────────── */
 
-:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }

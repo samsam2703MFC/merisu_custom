@@ -25,13 +25,14 @@ php bin/console merisu:seed        # schéma SQLite + 8 slots + seuils fictifs
 php -S 127.0.0.1:8000 -t public bin/dev-server.php
 ```
 
-Ouvrir <http://127.0.0.1:8000> et se connecter :
+Ouvrir <http://127.0.0.1:8000> et se connecter. **La connexion se fait au seul
+code PIN à 6 chiffres**, sans identifiant : c'est le geste réel au poste.
 
-| Identifiant   | Code | Rôle       |
-| ------------- | ---- | ---------- |
-| `admin`       | 0000 | ADMIN      |
-| `consultant1` | 1111 | CONSULTANT |
-| `consultant2` | 2222 | CONSULTANT |
+| Compte        | Code PIN | Rôle       |
+| ------------- | -------- | ---------- |
+| `admin`       | 000000   | ADMIN      |
+| `consultant1` | 111111   | CONSULTANT |
+| `consultant2` | 222222   | CONSULTANT |
 
 > ⚠️ Ces comptes n'existent que tant que le module Consultant réel n'est pas
 > branché. Ne jamais les conserver en production.
@@ -161,6 +162,37 @@ utilisateurs.
 | Seuils par poste ou globaux ? | **Les deux fonctionnent.** Un seuil défini pour un poste prime sur le seuil global ; sans seuil par poste, tout reste global. L'écran Seuils édite les seuils globaux. |
 
 ---
+
+## Connexion par code PIN — ce qu'il faut savoir
+
+L'écran de connexion issu du design system ne comporte **qu'un champ : le code
+PIN à 6 chiffres**. Le code est donc le seul facteur d'authentification, ce qui
+a trois conséquences à ne pas perdre de vue :
+
+1. **Les codes doivent être uniques** entre consultants. Deux personnes
+   partageant un code partageraient une identité, et l'audit deviendrait faux.
+   L'implémentation réelle de `ConsultantServiceInterface::authenticateByPin()`
+   doit garantir cette unicité.
+2. **Le forçage est bridé** par deux limiteurs (`config/packages/rate_limiter.yaml`) :
+   20 tentatives / 5 min par adresse IP, et 200 / 5 min au global. Sans cela, les
+   10^6 combinaisons se parcourent en quelques heures.
+   ⚠️ **À ajuster selon le site** : tous les postes d'une même cuisine sortent
+   souvent derrière une seule IP publique — une limite trop basse verrouillerait
+   toute l'équipe à la relève.
+3. Les tentatives bloquées sont **journalisées** (`LOGIN_THROTTLED`) et visibles
+   dans _Admin ▸ Historique_.
+
+Si ce niveau ne suffit pas pour un déploiement exposé sur Internet, les pistes
+usuelles sont : allonger le code, ajouter un second facteur, ou restreindre
+l'accès au réseau du site.
+
+## Polices
+
+Le design system s'appuie sur Playfair Display et Montserrat. Elles sont
+**hébergées localement** (`public/assets/fonts/`) et non chargées depuis
+`fonts.googleapis.com` : l'application doit rester lisible hors-ligne, or un
+appel distant retomberait sur Georgia dès que le poste perd le réseau. Elles
+sont précachées par le service worker.
 
 ## Restylage des vues (aller-retour avec un outil de design)
 

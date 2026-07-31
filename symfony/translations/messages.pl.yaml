@@ -39,6 +39,7 @@ status:
     partialDataHint: 'Brakuje części wpisów: poniższe liczby są orientacyjne.'
 
 login:
+    pincode: 'Kod PIN (6 cyfr)'
     title: Logowanie
     subtitle: 'Zaloguj się, aby policzyć stan magazynowy swojego stanowiska.'
     identifier: Identyfikator
@@ -47,7 +48,7 @@ login:
     workstationAuto: 'Stanowisko przypisane'
     submit: 'Zaloguj się'
     demoTitle: 'Konta demonstracyjne'
-    demoHint: 'admin / 0000 · consultant1 / 1111 · consultant2 / 2222'
+    demoHint: 'admin / 000000 · consultant1 / 111111 · consultant2 / 222222'
 
 nav:
     morning: Rano
@@ -213,7 +214,8 @@ validation:
 errors:
     generic: 'Wystąpił błąd.'
     network: 'Sieć niedostępna.'
-    INVALID_CREDENTIALS: 'Nieprawidłowy identyfikator lub kod.'
+    TOO_MANY_ATTEMPTS: 'Zbyt wiele prób. Odczekaj kilka minut i spróbuj ponownie.'
+    INVALID_CREDENTIALS: 'Nieprawidłowy kod PIN.'
     MISSING_TOKEN: 'Sesja wygasła, zaloguj się ponownie.'
     UNKNOWN_WORKSTATION: 'Nieznane stanowisko.'
     MISSING_WORKSTATION: 'Wybierz stanowisko.'

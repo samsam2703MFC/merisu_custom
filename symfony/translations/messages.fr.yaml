@@ -42,6 +42,7 @@ status:
     partialDataHint: 'Certaines saisies manquent : les chiffres ci-dessous sont indicatifs.'
 
 login:
+    pincode: 'Code PIN (6 chiffres)'
     title: Connexion
     subtitle: 'Identifiez-vous pour compter le stock de votre poste.'
     identifier: Identifiant
@@ -50,7 +51,7 @@ login:
     workstationAuto: 'Poste pré-affecté'
     submit: 'Se connecter'
     demoTitle: 'Comptes de démonstration'
-    demoHint: 'admin / 0000 · consultant1 / 1111 · consultant2 / 2222'
+    demoHint: 'admin / 000000 · consultant1 / 111111 · consultant2 / 222222'
 
 nav:
     morning: Matin
@@ -216,7 +217,8 @@ validation:
 errors:
     generic: 'Une erreur est survenue.'
     network: 'Réseau indisponible.'
-    INVALID_CREDENTIALS: 'Identifiant ou code incorrect.'
+    TOO_MANY_ATTEMPTS: 'Trop de tentatives. Patientez quelques minutes avant de réessayer.'
+    INVALID_CREDENTIALS: 'Code PIN incorrect.'
     MISSING_TOKEN: 'Session expirée, reconnectez-vous.'
     UNKNOWN_WORKSTATION: 'Poste de travail inconnu.'
     MISSING_WORKSTATION: 'Sélectionnez un poste de travail.'

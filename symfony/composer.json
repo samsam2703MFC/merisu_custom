@@ -11,6 +11,7 @@
     "symfony/console": "^7.2",
     "symfony/dotenv": "^7.2",
     "symfony/framework-bundle": "^7.2",
+    "symfony/rate-limiter": "^8.1",
     "symfony/runtime": "^7.2",
     "symfony/translation": "^7.2",
     "symfony/twig-bundle": "^7.2",

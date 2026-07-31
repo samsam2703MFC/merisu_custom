@@ -15,8 +15,14 @@
 const VERSION = 'merisu-v1';
 const STATIC_ASSETS = [
   '/assets/styles.css',
+  '/assets/fonts/fonts.css',
+  '/assets/fonts/JTUSjIg1_i6t8kCHKm459Wdhyzbi.woff2',
+  '/assets/fonts/JTUSjIg1_i6t8kCHKm459Wlhyw.woff2',
+  '/assets/fonts/nuFiD-vYSZviVYUb_rj3ij__anPXDTLYgFE_.woff2',
+  '/assets/fonts/nuFiD-vYSZviVYUb_rj3ij__anPXDTzYgA.woff2',
   '/assets/app.js',
   '/assets/favicon.svg',
+  '/assets/logo.png',
   '/assets/icon-192.png',
   '/assets/icon-512.png',
   '/manifest.json'

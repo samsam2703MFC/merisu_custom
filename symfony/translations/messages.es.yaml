@@ -39,6 +39,7 @@ status:
     partialDataHint: 'Faltan algunos registros: las cifras siguientes son orientativas.'
 
 login:
+    pincode: 'Código PIN (6 dígitos)'
     title: 'Iniciar sesión'
     subtitle: 'Identifícate para contar el stock de tu puesto.'
     identifier: Identificador
@@ -47,7 +48,7 @@ login:
     workstationAuto: 'Puesto asignado'
     submit: Entrar
     demoTitle: 'Cuentas de demostración'
-    demoHint: 'admin / 0000 · consultant1 / 1111 · consultant2 / 2222'
+    demoHint: 'admin / 000000 · consultant1 / 111111 · consultant2 / 222222'
 
 nav:
     morning: Mañana
@@ -213,7 +214,8 @@ validation:
 errors:
     generic: 'Se ha producido un error.'
     network: 'Red no disponible.'
-    INVALID_CREDENTIALS: 'Identificador o código incorrecto.'
+    TOO_MANY_ATTEMPTS: 'Demasiados intentos. Espera unos minutos antes de reintentar.'
+    INVALID_CREDENTIALS: 'Código PIN incorrecto.'
     MISSING_TOKEN: 'Sesión caducada, vuelve a iniciar sesión.'
     UNKNOWN_WORKSTATION: 'Puesto de trabajo desconocido.'
     MISSING_WORKSTATION: 'Selecciona un puesto de trabajo.'

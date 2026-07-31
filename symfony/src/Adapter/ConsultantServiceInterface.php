@@ -30,6 +30,21 @@ interface ConsultantServiceInterface
     /** Vérifie une identité et renvoie le consultant, ou null si refusé. */
     public function authenticate(string $login, string $secret): ?Consultant;
 
+    /**
+     * Connexion par code PIN seul — c'est le parcours réel de l'application :
+     * le consultant saisit son code à 6 chiffres au poste, sans identifiant.
+     *
+     * ⚠️ CONTRAINTES à respecter dans l'implémentation réelle :
+     *   1. les codes PIN doivent être UNIQUES entre consultants, sinon deux
+     *      personnes partageraient une identité et l'audit deviendrait faux ;
+     *   2. la comparaison doit être à temps constant et parcourir tous les
+     *      comptes, pour ne pas révéler quels codes existent ;
+     *   3. la protection contre le forçage est assurée en amont par
+     *      `SecurityController` (limiteur de tentatives), mais une protection
+     *      côté module existant reste souhaitable.
+     */
+    public function authenticateByPin(string $pin): ?Consultant;
+
     public function consultant(string $id): ?Consultant;
 
     /** @return list<Consultant> */

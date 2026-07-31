@@ -8,7 +8,7 @@
 
 {% block content %}
   <section class="card card--login">
-    <h1 class="page-header__title">{{ 'common.appName'|trans }}</h1>
+    <h1 class="login-logo"><img src="{{ asset('assets/logo.png') }}" alt="{{ 'common.appName'|trans }}"></h1>
     <p class="page-header__subtitle">{{ 'login.subtitle'|trans }}</p>
 
     {% if error %}
@@ -17,15 +17,10 @@
 
     <form method="post" action="{{ path('login') }}" class="form">
       <div class="field">
-        <label class="field__label" for="login">{{ 'login.identifier'|trans }}</label>
-        <input class="field__input" type="text" id="login" name="login"
-               autocomplete="username" autocapitalize="none" required>
-      </div>
-
-      <div class="field">
-        <label class="field__label" for="secret">{{ 'login.secret'|trans }}</label>
-        <input class="field__input" type="password" id="secret" name="secret"
-               inputmode="numeric" autocomplete="current-password" required>
+        <label class="field__label" for="secret">{{ 'login.pincode'|trans }}</label>
+        <input class="field__input field__input--pin" type="password" id="secret" name="secret"
+               inputmode="numeric" pattern="[0-9]{6}" maxlength="6" minlength="6"
+               autocomplete="current-password" required>
       </div>
 
       <div class="field">

@@ -39,6 +39,7 @@ status:
     partialDataHint: 'Mancano alcuni inserimenti: i valori sottostanti sono indicativi.'
 
 login:
+    pincode: 'Codice PIN (6 cifre)'
     title: Accesso
     subtitle: 'Accedi per contare le scorte della tua postazione.'
     identifier: Identificativo
@@ -47,7 +48,7 @@ login:
     workstationAuto: 'Postazione assegnata'
     submit: Accedi
     demoTitle: 'Account dimostrativi'
-    demoHint: 'admin / 0000 · consultant1 / 1111 · consultant2 / 2222'
+    demoHint: 'admin / 000000 · consultant1 / 111111 · consultant2 / 222222'
 
 nav:
     morning: Mattina
@@ -213,7 +214,8 @@ validation:
 errors:
     generic: 'Si è verificato un errore.'
     network: 'Rete non disponibile.'
-    INVALID_CREDENTIALS: 'Identificativo o codice errato.'
+    TOO_MANY_ATTEMPTS: 'Troppi tentativi. Attendi qualche minuto prima di riprovare.'
+    INVALID_CREDENTIALS: 'Codice PIN errato.'
     MISSING_TOKEN: 'Sessione scaduta, effettua di nuovo l''accesso.'
     UNKNOWN_WORKSTATION: 'Postazione sconosciuta.'
     MISSING_WORKSTATION: 'Seleziona una postazione.'

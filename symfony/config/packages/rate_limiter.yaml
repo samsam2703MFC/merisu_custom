@@ -1,0 +1,22 @@
+# Protection contre le forçage du code PIN.
+#
+# La connexion se fait au seul code à 6 chiffres : sans limitation, l'espace
+# (10^6 combinaisons) se parcourt en quelques heures. Deux limiteurs :
+#   · par adresse IP    — freine un attaquant unique ;
+#   · global            — plafonne une attaque distribuée sur plusieurs IP.
+#
+# ⚠️ À AJUSTER SELON LE SITE : tous les postes d'une même cuisine sortent
+# généralement derrière UNE SEULE IP publique. Une limite trop basse
+# verrouillerait toute l'équipe à la relève. 20 tentatives / 5 min tolère
+# plusieurs consultants qui se trompent de code, tout en portant à ~4 mois le
+# temps nécessaire pour parcourir les 10^6 combinaisons depuis une IP.
+framework:
+    rate_limiter:
+        login_ip:
+            policy: 'sliding_window'
+            limit: 20
+            interval: '5 minutes'
+        login_global:
+            policy: 'sliding_window'
+            limit: 200
+            interval: '5 minutes'
