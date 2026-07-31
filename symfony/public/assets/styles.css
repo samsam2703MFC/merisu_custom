@@ -97,17 +97,42 @@ p { margin: 0 0 .5rem; }
   color: var(--coffee);
   box-shadow: 0 1px 0 rgba(111, 78, 55, .06);
   padding: .6rem 1rem;
-  display: flex;
+
+  /* Trois colonnes de part et d'autre du logo : les zones latérales occupent
+     la même fraction, ce qui maintient le logo au centre optique quel que soit
+     le contenu des côtés. */
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: .75rem;
-  flex-wrap: wrap;
+  gap: .5rem;
 }
 
+.app-header__side { display: flex; align-items: center; gap: .5rem; min-width: 0; }
+.app-header__side--right { justify-content: flex-end; flex-wrap: wrap; }
+
 .app-header__brand {
-  margin-right: auto;
   height: 34px;
   width: auto;
   display: block;
+  justify-self: center;
+}
+
+/*
+ * Mobile : les contrôles passent sous le logo. Les garder sur la même ligne
+ * décentrerait le logo ou forcerait des cibles trop petites pour le doigt.
+ */
+@media (max-width: 599px) {
+  .app-header {
+    grid-template-columns: 1fr auto 1fr;
+    grid-template-areas:
+      "left brand right"
+      "tools tools tools";
+    row-gap: .5rem;
+  }
+
+  .app-header__side--left { grid-area: left; }
+  .app-header__brand { grid-area: brand; }
+  .app-header__side--right { grid-area: tools; justify-content: center; }
 }
 
 .login-logo { margin: 0 0 .75rem; }
@@ -122,49 +147,11 @@ p { margin: 0 0 .5rem; }
   color: var(--coffee);
 }
 
-/*
- * Barre d'onglets ancrée en bas sur mobile : le pouce y accède sans lâcher
- * l'appareil. `fixed` et non `sticky`.
- */
-.app-nav {
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  z-index: 20;
-  display: flex;
-  background: var(--surface);
-  border-top: 1px solid var(--border-soft);
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-.app-nav__link {
-  flex: 1;
-  min-height: var(--touch);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: .4rem .25rem;
-  text-decoration: none;
-  color: var(--latte);
-  font-size: .74rem;
-  font-weight: 600;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  text-align: center;
-  transition: color .25s var(--ease);
-}
-
-.app-nav__link:hover { color: var(--brand); }
-
-.app-nav__link.is-active {
-  color: var(--brand);
-  background: var(--brand-light);
-  box-shadow: inset 0 3px 0 var(--brand);
-}
 
 .app-main {
   flex: 1;
   padding: 1rem;
-  padding-bottom: calc(var(--touch) + 2.5rem + env(safe-area-inset-bottom));
+  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
   max-width: 1200px;
   width: 100%;
   margin: 0 auto;
@@ -511,7 +498,7 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 /* ── Tablette ────────────────────────────────────────────────────────────── */
 
 @media (min-width: 600px) {
-  .app-main { padding: 1.25rem; padding-bottom: calc(var(--touch) + 2.5rem); }
+  .app-main { padding: 1.25rem; }
   .count-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .qty { grid-template-columns: 56px 1fr 56px; }
   .field-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -523,25 +510,8 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 
 @media (min-width: 1024px) {
   /* La navigation revient en haut : plus de barre d'onglets basse. */
-  .app-nav {
-    position: static;
-    border-top: none;
-    border-bottom: 1px solid var(--border-soft);
-    justify-content: center;
-    gap: .25rem;
-    padding: .35rem 1rem;
-  }
 
-  .app-nav__link {
-    flex: 0 0 auto;
-    min-width: 140px;
-    border-radius: var(--radius-pill);
-    font-size: .8rem;
-  }
-
-  .app-nav__link.is-active { box-shadow: none; }
-
-  .app-main { padding: 1.5rem; padding-bottom: 1.5rem; }
+  .app-main { padding: 1.5rem; }
   .count-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .field-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .card-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -553,4 +523,196 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
+}
+
+/* ── Menu des tâches ─────────────────────────────────────────────────────── */
+
+.task-list { display: grid; gap: .75rem; }
+
+/*
+ * Une tâche est une ligne cliquable pleine largeur : cible large, atteignable
+ * au pouce sans viser, contrairement à un onglet de 60 px en pied d'écran.
+ */
+.task {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 1rem;
+  min-height: 88px;
+  padding: 1rem 1.25rem;
+  background: var(--surface);
+  border: 1px solid transparent;
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  text-decoration: none;
+  color: inherit;
+  transition: transform .25s cubic-bezier(.16, 1, .3, 1), box-shadow .25s var(--ease);
+}
+
+.task:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+
+/* Pastille d'icône : repère visuel immédiat, lisible sans lire. */
+.task__icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-pill);
+  background: var(--cream-outline);
+  color: var(--latte);
+  flex: none;
+}
+
+.task__icon .icon { width: 26px; height: 26px; }
+
+.task__time { font-weight: 700; color: var(--coffee-800); }
+
+.task__body { display: flex; flex-direction: column; gap: .25rem; min-width: 0; align-items: flex-start; }
+
+/* La pastille suit le texte plutôt que d'occuper une colonne : sur écran
+   étroit, une troisième colonne comprimait le titre jusqu'à le casser. */
+.task__state { display: block; }
+
+.task__label {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--coffee);
+}
+
+.task__meta { font-size: .88rem; color: var(--latte); }
+
+/* La tâche du moment : seule à porter la couleur d'action. */
+.task--now {
+  border-color: var(--brand);
+  box-shadow: var(--shadow-accent);
+}
+
+.task--now .task__label,
+.task--now .task__time { color: var(--brand); }
+
+.task--now .task__icon { background: var(--brand); color: #fff; }
+
+/* Une tâche validée s'efface visuellement : elle ne réclame plus rien. */
+.task--done { background: var(--cream-outline); box-shadow: none; }
+.task--done .task__label { color: var(--latte); }
+.task--done .task__icon { background: var(--ok-bg); color: var(--ok); }
+
+.task--secondary { min-height: 72px; background: transparent; box-shadow: none; border: 1px dashed var(--border); }
+.task--secondary .task__label { font-size: 1.1rem; }
+
+/* ── Retour au menu, dans l'entête ───────────────────────────────────────── */
+
+.app-header__back {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  min-height: var(--touch);
+  padding: .3rem .8rem .3rem .6rem;
+  border-radius: var(--radius-pill);
+  background: var(--cream-outline);
+  color: var(--coffee-800);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: .82rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.app-header__back:hover { background: var(--border); }
+
+/* Sur petit écran, la flèche suffit : le libellé mangerait la largeur. */
+@media (max-width: 599px) {
+  .app-header__back-label { display: none; }
+  .app-header__back { padding: .3rem .7rem; }
+}
+
+/* ── Connexion administration ────────────────────────────────────────────── */
+
+.card--admin-login { border-top: 4px solid var(--brand); }
+
+.admin-login__eyebrow {
+  margin: 0 0 .2rem;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--brand);
+}
+
+/* Icône de titre d'écran. */
+.page-header--with-icon { display: flex; align-items: center; gap: .9rem; }
+
+.page-header__icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-pill);
+  background: var(--brand-light);
+  color: var(--brand);
+  flex: none;
+}
+
+.page-header__icon .icon { width: 24px; height: 24px; }
+
+.icon { display: block; }
+
+@media (min-width: 600px) {
+  .task-list { gap: 1rem; }
+  .task__icon { width: 60px; height: 60px; }
+  .task__icon .icon { width: 30px; height: 30px; }
+}
+
+/* ── Avatar et fiche profil ──────────────────────────────────────────────── */
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-pill);
+  background: var(--brand);
+  color: #fff;
+  font-weight: 700;
+  font-size: .82rem;
+  letter-spacing: .04em;
+  text-decoration: none;
+  flex: none;
+}
+
+.avatar:hover { background: var(--brand-dark); }
+
+.avatar--lg { width: 72px; height: 72px; font-size: 1.5rem; }
+
+.profile__header { display: flex; align-items: center; gap: 1.1rem; margin-bottom: 1.25rem; }
+.profile__name { font-family: var(--font-display); font-size: 1.6rem; font-weight: 500; margin: 0; }
+.profile__role { margin: .3rem 0 0; }
+
+.profile__fields { display: grid; gap: 0; margin: 0; }
+
+.profile__field {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: .1rem;
+  padding: .7rem 0;
+  border-top: 1px solid var(--border-soft);
+}
+
+.profile__field dt {
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--latte);
+}
+
+.profile__field dd { margin: 0; color: var(--coffee); }
+
+.profile__pin { font-weight: 700; letter-spacing: .2em; margin-right: .6rem; }
+
+.button--small { min-height: 34px; padding: .25rem .8rem; font-size: .8rem; }
+
+@media (min-width: 600px) {
+  .profile__field { grid-template-columns: 220px 1fr; align-items: baseline; gap: 1rem; }
 }

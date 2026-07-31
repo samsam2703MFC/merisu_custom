@@ -1,0 +1,74 @@
+{#
+  Menu des tâches — écran d'accueil du poste.
+
+  Remplace l'ancienne barre d'onglets en pied d'écran : le vendeur voit d'un
+  coup d'œil ce qui lui reste à faire, plutôt que trois onglets sans état.
+  L'administration n'y figure pas, elle a sa propre porte d'entrée.
+#}
+{% extends 'base.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'tasks.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block content %}
+
+  <div class="identity-bar">
+    <span class="muted">{{ current_user().consultant.displayName }}</span>
+    {{ ui.workstation_switcher(workstations, workstationId) }}
+  </div>
+
+  <div class="page-header page-header--with-icon">
+    <span class="page-header__icon">{{ ui.icon('clipboard') }}</span>
+    <div class="page-header__text">
+      <h1 class="page-header__title">{{ 'tasks.title'|trans }}</h1>
+      <p class="page-header__subtitle">{{ date|long_date }}</p>
+    </div>
+  </div>
+
+  <div class="task-list">
+    {% for task in tasks %}
+      <a class="task {{ task.highlight ? 'task--now' : '' }} {{ task.done ? 'task--done' : '' }}"
+         href="{{ path(task.route) }}">
+
+        <span class="task__icon">{{ ui.icon(task.icon) }}</span>
+
+        <span class="task__body">
+          <span class="task__label">{{ task.title|trans }}</span>
+          <span class="task__meta">
+            <span class="task__time">{{ task.time }}</span> ·
+            {% if task.done %}
+              {{ 'tasks.validated'|trans }}
+            {% elseif task.saved > 0 %}
+              {{ 'tasks.inProgress'|trans({ '%saved%': task.saved, '%total%': task.total }) }}
+            {% else %}
+              {{ 'tasks.todo'|trans({ '%total%': task.total }) }}
+            {% endif %}
+          </span>
+
+          {% if task.done %}
+            <span class="task__state">{{ ui.badge('ok', 'tasks.doneShort'|trans) }}</span>
+          {% elseif task.highlight %}
+            <span class="task__state">{{ ui.badge('neutral', 'tasks.nowShort'|trans) }}</span>
+          {% endif %}
+        </span>
+      </a>
+    {% endfor %}
+
+    {# Consultation, pas une saisie : présentée à part des deux tâches. #}
+    <a class="task task--secondary" href="{{ path('production') }}">
+      <span class="task__icon">{{ ui.icon('tray') }}</span>
+
+      <span class="task__body">
+        <span class="task__label">{{ 'produce.title'|trans }}</span>
+        <span class="task__meta">
+          {% if planForToday is empty %}
+            {{ 'tasks.noPlan'|trans }}
+          {% else %}
+            {{ 'tasks.planReady'|trans({ '%count%': planForToday|length }) }}
+          {% endif %}
+        </span>
+      </span>
+    </a>
+  </div>
+
+{% endblock %}

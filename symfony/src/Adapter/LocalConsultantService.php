@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Merisu\Inventory\Adapter;
 
+use Merisu\Inventory\Domain\Locale;
 use Merisu\Inventory\Domain\Role;
 
 /**
@@ -33,10 +34,27 @@ final class LocalConsultantService implements ConsultantServiceInterface
      */
     public function __construct(string $adminPin, string $consultant1Pin, string $consultant2Pin)
     {
+        // Fiches de démonstration. Le vrai module fournira ces informations —
+        // ici elles servent uniquement à alimenter l'écran de profil.
         $this->accounts = [
-            'admin' => ['name' => 'Admin MERISU', 'role' => Role::Admin, 'workstation' => 'ws-1', 'secret' => $adminPin],
-            'consultant1' => ['name' => 'Consultant 1', 'role' => Role::Consultant, 'workstation' => 'ws-1', 'secret' => $consultant1Pin],
-            'consultant2' => ['name' => 'Consultant 2', 'role' => Role::Consultant, 'workstation' => 'ws-2', 'secret' => $consultant2Pin],
+            'admin' => [
+                'firstName' => 'Anna', 'lastName' => 'Kowalska', 'role' => Role::Admin,
+                'email' => 'anna.kowalska@merisu.example', 'workstation' => 'ws-1',
+                'shops' => ['Merisù Centrum'], 'workstations' => ['ws-1', 'ws-2'],
+                'locale' => Locale::Pl, 'secret' => $adminPin,
+            ],
+            'consultant1' => [
+                'firstName' => 'Marco', 'lastName' => 'Bianchi', 'role' => Role::Consultant,
+                'email' => 'marco.bianchi@merisu.example', 'workstation' => 'ws-1',
+                'shops' => ['Merisù Centrum'], 'workstations' => ['ws-1'],
+                'locale' => Locale::It, 'secret' => $consultant1Pin,
+            ],
+            'consultant2' => [
+                'firstName' => 'Claire', 'lastName' => 'Dubois', 'role' => Role::Consultant,
+                'email' => 'claire.dubois@merisu.example', 'workstation' => 'ws-2',
+                'shops' => ['Merisù Centrum', 'Merisù Galeria'], 'workstations' => ['ws-2'],
+                'locale' => Locale::Fr, 'secret' => $consultant2Pin,
+            ],
         ];
     }
 
@@ -88,7 +106,19 @@ final class LocalConsultantService implements ConsultantServiceInterface
             return null;
         }
 
-        return new Consultant($id, $account['name'], $account['role'], $account['workstation'], true);
+        return new Consultant(
+            $id,
+            $account['firstName'],
+            $account['lastName'],
+            $account['role'],
+            $account['workstation'],
+            true,
+            $account['email'],
+            $account['secret'],
+            $account['shops'],
+            $account['workstations'],
+            $account['locale'],
+        );
     }
 
     public function consultants(): array

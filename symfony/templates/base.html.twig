@@ -32,56 +32,64 @@
 
 {% block header %}
   <header class="app-header">
+    {# Trois zones : gauche, logo centré, contrôles à droite. Les zones latérales
+       ont la même souplesse, ce qui garde le logo optiquement au milieu. #}
+    <div class="app-header__side app-header__side--left">
+      {% if current_user().isLoggedIn and app.request.attributes.get('_route') != 'home' %}
+        <a class="app-header__back" href="{{ path('home') }}" title="{{ 'tasks.title'|trans }}">
+          <span aria-hidden="true">←</span>
+          <span class="app-header__back-label">{{ 'tasks.title'|trans }}</span>
+        </a>
+      {% endif %}
+    </div>
+
     <img class="app-header__brand" src="{{ asset('assets/logo.png') }}" alt="{{ 'common.appName'|trans }}">
 
-    {# Indicateur en/hors-ligne : piloté par app.js (§2).
-       Les deux libellés sont fournis ici, traduits : app.js ne contient aucun texte. #}
-    <span class="connectivity"
-          data-connectivity
-          data-label-online="{{ 'status.online'|trans }}"
-          data-label-offline="{{ 'status.offline'|trans }}">
-      <span class="connectivity__dot" aria-hidden="true"></span>
-      <span class="connectivity__label" data-connectivity-label>{{ 'status.online'|trans }}</span>
-      <span class="connectivity__pending" data-connectivity-pending hidden></span>
-    </span>
+    <div class="app-header__side app-header__side--right">
+      {# Indicateur en/hors-ligne : piloté par app.js (§2).
+         Les deux libellés sont fournis ici, traduits : app.js ne contient aucun texte. #}
+      <span class="connectivity"
+            data-connectivity
+            data-label-online="{{ 'status.online'|trans }}"
+            data-label-offline="{{ 'status.offline'|trans }}">
+        <span class="connectivity__dot" aria-hidden="true"></span>
+        <span class="connectivity__label" data-connectivity-label>{{ 'status.online'|trans }}</span>
+        <span class="connectivity__pending" data-connectivity-pending hidden></span>
+      </span>
 
-    {# Sélecteur de langue — présent sur tous les écrans, connexion comprise. #}
-    <form class="locale-switcher" method="post" action="{{ path('select_locale') }}">
-      <label class="visually-hidden" for="locale-select">{{ 'common.language'|trans }}</label>
-      <select id="locale-select" name="locale" class="locale-switcher__select" data-autosubmit>
-        {% for locale in supported_locales() %}
-          <option value="{{ locale.value }}" {{ locale.value == app.request.locale ? 'selected' : '' }}>
-            {{ ('locales.' ~ locale.value)|trans }}
-          </option>
-        {% endfor %}
-      </select>
-      <noscript><button type="submit" class="button button--ghost">{{ 'common.apply'|trans }}</button></noscript>
-    </form>
-
-    {% if current_user().isLoggedIn %}
-      <form method="post" action="{{ path('logout') }}">
-        <button type="submit" class="button button--ghost">{{ 'common.logout'|trans }}</button>
+      {# Sélecteur de langue — présent sur tous les écrans, connexion comprise. #}
+      <form class="locale-switcher" method="post" action="{{ path('select_locale') }}">
+        <label class="visually-hidden" for="locale-select">{{ 'common.language'|trans }}</label>
+        <select id="locale-select" name="locale" class="locale-switcher__select" data-autosubmit>
+          {% for locale in supported_locales() %}
+            <option value="{{ locale.value }}" {{ locale.value == app.request.locale ? 'selected' : '' }}>
+              {{ ('locales.' ~ locale.value)|trans }}
+            </option>
+          {% endfor %}
+        </select>
+        <noscript><button type="submit" class="button button--ghost">{{ 'common.apply'|trans }}</button></noscript>
       </form>
-    {% endif %}
+
+      {% if current_user().isLoggedIn %}
+        {# Avatar : accès à la fiche profil, initiales faute de photo fournie. #}
+        <a class="avatar" href="{{ path('profile') }}" title="{{ 'profile.title'|trans }}">
+          {{ current_user().consultant.initials }}
+        </a>
+
+        <form method="post" action="{{ path('logout') }}">
+          <button type="submit" class="button button--ghost">{{ 'common.logout'|trans }}</button>
+        </form>
+      {% endif %}
+    </div>
   </header>
 {% endblock %}
 
-{% block nav %}
-  {% if current_user().isLoggedIn %}
-    <nav class="app-nav">
-      <a class="app-nav__link {{ app.request.attributes.get('_route') == 'count_morning' ? 'is-active' : '' }}"
-         href="{{ path('count_morning') }}">{{ 'nav.morning'|trans }}</a>
-      <a class="app-nav__link {{ app.request.attributes.get('_route') == 'count_evening' ? 'is-active' : '' }}"
-         href="{{ path('count_evening') }}">{{ 'nav.evening'|trans }}</a>
-      <a class="app-nav__link {{ app.request.attributes.get('_route') == 'production' ? 'is-active' : '' }}"
-         href="{{ path('production') }}">{{ 'nav.toProduce'|trans }}</a>
-      {% if current_user().isAdmin %}
-        <a class="app-nav__link {{ 'admin' in app.request.attributes.get('_route') ? 'is-active' : '' }}"
-           href="{{ path('admin_home') }}">{{ 'nav.admin'|trans }}</a>
-      {% endif %}
-    </nav>
-  {% endif %}
-{% endblock %}
+{#
+  Plus de barre d'onglets en pied d'écran : le menu des tâches sert de point
+  d'entrée, et chaque écran ramène vers lui. Cela libère le bas de l'écran, où
+  vivent les boutons d'action (Enregistrer, Valider) sur les écrans de saisie.
+#}
+{% block nav %}{% endblock %}
 
 <main class="app-main">
 

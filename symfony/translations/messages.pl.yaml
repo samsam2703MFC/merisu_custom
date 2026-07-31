@@ -50,6 +50,44 @@ login:
     demoTitle: 'Konta demonstracyjne'
     demoHint: 'admin / 000000 · consultant1 / 111111 · consultant2 / 222222'
 
+roles:
+    ADMIN: Administrator
+    CONSULTANT: Sprzedawca
+
+profile:
+    title: 'Mój profil'
+    firstName: Imię
+    lastName: Nazwisko
+    email: 'Adres e-mail'
+    pin: 'Kod PIN'
+    pinShow: Pokaż
+    pinHide: Ukryj
+    shops: Sklepy
+    workstations: 'Dozwolone stanowiska'
+    currentWorkstation: 'Bieżące stanowisko'
+    language: Język
+    preferences: Preferencje
+    localeFromModule: 'Język zapisany w Twojej karcie: %locale%.'
+    readOnlyHint: 'Nazwisko, e-mail, kod i przypisania pochodzą z modułu Konsultant — tam należy je zmieniać.'
+
+tasks:
+    title: 'Moje zadania'
+    todo: 'Do policzenia: %total% produktów'
+    inProgress: 'Wprowadzono %saved% z %total% produktów'
+    validated: 'Zatwierdzone — wpis zablokowany'
+    doneShort: Gotowe
+    nowShort: 'Do zrobienia teraz'
+    noPlan: 'Brak planu na dziś'
+    planReady: 'Do przygotowania: %count% produktów'
+
+adminLogin:
+    title: 'Logowanie do administracji'
+    eyebrow: Administracja
+    subtitle: 'Dostęp ograniczony. Wprowadź kod administratora.'
+    pincode: 'Kod administratora (6 cyfr)'
+    submit: 'Przejdź do administracji'
+    backToSeller: 'Powrót do logowania stanowiska'
+
 nav:
     morning: Rano
     evening: Wieczór

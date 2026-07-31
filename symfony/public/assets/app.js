@@ -52,6 +52,25 @@
     if (message && !window.confirm(message)) event.preventDefault();
   });
 
+  // ── 3 bis. Révélation du code PIN sur la fiche profil ─────────────────────
+
+  document.addEventListener('click', function (event) {
+    var toggle = event.target.closest('[data-pin-toggle]');
+    if (!toggle) return;
+
+    var masked = document.querySelector('[data-pin-masked]');
+    var clear = document.querySelector('[data-pin-clear]');
+    if (!masked || !clear) return;
+
+    var revealed = !clear.hidden;
+    clear.hidden = revealed;
+    masked.hidden = !revealed;
+    // Les libellés viennent du gabarit : ce fichier ne contient aucun texte.
+    toggle.textContent = revealed
+      ? toggle.getAttribute('data-label-show')
+      : toggle.getAttribute('data-label-hide');
+  });
+
   // ── 4. File d'attente hors-ligne ──────────────────────────────────────────
 
   var DB_NAME = 'merisu-offline';

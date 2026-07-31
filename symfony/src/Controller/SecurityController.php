@@ -41,7 +41,7 @@ final class SecurityController extends AbstractController
     public function login(Request $request): Response
     {
         if ($this->currentUser->isLoggedIn()) {
-            return $this->redirectToRoute('count_morning');
+            return $this->redirectToRoute('home');
         }
 
         $error = null;
@@ -75,7 +75,7 @@ final class SecurityController extends AbstractController
                 $this->currentUser->login($consultant, $workstationId !== '' ? $workstationId : null);
                 $this->store->audit($consultant->id, $consultant->role->value, 'LOGIN', $this->currentUser->workstationId());
 
-                return $this->redirectToRoute('count_morning');
+                return $this->redirectToRoute('home');
             }
         }
 
@@ -83,6 +83,59 @@ final class SecurityController extends AbstractController
             'workstations' => $this->consultants->workstations(),
             'error' => $error,
         ]);
+    }
+
+    /**
+     * Connexion ADMINISTRATION, distincte de celle du poste.
+     *
+     * Deux portes d'entrée séparées : le vendeur au poste ne voit jamais
+     * l'administration, et l'accès admin ne s'obtient pas depuis l'écran de
+     * comptage. Un code de vendeur saisi ici est refusé, même s'il est valide.
+     */
+    #[Route('/admin/connexion', name: 'admin_login', methods: ['GET', 'POST'])]
+    public function adminLogin(Request $request): Response
+    {
+        if ($this->currentUser->isAdmin()) {
+            return $this->redirectToRoute('admin_home');
+        }
+
+        $error = null;
+
+        if ($request->isMethod('POST')) {
+            $secret = trim((string) $request->request->get('secret'));
+
+            $byIp = $this->loginIpLimiter->create($request->getClientIp() ?? 'unknown');
+            $global = $this->loginGlobalLimiter->create('login');
+
+            if (!$byIp->consume()->isAccepted() || !$global->consume()->isAccepted()) {
+                $this->store->audit('anonyme', 'ANONYMOUS', 'LOGIN_THROTTLED', null, null, [
+                    'ip' => $request->getClientIp(),
+                    'scope' => 'admin',
+                ]);
+
+                return $this->render('security/admin_login.html.twig', [
+                    'error' => 'TOO_MANY_ATTEMPTS',
+                ], new Response('', Response::HTTP_TOO_MANY_REQUESTS));
+            }
+
+            $consultant = $this->consultants->authenticateByPin($secret);
+
+            if ($consultant === null) {
+                $error = 'INVALID_CREDENTIALS';
+            } elseif (!$consultant->role->isAdmin()) {
+                // Code valide mais sans droits : refusé ici, et tracé — une
+                // tentative d'accès admin depuis un compte vendeur doit se voir.
+                $this->store->audit($consultant->id, $consultant->role->value, 'ADMIN_LOGIN_REFUSED');
+                $error = 'ROLE_NOT_ALLOWED';
+            } else {
+                $this->currentUser->login($consultant, $this->currentUser->workstationId());
+                $this->store->audit($consultant->id, $consultant->role->value, 'ADMIN_LOGIN');
+
+                return $this->redirectToRoute('admin_home');
+            }
+        }
+
+        return $this->render('security/admin_login.html.twig', ['error' => $error]);
     }
 
     #[Route('/deconnexion', name: 'logout', methods: ['POST'])]
@@ -105,7 +158,7 @@ final class SecurityController extends AbstractController
             $this->currentUser->selectWorkstation($workstationId);
         }
 
-        return $this->redirect($request->headers->get('referer') ?? $this->generateUrl('count_morning'));
+        return $this->redirect($request->headers->get('referer') ?? $this->generateUrl('home'));
     }
 
     /** Changement de langue : mémorisé, il prime sur le paramètre d'administration. */
@@ -118,6 +171,6 @@ final class SecurityController extends AbstractController
             $request->getSession()->set(LocaleSubscriber::SESSION_KEY, $locale->value);
         }
 
-        return $this->redirect($request->headers->get('referer') ?? $this->generateUrl('count_morning'));
+        return $this->redirect($request->headers->get('referer') ?? $this->generateUrl('home'));
     }
 }

@@ -50,6 +50,44 @@ login:
     demoTitle: 'Account dimostrativi'
     demoHint: 'admin / 000000 · consultant1 / 111111 · consultant2 / 222222'
 
+roles:
+    ADMIN: Amministratore
+    CONSULTANT: Venditore
+
+profile:
+    title: 'Il mio profilo'
+    firstName: Nome
+    lastName: Cognome
+    email: 'Indirizzo e-mail'
+    pin: 'Codice PIN'
+    pinShow: Mostra
+    pinHide: Nascondi
+    shops: Negozi
+    workstations: 'Postazioni autorizzate'
+    currentWorkstation: 'Postazione corrente'
+    language: Lingua
+    preferences: Preferenze
+    localeFromModule: 'Lingua registrata nella tua scheda: %locale%.'
+    readOnlyHint: 'Nome, e-mail, codice e assegnazioni provengono dal modulo Consulente: si modificano lì.'
+
+tasks:
+    title: 'I miei compiti'
+    todo: '%total% prodotti da contare'
+    inProgress: '%saved% di %total% prodotti inseriti'
+    validated: 'Convalidato — inserimento bloccato'
+    doneShort: Fatto
+    nowShort: 'Da fare ora'
+    noPlan: 'Nessun piano per oggi'
+    planReady: '%count% prodotti da preparare'
+
+adminLogin:
+    title: 'Accesso amministrazione'
+    eyebrow: Amministrazione
+    subtitle: 'Accesso riservato. Inserisci il tuo codice amministratore.'
+    pincode: 'Codice amministratore (6 cifre)'
+    submit: 'Accedi all''amministrazione'
+    backToSeller: 'Torna al login della postazione'
+
 nav:
     morning: Mattina
     evening: Sera

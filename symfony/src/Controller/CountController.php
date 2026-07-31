@@ -28,18 +28,63 @@ final class CountController extends AbstractController
     ) {
     }
 
+    /**
+     * Menu des tâches — écran d'accueil du poste.
+     *
+     * Le vendeur y voit ce qu'il lui reste à faire aujourd'hui, avec l'état de
+     * chaque tâche (à faire / validée). La tâche correspondant à l'heure est
+     * mise en avant : avant l'heure de clôture c'est le comptage d'ouverture,
+     * après c'est celui de clôture.
+     *
+     * L'administration n'y figure pas : elle a sa propre porte d'entrée.
+     */
     #[Route('/', name: 'home', methods: ['GET'])]
     public function home(): Response
     {
-        if (!$this->currentUser->isLoggedIn()) {
-            return $this->redirectToRoute('login');
-        }
+        $this->currentUser->requireConsultant();
 
-        // On propose l'écran correspondant à l'heure : inutile de demander au
-        // consultant de choisir alors que l'heure le dit déjà.
-        return $this->redirectToRoute(
-            $this->inventory->suggestedMoment()->isEvening() ? 'count_evening' : 'count_morning',
-        );
+        $date = $this->inventory->today();
+        $workstationId = $this->currentUser->resolveWorkstation();
+        $suggested = $this->inventory->suggestedMoment();
+
+        // Les horaires viennent des paramètres généraux : `daySheet()` ne les
+        // renvoie pas, il expose l'état de la saisie.
+        $settings = $this->store->settings();
+
+        $morning = $this->inventory->daySheet($date, $workstationId, CountMoment::Open0800);
+        $evening = $this->inventory->daySheet($date, $workstationId, CountMoment::Close2200);
+
+        return $this->render('count/tasks.html.twig', [
+            'date' => $date,
+            'workstationId' => $workstationId,
+            'workstations' => $this->consultants->workstations(),
+            'suggested' => $suggested,
+            'tasks' => [
+                [
+                    'route' => 'count_morning', 'icon' => 'sunrise',
+                    'label' => 'nav.morning',
+                    'title' => 'morning.title',
+                    'time' => $settings->openingTime,
+                    'done' => $morning['validated'],
+                    'saved' => \count($morning['counts']),
+                    'total' => \count($morning['products']),
+                    'highlight' => !$suggested->isEvening(),
+                ],
+                [
+                    'route' => 'count_evening', 'icon' => 'moon',
+                    'label' => 'nav.evening',
+                    'title' => 'evening.title',
+                    'time' => $settings->closingTime,
+                    'done' => $evening['validated'],
+                    'saved' => \count($evening['counts']),
+                    'total' => \count($evening['products']),
+                    'highlight' => $suggested->isEvening(),
+                ],
+            ],
+            // Le plan du jour vient du soir précédent : c'est une consultation,
+            // pas une saisie, d'où sa présentation distincte.
+            'planForToday' => $morning['planForToday'],
+        ]);
     }
 
     #[Route('/saisie/matin', name: 'count_morning', methods: ['GET'])]
