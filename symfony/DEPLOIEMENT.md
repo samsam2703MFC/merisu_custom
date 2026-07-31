@@ -6,7 +6,44 @@ worker et toutes les URL suivent automatiquement le préfixe d'installation.
 
 ---
 
-## 1. Déposer les fichiers
+## 0. Déploiement depuis Git (recommandé)
+
+Le dépôt est **public** : aucun identifiant n'est nécessaire pour le cloner.
+
+```bash
+# Sur le serveur, à l'emplacement voulu
+git clone https://github.com/samsam2703MFC/merisu_custom.git /var/www/merisu-src
+cd /var/www/merisu-src/symfony
+
+bash bin/deploy.sh
+```
+
+`bin/deploy.sh` vérifie les prérequis (PHP ≥ 8.2, extensions, pilote de base,
+Composer), crée `.env.local` avec un secret généré s'il est absent, installe les
+dépendances, pose les droits, applique le schéma et reconstruit le cache.
+
+Reste à faire pointer la racine web sur `/var/www/merisu-src/symfony/public`
+(voir §5), puis à parcourir la liste de contrôle du §7.
+
+### Mises à jour
+
+```bash
+cd /var/www/merisu-src && git pull
+cd symfony && bash bin/deploy.sh
+```
+
+Le script ne touche jamais à `.env.local` ni aux données : comptages, photos et
+journal d'audit sont préservés.
+
+> **Prérequis sur le serveur** : PHP 8.2 ou supérieur, Composer, et l'extension
+> `pdo_sqlite` (ou `pdo_pgsql`). `vendor/` n'est volontairement pas versionné.
+> Si Composer n'est pas installable sur le serveur, utiliser l'archive de
+> production fournie, qui embarque déjà les dépendances — la suite de ce
+> document décrit cette voie.
+
+---
+
+## 1. Déposer les fichiers (voie manuelle, sans Git)
 
 Copier le contenu de `symfony/` sur le serveur, par exemple dans
 `/var/www/merisu/`. **La racine web doit pointer sur `symfony/public/`**, jamais
