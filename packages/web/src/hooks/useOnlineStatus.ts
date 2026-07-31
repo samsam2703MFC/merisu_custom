@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react';
 
 import { syncQueue } from '../api/client.js';
-import { subscribeQueue, watchConnectivity, type QueueState } from '../offline/queue.js';
+import { clearFailed, subscribeQueue, watchConnectivity, type QueueState } from '../offline/queue.js';
 
-export function useOfflineQueue(): QueueState & { sync: () => void } {
+export function useOfflineQueue(): QueueState & { sync: () => void; dismissFailed: () => void } {
   const [state, setState] = useState<QueueState>({
     pending: 0,
     syncing: false,
@@ -26,5 +26,5 @@ export function useOfflineQueue(): QueueState & { sync: () => void } {
     };
   }, []);
 
-  return { ...state, sync: () => void syncQueue() };
+  return { ...state, sync: () => void syncQueue(), dismissFailed: clearFailed };
 }

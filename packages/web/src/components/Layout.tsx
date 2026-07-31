@@ -76,16 +76,26 @@ export function Layout() {
 
         {!queue.online && <Banner kind="warn">{t('status.offlineHint')}</Banner>}
 
+        {/* Envois définitivement abandonnés : le consultant doit les ressaisir,
+            l'alerte reste donc affichée jusqu'à ce qu'il l'acquitte. */}
         {queue.failed.length > 0 && (
           <Banner kind="danger">
             {t('errors.generic')}
-            <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.2rem' }}>
+            <ul style={{ margin: '0.5rem 0', paddingLeft: '1.2rem' }}>
               {queue.failed.map((request, index) => (
                 <li key={`${request.path}-${index}`}>
                   {request.path} — {request.lastError}
                 </li>
               ))}
             </ul>
+            <div className="row">
+              <button type="button" className="secondary" onClick={queue.sync}>
+                {t('common.retry')}
+              </button>
+              <button type="button" className="secondary" onClick={queue.dismissFailed}>
+                {t('common.close')}
+              </button>
+            </div>
           </Banner>
         )}
 

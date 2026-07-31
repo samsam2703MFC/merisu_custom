@@ -5,7 +5,7 @@
  * la photo et la validation verrouillante, propres au comptage du soir.
  */
 
-import type { CountMoment, ValidationIssue } from '@merisu/domain';
+import type { CountMoment, ProductionPlan, ValidationIssue } from '@merisu/domain';
 import { businessToday } from '@merisu/domain';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -44,6 +44,8 @@ export function CountScreen({ moment }: { moment: CountMoment }) {
   const [message, setMessage] = useState<{ kind: 'ok' | 'warn'; text: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [issues, setIssues] = useState<ValidationIssue[]>([]);
+  /** Plan renvoyé par la validation du soir, affiché sans changer d'écran. */
+  const [freshPlan, setFreshPlan] = useState<ProductionPlan[] | null>(null);
 
   const isEvening = moment === 'CLOSE_2200';
   const today = useMemo(
@@ -143,6 +145,9 @@ export function CountScreen({ moment }: { moment: CountMoment }) {
         setMessage({ kind: 'warn', text: t('status.offlineHint') });
       } else {
         setMessage({ kind: 'ok', text: t('common.saved') });
+        // §3.2.4 — la production à réaliser demain est affichée immédiatement,
+        // sans que le consultant ait à changer d'écran.
+        setFreshPlan(result.data?.plan ?? []);
         await load();
       }
       setConfirming(false);
@@ -272,6 +277,51 @@ export function CountScreen({ moment }: { moment: CountMoment }) {
               </div>
             </>
           )}
+        </Card>
+      )}
+
+      {/* §3.2.4 — production à réaliser demain, affichée juste après la validation. */}
+      {isEvening && freshPlan && freshPlan.length > 0 && (
+        <Card>
+          <h2>{t('produce.title')}</h2>
+          <p className="muted">
+            {t('produce.subtitle', {
+              date: formatDate(freshPlan[0]!.forDate, i18n.language),
+            })}
+          </p>
+          <div className="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>{t('common.product')}</th>
+                  <th>{t('produce.required')}</th>
+                  <th>{t('produce.closingStock')}</th>
+                  <th>{t('produce.qtyToProduce')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {freshPlan.map((line) => {
+                  const product = sheet.products.find((p) => p.id === line.productId);
+                  return (
+                    <tr key={line.id}>
+                      <td>
+                        {label(product?.name, line.productId)}
+                        {line.missingThreshold && (
+                          <> <span className="badge warn">{t('common.notDefined')}</span></>
+                        )}
+                      </td>
+                      <td>{formatQty(line.requiredPieces, i18n.language)}</td>
+                      <td>{formatQty(line.closingStock, i18n.language)}</td>
+                      <td>
+                        <strong>{formatQty(line.qtyToProduce, i18n.language)}</strong>{' '}
+                        {product?.unit}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </Card>
       )}
 

@@ -251,7 +251,11 @@ export const api = {
       { raw: true },
     );
 
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    // `Response#text()` retire le BOM envoyé par le serveur (décodage UTF-8 spécifié).
+    // On le replace ici, sinon Excel affiche mal les accents des libellés FR/PL/IT/ES.
+    const blob = new Blob([`﻿${csv.replace(/^﻿/, '')}`], {
+      type: 'text/csv;charset=utf-8',
+    });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
