@@ -33,6 +33,15 @@ services:
     Merisu\Inventory\Adapter\ConsultantServiceInterface:
         alias: Merisu\Inventory\Adapter\LocalConsultantService
 
+    # Codes PIN de l'implémentation de repli, surchargeables dans .env.local :
+    # ils ne doivent PAS rester à leur valeur par défaut une fois l'application
+    # joignable, celles-ci étant publiées dans le dépôt.
+    Merisu\Inventory\Adapter\LocalConsultantService:
+        arguments:
+            $adminPin: '%env(MERISU_ADMIN_PIN)%'
+            $consultant1Pin: '%env(MERISU_CONSULTANT1_PIN)%'
+            $consultant2Pin: '%env(MERISU_CONSULTANT2_PIN)%'
+
     Merisu\Inventory\Adapter\RecipeServiceInterface:
         alias: Merisu\Inventory\Adapter\LocalRecipeService
 

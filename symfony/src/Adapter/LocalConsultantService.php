@@ -10,21 +10,35 @@ use Merisu\Inventory\Domain\Role;
  * Implémentation de repli, active tant que le vrai module Consultant n'est pas
  * branché. Elle permet de lancer et de démontrer le module immédiatement.
  *
- * ⚠️ Les codes PIN sont triviaux : ne jamais déployer en production avec.
+ * ⚠️ Les codes PIN par défaut sont triviaux et publiés dans le dépôt. Ils
+ * DOIVENT être remplacés dès que l'application est joignable, via `.env.local` :
+ *
+ *     MERISU_ADMIN_PIN=418302
+ *     MERISU_CONSULTANT1_PIN=735914
+ *     MERISU_CONSULTANT2_PIN=260487
+ *     MERISU_SHOW_DEMO_ACCOUNTS=0     # masque le rappel sur l'écran de connexion
  */
 final class LocalConsultantService implements ConsultantServiceInterface
 {
+    /** @var array<string, array{name: string, role: Role, workstation: ?string, secret: string}> */
+    private array $accounts;
+
     /**
-     * Codes PIN à 6 chiffres, UNIQUES entre comptes : ils constituent à eux
-     * seuls l'identité, comme sur l'écran de connexion.
+     * Les codes viennent de la configuration, pas du code source : ils se
+     * changent sans redéploiement et ne transitent plus par le dépôt Git.
      *
-     * @var array<string, array{name: string, role: Role, workstation: ?string, secret: string}>
+     * Les codes doivent rester UNIQUES entre comptes — ils constituent à eux
+     * seuls l'identité, et l'audit deviendrait faux si deux personnes
+     * partageaient le même.
      */
-    private const ACCOUNTS = [
-        'admin' => ['name' => 'Admin MERISU', 'role' => Role::Admin, 'workstation' => 'ws-1', 'secret' => '000000'],
-        'consultant1' => ['name' => 'Consultant 1', 'role' => Role::Consultant, 'workstation' => 'ws-1', 'secret' => '111111'],
-        'consultant2' => ['name' => 'Consultant 2', 'role' => Role::Consultant, 'workstation' => 'ws-2', 'secret' => '222222'],
-    ];
+    public function __construct(string $adminPin, string $consultant1Pin, string $consultant2Pin)
+    {
+        $this->accounts = [
+            'admin' => ['name' => 'Admin MERISU', 'role' => Role::Admin, 'workstation' => 'ws-1', 'secret' => $adminPin],
+            'consultant1' => ['name' => 'Consultant 1', 'role' => Role::Consultant, 'workstation' => 'ws-1', 'secret' => $consultant1Pin],
+            'consultant2' => ['name' => 'Consultant 2', 'role' => Role::Consultant, 'workstation' => 'ws-2', 'secret' => $consultant2Pin],
+        ];
+    }
 
     private const WORKSTATIONS = [
         'ws-1' => 'Stanowisko 1',
@@ -34,7 +48,7 @@ final class LocalConsultantService implements ConsultantServiceInterface
     public function authenticate(string $login, string $secret): ?Consultant
     {
         $key = strtolower(trim($login));
-        $account = self::ACCOUNTS[$key] ?? null;
+        $account = $this->accounts[$key] ?? null;
 
         // Comparaison à temps constant : réflexe à conserver dans la vraie
         // implémentation, où le secret sera un mot de passe haché.
@@ -57,7 +71,7 @@ final class LocalConsultantService implements ConsultantServiceInterface
         $pin = trim($pin);
         $matched = null;
 
-        foreach (self::ACCOUNTS as $id => $account) {
+        foreach ($this->accounts as $id => $account) {
             if (hash_equals($account['secret'], $pin)) {
                 $matched = $id;
             }
@@ -68,7 +82,7 @@ final class LocalConsultantService implements ConsultantServiceInterface
 
     public function consultant(string $id): ?Consultant
     {
-        $account = self::ACCOUNTS[$id] ?? null;
+        $account = $this->accounts[$id] ?? null;
 
         if ($account === null) {
             return null;
@@ -81,7 +95,7 @@ final class LocalConsultantService implements ConsultantServiceInterface
     {
         return array_values(array_filter(array_map(
             fn (string $id): ?Consultant => $this->consultant($id),
-            array_keys(self::ACCOUNTS),
+            array_keys($this->accounts),
         )));
     }
 
@@ -102,7 +116,7 @@ final class LocalConsultantService implements ConsultantServiceInterface
 
     public function assignedWorkstation(string $consultantId): ?Workstation
     {
-        $workstationId = self::ACCOUNTS[$consultantId]['workstation'] ?? null;
+        $workstationId = $this->accounts[$consultantId]['workstation'] ?? null;
 
         return $workstationId === null ? null : $this->workstation($workstationId);
     }

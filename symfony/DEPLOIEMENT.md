@@ -236,12 +236,24 @@ peut pas obtenir de certificat reconnu.
 
 ## 7. Avant d'ouvrir aux utilisateurs
 
-- [ ] **Retirer les comptes de démonstration.** Ils sont dans
-      `src/Adapter/LocalConsultantService.php` et disparaîtront au branchement du
-      vrai module Consultant. Tant qu'ils existent, n'importe qui connaissant
-      `000000` est administrateur.
-- [ ] Supprimer le rappel des codes sur l'écran de connexion
-      (`templates/security/login.html.twig`, bloc `login.demoTitle`).
+- [ ] **Changer les codes PIN et masquer leur rappel.** Les valeurs par défaut
+      sont publiées dans le dépôt : tant qu'elles sont en place, quiconque
+      atteint la page de connexion est administrateur. Dans `.env.local` :
+
+      ```dotenv
+      MERISU_SHOW_DEMO_ACCOUNTS=0
+      MERISU_ADMIN_PIN=418302
+      MERISU_CONSULTANT1_PIN=735914
+      MERISU_CONSULTANT2_PIN=260487
+      ```
+
+      Puis `php bin/console cache:clear --env=prod`. Les codes doivent rester
+      **uniques** entre comptes : ils constituent à eux seuls l'identité, et
+      l'audit deviendrait faux si deux personnes partageaient le même.
+      Générer des codes : `php -r 'echo random_int(100000, 999999), PHP_EOL;'`
+
+      Ces comptes disparaîtront de toute façon au branchement du vrai module
+      Consultant (voir README).
 - [ ] Ajuster le limiteur de tentatives (`config/packages/rate_limiter.yaml`)
       selon le nombre de postes partageant l'adresse IP publique du site.
 - [ ] Remplacer les 8 produits et la matrice de seuils fictifs par les vraies

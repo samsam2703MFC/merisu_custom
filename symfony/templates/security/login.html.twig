@@ -38,11 +38,19 @@
       </button>
     </form>
 
-    {# Rappel des comptes de démonstration : à retirer au branchement du vrai module. #}
-    <hr class="separator">
-    <p class="muted">
-      <strong>{{ 'login.demoTitle'|trans }}</strong><br>
-      {{ 'login.demoHint'|trans }}
-    </p>
+    {#
+      Rappel des comptes de démonstration.
+
+      Affiché uniquement si MERISU_SHOW_DEMO_ACCOUNTS=1 : sur une application
+      joignable, publier les codes reviendrait à ouvrir l'administration à
+      quiconque atteint la page.
+    #}
+    {% if show_demo_accounts %}
+      <hr class="separator">
+      <p class="muted">
+        <strong>{{ 'login.demoTitle'|trans }}</strong><br>
+        {{ 'login.demoHint'|trans }}
+      </p>
+    {% endif %}
   </section>
 {% endblock %}
