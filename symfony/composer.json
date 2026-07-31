@@ -7,11 +7,11 @@
     "php": ">=8.2",
     "ext-json": "*",
     "doctrine/dbal": "^4.2",
-    "symfony/asset": "^8.1",
+    "symfony/asset": "^7.2",
     "symfony/console": "^7.2",
     "symfony/dotenv": "^7.2",
     "symfony/framework-bundle": "^7.2",
-    "symfony/rate-limiter": "^8.1",
+    "symfony/rate-limiter": "^7.2",
     "symfony/runtime": "^7.2",
     "symfony/translation": "^7.2",
     "symfony/twig-bundle": "^7.2",
@@ -34,7 +34,10 @@
     "allow-plugins": {
       "symfony/runtime": true
     },
-    "sort-packages": true
+    "sort-packages": true,
+    "platform": {
+      "php": "8.2.0"
+    }
   },
   "scripts": {
     "test": "phpunit"
