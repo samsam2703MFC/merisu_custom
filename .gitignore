@@ -3,8 +3,11 @@ dist/
 build/
 coverage/
 *.log
-.env
+# Convention Symfony : `.env` EST versionné — il ne porte que des valeurs par
+# défaut, sans secret. Les vraies valeurs vivent dans `.env.local`, ignoré.
+# Sans `.env` dans le dépôt, un déploiement par `git clone` échoue au démarrage.
 .env.local
+.env.*.local
 .DS_Store
 packages/server/uploads/
 packages/server/test-uploads/

@@ -14,6 +14,47 @@ APP_DIR="$(pwd)"
 
 echo "→ Déploiement de MERISU dans $APP_DIR"
 
+# ── 0. Prérequis ────────────────────────────────────────────────────────────
+# Vérifiés d'emblée : un échec ici est plus clair qu'une erreur PHP obscure
+# trois étapes plus loin.
+
+if ! command -v php >/dev/null 2>&1; then
+    echo "✗ PHP est introuvable. Installer PHP 8.2 ou supérieur." >&2
+    exit 1
+fi
+
+PHP_OK=$(php -r 'echo PHP_VERSION_ID >= 80200 ? 1 : 0;')
+if [ "$PHP_OK" != "1" ]; then
+    echo "✗ PHP $(php -r 'echo PHP_VERSION;') détecté ; 8.2 minimum requis." >&2
+    exit 1
+fi
+
+for ext in json mbstring; do
+    if ! php -m | grep -qix "$ext"; then
+        echo "✗ Extension PHP manquante : $ext" >&2
+        exit 1
+    fi
+done
+
+# Un pilote de base est indispensable : SQLite par défaut, PostgreSQL en option.
+if ! php -m | grep -qix "pdo_sqlite" && ! php -m | grep -qix "pdo_pgsql"; then
+    echo "✗ Aucun pilote de base disponible : installer pdo_sqlite ou pdo_pgsql." >&2
+    exit 1
+fi
+
+# vendor/ n'est pas versionné : sans Composer, le déploiement depuis Git ne peut
+# pas aboutir. Autant le dire tout de suite.
+if [ ! -f vendor/autoload_runtime.php ] && ! command -v composer >/dev/null 2>&1; then
+    cat >&2 <<'MSG'
+✗ Ni vendor/ ni Composer ne sont présents.
+
+  vendor/ n'est volontairement pas versionné. Deux solutions :
+    · installer Composer sur le serveur  → https://getcomposer.org/download/
+    · ou déployer l'archive fournie, qui embarque déjà vendor/
+MSG
+    exit 1
+fi
+
 # ── 1. Configuration ────────────────────────────────────────────────────────
 if [ ! -f .env.local ]; then
     echo "→ .env.local absent : création avec un secret généré"
@@ -29,11 +70,11 @@ else
 fi
 
 # ── 2. Dépendances ──────────────────────────────────────────────────────────
-if [ -f composer.json ] && command -v composer >/dev/null 2>&1; then
+if command -v composer >/dev/null 2>&1; then
     echo "→ Installation des dépendances (sans les outils de développement)"
     composer install --no-dev --optimize-autoloader --no-interaction
 else
-    echo "→ Composer absent ou vendor/ déjà fourni : étape ignorée"
+    echo "→ Composer absent : vendor/ fourni par l'archive, étape ignorée"
 fi
 
 # ── 3. Droits d'écriture ────────────────────────────────────────────────────
