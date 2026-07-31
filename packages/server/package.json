@@ -1,0 +1,33 @@
+{
+  "name": "@merisu/server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "API du module Inventaire & Production MERISU",
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "dev": "node --experimental-strip-types --watch src/index.ts",
+    "start": "node dist/index.js",
+    "seed": "node --experimental-strip-types src/seed.ts",
+    "migrate": "node --experimental-strip-types src/store/migrate.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@merisu/domain": "*",
+    "cors": "^2.8.5",
+    "express": "^4.21.1",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.9.0",
+    "@types/pg": "^8.11.10",
+    "@types/supertest": "^6.0.2",
+    "supertest": "^7.0.0",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5"
+  }
+}
