@@ -1,0 +1,41 @@
+# Réécriture Apache — indispensable si l'application est servie par Apache.
+#
+# Fonctionne aussi bien à la racine du domaine que dans un sous-répertoire
+# (`/merisu/`, `/kitchen/merisu/`…) : RewriteBase est déduit automatiquement.
+#
+# Nginx n'utilise pas ce fichier : voir DEPLOIEMENT.md pour la configuration.
+
+<IfModule mod_negotiation.c>
+    Options -MultiViews
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Déduit le préfixe d'installation, quel que soit le sous-répertoire.
+    RewriteCond %{REQUEST_URI}::$0 ^(/.+)/(.*)::\2$
+    RewriteRule .* - [E=BASE:%1]
+
+    # Redirige vers l'URL sans « /index.php » pour garder des adresses propres.
+    RewriteCond %{ENV:REDIRECT_STATUS} =""
+    RewriteRule ^index\.php(?:/(.*)|$) %{ENV:BASE}/$1 [R=301,L]
+
+    # Les fichiers existants (CSS, JS, polices, photos) sont servis tels quels.
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
+
+    # Tout le reste passe par le contrôleur frontal.
+    RewriteRule ^ %{ENV:BASE}/index.php [L]
+</IfModule>
+
+<IfModule !mod_rewrite.c>
+    <IfModule mod_alias.c>
+        # Sans mod_rewrite, au moins la page d'accueil reste atteignable.
+        RedirectMatch 302 ^/$ /index.php/
+    </IfModule>
+</IfModule>
+
+# Les photos de comptage ne doivent jamais être exécutées comme du code.
+<Directory "uploads">
+    php_flag engine off
+</Directory>

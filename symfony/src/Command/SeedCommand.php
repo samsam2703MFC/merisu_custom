@@ -103,7 +103,9 @@ final class SeedCommand extends Command
 
         $io->newLine();
         $io->warning('Données PLACEHOLDER : à remplacer via Admin ▸ Produits et Admin ▸ Seuils.');
-        $io->writeln('Comptes de démonstration : admin/0000, consultant1/1111, consultant2/2222');
+        // La connexion se fait au seul code PIN à 6 chiffres.
+        $io->writeln('Codes PIN de démonstration : admin 000000 · consultant1 111111 · consultant2 222222');
+        $io->writeln('⚠️  À retirer avant toute ouverture aux utilisateurs (voir DEPLOIEMENT.md).');
 
         return Command::SUCCESS;
     }

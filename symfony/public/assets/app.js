@@ -206,7 +206,12 @@
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {
-      navigator.serviceWorker.register('/sw.js').catch(function () {
+      // L'URL vient du gabarit : elle suit le préfixe d'installation.
+      var script = document.querySelector('script[data-sw-url]');
+      var swUrl = script && script.getAttribute('data-sw-url');
+      if (!swUrl) return;
+
+      navigator.serviceWorker.register(swUrl).catch(function () {
         // Enregistrement impossible (HTTP simple, navigation privée…) :
         // l'application reste utilisable, sans mode hors-ligne.
       });

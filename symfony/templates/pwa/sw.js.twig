@@ -12,19 +12,26 @@
  *   · écritures (POST) → jamais interceptées : elles passent par la file
  *     d'attente IndexedDB gérée par app.js, qui garantit l'ordre du rejeu.
  */
-const VERSION = 'merisu-v1';
+const VERSION = 'merisu-v2';
+
+/*
+ * Racine réelle de l'application, déduite de la portée du service worker.
+ * Elle vaut « / » à la racine du domaine, « /merisu/ » en sous-répertoire :
+ * les chemins ci-dessous doivent la suivre, sinon rien n'est trouvé.
+ */
+const BASE = new URL(self.registration.scope).pathname;
 const STATIC_ASSETS = [
-  '/assets/styles.css',
-  '/assets/fonts/fonts.css',
-  '/assets/fonts/JTUSjIg1_i6t8kCHKm459Wdhyzbi.woff2',
-  '/assets/fonts/JTUSjIg1_i6t8kCHKm459Wlhyw.woff2',
-  '/assets/fonts/nuFiD-vYSZviVYUb_rj3ij__anPXDTLYgFE_.woff2',
-  '/assets/fonts/nuFiD-vYSZviVYUb_rj3ij__anPXDTzYgA.woff2',
-  '/assets/app.js',
-  '/assets/favicon.svg',
-  '/assets/logo.png',
-  '/assets/icon-192.png',
-  '/assets/icon-512.png',
+  BASE + 'assets/styles.css',
+  BASE + 'assets/fonts/fonts.css',
+  BASE + 'assets/fonts/JTUSjIg1_i6t8kCHKm459Wdhyzbi.woff2',
+  BASE + 'assets/fonts/JTUSjIg1_i6t8kCHKm459Wlhyw.woff2',
+  BASE + 'assets/fonts/nuFiD-vYSZviVYUb_rj3ij__anPXDTLYgFE_.woff2',
+  BASE + 'assets/fonts/nuFiD-vYSZviVYUb_rj3ij__anPXDTzYgA.woff2',
+  BASE + 'assets/app.js',
+  BASE + 'assets/favicon.svg',
+  BASE + 'assets/logo.png',
+  BASE + 'assets/icon-192.png',
+  BASE + 'assets/icon-512.png',
   '/manifest.json'
 ];
 
@@ -68,7 +75,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(VERSION).then((cache) => cache.put(request, copy));
           return response;
         })
-        .catch(() => caches.match(request).then((cached) => cached || caches.match('/')))
+        .catch(() => caches.match(request).then((cached) => cached || caches.match(BASE)))
     );
   }
 });

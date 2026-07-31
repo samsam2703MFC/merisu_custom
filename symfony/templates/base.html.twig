@@ -20,7 +20,7 @@
 
   <title>{% block title %}{{ 'common.appName'|trans }}{% endblock %}</title>
 
-  <link rel="manifest" href="{{ asset('manifest.json') }}">
+  <link rel="manifest" href="{{ path('pwa_manifest') }}">
   <link rel="icon" type="image/svg+xml" href="{{ asset('assets/favicon.svg') }}">
   <link rel="apple-touch-icon" href="{{ asset('assets/icon-192.png') }}">
   <link rel="stylesheet" href="{{ asset('assets/styles.css') }}">
@@ -102,7 +102,9 @@
   {% block content %}{% endblock %}
 </main>
 
-<script src="{{ asset('assets/app.js') }}" defer></script>
+{# L'URL du service worker est transmise au script : elle dépend du
+   préfixe d'installation (racine du domaine ou sous-répertoire). #}
+<script src="{{ asset('assets/app.js') }}" data-sw-url="{{ path('pwa_service_worker') }}" defer></script>
 {% block javascripts %}{% endblock %}
 
 </body>
