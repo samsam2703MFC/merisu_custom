@@ -7,6 +7,5 @@ coverage/
 .env.local
 .DS_Store
 packages/server/uploads/
-packages/server/data/*.json
-!packages/server/data/.gitkeep
+packages/server/test-uploads/
 packages/web/dev-dist/
