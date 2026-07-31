@@ -70,6 +70,7 @@ profile:
     currentWorkstation: 'Poste courant'
     language: Langue
     preferences: Préférences
+    preferencesHint: 'Le poste de travail et la langue se changent depuis le menu de votre avatar, en haut à droite.'
     localeFromModule: 'Langue enregistrée dans votre fiche : %locale%.'
     readOnlyHint: 'Nom, e-mail, code et affectations proviennent du module Consultant : ils se modifient là-bas.'
 

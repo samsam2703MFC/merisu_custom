@@ -70,22 +70,10 @@
   </form>
 {% endmacro %}
 
-{# Sélecteur de poste de travail (changement en cours de session). #}
-{% macro workstation_switcher(workstations, current) %}
-  <form class="workstation-switcher" method="post" action="{{ path('select_workstation') }}">
-    <label class="workstation-switcher__label" for="workstation-select">
-      {{ 'common.workstation'|trans }}
-    </label>
-    <select id="workstation-select" name="workstationId" class="workstation-switcher__select" data-autosubmit>
-      {% for workstation in workstations %}
-        <option value="{{ workstation.id }}" {{ workstation.id == current ? 'selected' : '' }}>
-          {{ workstation.name }}
-        </option>
-      {% endfor %}
-    </select>
-    <noscript><button type="submit" class="button button--secondary">{{ 'common.apply'|trans }}</button></noscript>
-  </form>
-{% endmacro %}
+{#
+  Le sélecteur de poste a quitté les écrans : il vit désormais dans le menu de
+  l'avatar (base.html.twig), avec la langue. Un réglage, un seul endroit.
+#}
 
 {#
   Icônes — SVG inline, tracé en `currentColor`.

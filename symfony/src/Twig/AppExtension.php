@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Merisu\Inventory\Twig;
 
+use Merisu\Inventory\Adapter\ConsultantServiceInterface;
 use Merisu\Inventory\Adapter\Material;
+use Merisu\Inventory\Adapter\Workstation;
 use Merisu\Inventory\Domain\Locale;
 use Merisu\Inventory\Domain\Product;
 use Merisu\Inventory\Security\CurrentUser;
@@ -27,6 +29,7 @@ final class AppExtension extends AbstractExtension
         private readonly RequestStack $requestStack,
         private readonly CurrentUser $currentUser,
         private readonly Store $store,
+        private readonly ConsultantServiceInterface $consultants,
     ) {
     }
 
@@ -38,7 +41,51 @@ final class AppExtension extends AbstractExtension
             new TwigFunction('current_user', fn () => $this->currentUser),
             new TwigFunction('app_settings', fn () => $this->store->settings()),
             new TwigFunction('supported_locales', static fn (): array => Locale::all()),
+            new TwigFunction('available_workstations', $this->availableWorkstations(...)),
+            new TwigFunction('workstation_name', $this->workstationName(...)),
         ];
+    }
+
+    /**
+     * Postes proposés dans le menu de l'avatar.
+     *
+     * L'administrateur voit tous les postes ; le vendeur ne voit que ceux
+     * auxquels le module Consultant l'a rattaché. Sans rattachement connu, on
+     * retombe sur la liste complète : mieux vaut un choix large qu'un menu vide
+     * qui empêcherait de saisir.
+     *
+     * @return list<Workstation>
+     */
+    public function availableWorkstations(): array
+    {
+        $consultant = $this->currentUser->consultant();
+
+        if ($consultant === null) {
+            return [];
+        }
+
+        $all = $this->consultants->workstations();
+
+        if ($consultant->role->isAdmin() || $consultant->workstations === []) {
+            return $all;
+        }
+
+        $allowed = array_values(array_filter(
+            $all,
+            static fn (Workstation $w): bool => \in_array($w->id, $consultant->workstations, true),
+        ));
+
+        return $allowed !== [] ? $allowed : $all;
+    }
+
+    /** Nom lisible d'un poste : les écrans reçoivent des identifiants. */
+    public function workstationName(?string $id, string $placeholder = '—'): string
+    {
+        if ($id === null || $id === '') {
+            return $placeholder;
+        }
+
+        return $this->consultants->workstation($id)?->name ?? $id;
     }
 
     public function getFilters(): array

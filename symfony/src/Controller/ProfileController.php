@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Merisu\Inventory\Controller;
 
 use Merisu\Inventory\Adapter\ConsultantServiceInterface;
-use Merisu\Inventory\Domain\Locale;
 use Merisu\Inventory\Security\CurrentUser;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -50,8 +49,6 @@ final class ProfileController extends AbstractController
                 static fn (string $id): string => $names[$id] ?? $id,
                 $assigned,
             )),
-            'workstations' => $this->consultants->workstations(),
-            'locales' => Locale::all(),
         ]);
     }
 }

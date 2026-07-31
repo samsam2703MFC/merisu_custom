@@ -6,7 +6,7 @@
  * (amélioration progressive). Il ajoute :
  *
  *   1. les boutons − / + de comptage ;
- *   2. la file d'attente hors-ligne (IndexedDB) et l'indicateur réseau (§2) ;
+ *   2. la file d'attente hors-ligne (IndexedDB) et le bandeau de coupure (§2) ;
  *   3. la confirmation avant les actions verrouillantes ;
  *   4. l'enregistrement du service worker.
  *
@@ -40,6 +40,27 @@
   document.addEventListener('change', function (event) {
     var select = event.target.closest('[data-autosubmit]');
     if (select && select.form) select.form.submit();
+  });
+
+  // ── 2 bis. Fermeture du menu de l'avatar ──────────────────────────────────
+
+  // Le menu est un <details> : il s'ouvre et se ferme tout seul, sans script.
+  // Ces deux écouteurs n'ajoutent que le confort attendu d'un menu — un clic
+  // à côté ou la touche Échap le referment.
+  document.addEventListener('click', function (event) {
+    document.querySelectorAll('[data-dismiss-outside][open]').forEach(function (menu) {
+      if (!menu.contains(event.target)) menu.removeAttribute('open');
+    });
+  });
+
+  document.addEventListener('keydown', function (event) {
+    if (event.key !== 'Escape') return;
+
+    document.querySelectorAll('[data-dismiss-outside][open]').forEach(function (menu) {
+      menu.removeAttribute('open');
+      var trigger = menu.querySelector('summary');
+      if (trigger) trigger.focus();
+    });
   });
 
   // ── 3. Confirmation avant action verrouillante ────────────────────────────
@@ -107,32 +128,24 @@
   var readAll = function () { return withStore('readonly', function (s) { return s.getAll(); }); };
   var remove = function (id) { return withStore('readwrite', function (s) { return s.delete(id); }); };
 
-  // ── Indicateur réseau ─────────────────────────────────────────────────────
+  // ── État réseau ───────────────────────────────────────────────────────────
 
-  var indicator = document.querySelector('[data-connectivity]');
-  var indicatorLabel = document.querySelector('[data-connectivity-label]');
-  var pendingLabel = document.querySelector('[data-connectivity-pending]');
+  // Plus de pastille « En ligne » dans l'entête : quand tout va bien, l'écran
+  // ne dit rien. Seule la coupure s'annonce, par le bandeau — et tant qu'il
+  // reste des saisies en file, le compteur les rend visibles.
+  var queueCount = document.querySelector('[data-queue-count]');
   var offlineBanner = document.querySelector('[data-offline-banner]');
 
-  function refreshIndicator() {
-    if (!indicator) return Promise.resolve();
-
+  function refreshOfflineState() {
     var online = navigator.onLine;
-    indicator.classList.toggle('is-offline', !online);
-
-    if (indicatorLabel) {
-      indicatorLabel.textContent = online
-        ? indicator.getAttribute('data-label-online') || indicatorLabel.textContent
-        : indicator.getAttribute('data-label-offline') || indicatorLabel.textContent;
-    }
 
     if (offlineBanner) offlineBanner.hidden = online;
 
     return readAll().then(function (items) {
-      if (!pendingLabel) return;
-      pendingLabel.hidden = items.length === 0;
-      pendingLabel.textContent = items.length === 0 ? '' : '· ' + items.length;
-    }).catch(function () { /* IndexedDB indisponible : l'indicateur reste sobre. */ });
+      if (!queueCount) return;
+      queueCount.hidden = items.length === 0;
+      queueCount.textContent = items.length === 0 ? '' : '· ' + items.length;
+    }).catch(function () { /* IndexedDB indisponible : le bandeau reste sobre. */ });
   }
 
   // ── Interception du formulaire de comptage ────────────────────────────────
@@ -166,7 +179,7 @@
           quantities: quantities,
           validate: isValidation
         }
-      }).then(refreshIndicator);
+      }).then(refreshOfflineState);
     });
   }
 
@@ -209,16 +222,16 @@
       return chain;
     }).then(function () {
       syncing = false;
-      return refreshIndicator();
+      return refreshOfflineState();
     }).catch(function () {
       syncing = false;
     });
   }
 
-  window.addEventListener('online', function () { refreshIndicator(); flush(); });
-  window.addEventListener('offline', refreshIndicator);
+  window.addEventListener('online', function () { refreshOfflineState(); flush(); });
+  window.addEventListener('offline', refreshOfflineState);
 
-  refreshIndicator();
+  refreshOfflineState();
   flush();
 
   // ── 5. Service worker (installation sur l'écran d'accueil, §2) ────────────

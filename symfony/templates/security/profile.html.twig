@@ -89,32 +89,18 @@
     </dl>
   </section>
 
-  {# Ces deux réglages relèvent de la session : ils se changent bien ici. #}
+  {#
+    Poste et langue ne se règlent plus ici : ils vivent dans le menu de
+    l'avatar, atteignable depuis n'importe quel écran. Les dupliquer ferait
+    deux endroits pour un seul réglage.
+  #}
   <section class="card">
     <h2 class="card__title">{{ 'profile.preferences'|trans }}</h2>
+    <p class="field__hint">{{ 'profile.preferencesHint'|trans }}</p>
 
-    <div class="field">
-      <label class="field__label" for="workstation-select">{{ 'common.workstation'|trans }}</label>
-      {{ ui.workstation_switcher(workstations, current_user().workstationId) }}
-    </div>
-
-    <div class="field">
-      <span class="field__label">{{ 'common.language'|trans }}</span>
-      <form class="locale-switcher" method="post" action="{{ path('select_locale') }}">
-        <select name="locale" class="locale-switcher__select" data-autosubmit
-                aria-label="{{ 'common.language'|trans }}">
-          {% for locale in locales %}
-            <option value="{{ locale.value }}" {{ locale.value == app.request.locale ? 'selected' : '' }}>
-              {{ ('locales.' ~ locale.value)|trans }}
-            </option>
-          {% endfor %}
-        </select>
-        <noscript><button type="submit" class="button button--secondary">{{ 'common.apply'|trans }}</button></noscript>
-      </form>
-      {% if c.locale and c.locale.value != app.request.locale %}
-        <p class="field__hint">{{ 'profile.localeFromModule'|trans({ '%locale%': ('locales.' ~ c.locale.value)|trans }) }}</p>
-      {% endif %}
-    </div>
+    {% if c.locale and c.locale.value != app.request.locale %}
+      <p class="field__hint">{{ 'profile.localeFromModule'|trans({ '%locale%': ('locales.' ~ c.locale.value)|trans }) }}</p>
+    {% endif %}
 
     <p class="field__hint">{{ 'profile.readOnlyHint'|trans }}</p>
   </section>

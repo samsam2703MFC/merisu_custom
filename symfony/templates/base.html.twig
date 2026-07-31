@@ -46,38 +46,76 @@
     <img class="app-header__brand" src="{{ asset('assets/logo.png') }}" alt="{{ 'common.appName'|trans }}">
 
     <div class="app-header__side app-header__side--right">
-      {# Indicateur en/hors-ligne : piloté par app.js (§2).
-         Les deux libellés sont fournis ici, traduits : app.js ne contient aucun texte. #}
-      <span class="connectivity"
-            data-connectivity
-            data-label-online="{{ 'status.online'|trans }}"
-            data-label-offline="{{ 'status.offline'|trans }}">
-        <span class="connectivity__dot" aria-hidden="true"></span>
-        <span class="connectivity__label" data-connectivity-label>{{ 'status.online'|trans }}</span>
-        <span class="connectivity__pending" data-connectivity-pending hidden></span>
-      </span>
+      {#
+        Menu de l'avatar. Bâti sur <details> : il s'ouvre et se ferme sans une
+        ligne de JavaScript, reste accessible au clavier, et fonctionne donc
+        même si le script n'a pas pu se charger au poste.
 
-      {# Sélecteur de langue — présent sur tous les écrans, connexion comprise. #}
-      <form class="locale-switcher" method="post" action="{{ path('select_locale') }}">
-        <label class="visually-hidden" for="locale-select">{{ 'common.language'|trans }}</label>
-        <select id="locale-select" name="locale" class="locale-switcher__select" data-autosubmit>
-          {% for locale in supported_locales() %}
-            <option value="{{ locale.value }}" {{ locale.value == app.request.locale ? 'selected' : '' }}>
-              {{ ('locales.' ~ locale.value)|trans }}
-            </option>
-          {% endfor %}
-        </select>
-        <noscript><button type="submit" class="button button--ghost">{{ 'common.apply'|trans }}</button></noscript>
-      </form>
-
+        Il regroupe tout ce qui touche à la personne connectée — poste de
+        travail, langue, profil, déconnexion — pour dégager l'entête et les
+        écrans de saisie.
+      #}
       {% if current_user().isLoggedIn %}
-        {# Avatar : accès à la fiche profil, initiales faute de photo fournie. #}
-        <a class="avatar" href="{{ path('profile') }}" title="{{ 'profile.title'|trans }}">
-          {{ current_user().consultant.initials }}
-        </a>
+        {% set me = current_user().consultant %}
+        <details class="usermenu" data-dismiss-outside>
+          <summary class="usermenu__trigger" title="{{ me.displayName }}"
+                   aria-label="{{ me.displayName }}">
+            <span class="avatar">{{ me.initials }}</span>
+          </summary>
 
-        <form method="post" action="{{ path('logout') }}">
-          <button type="submit" class="button button--ghost">{{ 'common.logout'|trans }}</button>
+          <div class="usermenu__panel">
+            <div class="usermenu__identity">
+              <span class="avatar avatar--md" aria-hidden="true">{{ me.initials }}</span>
+              <span class="usermenu__names">
+                <strong>{{ me.displayName }}</strong>
+                <span class="muted">{{ ('roles.' ~ me.role.value)|trans }}</span>
+              </span>
+            </div>
+
+            <form class="usermenu__field" method="post" action="{{ path('select_workstation') }}">
+              <label class="field__label" for="menu-workstation">{{ 'common.workstation'|trans }}</label>
+              <select id="menu-workstation" name="workstationId" class="field__input" data-autosubmit>
+                {% for workstation in available_workstations() %}
+                  <option value="{{ workstation.id }}"
+                          {{ workstation.id == current_user().workstationId ? 'selected' : '' }}>
+                    {{ workstation.name }}
+                  </option>
+                {% endfor %}
+              </select>
+              <noscript><button type="submit" class="button button--secondary button--small">{{ 'common.apply'|trans }}</button></noscript>
+            </form>
+
+            <form class="usermenu__field" method="post" action="{{ path('select_locale') }}">
+              <label class="field__label" for="menu-locale">{{ 'common.language'|trans }}</label>
+              <select id="menu-locale" name="locale" class="field__input" data-autosubmit>
+                {% for locale in supported_locales() %}
+                  <option value="{{ locale.value }}" {{ locale.value == app.request.locale ? 'selected' : '' }}>
+                    {{ ('locales.' ~ locale.value)|trans }}
+                  </option>
+                {% endfor %}
+              </select>
+              <noscript><button type="submit" class="button button--secondary button--small">{{ 'common.apply'|trans }}</button></noscript>
+            </form>
+
+            <a class="usermenu__link" href="{{ path('profile') }}">{{ 'profile.title'|trans }}</a>
+
+            <form method="post" action="{{ path('logout') }}">
+              <button type="submit" class="usermenu__link usermenu__link--danger">{{ 'common.logout'|trans }}</button>
+            </form>
+          </div>
+        </details>
+      {% else %}
+        {# Hors session, seule la langue a du sens. #}
+        <form class="locale-switcher" method="post" action="{{ path('select_locale') }}">
+          <label class="visually-hidden" for="locale-select">{{ 'common.language'|trans }}</label>
+          <select id="locale-select" name="locale" class="locale-switcher__select" data-autosubmit>
+            {% for locale in supported_locales() %}
+              <option value="{{ locale.value }}" {{ locale.value == app.request.locale ? 'selected' : '' }}>
+                {{ ('locales.' ~ locale.value)|trans }}
+              </option>
+            {% endfor %}
+          </select>
+          <noscript><button type="submit" class="button button--ghost">{{ 'common.apply'|trans }}</button></noscript>
         </form>
       {% endif %}
     </div>
@@ -93,9 +131,16 @@
 
 <main class="app-main">
 
-  {# Bandeau affiché par app.js dès que le réseau est coupé. #}
+  {#
+    Bandeau affiché par app.js dès que le réseau est coupé.
+
+    Il remplace l'ancienne pastille « En ligne » de l'entête : tant que tout
+    va bien, rien ne s'affiche ; l'écran ne parle que lorsqu'il a quelque chose
+    à dire. Le compteur indique les saisies encore en file d'attente.
+  #}
   <div class="banner banner--warn" data-offline-banner hidden>
     {{ 'status.offlineHint'|trans }}
+    <span data-queue-count hidden></span>
   </div>
 
   {% block flashes %}

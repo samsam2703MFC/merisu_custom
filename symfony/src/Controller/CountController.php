@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Merisu\Inventory\Controller;
 
-use Merisu\Inventory\Adapter\ConsultantServiceInterface;
 use Merisu\Inventory\Domain\BusinessDate;
 use Merisu\Inventory\Domain\CountMoment;
 use Merisu\Inventory\Security\CurrentUser;
@@ -22,7 +21,6 @@ final class CountController extends AbstractController
     public function __construct(
         private readonly InventoryService $inventory,
         private readonly CurrentUser $currentUser,
-        private readonly ConsultantServiceInterface $consultants,
         private readonly Store $store,
         private readonly PhotoStorage $photos,
     ) {
@@ -57,7 +55,6 @@ final class CountController extends AbstractController
         return $this->render('count/tasks.html.twig', [
             'date' => $date,
             'workstationId' => $workstationId,
-            'workstations' => $this->consultants->workstations(),
             'suggested' => $suggested,
             'tasks' => [
                 [
@@ -109,7 +106,6 @@ final class CountController extends AbstractController
         $sheet = $this->inventory->daySheet($date, $workstationId, $moment);
 
         return $this->render('count/sheet.html.twig', $sheet + [
-            'workstations' => $this->consultants->workstations(),
             // Plan tout juste figé, transmis via la session après validation (§3.2.4).
             'freshPlan' => $request->getSession()->remove('merisu.fresh_plan') ?? [],
             'issues' => $request->getSession()->remove('merisu.issues') ?? [],
@@ -257,7 +253,6 @@ final class CountController extends AbstractController
             'tomorrow' => BusinessDate::next($today),
             'lines' => $this->store->plan($forDate, $workstationId),
             'products' => $products,
-            'workstations' => $this->consultants->workstations(),
         ]);
     }
 

@@ -67,6 +67,7 @@ profile:
     currentWorkstation: 'Bieżące stanowisko'
     language: Język
     preferences: Preferencje
+    preferencesHint: 'Stanowisko i język zmienisz w menu awatara, w prawym górnym rogu.'
     localeFromModule: 'Język zapisany w Twojej karcie: %locale%.'
     readOnlyHint: 'Nazwisko, e-mail, kod i przypisania pochodzą z modułu Konsultant — tam należy je zmieniać.'
 
