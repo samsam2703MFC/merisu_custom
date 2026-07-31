@@ -1,0 +1,365 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Merisu\Inventory\Controller;
+
+use Merisu\Inventory\Adapter\ConsultantServiceInterface;
+use Merisu\Inventory\Adapter\RecipeServiceInterface;
+use Merisu\Inventory\Domain\BusinessDate;
+use Merisu\Inventory\Domain\CountMoment;
+use Merisu\Inventory\Domain\DayOfWeek;
+use Merisu\Inventory\Domain\GeneralSettings;
+use Merisu\Inventory\Domain\Locale;
+use Merisu\Inventory\Domain\RoundingMode;
+use Merisu\Inventory\Security\CurrentUser;
+use Merisu\Inventory\Service\InventoryService;
+use Merisu\Inventory\Service\ReportService;
+use Merisu\Inventory\Store\Store;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
+
+/** §7.5 à §7.9 — Écrans d'administration. Réservés au rôle ADMIN. */
+#[Route('/admin')]
+final class AdminController extends AbstractController
+{
+    public function __construct(
+        private readonly Store $store,
+        private readonly CurrentUser $currentUser,
+        private readonly ReportService $reports,
+        private readonly InventoryService $inventory,
+        private readonly RecipeServiceInterface $recipes,
+        private readonly ConsultantServiceInterface $consultants,
+    ) {
+    }
+
+    #[Route('', name: 'admin_home', methods: ['GET'])]
+    public function home(): Response
+    {
+        $this->currentUser->requireAdmin();
+
+        return $this->render('admin/home.html.twig');
+    }
+
+    // ── §7.6 Produits ───────────────────────────────────────────────────────
+
+    #[Route('/produits', name: 'admin_products', methods: ['GET'])]
+    public function products(): Response
+    {
+        $this->currentUser->requireAdmin();
+
+        return $this->render('admin/products.html.twig', [
+            'products' => $this->store->products(),
+            'roundingModes' => RoundingMode::cases(),
+        ]);
+    }
+
+    #[Route('/produits/{id}', name: 'admin_product_save', methods: ['POST'])]
+    public function saveProduct(Request $request, string $id): Response
+    {
+        $admin = $this->currentUser->requireAdmin();
+
+        $product = $this->store->product($id);
+        if ($product === null) {
+            throw $this->createNotFoundException('PRODUCT_NOT_FOUND');
+        }
+
+        // Un libellé par langue : ce sont des DONNÉES, pas des chaînes d'interface.
+        $names = [];
+        foreach (Locale::all() as $locale) {
+            $value = trim((string) $request->request->get('name_' . $locale->value, ''));
+            if ($value !== '') {
+                $names[$locale->value] = mb_substr($value, 0, 120);
+            }
+        }
+
+        $wasteFactor = max(0.0, (float) str_replace(',', '.', (string) $request->request->get('wasteFactor', '0')));
+        $roundingStep = (float) str_replace(',', '.', (string) $request->request->get('roundingStep', '1'));
+
+        $this->store->saveProduct($product->with(
+            name: $names !== [] ? $names : $product->name,
+            unit: mb_substr(trim((string) $request->request->get('unit', $product->unit)), 0, 16) ?: $product->unit,
+            active: $request->request->getBoolean('active'),
+            wasteFactor: $wasteFactor,
+            roundingStep: $roundingStep > 0 ? $roundingStep : $product->roundingStep,
+            roundingMode: RoundingMode::tryFrom((string) $request->request->get('roundingMode')) ?? $product->roundingMode,
+            recipeRef: trim((string) $request->request->get('recipeRef', '')) ?: null,
+        ));
+
+        $this->store->audit($admin->id, $admin->role->value, 'PRODUCT_UPDATED', null, null, ['productId' => $id]);
+        $this->addFlash('success', 'common.saved');
+
+        return $this->redirectToRoute('admin_products');
+    }
+
+    // ── §7.5 Matrice des seuils ─────────────────────────────────────────────
+
+    #[Route('/seuils', name: 'admin_par_matrix', methods: ['GET'])]
+    public function parMatrix(Request $request): Response
+    {
+        $this->currentUser->requireAdmin();
+
+        // Seuls les seuils GLOBAUX sont édités ici (question ouverte §10) ; le
+        // domaine gère déjà les seuils par poste, qui priment quand ils existent.
+        $values = [];
+        foreach ($this->store->parMatrix() as $entry) {
+            if ($entry->workstationId === null) {
+                $values[$entry->productId][$entry->dayOfWeek->value] = $entry->requiredPieces;
+            }
+        }
+
+        return $this->render('admin/par_matrix.html.twig', [
+            'products' => $this->store->products(),
+            'days' => DayOfWeek::all(),
+            'values' => $values,
+            'productsInRows' => $request->query->get('orientation') !== 'days',
+        ]);
+    }
+
+    #[Route('/seuils', name: 'admin_par_matrix_save', methods: ['POST'])]
+    public function saveParMatrix(Request $request): Response
+    {
+        $admin = $this->currentUser->requireAdmin();
+
+        /** @var array<string, array<string, mixed>> $raw */
+        $raw = $request->request->all('par');
+        $saved = 0;
+
+        foreach ($raw as $productId => $byDay) {
+            if ($this->store->product((string) $productId) === null) {
+                continue;
+            }
+
+            foreach ($byDay as $dayValue => $value) {
+                $day = DayOfWeek::tryFrom((string) $dayValue);
+                if ($day === null) {
+                    continue;
+                }
+
+                $value = is_scalar($value) ? trim((string) $value) : '';
+                // Case vidée ⇒ suppression du seuil (≠ seuil fixé à 0).
+                $required = $value === '' ? null : (float) str_replace(',', '.', $value);
+
+                if ($required !== null && $required < 0) {
+                    continue;
+                }
+
+                $this->store->saveParEntry((string) $productId, $day, $required);
+                ++$saved;
+            }
+        }
+
+        $this->store->audit($admin->id, $admin->role->value, 'PAR_MATRIX_UPDATED', null, null, ['cells' => $saved]);
+        $this->addFlash('success', 'common.saved');
+
+        return $this->redirectToRoute('admin_par_matrix');
+    }
+
+    // ── §7.7 Paramètres généraux ────────────────────────────────────────────
+
+    #[Route('/parametres', name: 'admin_settings', methods: ['GET'])]
+    public function settings(): Response
+    {
+        $this->currentUser->requireAdmin();
+
+        return $this->render('admin/settings.html.twig', [
+            'settings' => $this->store->settings(),
+            'locales' => Locale::all(),
+        ]);
+    }
+
+    #[Route('/parametres', name: 'admin_settings_save', methods: ['POST'])]
+    public function saveSettings(Request $request): Response
+    {
+        $admin = $this->currentUser->requireAdmin();
+        $current = $this->store->settings();
+
+        $time = static fn (string $key, string $fallback): string => preg_match(
+            '/^([01]\d|2[0-3]):[0-5]\d$/',
+            (string) $request->request->get($key, ''),
+        ) === 1 ? (string) $request->request->get($key) : $fallback;
+
+        // Un fuseau inconnu est rejeté ici : accepté, il fausserait silencieusement
+        // toutes les dates métier.
+        $timezone = trim((string) $request->request->get('timezone', ''));
+        if ($timezone === '' || !\in_array($timezone, \DateTimeZone::listIdentifiers(), true)) {
+            $timezone = $current->timezone;
+        }
+
+        $tolerance = (float) str_replace(',', '.', (string) $request->request->get('deltaTolerance', '0.05'));
+
+        $this->store->saveSettings(new GeneralSettings(
+            $time('openingTime', $current->openingTime),
+            $time('closingTime', $current->closingTime),
+            $timezone,
+            Locale::tryFromLoose((string) $request->request->get('defaultLocale')) ?? $current->defaultLocale,
+            $request->request->getBoolean('photoRequired'),
+            $request->request->getBoolean('photoPerProduct'),
+            $tolerance >= 0 ? $tolerance : $current->deltaTolerance,
+        ));
+
+        $this->store->audit($admin->id, $admin->role->value, 'SETTINGS_UPDATED');
+        $this->addFlash('success', 'common.saved');
+
+        return $this->redirectToRoute('admin_settings');
+    }
+
+    // ── §7.8 Delta technique ────────────────────────────────────────────────
+
+    #[Route('/delta', name: 'admin_delta', methods: ['GET'])]
+    public function delta(Request $request): Response
+    {
+        $this->currentUser->requireAdmin();
+
+        [$from, $to] = $this->parsePeriod($request);
+
+        $materials = [];
+        foreach ($this->recipes->materials() as $material) {
+            $materials[$material->id] = $material;
+        }
+
+        return $this->render('admin/delta.html.twig', [
+            'from' => $from,
+            'to' => $to,
+            'report' => $this->reports->delta($from, $to),
+            'matrix' => $this->reports->matrix($from, $to),
+            'materials' => $materials,
+        ]);
+    }
+
+    #[Route('/delta/consommation', name: 'admin_material_movement', methods: ['POST'])]
+    public function addMovement(Request $request): Response
+    {
+        $admin = $this->currentUser->requireAdmin();
+
+        $date = (string) $request->request->get('date', '');
+        $materialId = (string) $request->request->get('materialId', '');
+        $qty = str_replace(',', '.', (string) $request->request->get('realQty', ''));
+
+        if (BusinessDate::isValid($date) && $materialId !== '' && is_numeric($qty)) {
+            $this->store->addMaterialMovement(
+                $date,
+                $materialId,
+                (float) $qty,
+                $admin->id,
+                null,
+                trim((string) $request->request->get('note', '')) ?: null,
+            );
+            $this->addFlash('success', 'common.saved');
+        } else {
+            $this->addFlash('error', 'errors.INVALID_QTY');
+        }
+
+        return $this->redirectToRoute('admin_delta', [
+            'from' => $request->request->get('from'),
+            'to' => $request->request->get('to'),
+        ]);
+    }
+
+    /** Exports CSV (§6). */
+    #[Route('/delta/export.csv', name: 'admin_delta_csv', methods: ['GET'])]
+    public function deltaCsv(Request $request): Response
+    {
+        $this->currentUser->requireAdmin();
+        [$from, $to] = $this->parsePeriod($request);
+        $locale = Locale::tryFromLoose($request->getLocale()) ?? Locale::Fr;
+
+        return $this->csvResponse(
+            $this->reports->deltaCsv($from, $to, $locale),
+            sprintf('merisu-delta-%s_%s.csv', $from, $to),
+        );
+    }
+
+    #[Route('/matrice/export.csv', name: 'admin_matrix_csv', methods: ['GET'])]
+    public function matrixCsv(Request $request): Response
+    {
+        $this->currentUser->requireAdmin();
+        [$from, $to] = $this->parsePeriod($request);
+        $locale = Locale::tryFromLoose($request->getLocale()) ?? Locale::Fr;
+
+        return $this->csvResponse(
+            $this->reports->matrixCsv($from, $to, $locale),
+            sprintf('merisu-matrice-%s_%s.csv', $from, $to),
+        );
+    }
+
+    // ── §7.9 Historique / audit ─────────────────────────────────────────────
+
+    #[Route('/historique', name: 'admin_audit', methods: ['GET'])]
+    public function audit(Request $request): Response
+    {
+        $this->currentUser->requireAdmin();
+
+        [$from, $to] = $this->parsePeriod($request, 13);
+
+        return $this->render('admin/audit.html.twig', [
+            'from' => $from,
+            'to' => $to,
+            'entries' => $this->store->auditEntries($from, $to),
+            'workstations' => $this->consultants->workstations(),
+            'today' => $this->inventory->today(),
+        ]);
+    }
+
+    /** Déverrouillage d'une saisie validée — ADMIN uniquement, tracé (§5.3). */
+    #[Route('/historique/deverrouiller', name: 'admin_unlock', methods: ['POST'])]
+    public function unlock(Request $request): Response
+    {
+        $admin = $this->currentUser->requireAdmin();
+
+        $date = (string) $request->request->get('date', '');
+        $moment = CountMoment::tryFrom((string) $request->request->get('moment'));
+        $workstationId = (string) $request->request->get('workstationId', '');
+
+        if (!BusinessDate::isValid($date) || $moment === null || $workstationId === '') {
+            $this->addFlash('error', 'errors.INVALID_DATE');
+
+            return $this->redirectToRoute('admin_audit');
+        }
+
+        $affected = $this->inventory->unlock(
+            $date,
+            $workstationId,
+            $moment,
+            $admin->id,
+            $admin->role,
+            trim((string) $request->request->get('reason', '')) ?: null,
+        );
+
+        $this->addFlash($affected > 0 ? 'success' : 'error', $affected > 0 ? 'admin.audit.unlockDone' : 'errors.COUNT_NOT_FOUND');
+
+        return $this->redirectToRoute('admin_audit');
+    }
+
+    // ── Utilitaires ─────────────────────────────────────────────────────────
+
+    /** @return array{string, string} */
+    private function parsePeriod(Request $request, int $defaultSpan = 6): array
+    {
+        $today = $this->inventory->today();
+
+        $to = (string) $request->query->get('to', $today);
+        if (!BusinessDate::isValid($to)) {
+            $to = $today;
+        }
+
+        $from = (string) $request->query->get('from', BusinessDate::addDays($to, -$defaultSpan));
+        if (!BusinessDate::isValid($from) || $from > $to) {
+            $from = BusinessDate::addDays($to, -$defaultSpan);
+        }
+
+        return [$from, $to];
+    }
+
+    private function csvResponse(string $csv, string $fileName): Response
+    {
+        // BOM UTF-8 : sans lui, Excel affiche mal les accents des libellés FR/PL/IT/ES.
+        $response = new Response("\u{FEFF}" . $csv);
+        $response->headers->set('Content-Type', 'text/csv; charset=utf-8');
+        $response->headers->set('Content-Disposition', sprintf('attachment; filename="%s"', $fileName));
+
+        return $response;
+    }
+}

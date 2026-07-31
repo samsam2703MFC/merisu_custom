@@ -1,0 +1,124 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Merisu\Inventory\Security;
+
+use Merisu\Inventory\Adapter\Consultant;
+use Merisu\Inventory\Adapter\ConsultantServiceInterface;
+use Merisu\Inventory\Domain\Role;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+
+/**
+ * Identité de la requête courante, conservée en session.
+ *
+ * Volontairement minimal : l'authentification appartient au module Consultant
+ * existant. Si l'application hôte possède déjà un pare-feu Symfony, remplacer
+ * `login()` par la lecture de son utilisateur connecté — le reste du code ne
+ * dépend que de `consultant()` et `workstationId()`.
+ */
+final class CurrentUser
+{
+    private const SESSION_KEY = 'merisu.consultant_id';
+    private const WORKSTATION_KEY = 'merisu.workstation_id';
+
+    public function __construct(
+        private readonly RequestStack $requestStack,
+        private readonly ConsultantServiceInterface $consultants,
+    ) {
+    }
+
+    public function login(Consultant $consultant, ?string $workstationId): void
+    {
+        $session = $this->requestStack->getSession();
+        // Nouvel identifiant de session à la connexion : parade classique à la
+        // fixation de session.
+        $session->migrate(true);
+        $session->set(self::SESSION_KEY, $consultant->id);
+        $session->set(self::WORKSTATION_KEY, $workstationId ?? $consultant->defaultWorkstationId);
+    }
+
+    public function logout(): void
+    {
+        $this->requestStack->getSession()->invalidate();
+    }
+
+    public function consultant(): ?Consultant
+    {
+        $session = $this->requestStack->getSession();
+        $id = $session->get(self::SESSION_KEY);
+
+        return \is_string($id) ? $this->consultants->consultant($id) : null;
+    }
+
+    public function isLoggedIn(): bool
+    {
+        return $this->consultant() !== null;
+    }
+
+    public function role(): ?Role
+    {
+        return $this->consultant()?->role;
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role()?->isAdmin() ?? false;
+    }
+
+    public function workstationId(): ?string
+    {
+        $value = $this->requestStack->getSession()->get(self::WORKSTATION_KEY);
+
+        return \is_string($value) && $value !== '' ? $value : null;
+    }
+
+    public function selectWorkstation(string $workstationId): void
+    {
+        $this->requestStack->getSession()->set(self::WORKSTATION_KEY, $workstationId);
+    }
+
+    /** @throws AccessDeniedHttpException si personne n'est connecté */
+    public function requireConsultant(): Consultant
+    {
+        return $this->consultant() ?? throw new AccessDeniedHttpException('MISSING_TOKEN');
+    }
+
+    /** @throws AccessDeniedHttpException si le rôle n'est pas ADMIN */
+    public function requireAdmin(): Consultant
+    {
+        $consultant = $this->requireConsultant();
+
+        if (!$consultant->role->isAdmin()) {
+            throw new AccessDeniedHttpException('ROLE_NOT_ALLOWED');
+        }
+
+        return $consultant;
+    }
+
+    /**
+     * Poste effectif de la requête.
+     *
+     * Un consultant est cantonné à son poste ; un administrateur peut viser
+     * n'importe quel poste.
+     */
+    public function resolveWorkstation(?string $requested = null): string
+    {
+        $consultant = $this->requireConsultant();
+        $asked = $requested !== null && $requested !== '' ? $requested : null;
+
+        if ($consultant->role->isAdmin()) {
+            return $asked ?? $this->workstationId() ?? throw new BadRequestHttpException('MISSING_WORKSTATION');
+        }
+
+        $own = $this->workstationId() ?? throw new BadRequestHttpException('NO_WORKSTATION_ASSIGNED');
+
+        if ($asked !== null && $asked !== $own) {
+            throw new AccessDeniedHttpException('WORKSTATION_NOT_ALLOWED');
+        }
+
+        return $own;
+    }
+}

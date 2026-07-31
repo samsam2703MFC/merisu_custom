@@ -1,0 +1,42 @@
+parameters:
+    # Dossier de stockage des photos de comptage.
+    merisu.upload_dir: '%kernel.project_dir%/public/uploads'
+    merisu.upload_public_path: '/uploads'
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    Merisu\Inventory\:
+        resource: '../src/'
+        exclude:
+            - '../src/Domain/'
+            - '../src/Kernel.php'
+
+    # ── Connexion à la base ──────────────────────────────────────────────────
+    # DBAL seul (pas l'ORM) : le schéma est simple et le SQL reste lisible.
+    Doctrine\DBAL\Connection:
+        factory: ['Doctrine\DBAL\DriverManager', 'getConnection']
+        arguments:
+            - url: '%env(resolve:DATABASE_URL)%'
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # POINT DE BRANCHEMENT DES MODULES EXISTANTS
+    #
+    # Pour raccorder les vrais modules, remplacer les deux alias ci-dessous par
+    # vos propres implémentations. C'est le SEUL fichier à modifier.
+    #
+    #   Merisu\Inventory\Adapter\ConsultantServiceInterface: '@App\Stanowisko\VotreService'
+    #   Merisu\Inventory\Adapter\RecipeServiceInterface: '@App\Recipe\VotreService'
+    # ═══════════════════════════════════════════════════════════════════════
+    Merisu\Inventory\Adapter\ConsultantServiceInterface:
+        alias: Merisu\Inventory\Adapter\LocalConsultantService
+
+    Merisu\Inventory\Adapter\RecipeServiceInterface:
+        alias: Merisu\Inventory\Adapter\LocalRecipeService
+
+    Merisu\Inventory\Service\PhotoStorage:
+        arguments:
+            $uploadDir: '%merisu.upload_dir%'
+            $publicPath: '%merisu.upload_public_path%'
