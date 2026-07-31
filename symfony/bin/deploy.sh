@@ -44,15 +44,19 @@ MSG
     exit 1
 fi
 
+# `extension_loaded()` plutôt que « php -m » : les extensions du cœur (json
+# depuis PHP 8) ne sont pas toujours listées par -m selon la compilation, ce qui
+# faisait échouer la vérification sur des serveurs parfaitement valides.
 for ext in json mbstring; do
-    if ! "$PHP_BIN" -m | grep -qix "$ext"; then
+    if [ "$("$PHP_BIN" -r "echo extension_loaded('$ext') ? 1 : 0;")" != "1" ]; then
         echo "✗ Extension PHP manquante pour $PHP_BIN : $ext" >&2
         exit 1
     fi
 done
 
 # Un pilote de base est indispensable : SQLite par défaut, PostgreSQL en option.
-if ! "$PHP_BIN" -m | grep -qix "pdo_sqlite" && ! "$PHP_BIN" -m | grep -qix "pdo_pgsql"; then
+HAS_DB=$("$PHP_BIN" -r "echo (extension_loaded('pdo_sqlite') || extension_loaded('pdo_pgsql')) ? 1 : 0;")
+if [ "$HAS_DB" != "1" ]; then
     echo "✗ Aucun pilote de base pour $PHP_BIN : installer pdo_sqlite ou pdo_pgsql." >&2
     exit 1
 fi
