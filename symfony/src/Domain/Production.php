@@ -1,0 +1,118 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Merisu\Inventory\Domain;
+
+/**
+ * §5.2 — Production à réaliser pour le lendemain matin.
+ *
+ *   Requis(demain)  = ParMatrix[produit, jour_de_demain].required_pieces
+ *   Stock_clôture   = comptage CLOSE_2200 validé du jour
+ *   À_produire_brut = max(0, Requis(demain) − Stock_clôture)
+ *   À_produire      = arrondi( À_produire_brut × (1 + waste_factor), rounding )
+ *
+ * Calculé à la validation du stock du soir, puis figé et horodaté.
+ */
+final class Production
+{
+    /**
+     * Quantité à produire pour UN produit.
+     *
+     * Cas limites couverts :
+     * - clôture ≥ requis → 0, jamais de valeur négative ;
+     * - seuil absent → 0 avec avertissement ;
+     * - clôture absente → considérée nulle (il faut produire le requis), signalée ;
+     * - facteur de perte appliqué APRÈS le max(0, …), jamais sur un besoin nul.
+     */
+    public static function line(Product $product, ?float $closingStock, ?float $requiredPieces): ProductionLine
+    {
+        $missingThreshold = $requiredPieces === null;
+        $missingClosingStock = $closingStock === null;
+
+        $required = $missingThreshold ? 0.0 : max(0.0, $requiredPieces);
+        $closing = $missingClosingStock ? 0.0 : $closingStock;
+
+        $raw = max(0.0, Rounding::clean($required - $closing));
+
+        // Un facteur de perte négatif est une donnée admin aberrante : on l'ignore.
+        $waste = is_finite($product->wasteFactor) ? max(0.0, $product->wasteFactor) : 0.0;
+
+        $qty = Rounding::apply($raw * (1 + $waste), $product->roundingStep, $product->roundingMode);
+
+        return new ProductionLine(
+            $product->id,
+            $product->code,
+            $required,
+            $closing,
+            $raw,
+            $qty,
+            $missingThreshold,
+            $missingClosingStock,
+        );
+    }
+
+    /**
+     * Plan complet pour le lendemain de `$today`.
+     *
+     * @param list<Product>              $products      produits ACTIFS uniquement
+     * @param array<string, float|null>  $closingStocks stocks 22:00 indexés par productId
+     * @param list<ParMatrixEntry>       $parMatrix
+     */
+    public static function plan(
+        string $today,
+        array $products,
+        array $closingStocks,
+        array $parMatrix,
+        string $workstationId,
+    ): ProductionPlanResult {
+        $forDate = BusinessDate::next($today);
+        $forDayOfWeek = BusinessDate::dayOfWeek($forDate);
+
+        $lines = [];
+        $warnings = [];
+
+        foreach ($products as $product) {
+            $required = self::resolveRequiredPieces($parMatrix, $product->id, $forDayOfWeek, $workstationId);
+            $line = self::line($product, $closingStocks[$product->id] ?? null, $required);
+
+            $lines[] = $line;
+            if ($line->missingThreshold) {
+                $warnings[] = $product->id;
+            }
+        }
+
+        return new ProductionPlanResult($forDate, $forDayOfWeek, $workstationId, $lines, $warnings);
+    }
+
+    /**
+     * Seuil applicable : celui du poste s'il existe, sinon le seuil global.
+     *
+     * Renvoie null si aucun seuil n'est défini — à ne pas confondre avec un seuil
+     * volontairement fixé à 0 par l'administrateur.
+     *
+     * @param list<ParMatrixEntry> $parMatrix
+     */
+    public static function resolveRequiredPieces(
+        array $parMatrix,
+        string $productId,
+        DayOfWeek $dayOfWeek,
+        ?string $workstationId,
+    ): ?float {
+        $global = null;
+
+        foreach ($parMatrix as $entry) {
+            if ($entry->productId !== $productId || $entry->dayOfWeek !== $dayOfWeek) {
+                continue;
+            }
+            if ($workstationId !== null && $entry->workstationId === $workstationId) {
+                return $entry->requiredPieces;
+            }
+            if ($entry->workstationId === null) {
+                $global = $entry->requiredPieces;
+            }
+        }
+
+        return $global;
+    }
+}

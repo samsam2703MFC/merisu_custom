@@ -1,0 +1,6 @@
+/vendor/
+/var/
+/.env.local
+/.phpunit.cache/
+/public/uploads/
+/var/data/
