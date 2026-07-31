@@ -1,0 +1,27 @@
+{
+  "name": "merisu-inventory-production",
+  "private": true,
+  "version": "0.1.0",
+  "description": "MERISU — Module Inventaire & Production (PWA + API)",
+  "workspaces": [
+    "packages/domain",
+    "packages/server",
+    "packages/web"
+  ],
+  "scripts": {
+    "build": "npm run build -w @merisu/domain && npm run build -w @merisu/server && npm run build -w @merisu/web",
+    "build:domain": "npm run build -w @merisu/domain",
+    "test": "npm run test -w @merisu/domain && npm run test -w @merisu/server",
+    "dev:server": "npm run dev -w @merisu/server",
+    "dev:web": "npm run dev -w @merisu/web",
+    "seed": "npm run seed -w @merisu/server",
+    "typecheck": "npm run typecheck -w @merisu/domain && npm run typecheck -w @merisu/server && npm run typecheck -w @merisu/web"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5"
+  }
+}

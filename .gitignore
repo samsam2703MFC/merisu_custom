@@ -1,0 +1,12 @@
+node_modules/
+dist/
+build/
+coverage/
+*.log
+.env
+.env.local
+.DS_Store
+packages/server/uploads/
+packages/server/data/*.json
+!packages/server/data/.gitkeep
+packages/web/dev-dist/
