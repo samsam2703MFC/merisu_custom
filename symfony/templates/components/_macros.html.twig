@@ -1,0 +1,88 @@
+{#
+  Macros réutilisables.
+
+  Elles concentrent les motifs d'interface répétés : un restylage se fait donc
+  ici et dans styles.css, sans parcourir chaque écran.
+#}
+
+{# Bandeau d'information. `kind` : info | ok | warn | danger #}
+{% macro banner(kind, content) %}
+  <div class="banner banner--{{ kind }}" role="{{ kind == 'danger' ? 'alert' : 'status' }}">
+    {{ content|raw }}
+  </div>
+{% endmacro %}
+
+{# Pastille courte. `kind` : neutral | ok | warn | danger #}
+{% macro badge(kind, label) %}
+  <span class="badge badge--{{ kind }}">{{ label }}</span>
+{% endmacro %}
+
+{# Entête de page : titre + sous-titre + zone d'actions optionnelle. #}
+{% macro page_header(title, subtitle) %}
+  <div class="page-header">
+    <div class="page-header__text">
+      <h1 class="page-header__title">{{ title }}</h1>
+      {% if subtitle %}<p class="page-header__subtitle">{{ subtitle }}</p>{% endif %}
+    </div>
+  </div>
+{% endmacro %}
+
+{#
+  Champ de comptage : gros boutons − / + et saisie centrale.
+
+  Cible tactile ≥ 44 px (§2) : le consultant compte debout, au poste. Les
+  boutons sont pilotés par app.js ; sans JavaScript, la saisie clavier reste
+  parfaitement fonctionnelle.
+#}
+{% macro qty_field(product, value, disabled, label) %}
+  <div class="qty">
+    <button type="button" class="qty__step" data-qty-step="-1"
+            aria-label="− {{ label }}" {{ disabled ? 'disabled' : '' }}>−</button>
+
+    <input class="qty__input"
+           type="number"
+           inputmode="decimal"
+           min="0"
+           step="any"
+           id="qty-{{ product.id }}"
+           name="qty[{{ product.id }}]"
+           value="{{ value }}"
+           aria-label="{{ label }}"
+           {{ disabled ? 'disabled' : '' }}>
+
+    <button type="button" class="qty__step" data-qty-step="1"
+            aria-label="+ {{ label }}" {{ disabled ? 'disabled' : '' }}>+</button>
+  </div>
+{% endmacro %}
+
+{# Sélecteur de période, commun aux écrans de rapport. #}
+{% macro period_filter(route, from, to) %}
+  <form class="filters" method="get" action="{{ path(route) }}">
+    <div class="field">
+      <label class="field__label" for="from">{{ 'common.from'|trans }}</label>
+      <input class="field__input" type="date" id="from" name="from" value="{{ from }}">
+    </div>
+    <div class="field">
+      <label class="field__label" for="to">{{ 'common.to'|trans }}</label>
+      <input class="field__input" type="date" id="to" name="to" value="{{ to }}">
+    </div>
+    <button type="submit" class="button button--secondary">{{ 'common.apply'|trans }}</button>
+  </form>
+{% endmacro %}
+
+{# Sélecteur de poste de travail (changement en cours de session). #}
+{% macro workstation_switcher(workstations, current) %}
+  <form class="workstation-switcher" method="post" action="{{ path('select_workstation') }}">
+    <label class="workstation-switcher__label" for="workstation-select">
+      {{ 'common.workstation'|trans }}
+    </label>
+    <select id="workstation-select" name="workstationId" class="workstation-switcher__select" data-autosubmit>
+      {% for workstation in workstations %}
+        <option value="{{ workstation.id }}" {{ workstation.id == current ? 'selected' : '' }}>
+          {{ workstation.name }}
+        </option>
+      {% endfor %}
+    </select>
+    <noscript><button type="submit" class="button button--secondary">{{ 'common.apply'|trans }}</button></noscript>
+  </form>
+{% endmacro %}

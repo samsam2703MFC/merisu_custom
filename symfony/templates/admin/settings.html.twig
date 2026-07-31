@@ -1,0 +1,79 @@
+{# §7.7 — Paramètres généraux : horaires, fuseau, langue, photo, tolérance. #}
+{% extends 'admin/_layout.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'admin.settings.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block admin_content %}
+
+  {{ ui.page_header('admin.settings.title'|trans, 'admin.settings.subtitle'|trans) }}
+
+  <section class="card">
+    <form method="post" action="{{ path('admin_settings_save') }}" class="form">
+
+      <div class="field-grid">
+        <div class="field">
+          <label class="field__label" for="openingTime">{{ 'admin.settings.openingTime'|trans }}</label>
+          <input class="field__input" type="time" id="openingTime" name="openingTime"
+                 value="{{ settings.openingTime }}">
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="closingTime">{{ 'admin.settings.closingTime'|trans }}</label>
+          <input class="field__input" type="time" id="closingTime" name="closingTime"
+                 value="{{ settings.closingTime }}">
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="timezone">{{ 'admin.settings.timezone'|trans }}</label>
+          <input class="field__input" type="text" id="timezone" name="timezone"
+                 value="{{ settings.timezone }}" placeholder="Europe/Warsaw" list="timezones">
+          {# Un fuseau inconnu est refusé côté serveur : accepté, il fausserait
+             silencieusement toutes les dates métier. #}
+          <datalist id="timezones">
+            {% for tz in ['Europe/Warsaw', 'Europe/Paris', 'Europe/Rome', 'Europe/Madrid', 'UTC'] %}
+              <option value="{{ tz }}"></option>
+            {% endfor %}
+          </datalist>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="defaultLocale">{{ 'admin.settings.defaultLocale'|trans }}</label>
+          <select class="field__input" id="defaultLocale" name="defaultLocale">
+            {% for locale in locales %}
+              <option value="{{ locale.value }}" {{ locale == settings.defaultLocale ? 'selected' : '' }}>
+                {{ ('locales.' ~ locale.value)|trans }}
+              </option>
+            {% endfor %}
+          </select>
+          <p class="field__hint">{{ 'admin.settings.defaultLocaleHint'|trans }}</p>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="deltaTolerance">{{ 'admin.settings.deltaTolerance'|trans }}</label>
+          <input class="field__input" type="number" min="0" step="0.01"
+                 id="deltaTolerance" name="deltaTolerance" value="{{ settings.deltaTolerance }}">
+          <p class="field__hint">{{ 'admin.settings.deltaToleranceHint'|trans }}</p>
+        </div>
+      </div>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="photoRequired" name="photoRequired" value="1"
+               {{ settings.photoRequired ? 'checked' : '' }}>
+        <label for="photoRequired">{{ 'admin.settings.photoRequired'|trans }}</label>
+      </div>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="photoPerProduct" name="photoPerProduct" value="1"
+               {{ settings.photoPerProduct ? 'checked' : '' }}>
+        <label for="photoPerProduct">{{ 'admin.settings.photoPerProduct'|trans }}</label>
+      </div>
+      <p class="field__hint">{{ 'admin.settings.photoPerProductHint'|trans }}</p>
+
+      <div class="form-actions">
+        <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
+      </div>
+    </form>
+  </section>
+
+{% endblock %}

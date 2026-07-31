@@ -1,0 +1,99 @@
+{# §7.6 — Paramètres produits : les 8 emplacements, renommables et réglables. #}
+{% extends 'admin/_layout.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'admin.products.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block admin_content %}
+
+  {{ ui.page_header('admin.products.title'|trans, 'admin.products.subtitle'|trans) }}
+
+  <div class="banner banner--warn">{{ 'admin.products.placeholderWarning'|trans }}</div>
+
+  {% for product in products %}
+    <section class="card">
+      <form method="post" action="{{ path('admin_product_save', { id: product.id }) }}" class="form">
+
+        <header class="card__header">
+          <h2 class="card__title">{{ ui.badge('neutral', product.code) }}</h2>
+
+          <div class="checkbox-row">
+            <input type="checkbox" id="active-{{ product.id }}" name="active" value="1"
+                   {{ product.active ? 'checked' : '' }}>
+            <label for="active-{{ product.id }}">{{ 'admin.products.active'|trans }}</label>
+          </div>
+        </header>
+
+        {# Un libellé par langue : ce sont des DONNÉES saisies ici, pas des
+           chaînes d'interface (celles-ci vivent dans translations/). #}
+        <div class="field-grid">
+          {% for locale in supported_locales() %}
+            <div class="field">
+              <label class="field__label" for="name-{{ product.id }}-{{ locale.value }}">
+                {{ 'admin.products.namePerLocale'|trans({ '%locale%': ('locales.' ~ locale.value)|trans }) }}
+              </label>
+              <input class="field__input" type="text"
+                     id="name-{{ product.id }}-{{ locale.value }}"
+                     name="name_{{ locale.value }}"
+                     value="{{ product.name[locale.value] ?? '' }}">
+            </div>
+          {% endfor %}
+        </div>
+
+        <div class="field-grid">
+          <div class="field">
+            <label class="field__label" for="unit-{{ product.id }}">{{ 'admin.products.unit'|trans }}</label>
+            <input class="field__input" type="text" id="unit-{{ product.id }}"
+                   name="unit" value="{{ product.unit }}">
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="waste-{{ product.id }}">
+              {{ 'admin.products.wasteFactor'|trans }}
+            </label>
+            <input class="field__input" type="number" min="0" step="0.01"
+                   id="waste-{{ product.id }}" name="wasteFactor" value="{{ product.wasteFactor }}">
+            <p class="field__hint">{{ 'admin.products.wasteFactorHint'|trans }}</p>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="step-{{ product.id }}">
+              {{ 'admin.products.roundingStep'|trans }}
+            </label>
+            <input class="field__input" type="number" min="0.001" step="0.001"
+                   id="step-{{ product.id }}" name="roundingStep" value="{{ product.roundingStep }}">
+            <p class="field__hint">{{ 'admin.products.roundingStepHint'|trans }}</p>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="mode-{{ product.id }}">
+              {{ 'admin.products.roundingMode'|trans }}
+            </label>
+            <select class="field__input" id="mode-{{ product.id }}" name="roundingMode">
+              {% for mode in roundingModes %}
+                <option value="{{ mode.value }}" {{ mode == product.roundingMode ? 'selected' : '' }}>
+                  {{ ('admin.roundingMode.' ~ mode.value)|trans }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          {# Clé de pont vers le module « Recette technique » existant. #}
+          <div class="field">
+            <label class="field__label" for="recipe-{{ product.id }}">
+              {{ 'admin.products.recipeRef'|trans }}
+            </label>
+            <input class="field__input" type="text" id="recipe-{{ product.id }}"
+                   name="recipeRef" value="{{ product.recipeRef ?? '' }}">
+            <p class="field__hint">{{ 'admin.products.recipeRefHint'|trans }}</p>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
+        </div>
+      </form>
+    </section>
+  {% endfor %}
+
+{% endblock %}

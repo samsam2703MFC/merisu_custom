@@ -17,9 +17,9 @@ services:
     # ── Connexion à la base ──────────────────────────────────────────────────
     # DBAL seul (pas l'ORM) : le schéma est simple et le SQL reste lisible.
     Doctrine\DBAL\Connection:
-        factory: ['Doctrine\DBAL\DriverManager', 'getConnection']
+        factory: ['Merisu\Inventory\Store\ConnectionFactory', 'create']
         arguments:
-            - url: '%env(resolve:DATABASE_URL)%'
+            $databaseUrl: '%env(resolve:DATABASE_URL)%'
 
     # ═══════════════════════════════════════════════════════════════════════
     # POINT DE BRANCHEMENT DES MODULES EXISTANTS

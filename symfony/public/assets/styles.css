@@ -1,0 +1,486 @@
+/*
+ * MERISU — Inventaire & Production
+ * ════════════════════════════════════════════════════════════════════════════
+ * FEUILLE DE STYLE UNIQUE.
+ *
+ * Ce fichier peut être REMPLACÉ INTÉGRALEMENT lors d'un restylage : aucun style
+ * ne vit dans les templates Twig. Les noms de classes utilisés par les gabarits
+ * sont listés ci-dessous et doivent être conservés.
+ *
+ *   Structure : app, app-header, app-nav, app-main, admin-nav, identity-bar
+ *   Blocs     : card, card__header, card__title, card-grid, page-header,
+ *               banner (--info/--ok/--warn/--danger), badge (--neutral/--ok/
+ *               --warn/--danger), muted, separator
+ *   Formulaire: form, field, field__label, field__input, field__hint,
+ *               field-grid, checkbox-row, form-actions, filters
+ *   Boutons   : button (--primary/--secondary/--ghost/--danger/--block/--large)
+ *   Comptage  : count-list, count-item (--invalid), count-item__name, qty,
+ *               qty__step, qty__input, produce-item, photo-strip
+ *   Tableaux  : table-scroll, table (--matrix), table__cell--alert,
+ *               table__cell--partial, table__cell--editable, table__input
+ *   Réseau    : connectivity, connectivity__dot
+ *
+ * Trois cibles (§2) : mobile < 600 px, tablette ≥ 600 px, desktop ≥ 1024 px.
+ * Toute cible tactile fait au moins 44 px : le consultant compte debout, au poste.
+ * ════════════════════════════════════════════════════════════════════════════
+ */
+
+:root {
+  --brand: #7b3f00;
+  --brand-dark: #5a2d00;
+  --brand-light: #f3e6d8;
+  --bg: #faf7f2;
+  --surface: #ffffff;
+  --text: #241a12;
+  --text-muted: #6d6157;
+  --border: #e2d7c9;
+  --ok: #1c7a4a;
+  --ok-bg: #e6f4ec;
+  --warn: #a06800;
+  --warn-bg: #fdf3e0;
+  --danger: #b3261e;
+  --danger-bg: #fdecea;
+  --radius: 12px;
+  --touch: 44px;
+  --shadow: 0 1px 3px rgba(36, 26, 18, .08), 0 4px 14px rgba(36, 26, 18, .06);
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; min-height: 100%; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.5;
+  /* Évite le zoom automatique iOS à la saisie. */
+  -webkit-text-size-adjust: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+h1, h2, h3 { margin: 0 0 .25rem; line-height: 1.25; }
+p { margin: 0 0 .5rem; }
+
+.muted { color: var(--text-muted); font-size: .9rem; }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.separator { border: 0; border-top: 1px solid var(--border); margin: 1rem 0; }
+
+/* ── Structure ───────────────────────────────────────────────────────────── */
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--brand);
+  color: #fff;
+  padding: .6rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  flex-wrap: wrap;
+}
+
+.app-header__brand { font-weight: 700; margin-right: auto; font-size: 1rem; }
+
+/*
+ * Barre d'onglets ancrée en bas sur mobile : le pouce y accède sans lâcher
+ * l'appareil. `fixed` et non `sticky` — la navigation étant en tête de
+ * document, `sticky` la ferait défiler hors écran au premier défilement.
+ */
+.app-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 20;
+  display: flex;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.app-nav__link {
+  flex: 1;
+  min-height: var(--touch);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: .4rem .25rem;
+  text-decoration: none;
+  color: var(--text-muted);
+  font-size: .8rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.app-nav__link.is-active {
+  color: var(--brand);
+  background: var(--brand-light);
+  box-shadow: inset 0 3px 0 var(--brand);
+}
+
+.app-main {
+  flex: 1;
+  padding: 1rem;
+  /* Réserve la hauteur de la barre d'onglets fixée en bas. */
+  padding-bottom: calc(var(--touch) + 2.5rem + env(safe-area-inset-bottom));
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.app--centered .app-main { display: grid; place-items: center; padding-bottom: 1rem; }
+
+.admin-nav { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1rem; }
+
+.admin-nav__link {
+  min-height: var(--touch);
+  display: inline-flex;
+  align-items: center;
+  padding: .5rem .9rem;
+  border-radius: var(--radius);
+  background: var(--brand);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 650;
+  font-size: .95rem;
+}
+
+.admin-nav__link.is-active { background: var(--brand-light); color: var(--brand-dark); }
+
+.identity-bar {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  flex-wrap: wrap;
+  margin-bottom: .75rem;
+}
+
+.identity-bar .workstation-switcher { margin-left: auto; }
+
+/* ── Cartes ──────────────────────────────────────────────────────────────── */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.card--login { width: 100%; max-width: 420px; }
+.card--link { display: block; text-decoration: none; color: inherit; }
+.card--link:hover { border-color: var(--brand); }
+
+.card__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .5rem;
+  flex-wrap: wrap;
+  margin-bottom: .75rem;
+}
+
+.card__title { font-size: 1.15rem; }
+
+.card-grid { display: grid; gap: 1rem; grid-template-columns: 1fr; }
+
+.page-header { margin-bottom: 1rem; }
+.page-header__title { font-size: 1.4rem; }
+.page-header__subtitle { color: var(--text-muted); font-size: .95rem; }
+
+/* ── Bandeaux et pastilles ───────────────────────────────────────────────── */
+
+.banner {
+  border-radius: var(--radius);
+  padding: .7rem .9rem;
+  margin-bottom: .9rem;
+  font-size: .92rem;
+  border: 1px solid transparent;
+}
+
+.banner--info { background: var(--brand-light); border-color: var(--border); color: var(--brand-dark); }
+.banner--ok { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); }
+.banner--warn { background: var(--warn-bg); border-color: var(--warn); color: var(--warn); }
+.banner--danger { background: var(--danger-bg); border-color: var(--danger); color: var(--danger); }
+
+.banner__list { margin: .5rem 0 0; padding-left: 1.2rem; }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  padding: .2rem .55rem;
+  border-radius: 999px;
+  font-size: .78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badge--neutral { background: var(--brand-light); color: var(--brand-dark); }
+.badge--ok { background: var(--ok-bg); color: var(--ok); }
+.badge--warn { background: var(--warn-bg); color: var(--warn); }
+.badge--danger { background: var(--danger-bg); color: var(--danger); }
+
+/* Indicateur en/hors-ligne (§2). */
+.connectivity {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  font-size: .78rem;
+  font-weight: 700;
+  padding: .25rem .6rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .18);
+  color: #fff;
+  min-height: 32px;
+}
+
+.connectivity__dot { width: 9px; height: 9px; border-radius: 50%; background: #7ee2a8; }
+.connectivity.is-offline .connectivity__dot { background: #ffcf6b; }
+
+/* ── Formulaires ─────────────────────────────────────────────────────────── */
+
+.field { margin-bottom: .75rem; }
+.field__label { display: block; font-size: .85rem; font-weight: 600; color: var(--text-muted); margin-bottom: .2rem; }
+.field__hint { font-size: .82rem; color: var(--text-muted); margin: .2rem 0 0; }
+
+.field__input,
+input[type="text"], input[type="password"], input[type="number"],
+input[type="date"], input[type="time"], input[type="file"],
+select, textarea {
+  font-family: inherit;
+  font-size: 1rem;
+  padding: .55rem .7rem;
+  min-height: var(--touch);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--text);
+  width: 100%;
+}
+
+input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-color: var(--brand); }
+
+.checkbox-row { display: flex; align-items: center; gap: .6rem; min-height: var(--touch); }
+.checkbox-row label { font-size: 1rem; color: var(--text); margin: 0; }
+
+.field-grid { display: grid; gap: .75rem; grid-template-columns: 1fr; }
+
+.form-actions { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-top: 1rem; }
+.form-actions .button--large { margin-left: auto; }
+
+.filters { display: flex; gap: .75rem; align-items: flex-end; flex-wrap: wrap; }
+.filters .field { margin-bottom: 0; }
+
+.locale-switcher, .workstation-switcher { display: flex; align-items: center; gap: .4rem; margin: 0; }
+.locale-switcher__select, .workstation-switcher__select { width: auto; min-width: 130px; }
+.workstation-switcher__label { font-size: .85rem; color: var(--text-muted); margin: 0; }
+
+/* ── Boutons ─────────────────────────────────────────────────────────────── */
+
+.button {
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 650;
+  min-height: var(--touch);
+  padding: .6rem 1rem;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  background: var(--brand);
+  color: #fff;
+  cursor: pointer;
+  touch-action: manipulation;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.button:disabled { opacity: .5; cursor: not-allowed; }
+.button--primary { background: var(--brand); color: #fff; }
+.button--secondary { background: var(--surface); color: var(--brand-dark); border-color: var(--border); }
+.button--ghost { background: transparent; color: inherit; border-color: currentColor; }
+.button--danger { background: var(--danger); color: #fff; }
+.button--block { width: 100%; }
+.button--large { min-height: 56px; font-size: 1.1rem; }
+
+/* ── Saisie rapide au doigt (§2) ─────────────────────────────────────────── */
+
+.count-list { display: grid; gap: .75rem; }
+
+.count-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: .75rem;
+  display: grid;
+  gap: .6rem;
+}
+
+.count-item--invalid { border-color: var(--danger); background: var(--danger-bg); }
+
+.count-item__header { display: flex; align-items: center; gap: .5rem; }
+.count-item__name { font-weight: 650; font-size: 1.05rem; }
+.count-item__unit { margin-left: auto; }
+.count-item__net { margin: 0; }
+
+.qty { display: grid; grid-template-columns: var(--touch) 1fr var(--touch); gap: .5rem; align-items: center; }
+
+.qty__step {
+  min-width: var(--touch);
+  min-height: calc(var(--touch) + 8px);
+  font-size: 1.5rem;
+  font-weight: 700;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--brand-light);
+  color: var(--brand-dark);
+  cursor: pointer;
+  /* Évite la sélection de texte lors des appuis répétés. */
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.qty__step:active { background: var(--brand); color: #fff; }
+
+.qty__input {
+  min-height: calc(var(--touch) + 8px);
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.produce-item__qty { margin: 0; }
+.produce-item__value { font-size: 2rem; font-weight: 800; }
+
+.photo-strip { display: flex; gap: .4rem; flex-wrap: wrap; }
+.photo-strip__thumb {
+  width: 56px; height: 56px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.photo-form { display: grid; gap: .75rem; }
+
+/* ── Tableaux ────────────────────────────────────────────────────────────── */
+
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.table { border-collapse: collapse; width: 100%; min-width: 520px; font-size: .92rem; }
+
+.table th, .table td {
+  padding: .5rem .6rem;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+/* Première colonne figée : le nom du produit reste visible au défilement. */
+.table th:first-child, .table td:first-child {
+  text-align: left;
+  position: sticky;
+  left: 0;
+  background: var(--surface);
+  z-index: 1;
+  border-right: 1px solid var(--border);
+}
+
+.table thead th {
+  background: var(--brand-light);
+  color: var(--brand-dark);
+  font-size: .82rem;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.table thead th:first-child { z-index: 3; }
+.table tbody tr:last-child td { border-bottom: none; }
+
+.table__cell--alert { background: var(--danger-bg); color: var(--danger); font-weight: 700; }
+.table__cell--partial { color: var(--text-muted); font-style: italic; }
+.table__cell--wrap { white-space: normal; max-width: 280px; }
+.table__subvalue { font-size: .75rem; }
+
+.table__cell--editable { padding: .2rem; }
+
+.table__input {
+  min-height: var(--touch);
+  min-width: 72px;
+  text-align: center;
+  font-weight: 650;
+  border-color: transparent;
+  background: transparent;
+}
+
+.table__input:focus { border-color: var(--brand); background: #fff; }
+
+/* ── Tablette ────────────────────────────────────────────────────────────── */
+
+@media (min-width: 600px) {
+  .app-main { padding: 1.25rem; padding-bottom: calc(var(--touch) + 2.5rem); }
+  .count-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .qty { grid-template-columns: 56px 1fr 56px; }
+  .field-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .page-header__title { font-size: 1.6rem; }
+}
+
+/* ── Desktop ─────────────────────────────────────────────────────────────── */
+
+@media (min-width: 1024px) {
+  /* La navigation revient en haut : plus de barre d'onglets basse. */
+  .app-nav {
+    position: static;
+    border-top: none;
+    border-bottom: 1px solid var(--border);
+    justify-content: center;
+    gap: .25rem;
+    padding: .25rem 1rem;
+  }
+
+  .app-nav__link {
+    flex: 0 0 auto;
+    min-width: 140px;
+    border-radius: var(--radius);
+    font-size: .95rem;
+  }
+
+  .app-nav__link.is-active { box-shadow: none; }
+
+  .app-main { padding: 1.5rem; padding-bottom: 1.5rem; }
+  .count-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .field-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .card-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* ── Accessibilité ───────────────────────────────────────────────────────── */
+
+:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}

@@ -1,0 +1,53 @@
+{# §7.1 — Connexion, choix du poste et sélecteur de langue. #}
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'login.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+{% block body_class %} app--centered{% endblock %}
+
+{% block nav %}{% endblock %}
+
+{% block content %}
+  <section class="card card--login">
+    <h1 class="page-header__title">{{ 'common.appName'|trans }}</h1>
+    <p class="page-header__subtitle">{{ 'login.subtitle'|trans }}</p>
+
+    {% if error %}
+      <p class="banner banner--danger" role="alert">{{ ('errors.' ~ error)|trans }}</p>
+    {% endif %}
+
+    <form method="post" action="{{ path('login') }}" class="form">
+      <div class="field">
+        <label class="field__label" for="login">{{ 'login.identifier'|trans }}</label>
+        <input class="field__input" type="text" id="login" name="login"
+               autocomplete="username" autocapitalize="none" required>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="secret">{{ 'login.secret'|trans }}</label>
+        <input class="field__input" type="password" id="secret" name="secret"
+               inputmode="numeric" autocomplete="current-password" required>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="workstationId">{{ 'login.workstation'|trans }}</label>
+        <select class="field__input" id="workstationId" name="workstationId">
+          <option value="">{{ 'login.workstationAuto'|trans }}</option>
+          {% for workstation in workstations %}
+            <option value="{{ workstation.id }}">{{ workstation.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <button type="submit" class="button button--primary button--block button--large">
+        {{ 'login.submit'|trans }}
+      </button>
+    </form>
+
+    {# Rappel des comptes de démonstration : à retirer au branchement du vrai module. #}
+    <hr class="separator">
+    <p class="muted">
+      <strong>{{ 'login.demoTitle'|trans }}</strong><br>
+      {{ 'login.demoHint'|trans }}
+    </p>
+  </section>
+{% endblock %}

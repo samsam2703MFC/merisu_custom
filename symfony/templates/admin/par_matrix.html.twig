@@ -1,0 +1,95 @@
+{#
+  §7.5 — Matrice des seuils, éditable (jour × produit).
+
+  L'orientation est commutable : produits en lignes (confortable sur desktop)
+  ou jours en lignes (plus lisible sur mobile).
+#}
+{% extends 'admin/_layout.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'admin.parMatrix.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block admin_content %}
+
+  {{ ui.page_header('admin.parMatrix.title'|trans, 'admin.parMatrix.subtitle'|trans) }}
+
+  <div class="banner banner--info">{{ 'admin.parMatrix.hint'|trans }}</div>
+
+  <section class="card">
+    <div class="card__header">
+      <a class="button button--secondary"
+         href="{{ path('admin_par_matrix', { orientation: productsInRows ? 'days' : 'products' }) }}">
+        {{ (productsInRows ? 'admin.parMatrix.daysInRows' : 'admin.parMatrix.productsInRows')|trans }}
+      </a>
+    </div>
+
+    <form method="post" action="{{ path('admin_par_matrix_save') }}">
+      <div class="table-scroll">
+        <table class="table table--matrix">
+
+          {% if productsInRows %}
+            <thead>
+              <tr>
+                <th>{{ 'common.product'|trans }}</th>
+                {% for day in days %}
+                  <th>{{ ('daysShort.' ~ day.value)|trans }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for product in products %}
+                <tr>
+                  <th scope="row">
+                    {{ product_label(product) }}
+                    {% if not product.active %}
+                      {{ ui.badge('warn', 'admin.products.inactive'|trans) }}
+                    {% endif %}
+                  </th>
+                  {% for day in days %}
+                    <td class="table__cell--editable">
+                      <input class="table__input" type="number" min="0" step="any" inputmode="numeric"
+                             name="par[{{ product.id }}][{{ day.value }}]"
+                             value="{{ values[product.id][day.value] ?? '' }}"
+                             aria-label="{{ product_label(product) }} — {{ ('days.' ~ day.value)|trans }}">
+                    </td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+
+          {% else %}
+            <thead>
+              <tr>
+                <th>{{ 'common.date'|trans }}</th>
+                {% for product in products %}
+                  <th>{{ product_label(product) }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for day in days %}
+                <tr>
+                  <th scope="row">{{ ('days.' ~ day.value)|trans }}</th>
+                  {% for product in products %}
+                    <td class="table__cell--editable">
+                      <input class="table__input" type="number" min="0" step="any" inputmode="numeric"
+                             name="par[{{ product.id }}][{{ day.value }}]"
+                             value="{{ values[product.id][day.value] ?? '' }}"
+                             aria-label="{{ product_label(product) }} — {{ ('days.' ~ day.value)|trans }}">
+                    </td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          {% endif %}
+
+        </table>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
+      </div>
+    </form>
+  </section>
+
+{% endblock %}

@@ -1,0 +1,93 @@
+{# §7.9 — Historique / audit des comptages et validations, + déverrouillage admin. #}
+{% extends 'admin/_layout.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'admin.audit.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block admin_content %}
+
+  {{ ui.page_header('admin.audit.title'|trans, 'admin.audit.subtitle'|trans) }}
+
+  {# Déverrouillage d'une saisie validée — ADMIN uniquement, toujours tracé (§5.3). #}
+  <section class="card">
+    <h2 class="card__title">{{ 'admin.audit.unlockTitle'|trans }}</h2>
+
+    <form method="post" action="{{ path('admin_unlock') }}" class="filters">
+      <div class="field">
+        <label class="field__label" for="unlock-date">{{ 'common.date'|trans }}</label>
+        <input class="field__input" type="date" id="unlock-date" name="date" value="{{ today }}" required>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="unlock-moment">{{ 'admin.audit.moment'|trans }}</label>
+        <select class="field__input" id="unlock-moment" name="moment">
+          <option value="CLOSE_2200">{{ 'nav.evening'|trans }}</option>
+          <option value="OPEN_0800">{{ 'nav.morning'|trans }}</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="unlock-workstation">{{ 'common.workstation'|trans }}</label>
+        <select class="field__input" id="unlock-workstation" name="workstationId" required>
+          {% for workstation in workstations %}
+            <option value="{{ workstation.id }}">{{ workstation.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="unlock-reason">{{ 'admin.audit.unlockReason'|trans }}</label>
+        <input class="field__input" type="text" id="unlock-reason" name="reason">
+      </div>
+
+      <button type="submit" class="button button--danger"
+              data-confirm="{{ 'admin.audit.unlockConfirm'|trans }}">
+        {{ 'admin.audit.unlock'|trans }}
+      </button>
+    </form>
+  </section>
+
+  <section class="card">
+    {{ ui.period_filter('admin_audit', from, to) }}
+
+    <div class="table-scroll">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>{{ 'admin.audit.when'|trans }}</th>
+            <th>{{ 'admin.audit.actor'|trans }}</th>
+            <th>{{ 'admin.audit.action'|trans }}</th>
+            <th>{{ 'common.workstation'|trans }}</th>
+            <th>{{ 'common.date'|trans }}</th>
+            <th>{{ 'admin.audit.details'|trans }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in entries %}
+            <tr>
+              <td>{{ entry.at|datetime_short }}</td>
+              <td>
+                {{ entry.actorId }} {{ ui.badge('neutral', entry.actorRole) }}
+              </td>
+              <td>{{ ('admin.actions.' ~ entry.action)|trans({}, 'messages') }}</td>
+              <td>{{ entry.workstationId ?? '—' }}</td>
+              <td>{{ entry.businessDate ?? '—' }}</td>
+              <td class="table__cell--wrap">
+                <span class="muted">
+                  {% for key, value in entry.details %}
+                    {{ key }}: {{ value is iterable ? value|join(', ') : value }}{{ not loop.last ? ' · ' : '' }}
+                  {% endfor %}
+                </span>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="6" class="table__cell--partial">{{ 'admin.audit.empty'|trans }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+{% endblock %}

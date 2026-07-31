@@ -1,0 +1,23 @@
+{# Sommaire de l'administration (§7.5 à §7.9). #}
+{% extends 'admin/_layout.html.twig' %}
+
+{% block title %}{{ 'admin.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block admin_content %}
+  <h1 class="page-header__title">{{ 'admin.title'|trans }}</h1>
+
+  <div class="card-grid">
+    {% for section in [
+      { route: 'admin_products',   label: 'nav.products',  desc: 'admin.products.subtitle' },
+      { route: 'admin_par_matrix', label: 'nav.parMatrix', desc: 'admin.parMatrix.subtitle' },
+      { route: 'admin_settings',   label: 'nav.settings',  desc: 'admin.settings.subtitle' },
+      { route: 'admin_delta',      label: 'nav.delta',     desc: 'admin.delta.subtitle' },
+      { route: 'admin_audit',      label: 'nav.audit',     desc: 'admin.audit.subtitle' }
+    ] %}
+      <a class="card card--link" href="{{ path(section.route) }}">
+        <h2 class="card__title">{{ section.label|trans }}</h2>
+        <p class="muted">{{ section.desc|trans }}</p>
+      </a>
+    {% endfor %}
+  </div>
+{% endblock %}

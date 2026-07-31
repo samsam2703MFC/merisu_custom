@@ -1,0 +1,81 @@
+{# §7.4 — Écran « À produire » : le plan figé à la validation du soir. #}
+{% extends 'base.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'produce.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block content %}
+
+  <div class="identity-bar">
+    <span class="muted">{{ current_user().consultant.displayName }}</span>
+    {{ ui.workstation_switcher(workstations, current_user().workstationId) }}
+  </div>
+
+  {{ ui.page_header(
+    'produce.title'|trans,
+    'produce.subtitle'|trans({ '%date%': forDate|long_date }) ~ ' · ' ~ ('days.' ~ dayOfWeek.value)|trans
+  ) }}
+
+  <section class="card">
+    <form class="filters" method="get" action="{{ path('production') }}">
+      <div class="field">
+        <label class="field__label" for="forDate">{{ 'common.date'|trans }}</label>
+        <input class="field__input" type="date" id="forDate" name="forDate" value="{{ forDate }}">
+      </div>
+      <button type="submit" class="button button--secondary">{{ 'common.apply'|trans }}</button>
+
+      {# Raccourcis : le consultant regarde presque toujours aujourd'hui ou demain. #}
+      <a class="button button--secondary" href="{{ path('production', { forDate: today }) }}">
+        {{ 'produce.shortcutToday'|trans }}
+      </a>
+      <a class="button button--secondary" href="{{ path('production', { forDate: tomorrow }) }}">
+        {{ 'produce.shortcutTomorrow'|trans }}
+      </a>
+    </form>
+  </section>
+
+  {% if lines is empty %}
+    <div class="banner banner--warn">{{ 'produce.empty'|trans }}</div>
+  {% else %}
+    <p class="muted">
+      {{ 'produce.computedFrom'|trans({ '%date%': computedFromDate|long_date }) }}
+      · {{ 'produce.frozenAt'|trans({ '%datetime%': lines|first.computedAt|datetime_short }) }}
+    </p>
+
+    {% if lines|filter(l => l.missingThreshold)|length > 0 %}
+      <div class="banner banner--warn">{{ 'produce.missingThreshold'|trans }}</div>
+    {% endif %}
+
+    <div class="count-list">
+      {% for line in lines %}
+        {% set product = products[line.productId] ?? null %}
+
+        <article class="count-item produce-item">
+          <header class="count-item__header">
+            <span class="count-item__name">
+              {{ product ? product_label(product) : line.productId }}
+            </span>
+            {% if line.missingThreshold %}
+              {{ ui.badge('warn', 'common.notDefined'|trans) }}
+            {% endif %}
+          </header>
+
+          <p class="produce-item__qty">
+            <span class="produce-item__value">{{ line.qtyToProduce|qty }}</span>
+            <span class="produce-item__unit muted">{{ product ? product.unit : '' }}</span>
+          </p>
+
+          <p class="muted">
+            {{ 'produce.required'|trans }} : {{ line.requiredPieces|qty }}
+            · {{ 'produce.closingStock'|trans }} : {{ line.closingStock|qty }}
+          </p>
+
+          {% if line.qtyToProduce == 0 and not line.missingThreshold %}
+            {{ ui.badge('ok', 'produce.nothing'|trans) }}
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+{% endblock %}

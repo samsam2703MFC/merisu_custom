@@ -1,0 +1,234 @@
+# MERISU — textos de la interfaz, español.
+
+locales:
+    fr: Français
+    pl: Polski
+    it: Italiano
+    es: Español
+
+common:
+    appName: 'MERISU — Inventario y producción'
+    save: Guardar
+    saved: Guardado
+    cancel: Cancelar
+    validate: Validar
+    loading: 'Cargando…'
+    retry: Reintentar
+    language: Idioma
+    logout: 'Cerrar sesión'
+    workstation: 'Puesto de trabajo'
+    date: Fecha
+    product: Producto
+    unit: Unidad
+    quantity: Cantidad
+    export: 'Exportar a CSV'
+    from: Del
+    to: Al
+    apply: Aplicar
+    notDefined: 'Sin definir'
+    yes: 'Sí'
+    no: 'No'
+
+status:
+    online: 'En línea'
+    offline: 'Sin conexión'
+    offlineHint: 'Tus registros se conservan y se envían al recuperar la red.'
+    pendingSync: 'Envíos pendientes: %count%'
+    syncing: 'Sincronizando…'
+    partialData: 'Datos parciales'
+    partialDataHint: 'Faltan algunos registros: las cifras siguientes son orientativas.'
+
+login:
+    title: 'Iniciar sesión'
+    subtitle: 'Identifícate para contar el stock de tu puesto.'
+    identifier: Identificador
+    secret: Código
+    workstation: 'Puesto de trabajo'
+    workstationAuto: 'Puesto asignado'
+    submit: Entrar
+    demoTitle: 'Cuentas de demostración'
+    demoHint: 'admin / 0000 · consultant1 / 1111 · consultant2 / 2222'
+
+nav:
+    morning: Mañana
+    evening: Tarde
+    toProduce: 'Por producir'
+    admin: Administración
+    products: Productos
+    parMatrix: Umbrales
+    settings: Ajustes
+    delta: 'Delta técnico'
+    audit: Historial
+
+morning:
+    title: 'Stock de apertura'
+    subtitle: 'Recuento físico de las %time% — %date%'
+    planTitle: 'Producción planificada para hoy'
+    planEmpty: 'Sin plan: el stock de la tarde de ayer no fue validado.'
+    planHint: 'Calculado ayer por la tarde, a título informativo.'
+    validate: 'Validar el recuento de la mañana'
+    validated: 'Recuento de la mañana validado a las %time%'
+
+evening:
+    title: 'Stock de cierre'
+    subtitle: 'Recuento físico de las %time% — %date%'
+    photo: Foto
+    addPhoto: 'Añadir una foto'
+    photoRequired: 'Foto obligatoria'
+    photoGlobal: 'Basta con una foto general del stock.'
+    photoPerProduct: 'Se exige una foto por cada producto.'
+    validate: 'Validar el stock de la tarde'
+    validated: 'Stock de la tarde validado a las %time% — registro bloqueado'
+    lockedHint: 'Solo un administrador puede desbloquear este registro.'
+    confirmBody: 'Tras la validación el registro queda bloqueado y el plan de producción de mañana se congela. ¿Continuar?'
+    netConsumption: 'Consumido hoy'
+
+produce:
+    title: 'Por producir'
+    subtitle: 'Para el %date%'
+    qtyToProduce: 'Por producir'
+    required: Requerido
+    closingStock: 'Stock de cierre'
+    nothing: 'Nada que producir para este producto.'
+    empty: 'No hay plan congelado para esta fecha.'
+    frozenAt: 'Plan congelado el %datetime%'
+    missingThreshold: 'Sin umbral definido para este día — corrígelo en administración.'
+    computedFrom: 'Calculado a partir del stock de cierre del %date%'
+    shortcutToday: Hoy
+    shortcutTomorrow: Mañana
+
+admin:
+    title: Administración
+    products:
+        title: 'Ajustes de productos'
+        subtitle: '8 posiciones: renombra, activa y ajusta los parámetros de cálculo.'
+        namePerLocale: 'Denominación (%locale%)'
+        unit: Unidad
+        active: Activo
+        inactive: Inactivo
+        wasteFactor: 'Factor de merma'
+        wasteFactorHint: '0.05 = +5 % de producción para cubrir las pérdidas.'
+        roundingStep: 'Paso de redondeo'
+        roundingStepHint: '1 = a la unidad, 6 = por lotes de 6.'
+        roundingMode: 'Modo de redondeo'
+        recipeRef: 'Referencia de receta'
+        recipeRefHint: 'Identificador del producto en el módulo Receta técnica.'
+        placeholderWarning: 'Denominaciones provisionales: sustitúyelas por los nombres reales.'
+    roundingMode:
+        CEIL: 'Al múltiplo superior'
+        FLOOR: 'Al múltiplo inferior'
+        NEAREST: 'Al más cercano'
+        NONE: 'Sin redondeo'
+    parMatrix:
+        title: 'Matriz de umbrales'
+        subtitle: 'Piezas requeridas en stock, por día y por producto.'
+        hint: "Una casilla vacía significa «sin umbral definido»: la producción calculada será 0 y aparecerá un aviso."
+        productsInRows: 'Productos en filas'
+        daysInRows: 'Días en filas'
+    settings:
+        title: 'Ajustes generales'
+        subtitle: 'Horarios, zona horaria, idioma, política de fotos y tolerancia del delta.'
+        openingTime: 'Hora del recuento de apertura'
+        closingTime: 'Hora del recuento de cierre'
+        timezone: 'Zona horaria'
+        defaultLocale: 'Idioma predeterminado'
+        defaultLocaleHint: 'Se aplica mientras el usuario no elija su propio idioma.'
+        photoRequired: 'Foto obligatoria en el recuento de la tarde'
+        photoPerProduct: 'Una foto por producto'
+        photoPerProductHint: 'Sin marcar: basta una sola foto general del stock.'
+        deltaTolerance: 'Tolerancia del delta técnico'
+        deltaToleranceHint: '0.05 = 5 %. Por encima, la desviación se marca en rojo.'
+    delta:
+        title: 'Delta técnico'
+        subtitle: 'Cruce entre las recetas y el consumo real de materias primas.'
+        material: 'Materia prima'
+        theoretical: Teórico
+        real: Real
+        delta: Delta
+        deltaPct: 'Delta %'
+        tolerance: 'Tolerancia: %value% %'
+        noRealData: 'Consumo real no registrado'
+        productsWithoutRecipe: 'Productos sin receta: el teórico queda infravalorado.'
+        noPlan: 'Sin plan de producción congelado en el periodo: nada que comparar.'
+        summary: 'Materias primas: %materials% · fuera de tolerancia: %outOfTolerance%'
+        addMovement: 'Registrar un consumo real'
+        movementQty: 'Cantidad realmente consumida'
+        movementNote: Nota
+        matrixTitle: 'Vista matricial día × producto'
+        opening: Apertura
+        closing: Cierre
+        net: 'Desviación neta'
+    audit:
+        title: 'Historial y auditoría'
+        subtitle: 'Quién contó o validó, cuándo y en qué puesto.'
+        when: 'Fecha y hora'
+        actor: Autor
+        action: Acción
+        details: Detalle
+        moment: Momento
+        empty: 'Sin operaciones en este periodo.'
+        unlock: Desbloquear
+        unlockTitle: 'Desbloquear un registro validado'
+        unlockReason: 'Motivo del desbloqueo'
+        unlockConfirm: '¿Desbloquear este registro validado?'
+        unlockDone: 'Registro desbloqueado'
+    actions:
+        LOGIN: 'Inicio de sesión'
+        COUNT_SAVED: 'Registro guardado'
+        COUNT_EDITED_AFTER_VALIDATION: 'Corrección tras la validación'
+        MORNING_VALIDATED: 'Recuento de la mañana validado'
+        EVENING_VALIDATED: 'Stock de la tarde validado'
+        COUNT_UNLOCKED: 'Registro desbloqueado'
+        PHOTO_ADDED: 'Foto añadida'
+        PRODUCTION_PLAN_FROZEN: 'Plan de producción congelado'
+        PRODUCT_UPDATED: 'Producto modificado'
+        PAR_MATRIX_UPDATED: 'Umbrales modificados'
+        SETTINGS_UPDATED: 'Ajustes modificados'
+
+days:
+    MON: Lunes
+    TUE: Martes
+    WED: Miércoles
+    THU: Jueves
+    FRI: Viernes
+    SAT: Sábado
+    SUN: Domingo
+
+daysShort:
+    MON: Lun
+    TUE: Mar
+    WED: 'Mié'
+    THU: Jue
+    FRI: Vie
+    SAT: 'Sáb'
+    SUN: Dom
+
+validation:
+    MISSING_QTY: 'Cantidad sin registrar'
+    NEGATIVE_QTY: 'Cantidad negativa'
+    MISSING_PHOTO: 'Falta la foto'
+    MISSING_GLOBAL_PHOTO: 'Añade al menos una foto del stock'
+    ALREADY_VALIDATED: 'Ya validado'
+
+errors:
+    generic: 'Se ha producido un error.'
+    network: 'Red no disponible.'
+    INVALID_CREDENTIALS: 'Identificador o código incorrecto.'
+    MISSING_TOKEN: 'Sesión caducada, vuelve a iniciar sesión.'
+    UNKNOWN_WORKSTATION: 'Puesto de trabajo desconocido.'
+    MISSING_WORKSTATION: 'Selecciona un puesto de trabajo.'
+    NO_WORKSTATION_ASSIGNED: 'Esta cuenta no tiene puesto asignado.'
+    WORKSTATION_NOT_ALLOWED: 'Solo puedes registrar en tu puesto.'
+    ROLE_NOT_ALLOWED: 'Acceso reservado al administrador.'
+    ADMIN_ONLY: 'Acceso reservado al administrador.'
+    COUNT_LOCKED: 'Registro bloqueado tras la validación.'
+    COUNT_NOT_FOUND: 'Recuento no encontrado.'
+    PRODUCT_NOT_FOUND: 'Producto no encontrado.'
+    VALIDATION_FAILED: 'Validación imposible: corrige los puntos señalados.'
+    NO_ENTRIES: 'No hay cantidades que guardar.'
+    INVALID_QTY: 'Cantidad no válida.'
+    INVALID_DATE: 'Fecha no válida.'
+    MISSING_PHOTO_DATA: 'Falta la foto.'
+    INVALID_PHOTO_DATA: 'Foto ilegible.'
+    UNSUPPORTED_IMAGE_TYPE: 'Formato de imagen no admitido (JPEG, PNG o WebP).'
+    UPLOAD_DIR_UNAVAILABLE: 'Carpeta de fotos no accesible.'

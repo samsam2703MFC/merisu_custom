@@ -1,0 +1,68 @@
+/*
+ * Service worker — MERISU Inventaire & Production.
+ *
+ * Écrit à la main, sans Workbox : les besoins sont simples et une dépendance de
+ * build serait disproportionnée pour un module Symfony.
+ *
+ * Stratégies :
+ *   · ressources statiques (CSS, JS, icônes) → cache d'abord, mises en cache à
+ *     l'installation pour que l'application démarre hors-ligne ;
+ *   · pages HTML → réseau d'abord, cache en secours (le poste peut perdre le
+ *     réseau en pleine saisie) ;
+ *   · écritures (POST) → jamais interceptées : elles passent par la file
+ *     d'attente IndexedDB gérée par app.js, qui garantit l'ordre du rejeu.
+ */
+const VERSION = 'merisu-v1';
+const STATIC_ASSETS = [
+  '/assets/styles.css',
+  '/assets/app.js',
+  '/assets/favicon.svg',
+  '/assets/icon-192.png',
+  '/assets/icon-512.png',
+  '/manifest.json'
+];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(VERSION)
+      .then((cache) => cache.addAll(STATIC_ASSETS))
+      .then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== VERSION).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', (event) => {
+  const request = event.request;
+
+  // Les écritures ne sont jamais servies depuis le cache ni rejouées ici.
+  if (request.method !== 'GET') return;
+
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
+
+  if (STATIC_ASSETS.includes(url.pathname)) {
+    event.respondWith(
+      caches.match(request).then((cached) => cached || fetch(request))
+    );
+    return;
+  }
+
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(VERSION).then((cache) => cache.put(request, copy));
+          return response;
+        })
+        .catch(() => caches.match(request).then((cached) => cached || caches.match('/')))
+    );
+  }
+});

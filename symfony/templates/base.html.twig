@@ -1,0 +1,109 @@
+{#
+  Gabarit principal — MERISU Inventaire & Production.
+
+  CONVENTIONS DE DESIGN (à respecter en cas de restylage) :
+  · aucun style en ligne : tout le CSS vit dans public/assets/styles.css,
+    qui peut être remplacé intégralement sans toucher aux templates ;
+  · les noms de classes sont stables et sémantiques (app-header, card, badge…) ;
+  · aucun texte en dur : tout passe par `trans` (translations/messages.*.yaml) ;
+  · les blocs ci-dessous sont les points d'extension des pages filles.
+#}
+<!doctype html>
+<html lang="{{ app.request.locale }}">
+<head>
+  <meta charset="utf-8">
+  {# viewport-fit=cover : l'application occupe l'écran entier une fois installée. #}
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#7b3f00">
+  <meta name="description" content="{{ 'common.appName'|trans }}">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+
+  <title>{% block title %}{{ 'common.appName'|trans }}{% endblock %}</title>
+
+  <link rel="manifest" href="{{ asset('manifest.json') }}">
+  <link rel="icon" type="image/svg+xml" href="{{ asset('assets/favicon.svg') }}">
+  <link rel="apple-touch-icon" href="{{ asset('assets/icon-192.png') }}">
+  <link rel="stylesheet" href="{{ asset('assets/styles.css') }}">
+
+  {% block stylesheets %}{% endblock %}
+</head>
+
+<body class="app{% block body_class %}{% endblock %}">
+
+{% block header %}
+  <header class="app-header">
+    <span class="app-header__brand">{{ 'common.appName'|trans }}</span>
+
+    {# Indicateur en/hors-ligne : piloté par app.js (§2).
+       Les deux libellés sont fournis ici, traduits : app.js ne contient aucun texte. #}
+    <span class="connectivity"
+          data-connectivity
+          data-label-online="{{ 'status.online'|trans }}"
+          data-label-offline="{{ 'status.offline'|trans }}">
+      <span class="connectivity__dot" aria-hidden="true"></span>
+      <span class="connectivity__label" data-connectivity-label>{{ 'status.online'|trans }}</span>
+      <span class="connectivity__pending" data-connectivity-pending hidden></span>
+    </span>
+
+    {# Sélecteur de langue — présent sur tous les écrans, connexion comprise. #}
+    <form class="locale-switcher" method="post" action="{{ path('select_locale') }}">
+      <label class="visually-hidden" for="locale-select">{{ 'common.language'|trans }}</label>
+      <select id="locale-select" name="locale" class="locale-switcher__select" data-autosubmit>
+        {% for locale in supported_locales() %}
+          <option value="{{ locale.value }}" {{ locale.value == app.request.locale ? 'selected' : '' }}>
+            {{ ('locales.' ~ locale.value)|trans }}
+          </option>
+        {% endfor %}
+      </select>
+      <noscript><button type="submit" class="button button--ghost">{{ 'common.apply'|trans }}</button></noscript>
+    </form>
+
+    {% if current_user().isLoggedIn %}
+      <form method="post" action="{{ path('logout') }}">
+        <button type="submit" class="button button--ghost">{{ 'common.logout'|trans }}</button>
+      </form>
+    {% endif %}
+  </header>
+{% endblock %}
+
+{% block nav %}
+  {% if current_user().isLoggedIn %}
+    <nav class="app-nav">
+      <a class="app-nav__link {{ app.request.attributes.get('_route') == 'count_morning' ? 'is-active' : '' }}"
+         href="{{ path('count_morning') }}">{{ 'nav.morning'|trans }}</a>
+      <a class="app-nav__link {{ app.request.attributes.get('_route') == 'count_evening' ? 'is-active' : '' }}"
+         href="{{ path('count_evening') }}">{{ 'nav.evening'|trans }}</a>
+      <a class="app-nav__link {{ app.request.attributes.get('_route') == 'production' ? 'is-active' : '' }}"
+         href="{{ path('production') }}">{{ 'nav.toProduce'|trans }}</a>
+      {% if current_user().isAdmin %}
+        <a class="app-nav__link {{ 'admin' in app.request.attributes.get('_route') ? 'is-active' : '' }}"
+           href="{{ path('admin_home') }}">{{ 'nav.admin'|trans }}</a>
+      {% endif %}
+    </nav>
+  {% endif %}
+{% endblock %}
+
+<main class="app-main">
+
+  {# Bandeau affiché par app.js dès que le réseau est coupé. #}
+  <div class="banner banner--warn" data-offline-banner hidden>
+    {{ 'status.offlineHint'|trans }}
+  </div>
+
+  {% block flashes %}
+    {% for message in app.flashes('success') %}
+      <p class="banner banner--ok" role="status">{{ message|trans }}</p>
+    {% endfor %}
+    {% for message in app.flashes('error') %}
+      <p class="banner banner--danger" role="alert">{{ message|trans }}</p>
+    {% endfor %}
+  {% endblock %}
+
+  {% block content %}{% endblock %}
+</main>
+
+<script src="{{ asset('assets/app.js') }}" defer></script>
+{% block javascripts %}{% endblock %}
+
+</body>
+</html>

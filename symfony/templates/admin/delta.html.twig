@@ -1,0 +1,181 @@
+{#
+  §7.8 — Delta technique (recettes ↔ consommation réelle) et vue matricielle.
+
+  Règle d'affichage : l'incomplétude des données est signalée AVANT les chiffres,
+  jamais après — on ne laisse pas conclure à tort sur des données partielles (§6).
+#}
+{% extends 'admin/_layout.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'admin.delta.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block admin_content %}
+
+  {{ ui.page_header('admin.delta.title'|trans, 'admin.delta.subtitle'|trans) }}
+
+  <section class="card">
+    {{ ui.period_filter('admin_delta', from, to) }}
+  </section>
+
+  {% if report.partial %}
+    <div class="banner banner--warn" role="status">
+      <strong>{{ 'status.partialData'|trans }}</strong> {{ 'status.partialDataHint'|trans }}
+      <ul class="banner__list">
+        {% if report.producedByProduct is empty %}
+          <li>{{ 'admin.delta.noPlan'|trans }}</li>
+        {% endif %}
+        {% if report.productsWithoutRecipe is not empty %}
+          <li>{{ 'admin.delta.productsWithoutRecipe'|trans }}</li>
+        {% endif %}
+        {% if report.materialsWithoutRealData is not empty %}
+          <li>
+            {{ 'admin.delta.noRealData'|trans }} :
+            {% for materialId in report.materialsWithoutRealData %}
+              {{ material_label(materials[materialId] ?? null, materialId) }}{{ not loop.last ? ',' : '' }}
+            {% endfor %}
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <section class="card">
+    <header class="card__header">
+      <div>
+        <h2 class="card__title">{{ 'admin.delta.title'|trans }}</h2>
+        <p class="muted">
+          {{ 'admin.delta.summary'|trans({
+            '%materials%': report.summary.materials,
+            '%outOfTolerance%': report.summary.outOfTolerance
+          }) }}
+          · {{ 'admin.delta.tolerance'|trans({ '%value%': (report.tolerance * 100)|number_format(1, ',', ' ') }) }}
+        </p>
+      </div>
+
+      <a class="button button--secondary" href="{{ path('admin_delta_csv', { from: from, to: to }) }}">
+        {{ 'common.export'|trans }}
+      </a>
+    </header>
+
+    <div class="table-scroll">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>{{ 'admin.delta.material'|trans }}</th>
+            <th>{{ 'common.unit'|trans }}</th>
+            <th>{{ 'admin.delta.theoretical'|trans }}</th>
+            <th>{{ 'admin.delta.real'|trans }}</th>
+            <th>{{ 'admin.delta.delta'|trans }}</th>
+            <th>{{ 'admin.delta.deltaPct'|trans }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for delta in report.deltas %}
+            {% set material = materials[delta.materialId] ?? null %}
+            <tr>
+              <th scope="row">{{ material_label(material, delta.materialId) }}</th>
+              <td>{{ material ? material.unit : '—' }}</td>
+              <td>{{ delta.theoreticalQty|qty }}</td>
+              <td class="{{ delta.partial ? 'table__cell--partial' : '' }}">
+                {{ delta.partial ? 'admin.delta.noRealData'|trans : delta.realQty|qty }}
+              </td>
+              <td class="{{ delta.outOfTolerance ? 'table__cell--alert' : '' }}">{{ delta.delta|qty }}</td>
+              <td class="{{ delta.outOfTolerance ? 'table__cell--alert' : '' }}">{{ delta.deltaPct|pct }}</td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="6" class="table__cell--partial">{{ 'admin.delta.noPlan'|trans }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  {# Saisie de la consommation réelle : sans elle, le delta reste indicatif. #}
+  <section class="card">
+    <h2 class="card__title">{{ 'admin.delta.addMovement'|trans }}</h2>
+
+    <form method="post" action="{{ path('admin_material_movement') }}" class="filters">
+      <input type="hidden" name="from" value="{{ from }}">
+      <input type="hidden" name="to" value="{{ to }}">
+
+      <div class="field">
+        <label class="field__label" for="movement-date">{{ 'common.date'|trans }}</label>
+        <input class="field__input" type="date" id="movement-date" name="date" value="{{ to }}" required>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="movement-material">{{ 'admin.delta.material'|trans }}</label>
+        <select class="field__input" id="movement-material" name="materialId" required>
+          {% for id, material in materials %}
+            <option value="{{ id }}">{{ material_label(material, id) }} ({{ material.unit }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="movement-qty">{{ 'admin.delta.movementQty'|trans }}</label>
+        <input class="field__input" type="number" step="any" id="movement-qty" name="realQty" required>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="movement-note">{{ 'admin.delta.movementNote'|trans }}</label>
+        <input class="field__input" type="text" id="movement-note" name="note">
+      </div>
+
+      <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
+    </form>
+  </section>
+
+  {# Vue matricielle jour × produit (§6). #}
+  <section class="card">
+    <header class="card__header">
+      <h2 class="card__title">{{ 'admin.delta.matrixTitle'|trans }}</h2>
+      <a class="button button--secondary" href="{{ path('admin_matrix_csv', { from: from, to: to }) }}">
+        {{ 'common.export'|trans }}
+      </a>
+    </header>
+
+    <div class="table-scroll">
+      <table class="table table--matrix">
+        <thead>
+          <tr>
+            <th>{{ 'common.product'|trans }}</th>
+            {% for day in matrix.days %}
+              <th>
+                {{ ('daysShort.' ~ day.dayOfWeek.value)|trans }}<br>
+                <span class="muted">{{ day.date|slice(5) }}</span>
+              </th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for product in matrix.products %}
+            <tr>
+              <th scope="row">{{ product_label(product) }}</th>
+              {% for day in matrix.days %}
+                {% set cell = matrix.cells[product.id][day.date] ?? null %}
+                <td class="{{ cell and cell.net is null ? 'table__cell--partial' : '' }}">
+                  {% if cell %}
+                    <strong>{{ cell.net|qty }}</strong><br>
+                    <span class="muted table__subvalue">
+                      {{ cell.opening|qty }} → {{ cell.closing|qty }}
+                    </span>
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <p class="muted">
+      {{ 'admin.delta.net'|trans }} · {{ 'admin.delta.opening'|trans }} → {{ 'admin.delta.closing'|trans }}
+    </p>
+  </section>
+
+{% endblock %}

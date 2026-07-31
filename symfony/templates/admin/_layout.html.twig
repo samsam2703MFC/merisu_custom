@@ -1,0 +1,19 @@
+{# Gabarit commun aux écrans d'administration : ajoute la barre de sections. #}
+{% extends 'base.html.twig' %}
+
+{% block content %}
+  <nav class="admin-nav">
+    {% for section in [
+      { route: 'admin_products',   label: 'nav.products' },
+      { route: 'admin_par_matrix', label: 'nav.parMatrix' },
+      { route: 'admin_settings',   label: 'nav.settings' },
+      { route: 'admin_delta',      label: 'nav.delta' },
+      { route: 'admin_audit',      label: 'nav.audit' }
+    ] %}
+      <a class="admin-nav__link {{ app.request.attributes.get('_route') starts with section.route ? 'is-active' : '' }}"
+         href="{{ path(section.route) }}">{{ section.label|trans }}</a>
+    {% endfor %}
+  </nav>
+
+  {% block admin_content %}{% endblock %}
+{% endblock %}
