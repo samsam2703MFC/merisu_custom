@@ -12,6 +12,25 @@ export function authRoutes(ctx: AppContext): Router {
   const router = Router();
 
   /**
+   * Liste des postes, accessible AVANT connexion.
+   *
+   * Le consultant doit pouvoir choisir son poste sur l'écran de connexion (§3.1.1).
+   * Seuls l'identifiant et le nom des postes ACTIFS sont exposés — aucune donnée
+   * de production, de stock ou de personnel ne transite par cette route.
+   */
+  router.get(
+    '/workstations',
+    asyncHandler(async (_req, res) => {
+      const workstations = await ctx.consultants.listWorkstations();
+      res.json({
+        workstations: workstations
+          .filter((workstation) => workstation.active)
+          .map(({ id, name }) => ({ id, name })),
+      });
+    }),
+  );
+
+  /**
    * Connexion. Les identifiants sont vérifiés par le module Consultant existant
    * (via l'adaptateur), jamais par ce module.
    */

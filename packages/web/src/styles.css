@@ -1,0 +1,661 @@
+/**
+ * Feuille de style unique — 3 cibles : mobile, tablette, desktop (§2).
+ *
+ * Règles directrices :
+ *   • toute cible tactile fait au moins 44 px (le consultant compte debout) ;
+ *   • les tableaux larges défilent dans leur propre conteneur, jamais la page ;
+ *   • mobile d'abord, la tablette et le desktop enrichissent la mise en page.
+ */
+
+:root {
+  --brand: #7b3f00;
+  --brand-dark: #5a2d00;
+  --brand-light: #f3e6d8;
+  --bg: #faf7f2;
+  --surface: #ffffff;
+  --text: #241a12;
+  --text-muted: #6d6157;
+  --border: #e2d7c9;
+  --ok: #1c7a4a;
+  --ok-bg: #e6f4ec;
+  --warn: #a06800;
+  --warn-bg: #fdf3e0;
+  --danger: #b3261e;
+  --danger-bg: #fdecea;
+  --radius: 12px;
+  --touch: 44px;
+  --shadow: 0 1px 3px rgba(36, 26, 18, 0.08), 0 4px 14px rgba(36, 26, 18, 0.06);
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.5;
+  /* Évite le zoom automatique iOS lors de la saisie au doigt. */
+  -webkit-text-size-adjust: 100%;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 0.25rem;
+  line-height: 1.25;
+}
+
+h1 {
+  font-size: 1.4rem;
+}
+h2 {
+  font-size: 1.15rem;
+}
+
+p {
+  margin: 0 0 0.5rem;
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* ── Structure ────────────────────────────────────────────────────────── */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--brand);
+  color: #fff;
+  padding: 0.6rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.app-header .brand {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  margin-right: auto;
+  font-size: 1rem;
+}
+
+.app-main {
+  flex: 1;
+  padding: 1rem;
+  /* Réserve la hauteur de la barre d'onglets fixée en bas d'écran. */
+  padding-bottom: calc(var(--touch) + 2.5rem + env(safe-area-inset-bottom));
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/*
+ * Barre d'onglets ancrée en bas sur mobile/tablette : le pouce y accède sans
+ * lâcher l'appareil. `fixed` et non `sticky` — la navigation étant en tête de
+ * document, `sticky` la ferait défiler hors écran dès le premier scroll.
+ */
+.app-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.app-nav a {
+  flex: 1;
+  min-height: var(--touch);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0.4rem 0.25rem;
+  text-decoration: none;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.app-nav a.active {
+  color: var(--brand);
+  box-shadow: inset 0 3px 0 var(--brand);
+  background: var(--brand-light);
+}
+
+/* ── Cartes et sections ───────────────────────────────────────────────── */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.card-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.spacer {
+  flex: 1;
+}
+
+/* ── Saisie rapide au doigt (§2) ──────────────────────────────────────── */
+
+.count-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.count-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.count-item.invalid {
+  border-color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.count-item .name {
+  font-weight: 650;
+  font-size: 1.05rem;
+}
+
+.count-controls {
+  display: grid;
+  grid-template-columns: var(--touch) 1fr var(--touch);
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.count-controls button {
+  min-width: var(--touch);
+  min-height: calc(var(--touch) + 8px);
+  font-size: 1.5rem;
+  font-weight: 700;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--brand-light);
+  color: var(--brand-dark);
+  cursor: pointer;
+  /* Évite la sélection de texte lors des appuis répétés. */
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.count-controls button:active {
+  background: var(--brand);
+  color: #fff;
+}
+
+.count-controls input {
+  min-height: calc(var(--touch) + 8px);
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--text);
+  width: 100%;
+}
+
+/* ── Formulaires ──────────────────────────────────────────────────────── */
+
+label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 0.2rem;
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: 1rem;
+  padding: 0.55rem 0.7rem;
+  min-height: var(--touch);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--text);
+  width: 100%;
+}
+
+input[type='checkbox'] {
+  width: 24px;
+  height: 24px;
+  min-height: 24px;
+  accent-color: var(--brand);
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: var(--touch);
+}
+
+.checkbox-row label {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.field {
+  margin-bottom: 0.75rem;
+}
+
+.field-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: 1fr;
+}
+
+/* ── Boutons ──────────────────────────────────────────────────────────── */
+
+button,
+.button {
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 650;
+  min-height: var(--touch);
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  background: var(--brand);
+  color: #fff;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button.secondary {
+  background: var(--surface);
+  color: var(--brand-dark);
+  border-color: var(--border);
+}
+
+button.ghost {
+  background: transparent;
+  color: inherit;
+  border-color: currentColor;
+}
+
+button.danger {
+  background: var(--danger);
+}
+
+button.block {
+  width: 100%;
+}
+
+button.large {
+  min-height: 56px;
+  font-size: 1.1rem;
+}
+
+/* ── Badges et bandeaux ───────────────────────────────────────────────── */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badge.ok {
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+.badge.warn {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+.badge.danger {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+.badge.neutral {
+  background: var(--brand-light);
+  color: var(--brand-dark);
+}
+
+.banner {
+  border-radius: var(--radius);
+  padding: 0.7rem 0.9rem;
+  margin-bottom: 0.9rem;
+  font-size: 0.92rem;
+  border: 1px solid transparent;
+}
+
+.banner.info {
+  background: var(--brand-light);
+  border-color: var(--border);
+  color: var(--brand-dark);
+}
+.banner.ok {
+  background: var(--ok-bg);
+  border-color: var(--ok);
+  color: var(--ok);
+}
+.banner.warn {
+  background: var(--warn-bg);
+  border-color: var(--warn);
+  color: var(--warn);
+}
+.banner.danger {
+  background: var(--danger-bg);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* Indicateur en/hors-ligne (§2). */
+.connectivity {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  min-height: 32px;
+}
+
+.connectivity .dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #7ee2a8;
+}
+
+.connectivity.offline .dot {
+  background: #ffcf6b;
+}
+
+/* ── Tableaux (matrices, rapports) ────────────────────────────────────── */
+
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 520px;
+  font-size: 0.92rem;
+}
+
+th,
+td {
+  padding: 0.5rem 0.6rem;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+th:first-child,
+td:first-child {
+  text-align: left;
+  position: sticky;
+  left: 0;
+  background: var(--surface);
+  z-index: 1;
+  border-right: 1px solid var(--border);
+}
+
+thead th {
+  background: var(--brand-light);
+  color: var(--brand-dark);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+thead th:first-child {
+  z-index: 3;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+td.out-of-tolerance {
+  background: var(--danger-bg);
+  color: var(--danger);
+  font-weight: 700;
+}
+
+td.partial {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Cellules éditables de la matrice des seuils. */
+td.editable {
+  padding: 0.2rem;
+}
+
+td.editable input {
+  min-height: var(--touch);
+  min-width: 64px;
+  text-align: center;
+  font-weight: 650;
+  border-color: transparent;
+  background: transparent;
+}
+
+td.editable input:focus {
+  border-color: var(--brand);
+  background: #fff;
+}
+
+/* ── Écran de connexion ───────────────────────────────────────────────── */
+
+.login-screen {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+}
+
+/* ── Boîte de dialogue ────────────────────────────────────────────────── */
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(36, 26, 18, 0.45);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  z-index: 50;
+}
+
+.dialog {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  width: 100%;
+  max-width: 460px;
+  box-shadow: var(--shadow);
+}
+
+/* ── Photos ───────────────────────────────────────────────────────────── */
+
+.photo-strip {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.photo-strip img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+/* L'input fichier natif est masqué au profit d'un bouton conforme au design. */
+.photo-input {
+  display: none;
+}
+
+/* ── Tablette ─────────────────────────────────────────────────────────── */
+
+@media (min-width: 600px) {
+  .app-main {
+    padding: 1.25rem;
+  }
+
+  .count-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .count-controls {
+    grid-template-columns: 56px 1fr 56px;
+  }
+
+  .field-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  h1 {
+    font-size: 1.6rem;
+  }
+}
+
+/* ── Desktop ──────────────────────────────────────────────────────────── */
+
+@media (min-width: 1024px) {
+  /* Sur desktop la navigation revient en haut : plus de barre d'onglets basse,
+     donc plus besoin de réserver d'espace en pied de page. */
+  .app-main {
+    padding-bottom: 1.5rem;
+  }
+
+  .app-nav {
+    position: static;
+    border-top: none;
+    border-bottom: 1px solid var(--border);
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.25rem 1rem;
+  }
+
+  .app-nav a {
+    flex: 0 0 auto;
+    min-width: 128px;
+    flex-direction: row;
+    gap: 0.4rem;
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+  }
+
+  .app-nav a.active {
+    box-shadow: none;
+  }
+
+  .count-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .field-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .app-main {
+    padding: 1.5rem;
+  }
+}
+
+/* ── Accessibilité ────────────────────────────────────────────────────── */
+
+:focus-visible {
+  outline: 3px solid var(--brand);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

@@ -198,6 +198,40 @@ export class InventoryService {
   }
 
   /**
+   * Joint une photo désignée par sa CLÉ MÉTIER (jour, poste, produit, moment).
+   *
+   * C'est la variante utilisée par la PWA : hors-ligne, l'identifiant technique du
+   * comptage n'existe pas encore. La file rejoue les requêtes dans l'ordre, donc
+   * l'enregistrement des quantités précède toujours l'envoi de la photo.
+   */
+  async addPhotoByKey(params: {
+    date: string;
+    workstationId: string;
+    productId: string;
+    moment: CountMoment;
+    url: string;
+    takenAt?: string;
+    actor: Actor;
+  }): Promise<InventoryCount> {
+    const counts = await this.store.findCounts({
+      date: params.date,
+      workstationId: params.workstationId,
+      productId: params.productId,
+      moment: params.moment,
+    });
+
+    const count = counts[0];
+    if (!count) throw notFound('COUNT_NOT_FOUND');
+
+    return this.addPhoto({
+      countId: count.id,
+      url: params.url,
+      takenAt: params.takenAt,
+      actor: params.actor,
+    });
+  }
+
+  /**
    * Valide un comptage.
    *
    * Pour le SOIR : vérifie les règles §5.3, verrouille les saisies, puis calcule

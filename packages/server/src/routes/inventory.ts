@@ -21,6 +21,33 @@ const ALLOWED_IMAGE_TYPES: Record<string, string> = {
   'image/webp': 'webp',
 };
 
+/**
+ * Décode et écrit une photo envoyée en base64.
+ * Le type MIME est vérifié en liste blanche : on n'écrit jamais un contenu
+ * arbitraire sous une extension choisie par le client.
+ */
+function savePhotoFile(
+  dataBase64: unknown,
+  contentType: unknown,
+  uploadDir: string,
+): { fileName: string } {
+  if (typeof dataBase64 !== 'string' || dataBase64.length === 0) {
+    throw badRequest('MISSING_PHOTO_DATA');
+  }
+
+  const extension = ALLOWED_IMAGE_TYPES[String(contentType)];
+  if (!extension) throw badRequest('UNSUPPORTED_IMAGE_TYPE');
+
+  const buffer = Buffer.from(dataBase64.replace(/^data:[^;]+;base64,/, ''), 'base64');
+  if (buffer.length === 0) throw badRequest('INVALID_PHOTO_DATA');
+
+  const fileName = `${randomUUID()}.${extension}`;
+  mkdirSync(uploadDir, { recursive: true });
+  writeFileSync(join(uploadDir, fileName), buffer);
+
+  return { fileName };
+}
+
 export function inventoryRoutes(ctx: AppContext): Router {
   const router = Router();
   router.use(authenticate(ctx.config.authSecret));
@@ -116,22 +143,42 @@ export function inventoryRoutes(ctx: AppContext): Router {
     asyncHandler(async (req, res) => {
       const auth = requireAuth(req);
       const { dataBase64, contentType, takenAt } = req.body ?? {};
-
-      if (typeof dataBase64 !== 'string' || dataBase64.length === 0) {
-        throw badRequest('MISSING_PHOTO_DATA');
-      }
-      const extension = ALLOWED_IMAGE_TYPES[String(contentType)];
-      if (!extension) throw badRequest('UNSUPPORTED_IMAGE_TYPE');
-
-      const buffer = Buffer.from(dataBase64.replace(/^data:[^;]+;base64,/, ''), 'base64');
-      if (buffer.length === 0) throw badRequest('INVALID_PHOTO_DATA');
-
-      const fileName = `${randomUUID()}.${extension}`;
-      mkdirSync(ctx.config.uploadDir, { recursive: true });
-      writeFileSync(join(ctx.config.uploadDir, fileName), buffer);
+      const { fileName } = savePhotoFile(dataBase64, contentType, ctx.config.uploadDir);
 
       const count = await ctx.inventory.addPhoto({
         countId: req.params.countId!,
+        url: `${ctx.config.uploadPublicPath}/${fileName}`,
+        takenAt: typeof takenAt === 'string' ? takenAt : undefined,
+        actor: { id: auth.sub, role: auth.role },
+      });
+
+      res.status(201).json({ count });
+    }),
+  );
+
+  /**
+   * Ajout d'une photo par clé métier (jour, poste, produit, moment).
+   * Variante utilisée par la PWA : elle fonctionne hors-ligne, l'identifiant
+   * technique du comptage n'étant pas connu au moment de la prise de vue.
+   */
+  router.post(
+    '/counts/photos',
+    asyncHandler(async (req, res) => {
+      const auth = requireAuth(req);
+      const { dataBase64, contentType, takenAt, productId } = req.body ?? {};
+
+      const date = await parseDate(req.body?.date);
+      const workstationId = resolveWorkstation(req, req.body?.workstationId);
+      const moment = parseMoment(req.body?.moment);
+      if (typeof productId !== 'string' || !productId) throw badRequest('UNKNOWN_PRODUCT');
+
+      const { fileName } = savePhotoFile(dataBase64, contentType, ctx.config.uploadDir);
+
+      const count = await ctx.inventory.addPhotoByKey({
+        date,
+        workstationId,
+        productId,
+        moment,
         url: `${ctx.config.uploadPublicPath}/${fileName}`,
         takenAt: typeof takenAt === 'string' ? takenAt : undefined,
         actor: { id: auth.sub, role: auth.role },
