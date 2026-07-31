@@ -18,27 +18,42 @@ echo "→ Déploiement de MERISU dans $APP_DIR"
 # Vérifiés d'emblée : un échec ici est plus clair qu'une erreur PHP obscure
 # trois étapes plus loin.
 
-if ! command -v php >/dev/null 2>&1; then
-    echo "✗ PHP est introuvable. Installer PHP 8.2 ou supérieur." >&2
+# Interpréteur à utiliser. Surchargeable pour viser une version précise sans
+# toucher au PHP par défaut du système — utile quand d'autres sites du serveur
+# tournent encore sur une version plus ancienne :
+#
+#   PHP_BIN=php8.3 bash bin/deploy.sh
+PHP_BIN="${PHP_BIN:-php}"
+
+if ! command -v "$PHP_BIN" >/dev/null 2>&1; then
+    echo "✗ « $PHP_BIN » est introuvable. Installer PHP 8.2 ou supérieur." >&2
     exit 1
 fi
 
-PHP_OK=$(php -r 'echo PHP_VERSION_ID >= 80200 ? 1 : 0;')
+PHP_OK=$("$PHP_BIN" -r 'echo PHP_VERSION_ID >= 80200 ? 1 : 0;')
 if [ "$PHP_OK" != "1" ]; then
-    echo "✗ PHP $(php -r 'echo PHP_VERSION;') détecté ; 8.2 minimum requis." >&2
+    cat >&2 <<MSG
+✗ PHP $("$PHP_BIN" -r 'echo PHP_VERSION;') détecté ; 8.2 minimum requis
+  (contrainte de Symfony 7).
+
+  Si une version plus récente est déjà installée à côté, la désigner :
+      PHP_BIN=php8.3 bash bin/deploy.sh
+
+  Sinon, voir DEPLOIEMENT.md §0 pour l'installer sans modifier le PHP système.
+MSG
     exit 1
 fi
 
 for ext in json mbstring; do
-    if ! php -m | grep -qix "$ext"; then
-        echo "✗ Extension PHP manquante : $ext" >&2
+    if ! "$PHP_BIN" -m | grep -qix "$ext"; then
+        echo "✗ Extension PHP manquante pour $PHP_BIN : $ext" >&2
         exit 1
     fi
 done
 
 # Un pilote de base est indispensable : SQLite par défaut, PostgreSQL en option.
-if ! php -m | grep -qix "pdo_sqlite" && ! php -m | grep -qix "pdo_pgsql"; then
-    echo "✗ Aucun pilote de base disponible : installer pdo_sqlite ou pdo_pgsql." >&2
+if ! "$PHP_BIN" -m | grep -qix "pdo_sqlite" && ! "$PHP_BIN" -m | grep -qix "pdo_pgsql"; then
+    echo "✗ Aucun pilote de base pour $PHP_BIN : installer pdo_sqlite ou pdo_pgsql." >&2
     exit 1
 fi
 
@@ -58,7 +73,7 @@ fi
 # ── 1. Configuration ────────────────────────────────────────────────────────
 if [ ! -f .env.local ]; then
     echo "→ .env.local absent : création avec un secret généré"
-    SECRET="$(php -r 'echo bin2hex(random_bytes(24));')"
+    SECRET="$("$PHP_BIN" -r 'echo bin2hex(random_bytes(24));')"
     cat > .env.local <<EOF
 APP_ENV=prod
 APP_SECRET=$SECRET
@@ -72,7 +87,7 @@ fi
 # ── 2. Dépendances ──────────────────────────────────────────────────────────
 if command -v composer >/dev/null 2>&1; then
     echo "→ Installation des dépendances (sans les outils de développement)"
-    composer install --no-dev --optimize-autoloader --no-interaction
+    "$PHP_BIN" "$(command -v composer)" install --no-dev --optimize-autoloader --no-interaction
 else
     echo "→ Composer absent : vendor/ fourni par l'archive, étape ignorée"
 fi
@@ -92,11 +107,11 @@ chmod -R u+rwX,g+rwX var public/uploads
 
 # ── 4. Schéma et données ────────────────────────────────────────────────────
 echo "→ Application du schéma (idempotente, sans écraser les saisies)"
-php bin/console --env=prod merisu:seed
+"$PHP_BIN" bin/console --env=prod merisu:seed
 
 # ── 5. Cache ────────────────────────────────────────────────────────────────
 echo "→ Reconstruction du cache"
-php bin/console --env=prod cache:clear
+"$PHP_BIN" bin/console --env=prod cache:clear
 
 cat <<'EOF'
 

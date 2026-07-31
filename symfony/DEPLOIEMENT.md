@@ -41,6 +41,56 @@ journal d'audit sont préservés.
 > production fournie, qui embarque déjà les dépendances — la suite de ce
 > document décrit cette voie.
 
+### Installer PHP 8.3 sur Ubuntu 22.04 sans casser l'existant
+
+Ubuntu 22.04 livre PHP 8.1, insuffisant pour Symfony 7 — et **PHP 8.1 ne reçoit
+plus de correctifs de sécurité depuis fin 2025**. Le dépôt `ondrej/php` permet
+d'installer 8.3 **à côté** de 8.1, sans toucher aux autres sites du serveur :
+
+```bash
+apt update
+apt install -y software-properties-common
+add-apt-repository -y ppa:ondrej/php
+apt update
+
+# 8.3 s'installe en parallèle de 8.1, qui reste le PHP par défaut du système.
+apt install -y php8.3-cli php8.3-fpm php8.3-mbstring php8.3-xml \
+               php8.3-sqlite3 php8.3-intl php8.3-curl php8.3-zip
+```
+
+`php8.3-intl` n'est pas strictement obligatoire (le code sait s'en passer), mais
+sans lui les dates longues perdent leur nom de jour traduit en PL, IT et ES.
+
+Déployer ensuite en désignant explicitement l'interpréteur :
+
+```bash
+PHP_BIN=php8.3 bash bin/deploy.sh
+```
+
+⚠️ **Ne pas changer le PHP par défaut** (`update-alternatives`) si d'autres
+applications tournent sur ce serveur : elles pourraient cesser de fonctionner.
+Il suffit de faire pointer le *pool* FPM de MERISU sur 8.3 dans la
+configuration du serveur web (§5) :
+
+```nginx
+fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+```
+
+Sous Apache avec `mod_php`, deux versions ne peuvent pas cohabiter : passer par
+PHP-FPM pour ce site précis.
+
+```apache
+<FilesMatch \.php$>
+    SetHandler "proxy:unix:/run/php/php8.3-fpm.sock|fcgi://localhost"
+</FilesMatch>
+```
+
+**Autre voie possible**, si la version de PHP ne peut pas bouger : rétrograder
+l'application vers Symfony 6.4 LTS, qui accepte PHP 8.1. C'est un travail réel
+(ajustement des dépendances, des classes `readonly` et nouvelle campagne de
+tests) et cela adosserait le module à un PHP sans support de sécurité — à ne
+retenir qu'en dernier recours.
+
 ---
 
 ## 1. Déposer les fichiers (voie manuelle, sans Git)
