@@ -1,0 +1,17 @@
+# Photos de comptage — contenu téléversé par les consultants.
+#
+# Rien ici ne doit JAMAIS être exécuté : un fichier déposé sous une extension
+# trompeuse deviendrait sinon une porte d'entrée. Les directives ci-dessous sont
+# valides en .htaccess (contrairement à <Directory>, qui y est interdit).
+
+# Neutralise tout gestionnaire hérité du vhost : les fichiers sont servis
+# comme du contenu statique, jamais passés à PHP-FPM.
+SetHandler none
+RemoveHandler .php .phtml .phar .phps .cgi .pl .py .sh
+
+# Ceinture et bretelles : accès refusé à toute extension exécutable.
+<FilesMatch "\.(?:php\d?|phtml|phar|phps|cgi|pl|py|sh|shtml|htaccess)$">
+    Require all denied
+</FilesMatch>
+
+Options -ExecCGI -Indexes

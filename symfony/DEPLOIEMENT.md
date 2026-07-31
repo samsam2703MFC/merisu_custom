@@ -150,23 +150,49 @@ une matrice de seuils **fictive**, sans jamais écraser des saisies réelles.
 
 ## 5. Serveur web
 
-### Apache
+### Apache (+ PHP-FPM)
 
-`public/.htaccess` est fourni et gère seul le sous-répertoire. Il faut
-simplement `mod_rewrite` activé et `AllowOverride All` sur le répertoire :
+`public/.htaccess` est fourni et gère seul le sous-répertoire. Configuration
+complète pour servir l'application sous `/merisu/` d'un site existant, en la
+faisant tourner sur PHP 8.3 **sans toucher au PHP des autres sites** :
 
 ```apache
-<Directory /var/www/merisu/public>
+# /etc/apache2/conf-available/merisu.conf
+Alias /merisu /var/www/merisu-src/symfony/public
+
+<Directory /var/www/merisu-src/symfony/public>
     AllowOverride All
     Require all granted
+    Options -MultiViews +FollowSymLinks
+
+    # Ce répertoire seulement passe par PHP 8.3 ; les autres sites du serveur
+    # continuent d'utiliser leur propre version.
+    <FilesMatch \.php$>
+        SetHandler "proxy:unix:/run/php/php8.3-fpm.sock|fcgi://localhost"
+    </FilesMatch>
 </Directory>
 ```
 
-Pour servir l'application sous `/merisu/` d'un site existant :
+Activation :
 
-```apache
-Alias /merisu /var/www/merisu/public
+```bash
+a2enmod rewrite proxy proxy_fcgi setenvif
+a2enconf merisu
+apachectl configtest && systemctl reload apache2
 ```
+
+Placer le fichier dans `conf-available/` plutôt que dans un vhost précis le
+rend actif sur les vhosts HTTP **et** HTTPS du serveur, sans les éditer.
+
+> ⚠️ **Ne jamais mettre de bloc `<Directory>` dans un `.htaccess`** : la
+> directive y est interdite et Apache renvoie alors une erreur 500 sur toutes
+> les requêtes (`<Directory not allowed here`). Les blocs `<Directory>`
+> n'appartiennent qu'à la configuration du serveur, comme ci-dessus.
+
+Les photos téléversées sont protégées par `public/uploads/.htaccess`, qui
+neutralise tout gestionnaire hérité et refuse les extensions exécutables :
+un fichier `.php` déposé dans ce dossier renvoie 403, une image reste servie
+normalement.
 
 ### Nginx
 

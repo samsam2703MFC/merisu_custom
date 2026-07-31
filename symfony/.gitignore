@@ -2,5 +2,6 @@
 /var/
 /.env.local
 /.phpunit.cache/
-/public/uploads/
+/public/uploads/*
+!/public/uploads/.htaccess
 /var/data/

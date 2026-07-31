@@ -35,7 +35,6 @@
     </IfModule>
 </IfModule>
 
-# Les photos de comptage ne doivent jamais être exécutées comme du code.
-<Directory "uploads">
-    php_flag engine off
-</Directory>
+# NE PAS ajouter de bloc <Directory> ici : cette directive est interdite en
+# .htaccess et provoque un « Directory not allowed here », donc une erreur 500
+# sur TOUTES les requêtes. La protection des photos est dans public/uploads/.htaccess.
