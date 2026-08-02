@@ -310,3 +310,28 @@ checklist:
 
 count:
     openedContainer: 'Contenant entamé'
+
+network:
+    title: Réseau
+    tileHint: 'Classement des boutiques'
+    period: 'Du %from% au %to%'
+    myPosition: 'Votre boutique'
+    rankSuffix: e
+    inCountry: 'en %country%'
+    worldwide: 'Dans le monde'
+    nationalRanking: 'Dans votre pays'
+    country: Pays
+    yourShop: 'votre boutique'
+    empty: 'Aucune boutique sur cette période.'
+    sameCurrencyOnly: "Classement limité aux boutiques en %currency% : sans taux de change, deux devises ne se comparent pas."
+    demoWarning: "Chiffres de DÉMONSTRATION : la caisse n'est pas encore branchée. Aucune décision ne doit s'appuyer dessus."
+    metrics:
+        REVENUE: "Chiffre d'affaires"
+        CUSTOMERS: Clients
+        TIRAMISU: 'Tiramisu vendus'
+
+countries:
+    PL: Pologne
+    IT: Italie
+    FR: France
+    ES: Espagne

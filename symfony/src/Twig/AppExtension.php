@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Merisu\Inventory\Twig;
 
 use Merisu\Inventory\Adapter\ConsultantServiceInterface;
+use Merisu\Inventory\Adapter\LocalShopRankingService;
 use Merisu\Inventory\Adapter\Material;
+use Merisu\Inventory\Adapter\ShopRankingServiceInterface;
 use Merisu\Inventory\Adapter\Workstation;
 use Merisu\Inventory\Domain\ChecklistItem;
 use Merisu\Inventory\Domain\ContainerQuantity;
@@ -32,6 +34,7 @@ final class AppExtension extends AbstractExtension
         private readonly CurrentUser $currentUser,
         private readonly Store $store,
         private readonly ConsultantServiceInterface $consultants,
+        private readonly ShopRankingServiceInterface $ranking,
     ) {
     }
 
@@ -48,6 +51,9 @@ final class AppExtension extends AbstractExtension
             new TwigFunction('workstation_name', $this->workstationName(...)),
             new TwigFunction('container_fractions', static fn (): array => ContainerQuantity::FRACTIONS),
             new TwigFunction('container_split', static fn (?float $q): array => ContainerQuantity::split($q)),
+            // Vrai tant que la caisse n'est pas branchée : l'écran Réseau le
+            // dit franchement plutôt que de laisser croire à de vraies mesures.
+            new TwigFunction('is_demo_ranking', fn (): bool => $this->ranking instanceof LocalShopRankingService),
         ];
     }
 

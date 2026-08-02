@@ -307,3 +307,28 @@ checklist:
 
 count:
     openedContainer: 'Napoczęty pojemnik'
+
+network:
+    title: Sieć
+    tileHint: 'Ranking sklepów'
+    period: 'Od %from% do %to%'
+    myPosition: 'Twój sklep'
+    rankSuffix: .
+    inCountry: 'w kraju: %country%'
+    worldwide: 'Na świecie'
+    nationalRanking: 'W twoim kraju'
+    country: Kraj
+    yourShop: 'twój sklep'
+    empty: 'Brak sklepów w tym okresie.'
+    sameCurrencyOnly: 'Ranking ograniczony do sklepów w walucie %currency%: bez kursu wymiany dwóch walut nie da się porównać.'
+    demoWarning: 'Dane DEMONSTRACYJNE: kasa nie jest jeszcze podłączona. Nie podejmuj na ich podstawie żadnych decyzji.'
+    metrics:
+        REVENUE: Obrót
+        CUSTOMERS: Klienci
+        TIRAMISU: 'Sprzedane tiramisu'
+
+countries:
+    PL: Polska
+    IT: Włochy
+    FR: Francja
+    ES: Hiszpania

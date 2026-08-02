@@ -57,7 +57,16 @@
       </a>
     {% endfor %}
 
-    {# Consultation, pas une saisie : présentée à part des deux tâches. #}
+    {# Consultations, présentées à part des tâches à faire. #}
+    <a class="task task--secondary" href="{{ path('network') }}">
+      <span class="task__icon">{{ ui.icon('network') }}</span>
+
+      <span class="task__body">
+        <span class="task__label">{{ 'network.title'|trans }}</span>
+        <span class="task__meta">{{ 'network.tileHint'|trans }}</span>
+      </span>
+    </a>
+
     <a class="task task--secondary" href="{{ path('production') }}">
       <span class="task__icon">{{ ui.icon('tray') }}</span>
 

@@ -1,0 +1,149 @@
+{#
+  Réseau — classement des boutiques.
+
+  Deux tableaux, jamais mélangés : le pays d'abord, parce que c'est là que le
+  vendeur se compare à des boutiques qui lui ressemblent, puis le monde.
+
+  Écran de consultation : aucune saisie, aucun bouton d'enregistrement.
+#}
+{% extends 'base.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'network.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block content %}
+
+  <div class="page-header page-header--with-icon">
+    <span class="page-header__icon">{{ ui.icon('network') }}</span>
+    <div class="page-header__text">
+      <h1 class="page-header__title">{{ 'network.title'|trans }}</h1>
+      <p class="page-header__subtitle">
+        {{ 'network.period'|trans({ '%from%': from|long_date, '%to%': to|long_date }) }}
+      </p>
+    </div>
+  </div>
+
+  {#
+    Les chiffres viennent de la caisse. Tant qu'elle n'est pas branchée, le
+    dire franchement vaut mieux que laisser croire à de vraies mesures.
+  #}
+  {% if is_demo_ranking() %}
+    {{ ui.banner('warn', 'network.demoWarning'|trans) }}
+  {% endif %}
+
+  {# Le critère : trois classements qui ne désignent pas les mêmes gagnants. #}
+  <div class="metric-switch">
+    {% for choix in metrics %}
+      <a class="metric-switch__item {{ choix == metric ? 'is-active' : '' }}"
+         href="{{ path('network', { metric: choix.value, country: country }) }}">
+        {{ choix.labelKey|trans }}
+      </a>
+    {% endfor %}
+  </div>
+
+  {% if myNational or myWorldwide %}
+    <section class="card standing">
+      <h2 class="card__title">{{ 'network.myPosition'|trans }}</h2>
+      <div class="standing__figures">
+        {% if myNational %}
+          <div class="standing__figure">
+            <span class="standing__rank">{{ myNational.rank }}<sup>{{ 'network.rankSuffix'|trans }}</sup></span>
+            <span class="standing__scope">
+              {{ 'network.inCountry'|trans({ '%country%': ('countries.' ~ country)|trans }) }}
+              <span class="muted">/ {{ myNational.total }}</span>
+            </span>
+          </div>
+        {% endif %}
+
+        {% if myWorldwide %}
+          <div class="standing__figure">
+            <span class="standing__rank">{{ myWorldwide.rank }}<sup>{{ 'network.rankSuffix'|trans }}</sup></span>
+            <span class="standing__scope">
+              {{ 'network.worldwide'|trans }}
+              <span class="muted">/ {{ myWorldwide.total }}</span>
+            </span>
+          </div>
+        {% endif %}
+      </div>
+    </section>
+  {% endif %}
+
+  {# ── Classement national ──────────────────────────────────────────────── #}
+  <section class="card">
+    <header class="card__header">
+      <h2 class="card__title">
+        {{ country ? ('countries.' ~ country)|trans : 'network.nationalRanking'|trans }}
+      </h2>
+
+      {% if countries|length > 1 %}
+        <form method="get" action="{{ path('network') }}" class="locale-switcher">
+          <input type="hidden" name="metric" value="{{ metric.value }}">
+          <label class="visually-hidden" for="country">{{ 'network.country'|trans }}</label>
+          <select class="locale-switcher__select" id="country" name="country" data-autosubmit>
+            {% for code in countries %}
+              <option value="{{ code }}" {{ code == country ? 'selected' : '' }}>
+                {{ ('countries.' ~ code)|trans }}
+              </option>
+            {% endfor %}
+          </select>
+          <noscript><button type="submit" class="button button--secondary button--small">{{ 'common.apply'|trans }}</button></noscript>
+        </form>
+      {% endif %}
+    </header>
+
+    {{ _self.classement(national, metric, 'network.empty'|trans) }}
+  </section>
+
+  {# ── Classement mondial ───────────────────────────────────────────────── #}
+  <section class="card">
+    <h2 class="card__title">{{ 'network.worldwide'|trans }}</h2>
+
+    {#
+      Sur le chiffre d'affaires, ce classement ne retient qu'une devise : sans
+      taux de change fiable, comparer des zlotys à des euros donnerait un ordre
+      faux. Le dire ici, sinon « Dans le monde » avec quatre boutiques d'un
+      seul pays passerait pour une donnée manquante.
+    #}
+    {% if metric.isMonetary and worldwide is not empty %}
+      <p class="field__hint">
+        {{ 'network.sameCurrencyOnly'|trans({ '%currency%': worldwide|first.shop.currency }) }}
+      </p>
+    {% endif %}
+
+    {{ _self.classement(worldwide, metric, 'network.empty'|trans) }}
+  </section>
+
+{% endblock %}
+
+{#
+  Un classement. Les trois premiers portent une médaille : c'est ce qu'on
+  cherche des yeux avant de lire les chiffres.
+#}
+{% macro classement(lignes, metric, vide) %}
+  {% if lignes is empty %}
+    <p class="muted">{{ vide }}</p>
+  {% else %}
+    <ol class="rank">
+      {% for ligne in lignes %}
+        <li class="rank__row{{ ligne.isCurrent ? ' rank__row--mine' : '' }}">
+          <span class="rank__badge rank__badge--{{ ligne.rank <= 3 ? ligne.rank : 'other' }}">{{ ligne.rank }}</span>
+
+          <span class="rank__shop">
+            {{ ligne.shop.name }}
+            {% if ligne.isCurrent %}
+              <span class="rank__mine">{{ 'network.yourShop'|trans }}</span>
+            {% endif %}
+          </span>
+
+          <span class="rank__value">
+            {% if metric.isMonetary %}
+              {{ ligne.value|qty }} <span class="rank__unit">{{ ligne.shop.currency }}</span>
+            {% else %}
+              {{ ligne.value|qty }}
+            {% endif %}
+          </span>
+        </li>
+      {% endfor %}
+    </ol>
+  {% endif %}
+{% endmacro %}

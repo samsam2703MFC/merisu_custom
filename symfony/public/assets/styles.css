@@ -1125,3 +1125,107 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
   .pin__cup { transition: none; }
   .pin__cup:focus { transform: none; }
 }
+
+/* ── Réseau : classement des boutiques ───────────────────────────────────── */
+
+/* Choix du critère : trois onglets en pilules, comme la barre d'administration. */
+.metric-switch { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1rem; }
+
+.metric-switch__item {
+  min-height: var(--touch);
+  display: inline-flex;
+  align-items: center;
+  padding: .5rem 1.1rem;
+  border-radius: var(--radius-pill);
+  background: var(--cream-outline);
+  border: 1px solid var(--border);
+  color: var(--coffee-800);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: .82rem;
+  letter-spacing: .06em;
+  transition: background .25s var(--ease), color .25s var(--ease);
+}
+
+.metric-switch__item:hover { background: var(--border); }
+
+.metric-switch__item.is-active {
+  background: var(--brand);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: var(--shadow-accent);
+}
+
+/* Position de la boutique : le chiffre qu'on vient chercher en premier. */
+.standing__figures { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+.standing__figure { display: flex; align-items: baseline; gap: .5rem; }
+
+.standing__rank {
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  font-weight: 500;
+  color: var(--brand);
+  line-height: 1;
+}
+
+.standing__rank sup { font-size: .9rem; margin-left: .1rem; }
+.standing__scope { font-size: .9rem; color: var(--latte); }
+
+.rank { list-style: none; margin: 0; padding: 0; counter-reset: none; }
+
+.rank__row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: .75rem;
+  padding: .6rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.rank__row:first-child { border-top: none; }
+
+/* La boutique du poste, mise en avant : c'est elle qu'on cherche du regard. */
+.rank__row--mine {
+  background: var(--brand-light);
+  border-radius: var(--radius);
+  padding-left: .6rem;
+  padding-right: .6rem;
+  border-top-color: transparent;
+}
+
+.rank__badge {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-pill);
+  background: var(--cream-outline);
+  color: var(--coffee-800);
+  font-weight: 700;
+  font-size: .9rem;
+  flex: none;
+}
+
+/* Or, argent, bronze — lus avant même les chiffres. */
+.rank__badge--1 { background: linear-gradient(160deg, #FFD75E, #E0A800); color: #4A3200; }
+.rank__badge--2 { background: linear-gradient(160deg, #E8E8EA, #B9BAC0); color: #40434A; }
+.rank__badge--3 { background: linear-gradient(160deg, #E3A66B, #B4763C); color: #3F2609; }
+
+.rank__shop { font-weight: 600; color: var(--coffee); min-width: 0; overflow-wrap: anywhere; }
+
+.rank__mine {
+  display: inline-block;
+  margin-left: .4rem;
+  padding: .1rem .5rem;
+  border-radius: var(--radius-pill);
+  background: var(--brand);
+  color: #fff;
+  font-size: .66rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.rank__value { font-weight: 700; color: var(--coffee); white-space: nowrap; }
+.rank__unit { font-weight: 600; font-size: .78rem; color: var(--latte); }

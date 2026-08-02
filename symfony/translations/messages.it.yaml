@@ -307,3 +307,28 @@ checklist:
 
 count:
     openedContainer: 'Contenitore aperto'
+
+network:
+    title: Rete
+    tileHint: 'Classifica dei negozi'
+    period: 'Dal %from% al %to%'
+    myPosition: 'Il tuo negozio'
+    rankSuffix: º
+    inCountry: 'in %country%'
+    worldwide: 'Nel mondo'
+    nationalRanking: 'Nel tuo paese'
+    country: Paese
+    yourShop: 'il tuo negozio'
+    empty: 'Nessun negozio in questo periodo.'
+    sameCurrencyOnly: 'Classifica limitata ai negozi in %currency%: senza tasso di cambio due valute non si confrontano.'
+    demoWarning: 'Cifre DIMOSTRATIVE: la cassa non è ancora collegata. Nessuna decisione deve basarsi su questi dati.'
+    metrics:
+        REVENUE: Fatturato
+        CUSTOMERS: Clienti
+        TIRAMISU: 'Tiramisù venduti'
+
+countries:
+    PL: Polonia
+    IT: Italia
+    FR: Francia
+    ES: Spagna
