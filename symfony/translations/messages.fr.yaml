@@ -10,6 +10,7 @@ locales:
     es: Español
 
 common:
+    workstation: 'Poste de travail'
     appName: 'MERISU — Inventaire & Production'
     save: Enregistrer
     saved: Enregistré
@@ -19,7 +20,6 @@ common:
     retry: Réessayer
     language: Langue
     logout: Déconnexion
-    workstation: 'Poste de travail'
     date: Date
     product: Produit
     unit: Unité
@@ -47,8 +47,6 @@ login:
     subtitle: 'Identifiez-vous pour compter le stock de votre poste.'
     identifier: Identifiant
     secret: Code
-    workstation: 'Poste de travail'
-    workstationAuto: 'Poste pré-affecté'
     submit: 'Se connecter'
     demoTitle: 'Comptes de démonstration'
     demoHint: 'admin / 000000 · consultant1 / 111111 · consultant2 / 222222'

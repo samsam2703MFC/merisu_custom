@@ -7,6 +7,7 @@ locales:
     es: Español
 
 common:
+    workstation: Postazione
     appName: 'MERISU — Inventario e produzione'
     save: Salva
     saved: Salvato
@@ -16,7 +17,6 @@ common:
     retry: Riprova
     language: Lingua
     logout: Esci
-    workstation: Postazione
     date: Data
     product: Prodotto
     unit: Unità
@@ -44,8 +44,6 @@ login:
     subtitle: 'Accedi per contare le scorte della tua postazione.'
     identifier: Identificativo
     secret: Codice
-    workstation: Postazione
-    workstationAuto: 'Postazione assegnata'
     submit: Accedi
     demoTitle: 'Account dimostrativi'
     demoHint: 'admin / 000000 · consultant1 / 111111 · consultant2 / 222222'

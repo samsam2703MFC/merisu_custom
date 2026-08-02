@@ -31,8 +31,13 @@ final class SecurityController extends AbstractController
     }
 
     /**
-     * Connexion par code PIN à 6 chiffres, sans identifiant : c'est le geste
-     * réel au poste de travail.
+     * Connexion par code PIN à 6 chiffres, sans identifiant ni choix de poste :
+     * c'est le geste réel au poste de travail.
+     *
+     * Le poste vient de la fiche du consultant, tenue en administration. Le
+     * faire choisir au vendeur, c'était lui laisser se tromper de poste et
+     * fausser des comptages qu'aucun écran ne rattraperait — l'erreur ne se
+     * verrait qu'au plan de production du lendemain.
      *
      * Le code étant le SEUL facteur, les tentatives sont limitées par IP et
      * globalement — 10^6 combinaisons se parcourent vite sans cela.
@@ -48,7 +53,6 @@ final class SecurityController extends AbstractController
 
         if ($request->isMethod('POST')) {
             $secret = trim((string) $request->request->get('secret'));
-            $workstationId = trim((string) $request->request->get('workstationId'));
 
             $byIp = $this->loginIpLimiter->create($request->getClientIp() ?? 'unknown');
             $global = $this->loginGlobalLimiter->create('login');
@@ -60,7 +64,6 @@ final class SecurityController extends AbstractController
                 ]);
 
                 return $this->render('security/login.html.twig', [
-                    'workstations' => $this->consultants->workstations(),
                     'error' => 'TOO_MANY_ATTEMPTS',
                 ], new Response('', Response::HTTP_TOO_MANY_REQUESTS));
             }
@@ -69,20 +72,21 @@ final class SecurityController extends AbstractController
 
             if ($consultant === null) {
                 $error = 'INVALID_CREDENTIALS';
-            } elseif ($workstationId !== '' && $this->consultants->workstation($workstationId) === null) {
-                $error = 'UNKNOWN_WORKSTATION';
+            } elseif ($consultant->defaultWorkstationId === null) {
+                // Refusé ici, avec un message clair, plutôt que de laisser la
+                // session s'ouvrir sur un écran de saisie en erreur : le
+                // vendeur n'y pourrait rien, c'est à l'administrateur d'agir.
+                $this->store->audit($consultant->id, $consultant->role->value, 'LOGIN_NO_WORKSTATION');
+                $error = 'NO_WORKSTATION_ASSIGNED';
             } else {
-                $this->currentUser->login($consultant, $workstationId !== '' ? $workstationId : null);
+                $this->currentUser->login($consultant, null);
                 $this->store->audit($consultant->id, $consultant->role->value, 'LOGIN', $this->currentUser->workstationId());
 
                 return $this->redirectToRoute('home');
             }
         }
 
-        return $this->render('security/login.html.twig', [
-            'workstations' => $this->consultants->workstations(),
-            'error' => $error,
-        ]);
+        return $this->render('security/login.html.twig', ['error' => $error]);
     }
 
     /**

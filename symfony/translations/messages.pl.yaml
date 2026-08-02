@@ -7,6 +7,7 @@ locales:
     es: Español
 
 common:
+    workstation: Stanowisko
     appName: 'MERISU — Inwentaryzacja i produkcja'
     save: Zapisz
     saved: Zapisano
@@ -16,7 +17,6 @@ common:
     retry: 'Spróbuj ponownie'
     language: Język
     logout: Wyloguj
-    workstation: Stanowisko
     date: Data
     product: Produkt
     unit: Jednostka
@@ -44,8 +44,6 @@ login:
     subtitle: 'Zaloguj się, aby policzyć stan magazynowy swojego stanowiska.'
     identifier: Identyfikator
     secret: Kod
-    workstation: Stanowisko
-    workstationAuto: 'Stanowisko przypisane'
     submit: 'Zaloguj się'
     demoTitle: 'Konta demonstracyjne'
     demoHint: 'admin / 000000 · consultant1 / 111111 · consultant2 / 222222'

@@ -7,6 +7,7 @@ locales:
     es: Español
 
 common:
+    workstation: Puesto de trabajo
     appName: 'MERISU — Inventario y producción'
     save: Guardar
     saved: Guardado
@@ -16,7 +17,6 @@ common:
     retry: Reintentar
     language: Idioma
     logout: 'Cerrar sesión'
-    workstation: 'Puesto de trabajo'
     date: Fecha
     product: Producto
     unit: Unidad
@@ -44,8 +44,6 @@ login:
     subtitle: 'Identifícate para contar el stock de tu puesto.'
     identifier: Identificador
     secret: Código
-    workstation: 'Puesto de trabajo'
-    workstationAuto: 'Puesto asignado'
     submit: Entrar
     demoTitle: 'Cuentas de demostración'
     demoHint: 'admin / 000000 · consultant1 / 111111 · consultant2 / 222222'

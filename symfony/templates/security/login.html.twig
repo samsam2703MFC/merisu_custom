@@ -1,4 +1,11 @@
-{# §7.1 — Connexion, choix du poste et sélecteur de langue. #}
+{#
+  §7.1 — Connexion au poste.
+
+  Un seul geste : le code à six chiffres. Le poste de travail n'est PAS demandé
+  ici — il vient de la fiche du consultant, tenue en administration. Le faire
+  choisir au vendeur, c'était lui laisser se tromper de poste et fausser des
+  comptages qu'aucun écran ne signalerait.
+#}
 {% extends 'base.html.twig' %}
 
 {% block title %}{{ 'login.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
@@ -21,16 +28,6 @@
         <input class="field__input field__input--pin" type="password" id="secret" name="secret"
                inputmode="numeric" pattern="[0-9]{6}" maxlength="6" minlength="6"
                autocomplete="current-password" required>
-      </div>
-
-      <div class="field">
-        <label class="field__label" for="workstationId">{{ 'login.workstation'|trans }}</label>
-        <select class="field__input" id="workstationId" name="workstationId">
-          <option value="">{{ 'login.workstationAuto'|trans }}</option>
-          {% for workstation in workstations %}
-            <option value="{{ workstation.id }}">{{ workstation.name }}</option>
-          {% endfor %}
-        </select>
       </div>
 
       <button type="submit" class="button button--primary button--block button--large">
