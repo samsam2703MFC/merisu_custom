@@ -12,7 +12,16 @@
  *   · écritures (POST) → jamais interceptées : elles passent par la file
  *     d'attente IndexedDB gérée par app.js, qui garantit l'ordre du rejeu.
  */
-const VERSION = 'merisu-v2';
+/*
+ * La version est l'empreinte du dossier `assets/`, calculée côté serveur.
+ *
+ * Elle NE DOIT PAS être écrite à la main : une constante figée fait que le nom
+ * du cache ne change jamais, donc que la purge à l'activation ne supprime
+ * jamais rien, donc qu'une feuille de style mise en cache le premier jour est
+ * resservie indéfiniment. Le poste de travail affichait alors une interface
+ * périmée qu'aucun rechargement ne corrigeait.
+ */
+const VERSION = 'merisu-{{ version }}';
 
 /*
  * Racine réelle de l'application, déduite de la portée du service worker.
@@ -32,13 +41,23 @@ const STATIC_ASSETS = [
   BASE + 'assets/logo.png',
   BASE + 'assets/icon-192.png',
   BASE + 'assets/icon-512.png',
-  '/manifest.json'
+  // Chemin RELATIF à la portée : en sous-répertoire, « /manifest.json »
+  // désigne la racine du domaine, où il n'existe pas.
+  BASE + 'manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(VERSION)
-      .then((cache) => cache.addAll(STATIC_ASSETS))
+      // Une par une, et non `addAll` : celui-ci rejette en bloc dès qu'une
+      // seule ressource manque. L'installation échouait alors entièrement,
+      // l'ancien service worker restait aux commandes, et son cache périmé
+      // avec lui — panne invisible et impossible à corriger côté poste.
+      .then((cache) => Promise.all(
+        STATIC_ASSETS.map((url) => cache.add(url).catch((erreur) => {
+          console.warn('[merisu] ressource non mise en cache :', url, erreur);
+        }))
+      ))
       .then(() => self.skipWaiting())
   );
 });

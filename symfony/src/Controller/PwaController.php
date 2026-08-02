@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Merisu\Inventory\Controller;
 
+use Merisu\Inventory\Pwa\BuildVersion;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -60,9 +61,9 @@ final class PwaController extends AbstractController
      * propre chemin.
      */
     #[Route('/sw.js', name: 'pwa_service_worker', methods: ['GET'])]
-    public function serviceWorker(): Response
+    public function serviceWorker(BuildVersion $version): Response
     {
-        $response = $this->render('pwa/sw.js.twig');
+        $response = $this->render('pwa/sw.js.twig', ['version' => $version->get()]);
         $response->headers->set('Content-Type', 'application/javascript');
         // Le navigateur doit revoir le script à chaque déploiement.
         $response->headers->set('Cache-Control', 'no-cache');

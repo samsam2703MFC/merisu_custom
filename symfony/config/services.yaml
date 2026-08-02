@@ -14,6 +14,12 @@ services:
             - '../src/Domain/'
             - '../src/Kernel.php'
 
+    # Empreinte des ressources statiques : elle nomme le cache du service
+    # worker, et doit donc changer à chaque déploiement qui touche `assets/`.
+    Merisu\Inventory\Pwa\BuildVersion:
+        arguments:
+            $assetsDir: '%kernel.project_dir%/public/assets'
+
     # ── Connexion à la base ──────────────────────────────────────────────────
     # DBAL seul (pas l'ORM) : le schéma est simple et le SQL reste lisible.
     Doctrine\DBAL\Connection:
