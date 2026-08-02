@@ -24,7 +24,14 @@
   <link rel="manifest" href="{{ path('pwa_manifest') }}">
   <link rel="icon" type="image/svg+xml" href="{{ asset('assets/favicon.svg') }}">
   <link rel="apple-touch-icon" href="{{ asset('assets/icon-192.png') }}">
-  <link rel="stylesheet" href="{{ asset('assets/styles.css') }}">
+  {#
+    L'empreinte du dossier `assets/` en suffixe : à chaque déploiement l'URL
+    change, donc AUCUN cache — navigateur, service worker, mandataire — ne peut
+    servir l'ancienne feuille sous la même adresse. Sans cela, un poste pouvait
+    afficher le nouveau HTML avec l'ancien CSS, et aucun rechargement forcé n'y
+    changeait rien de façon fiable.
+  #}
+  <link rel="stylesheet" href="{{ asset('assets/styles.css') }}?v={{ asset_version() }}">
 
   {% block stylesheets %}{% endblock %}
 </head>
@@ -158,7 +165,7 @@
 
 {# L'URL du service worker est transmise au script : elle dépend du
    préfixe d'installation (racine du domaine ou sous-répertoire). #}
-<script src="{{ asset('assets/app.js') }}" data-sw-url="{{ path('pwa_service_worker') }}" defer></script>
+<script src="{{ asset('assets/app.js') }}?v={{ asset_version() }}" data-sw-url="{{ path('pwa_service_worker') }}" defer></script>
 {% block javascripts %}{% endblock %}
 
 </body>

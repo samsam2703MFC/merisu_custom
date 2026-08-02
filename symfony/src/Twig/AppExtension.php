@@ -13,6 +13,7 @@ use Merisu\Inventory\Domain\ChecklistItem;
 use Merisu\Inventory\Domain\ContainerQuantity;
 use Merisu\Inventory\Domain\Locale;
 use Merisu\Inventory\Domain\Product;
+use Merisu\Inventory\Pwa\BuildVersion;
 use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Store\Store;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -35,6 +36,7 @@ final class AppExtension extends AbstractExtension
         private readonly Store $store,
         private readonly ConsultantServiceInterface $consultants,
         private readonly ShopRankingServiceInterface $ranking,
+        private readonly BuildVersion $buildVersion,
     ) {
     }
 
@@ -53,6 +55,7 @@ final class AppExtension extends AbstractExtension
             new TwigFunction('container_split', static fn (?float $q): array => ContainerQuantity::split($q)),
             // Vrai tant que la caisse n'est pas branchée : l'écran Réseau le
             // dit franchement plutôt que de laisser croire à de vraies mesures.
+            new TwigFunction('asset_version', fn (): string => $this->buildVersion->get()),
             new TwigFunction('is_demo_ranking', fn (): bool => $this->ranking instanceof LocalShopRankingService),
         ];
     }

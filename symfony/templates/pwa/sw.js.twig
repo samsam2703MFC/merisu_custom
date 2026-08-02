@@ -29,14 +29,18 @@ const VERSION = 'merisu-{{ version }}';
  * les chemins ci-dessous doivent la suivre, sinon rien n'est trouvé.
  */
 const BASE = new URL(self.registration.scope).pathname;
+/* Les deux ressources versionnées portent la même empreinte que dans le HTML :
+   sans cela le service worker mettrait en cache des URL que la page ne demande
+   jamais, et le mode hors-ligne servirait du vide. */
+const V = '?v={{ version }}';
 const STATIC_ASSETS = [
-  BASE + 'assets/styles.css',
+  BASE + 'assets/styles.css' + V,
   BASE + 'assets/fonts/fonts.css',
   BASE + 'assets/fonts/JTUSjIg1_i6t8kCHKm459Wdhyzbi.woff2',
   BASE + 'assets/fonts/JTUSjIg1_i6t8kCHKm459Wlhyw.woff2',
   BASE + 'assets/fonts/nuFiD-vYSZviVYUb_rj3ij__anPXDTLYgFE_.woff2',
   BASE + 'assets/fonts/nuFiD-vYSZviVYUb_rj3ij__anPXDTzYgA.woff2',
-  BASE + 'assets/app.js',
+  BASE + 'assets/app.js' + V,
   BASE + 'assets/favicon.svg',
   BASE + 'assets/logo.png',
   BASE + 'assets/icon-192.png',
@@ -79,7 +83,10 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  if (STATIC_ASSETS.includes(url.pathname)) {
+  // pathname + search : les ressources versionnées portent « ?v=… », et
+  // comparer le seul chemin ne les reconnaîtrait plus — elles sortiraient du
+  // cache, et le poste perdrait son style et son script hors-ligne.
+  if (STATIC_ASSETS.includes(url.pathname + url.search)) {
     event.respondWith(
       caches.match(request).then((cached) => cached || fetch(request))
     );
