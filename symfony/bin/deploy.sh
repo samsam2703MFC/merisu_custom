@@ -91,7 +91,26 @@ fi
 # ── 2. Dépendances ──────────────────────────────────────────────────────────
 if command -v composer >/dev/null 2>&1; then
     echo "→ Installation des dépendances (sans les outils de développement)"
+
+    # Composer désactive les plugins quand il tourne en root sans terminal —
+    # le cas d'un déploiement automatisé. Or le plugin `symfony/runtime` est
+    # celui qui écrit `vendor/autoload_runtime.php`, requis aussi bien par
+    # `bin/console` que par `public/index.php` : sans lui, le site répond 500
+    # et la console est inutilisable. On lève donc la garde, en connaissance
+    # de cause, uniquement lorsqu'on est effectivement root.
+    if [ "$(id -u)" = "0" ]; then
+        export COMPOSER_ALLOW_SUPERUSER=1
+    fi
+
     "$PHP_BIN" "$(command -v composer)" install --no-dev --optimize-autoloader --no-interaction
+
+    # Filet : si le fichier manque malgré tout, autant s'arrêter ici avec un
+    # message clair plutôt que de laisser un 500 au poste de travail.
+    if [ ! -f vendor/autoload_runtime.php ]; then
+        echo "✗ vendor/autoload_runtime.php absent : le plugin symfony/runtime n'a pas tourné." >&2
+        echo "  Relancer : COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader" >&2
+        exit 1
+    fi
 else
     echo "→ Composer absent : vendor/ fourni par l'archive, étape ignorée"
 fi

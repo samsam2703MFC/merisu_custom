@@ -1,0 +1,130 @@
+# Déploiement automatique sur le serveur de production.
+#
+# Se déclenche à chaque push sur la branche par défaut : GitHub se connecte en
+# SSH au serveur, l'aligne sur le commit qui vient d'être poussé, puis lance
+# `bin/deploy.sh`. L'onglet « Actions » du dépôt sert de journal de déploiement.
+#
+# ─── SECRETS À CRÉER (Settings ▸ Secrets and variables ▸ Actions) ─────────────
+#
+#   DEPLOY_HOST         adresse du serveur, ex. 185.180.206.46
+#   DEPLOY_USER         compte SSH, ex. root
+#   DEPLOY_SSH_KEY      clé PRIVÉE de déploiement (contenu entier du fichier)
+#   DEPLOY_KNOWN_HOSTS  empreinte publique du serveur — voir plus bas
+#   DEPLOY_PATH         chemin du clone, ex. /var/www/merisu-src
+#
+# Variables facultatives (Settings ▸ Secrets and variables ▸ Actions ▸ Variables) :
+#
+#   DEPLOY_PORT         port SSH si différent de 22
+#   DEPLOY_PHP_BIN      binaire PHP, ex. php8.3 (défaut : php)
+#   DEPLOY_HEALTH_URL   URL testée après déploiement, ex. http://127.0.0.1/merisu/connexion
+#
+# DEPLOY_KNOWN_HOSTS mérite un mot : sans lui, le runner accepterait n'importe
+# quel serveur se présentant à cette adresse, et lui livrerait la clé privée.
+# Il se remplit avec la sortie de cette commande, lancée depuis une machine de
+# confiance : ssh-keyscan -H 185.180.206.46
+
+name: Déploiement
+
+on:
+  push:
+    branches: [claude/merisu-inventory-production-3zy0zi]
+    # Une correction de documentation n'a pas à redémarrer la production.
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+  workflow_dispatch:
+
+# Deux déploiements simultanés se marcheraient dessus pendant le cache:clear.
+concurrency:
+  group: deploiement-production
+  cancel-in-progress: false
+
+jobs:
+  deployer:
+    name: Mettre à jour le serveur
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Préparer la connexion SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${SSH_KEY:-}" ] || [ -z "${KNOWN_HOSTS:-}" ]; then
+            echo "::error::Secrets manquants. Créer DEPLOY_SSH_KEY et DEPLOY_KNOWN_HOSTS (voir l'entête du workflow)."
+            exit 1
+          fi
+
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          # printf, pas echo : préserve les sauts de ligne de la clé PEM.
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploiement
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_deploiement ~/.ssh/known_hosts
+
+      - name: Déployer le commit ${{ github.sha }}
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          APP_PATH: ${{ secrets.DEPLOY_PATH }}
+          PORT: ${{ vars.DEPLOY_PORT || '22' }}
+          PHP_BIN: ${{ vars.DEPLOY_PHP_BIN || 'php' }}
+          BRANCHE: ${{ github.ref_name }}
+          COMMIT: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          # On vise le commit exact qui a déclenché ce run, et non « la pointe
+          # de la branche » : si un second push survient pendant l'exécution,
+          # le serveur reste cohérent avec ce que ce journal affiche.
+          #
+          # `reset --hard` ne touche ni aux fichiers ignorés ni aux non suivis :
+          # .env.local, var/ (base de données) et public/uploads/ survivent.
+          ssh -i ~/.ssh/id_deploiement -p "$PORT" -o BatchMode=yes \
+              "$USER@$HOST" bash -euo pipefail -s -- \
+              "$APP_PATH" "$BRANCHE" "$COMMIT" "$PHP_BIN" <<'DISTANT'
+          APP_PATH="$1"; BRANCHE="$2"; COMMIT="$3"; PHP_BIN="$4"
+
+          cd "$APP_PATH"
+
+          echo "▸ Récupération depuis GitHub"
+          git fetch --prune origin "$BRANCHE"
+
+          echo "▸ Alignement sur $COMMIT"
+          git checkout -B "$BRANCHE" "$COMMIT"
+
+          echo "▸ Déploiement"
+          cd symfony
+          PHP_BIN="$PHP_BIN" bash bin/deploy.sh
+          DISTANT
+
+      - name: Vérifier que le site répond
+        if: ${{ vars.DEPLOY_HEALTH_URL != '' }}
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          PORT: ${{ vars.DEPLOY_PORT || '22' }}
+          URL: ${{ vars.DEPLOY_HEALTH_URL }}
+        run: |
+          set -euo pipefail
+
+          # Le test part du serveur lui-même : il valide PHP et Apache sans
+          # dépendre du certificat ni de la route réseau depuis l'extérieur.
+          # Un déploiement qui compile mais rend un 500 doit faire rougir ce run.
+          CODE=$(ssh -i ~/.ssh/id_deploiement -p "$PORT" -o BatchMode=yes \
+                     "$USER@$HOST" \
+                     "curl -sS -o /dev/null -w '%{http_code}' --max-time 20 '$URL'")
+
+          echo "$URL → HTTP $CODE"
+
+          if [ "$CODE" != "200" ]; then
+            echo "::error::Le site répond $CODE au lieu de 200. Déploiement à vérifier."
+            exit 1
+          fi
+
+      - name: Effacer la clé privée
+        if: always()
+        run: rm -f ~/.ssh/id_deploiement
