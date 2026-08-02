@@ -146,6 +146,11 @@ admin:
         title: 'Impostazioni prodotti'
         subtitle: '8 posizioni: rinomina, attiva e regola i parametri di calcolo.'
         namePerLocale: 'Denominazione (%locale%)'
+        countMode: 'Modo di conteggio'
+        countModeHint: "Contenitore: l'addetto conta i contenitori pieni e la frazione dell'ultimo aperto, invece di un numero con la virgola."
+        countModes:
+            PIECES: 'A unità'
+            CONTAINER: 'Per contenitore'
         unit: Unità
         active: Attivo
         inactive: 'Non attivo'
@@ -301,3 +306,6 @@ checklist:
         requiredHint: 'Un punto obbligatorio deve essere spuntato perché la sezione sia completa.'
         add: 'Aggiungi un punto'
         newLabel: 'Nuovo punto'
+
+count:
+    openedContainer: 'Contenitore aperto'

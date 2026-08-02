@@ -55,6 +55,61 @@
   </div>
 {% endmacro %}
 
+{#
+  Champ de comptage par contenant.
+
+  Le vendeur saisit ce qu'il voit : des bacs pleins au compteur, et le dernier
+  entamé à la fraction. Lui demander « 2,75 » l'obligerait à une division
+  mentale devant une cuve aux trois quarts.
+
+  Le contenant se remplit SANS JavaScript : les boutons radio précèdent le
+  dessin dans le DOM, et une règle CSS `:checked ~` fixe la hauteur du niveau.
+  Le poste garde donc le retour visuel même si le script n'a pas pu se charger.
+#}
+{% macro container_field(product, whole, percent, disabled, label) %}
+  <div class="vessel-field">
+    <div class="qty qty--compact">
+      <button type="button" class="qty__step" data-qty-step="-1"
+              aria-label="− {{ label }}" {{ disabled ? 'disabled' : '' }}>−</button>
+
+      <input class="qty__input"
+             type="number"
+             inputmode="numeric"
+             min="0"
+             step="1"
+             id="qty-{{ product.id }}"
+             name="qty[{{ product.id }}]"
+             value="{{ whole }}"
+             aria-label="{{ label }}"
+             {{ disabled ? 'disabled' : '' }}>
+
+      <button type="button" class="qty__step" data-qty-step="1"
+              aria-label="+ {{ label }}" {{ disabled ? 'disabled' : '' }}>+</button>
+    </div>
+
+    <fieldset class="vessel" {{ disabled ? 'disabled' : '' }}>
+      <legend class="visually-hidden">{{ 'count.openedContainer'|trans }}</legend>
+
+      <div class="vessel__choices">
+        {% for fraction in container_fractions() %}
+          <input class="vessel__radio visually-hidden"
+                 type="radio"
+                 id="frac-{{ product.id }}-{{ fraction }}"
+                 name="frac[{{ product.id }}]"
+                 value="{{ fraction }}"
+                 {{ fraction == percent ? 'checked' : '' }}>
+          <label class="vessel__choice" for="frac-{{ product.id }}-{{ fraction }}">{{ fraction }} %</label>
+        {% endfor %}
+
+        {# Placé APRÈS les radios : c'est ce qui permet au CSS de le remplir. #}
+        <span class="vessel__jar" aria-hidden="true">
+          <span class="vessel__level"></span>
+        </span>
+      </div>
+    </fieldset>
+  </div>
+{% endmacro %}
+
 {# Sélecteur de période, commun aux écrans de rapport. #}
 {% macro period_filter(route, from, to) %}
   <form class="filters" method="get" action="{{ path(route) }}">

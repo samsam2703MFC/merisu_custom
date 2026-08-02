@@ -146,6 +146,11 @@ admin:
         title: 'Ustawienia produktów'
         subtitle: '8 miejsc: zmień nazwę, aktywuj i ustaw parametry obliczeń.'
         namePerLocale: 'Nazwa (%locale%)'
+        countMode: 'Sposób liczenia'
+        countModeHint: 'Pojemnik: sprzedawca liczy pełne pojemniki i ułamek napoczętego, zamiast liczby z przecinkiem.'
+        countModes:
+            PIECES: 'Na sztuki'
+            CONTAINER: 'Na pojemniki'
         unit: Jednostka
         active: Aktywny
         inactive: Nieaktywny
@@ -301,3 +306,6 @@ checklist:
         requiredHint: 'Punkt obowiązkowy musi być odhaczony, aby część była kompletna.'
         add: 'Dodaj punkt'
         newLabel: 'Nowy punkt'
+
+count:
+    openedContainer: 'Napoczęty pojemnik'

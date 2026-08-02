@@ -42,6 +42,18 @@
 
         <div class="field-grid">
           <div class="field">
+            <label class="field__label" for="countMode-{{ product.id }}">{{ 'admin.products.countMode'|trans }}</label>
+            <select class="field__input" id="countMode-{{ product.id }}" name="countMode">
+              {% for mode in countModes %}
+                <option value="{{ mode.value }}" {{ mode == product.countMode ? 'selected' : '' }}>
+                  {{ ('admin.products.countModes.' ~ mode.value)|trans }}
+                </option>
+              {% endfor %}
+            </select>
+            <p class="field__hint">{{ 'admin.products.countModeHint'|trans }}</p>
+          </div>
+
+          <div class="field">
             <label class="field__label" for="unit-{{ product.id }}">{{ 'admin.products.unit'|trans }}</label>
             <input class="field__input" type="text" id="unit-{{ product.id }}"
                    name="unit" value="{{ product.unit }}">

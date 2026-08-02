@@ -9,6 +9,7 @@ use Merisu\Inventory\Adapter\RecipeServiceInterface;
 use Merisu\Inventory\Domain\BusinessDate;
 use Merisu\Inventory\Domain\ChecklistItem;
 use Merisu\Inventory\Domain\ChecklistSection;
+use Merisu\Inventory\Domain\CountMode;
 use Merisu\Inventory\Domain\CountMoment;
 use Merisu\Inventory\Domain\DayOfWeek;
 use Merisu\Inventory\Domain\GeneralSettings;
@@ -55,6 +56,7 @@ final class AdminController extends AbstractController
         return $this->render('admin/products.html.twig', [
             'products' => $this->store->products(),
             'roundingModes' => RoundingMode::cases(),
+            'countModes' => CountMode::all(),
         ]);
     }
 
@@ -88,6 +90,7 @@ final class AdminController extends AbstractController
             roundingStep: $roundingStep > 0 ? $roundingStep : $product->roundingStep,
             roundingMode: RoundingMode::tryFrom((string) $request->request->get('roundingMode')) ?? $product->roundingMode,
             recipeRef: trim((string) $request->request->get('recipeRef', '')) ?: null,
+            countMode: CountMode::tryFromLoose($request->request->get('countMode')) ?? $product->countMode,
         ));
 
         $this->store->audit($admin->id, $admin->role->value, 'PRODUCT_UPDATED', null, null, ['productId' => $id]);

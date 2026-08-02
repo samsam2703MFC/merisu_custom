@@ -9,6 +9,7 @@ use Merisu\Inventory\Domain\AuditEntry;
 use Merisu\Inventory\Domain\ChecklistEntry;
 use Merisu\Inventory\Domain\ChecklistItem;
 use Merisu\Inventory\Domain\ChecklistSection;
+use Merisu\Inventory\Domain\CountMode;
 use Merisu\Inventory\Domain\CountMoment;
 use Merisu\Inventory\Domain\CountPhoto;
 use Merisu\Inventory\Domain\DayOfWeek;
@@ -103,6 +104,7 @@ final class Store
             'rounding_mode' => $product->roundingMode->value,
             'recipe_ref' => $product->recipeRef,
             'sort_order' => $product->sortOrder,
+            'count_mode' => $product->countMode->value,
         ];
 
         $exists = (int) $this->db->fetchOne('SELECT COUNT(*) FROM inv_product WHERE id = ?', [$product->id]) > 0;
@@ -605,6 +607,9 @@ final class Store
             RoundingMode::from((string) $row['rounding_mode']),
             $row['recipe_ref'] === null ? null : (string) $row['recipe_ref'],
             (int) $row['sort_order'],
+            // Repli sur l'unité : une base installée avant l'ajout du mode
+            // n'a que des produits comptés à la pièce.
+            CountMode::tryFromLoose($row['count_mode'] ?? null) ?? CountMode::Pieces,
         );
     }
 

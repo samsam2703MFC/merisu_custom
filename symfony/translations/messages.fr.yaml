@@ -149,6 +149,11 @@ admin:
         title: 'Paramètres produits'
         subtitle: '8 emplacements : renommez, activez et réglez les paramètres de calcul.'
         namePerLocale: 'Libellé (%locale%)'
+        countMode: 'Mode de comptage'
+        countModeHint: "Contenant : le vendeur compte des bacs pleins et la fraction du dernier entamé, plutôt qu'un nombre à virgule."
+        countModes:
+            PIECES: "À l'unité"
+            CONTAINER: 'Par contenant'
         unit: Unité
         active: Actif
         inactive: Inactif
@@ -304,3 +309,6 @@ checklist:
         requiredHint: "Un point obligatoire doit être coché pour que le volet soit complet."
         add: 'Ajouter un point'
         newLabel: 'Nouveau point'
+
+count:
+    openedContainer: 'Contenant entamé'

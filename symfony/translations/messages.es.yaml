@@ -146,6 +146,11 @@ admin:
         title: 'Ajustes de productos'
         subtitle: '8 posiciones: renombra, activa y ajusta los parámetros de cálculo.'
         namePerLocale: 'Denominación (%locale%)'
+        countMode: 'Modo de recuento'
+        countModeHint: 'Recipiente: el vendedor cuenta recipientes llenos y la fracción del último empezado, en vez de un número con coma.'
+        countModes:
+            PIECES: 'Por unidad'
+            CONTAINER: 'Por recipiente'
         unit: Unidad
         active: Activo
         inactive: Inactivo
@@ -301,3 +306,6 @@ checklist:
         requiredHint: 'Un punto obligatorio debe marcarse para que la sección esté completa.'
         add: 'Añadir un punto'
         newLabel: 'Nuevo punto'
+
+count:
+    openedContainer: 'Recipiente empezado'

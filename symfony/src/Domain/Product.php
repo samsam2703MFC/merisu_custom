@@ -28,6 +28,11 @@ final readonly class Product
         /** Référence du produit dans le module « Recette technique » existant. */
         public ?string $recipeRef,
         public int $sortOrder,
+        /**
+         * Unité ou contenant. Le mode conteneur change la saisie à l'écran,
+         * jamais le calcul : la quantité reste décimale en base.
+         */
+        public CountMode $countMode = CountMode::Pieces,
     ) {
     }
 
@@ -67,6 +72,7 @@ final readonly class Product
             $changes['roundingMode'] ?? $this->roundingMode,
             \array_key_exists('recipeRef', $changes) ? $changes['recipeRef'] : $this->recipeRef,
             $changes['sortOrder'] ?? $this->sortOrder,
+            $changes['countMode'] ?? $this->countMode,
         );
     }
 }

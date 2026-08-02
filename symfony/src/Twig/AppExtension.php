@@ -8,6 +8,7 @@ use Merisu\Inventory\Adapter\ConsultantServiceInterface;
 use Merisu\Inventory\Adapter\Material;
 use Merisu\Inventory\Adapter\Workstation;
 use Merisu\Inventory\Domain\ChecklistItem;
+use Merisu\Inventory\Domain\ContainerQuantity;
 use Merisu\Inventory\Domain\Locale;
 use Merisu\Inventory\Domain\Product;
 use Merisu\Inventory\Security\CurrentUser;
@@ -45,6 +46,8 @@ final class AppExtension extends AbstractExtension
             new TwigFunction('supported_locales', static fn (): array => Locale::all()),
             new TwigFunction('available_workstations', $this->availableWorkstations(...)),
             new TwigFunction('workstation_name', $this->workstationName(...)),
+            new TwigFunction('container_fractions', static fn (): array => ContainerQuantity::FRACTIONS),
+            new TwigFunction('container_split', static fn (?float $q): array => ContainerQuantity::split($q)),
         ];
     }
 

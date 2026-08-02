@@ -58,6 +58,7 @@ final class SchemaInstaller
             $t->addColumn('rounding_mode', 'string', ['length' => 8, 'default' => 'CEIL']);
             $t->addColumn('recipe_ref', 'string', ['length' => 128, 'notnull' => false]);
             $t->addColumn('sort_order', 'integer', ['default' => 0]);
+            $t->addColumn('count_mode', 'string', ['length' => 16, 'default' => 'PIECES']);
             $t->setPrimaryKey(['id']);
             $t->addUniqueIndex(['code'], 'inv_product_code');
         }
@@ -185,7 +186,60 @@ final class SchemaInstaller
             $this->connection->executeStatement($sql);
         }
 
+        $this->ensureColumns();
         $this->ensureSettingsRow();
+    }
+
+    /**
+     * Colonnes ajoutées après coup à des tables déjà installées.
+     *
+     * `install()` ne crée que les tables ABSENTES : une base en production ne
+     * verrait jamais une colonne nouvelle. Sans cette étape, un déploiement
+     * ajoutant un champ laisserait l'application en erreur sur la première
+     * requête — panne découverte au poste, un matin, à 8 h.
+     *
+     * La présence de la colonne se teste par une requête, et non via
+     * `listTableColumns()` : celui-ci échoue dès qu'une colonne de la table
+     * porte un type que DBAL ne sait pas rattacher, et ferait alors tomber
+     * tout le déploiement pour une colonne qui ne nous concerne même pas.
+     *
+     * Idempotent : chaque colonne n'est ajoutée que si elle manque.
+     */
+    private function ensureColumns(): void
+    {
+        $attendues = [
+            'inv_product' => [
+                // Ajoutée avec le comptage par contenant : les bases installées
+                // avant ne l'ont pas, et tous leurs produits se comptent à
+                // l'unité — ce que dit précisément la valeur par défaut.
+                'count_mode' => "VARCHAR(16) DEFAULT 'PIECES' NOT NULL",
+            ],
+        ];
+
+        foreach ($attendues as $table => $colonnes) {
+            foreach ($colonnes as $nom => $definition) {
+                if ($this->columnExists($table, $nom)) {
+                    continue;
+                }
+
+                $this->connection->executeStatement(
+                    \sprintf('ALTER TABLE %s ADD COLUMN %s %s', $table, $nom, $definition),
+                );
+            }
+        }
+    }
+
+    private function columnExists(string $table, string $column): bool
+    {
+        try {
+            $this->connection->fetchOne(\sprintf('SELECT %s FROM %s LIMIT 1', $column, $table));
+
+            return true;
+        } catch (\Doctrine\DBAL\Exception) {
+            // Colonne absente — ou table absente, auquel cas `install()` vient
+            // de la créer avec la colonne, et l'ALTER échouerait sans dommage.
+            return false;
+        }
     }
 
     private function ensureSettingsRow(): void

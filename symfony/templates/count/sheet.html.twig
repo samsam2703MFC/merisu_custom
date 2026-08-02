@@ -146,7 +146,22 @@
             <span class="count-item__unit muted">{{ product.unit }}</span>
           </header>
 
-          {{ ui.qty_field(product, count ? count.qty|qty('') : '', validated, product_label(product)) }}
+          {#
+            Deux façons de saisir selon le produit : à l'unité, ou en
+            contenants pleins plus une fraction pour celui qui est entamé.
+          #}
+          {% if product.countMode.isContainer %}
+            {% set part = container_split(count ? count.qty : null) %}
+            {{ ui.container_field(
+              product,
+              count ? part.whole : '',
+              part.percent,
+              validated,
+              product_label(product)
+            ) }}
+          {% else %}
+            {{ ui.qty_field(product, count ? count.qty|qty('') : '', validated, product_label(product)) }}
+          {% endif %}
 
           {% if isEvening and net and net.netConsumption is not null %}
             <p class="count-item__net muted">

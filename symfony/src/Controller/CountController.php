@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Merisu\Inventory\Controller;
 
 use Merisu\Inventory\Domain\BusinessDate;
+use Merisu\Inventory\Domain\ContainerQuantity;
 use Merisu\Inventory\Domain\CountMoment;
 use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Service\InventoryService;
@@ -285,19 +286,42 @@ final class CountController extends AbstractController
     {
         /** @var array<string, mixed> $raw */
         $raw = $request->request->all('qty');
+        /** @var array<string, mixed> $fractions Fractions du contenant entamé. */
+        $fractions = $request->request->all('frac');
         $quantities = [];
 
         foreach ($raw as $productId => $value) {
+            $productId = (string) $productId;
             $value = is_scalar($value) ? trim((string) $value) : '';
+
+            // Produit compté en contenants : deux champs à recomposer. Le
+            // découpage n'existe qu'à l'écran ; la base ne connaît qu'une
+            // quantité décimale, et tous les calculs restent inchangés.
+            if (\array_key_exists($productId, $fractions)) {
+                $percent = is_scalar($fractions[$productId]) ? (int) $fractions[$productId] : 0;
+
+                // Ni contenant plein ni fraction : rien n'a été compté. Un
+                // contenant entamé seul, lui, est bien une saisie.
+                if ($value === '' && $percent === 0) {
+                    $quantities[$productId] = null;
+                    continue;
+                }
+
+                $quantities[$productId] = ContainerQuantity::combine(
+                    $value === '' ? 0 : (int) $value,
+                    $percent,
+                );
+                continue;
+            }
 
             // Un champ vide n'est PAS un zéro : c'est une absence de saisie.
             if ($value === '') {
-                $quantities[(string) $productId] = null;
+                $quantities[$productId] = null;
                 continue;
             }
 
             $normalized = str_replace(',', '.', $value);
-            $quantities[(string) $productId] = is_numeric($normalized) ? (float) $normalized : null;
+            $quantities[$productId] = is_numeric($normalized) ? (float) $normalized : null;
         }
 
         return $quantities;
