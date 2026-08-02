@@ -63,6 +63,61 @@
     });
   });
 
+  // ── 2 ter. Saisie du code PIN, coupe par coupe ────────────────────────────
+
+  // Sans ce bloc, la saisie reste possible : six champs et la touche Tab
+  // suffisent. Il n'ajoute que l'enchaînement attendu d'un code à chiffres —
+  // avancer seul, revenir sur effacement, accepter un code collé d'un bloc.
+  var coupes = Array.prototype.slice.call(document.querySelectorAll('.pin__cup'));
+
+  if (coupes.length) {
+    coupes.forEach(function (coupe, rang) {
+      coupe.addEventListener('input', function () {
+        // Un clavier de téléphone peut livrer plusieurs chiffres d'un coup.
+        var chiffres = coupe.value.replace(/\D/g, '');
+
+        if (chiffres.length > 1) {
+          repartir(chiffres, rang);
+          return;
+        }
+
+        coupe.value = chiffres;
+        if (chiffres && coupes[rang + 1]) coupes[rang + 1].focus();
+      });
+
+      coupe.addEventListener('keydown', function (event) {
+        // Effacer une coupe déjà vide remonte à la précédente : c'est le
+        // geste naturel pour corriger, sans viser la bonne case du doigt.
+        if (event.key === 'Backspace' && !coupe.value && coupes[rang - 1]) {
+          coupes[rang - 1].focus();
+          coupes[rang - 1].value = '';
+          event.preventDefault();
+        }
+        if (event.key === 'ArrowLeft' && coupes[rang - 1]) coupes[rang - 1].focus();
+        if (event.key === 'ArrowRight' && coupes[rang + 1]) coupes[rang + 1].focus();
+      });
+
+      coupe.addEventListener('paste', function (event) {
+        var colle = (event.clipboardData || window.clipboardData).getData('text');
+        event.preventDefault();
+        repartir(colle.replace(/\D/g, ''), rang);
+      });
+
+      // Toucher une coupe déjà remplie sélectionne son chiffre : la frappe
+      // suivante le remplace, au lieu de s'ajouter et d'être ignorée.
+      coupe.addEventListener('focus', function () { coupe.select(); });
+    });
+
+    function repartir(chiffres, depart) {
+      for (var i = 0; i < chiffres.length && depart + i < coupes.length; i++) {
+        coupes[depart + i].value = chiffres.charAt(i);
+      }
+
+      var suivante = Math.min(depart + chiffres.length, coupes.length - 1);
+      coupes[suivante].focus();
+    }
+  }
+
   // ── 3. Confirmation avant action verrouillante ────────────────────────────
 
   document.addEventListener('click', function (event) {

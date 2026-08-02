@@ -5,6 +5,7 @@
   aux vendeurs, et rien n'y renvoie depuis l'application de comptage.
 #}
 {% extends 'base.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
 
 {% block title %}{{ 'adminLogin.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
 {% block body_class %} app--centered{% endblock %}
@@ -24,12 +25,7 @@
     {% endif %}
 
     <form method="post" action="{{ path('admin_login') }}" class="form">
-      <div class="field">
-        <label class="field__label" for="secret">{{ 'adminLogin.pincode'|trans }}</label>
-        <input class="field__input field__input--pin" type="password" id="secret" name="secret"
-               inputmode="numeric" pattern="[0-9]{6}" maxlength="6" minlength="6"
-               autocomplete="current-password" autofocus required>
-      </div>
+      {{ ui.pin_field('adminLogin.pincode'|trans, true) }}
 
       <button type="submit" class="button button--primary button--block button--large">
         {{ 'adminLogin.submit'|trans }}

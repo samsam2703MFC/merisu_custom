@@ -52,7 +52,7 @@ final class SecurityController extends AbstractController
         $error = null;
 
         if ($request->isMethod('POST')) {
-            $secret = trim((string) $request->request->get('secret'));
+            $secret = $this->readPin($request);
 
             $byIp = $this->loginIpLimiter->create($request->getClientIp() ?? 'unknown');
             $global = $this->loginGlobalLimiter->create('login');
@@ -106,7 +106,7 @@ final class SecurityController extends AbstractController
         $error = null;
 
         if ($request->isMethod('POST')) {
-            $secret = trim((string) $request->request->get('secret'));
+            $secret = $this->readPin($request);
 
             $byIp = $this->loginIpLimiter->create($request->getClientIp() ?? 'unknown');
             $global = $this->loginGlobalLimiter->create('login');
@@ -140,6 +140,27 @@ final class SecurityController extends AbstractController
         }
 
         return $this->render('security/admin_login.html.twig', ['error' => $error]);
+    }
+
+    /**
+     * Code PIN, recomposé depuis les six coupes de l'écran.
+     *
+     * Un champ unique reste accepté : un navigateur qui ne poste qu'une chaîne
+     * — outil de test, client exotique — ne doit pas se voir refuser un code
+     * pourtant correct.
+     */
+    private function readPin(Request $request): string
+    {
+        $valeur = $request->request->all()['secret'] ?? '';
+
+        if (\is_array($valeur)) {
+            $valeur = implode('', array_map(
+                static fn (mixed $chiffre): string => is_scalar($chiffre) ? trim((string) $chiffre) : '',
+                $valeur,
+            ));
+        }
+
+        return trim((string) $valeur);
     }
 
     #[Route('/deconnexion', name: 'logout', methods: ['POST'])]

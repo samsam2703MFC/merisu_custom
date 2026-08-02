@@ -56,6 +56,44 @@
 {% endmacro %}
 
 {#
+  Saisie du code PIN : six coupes de tiramisu, une par chiffre.
+
+  Six champs distincts plutôt qu'un seul : le vendeur voit d'un coup d'œil
+  combien de chiffres il a posés, et corrige le troisième sans effacer les
+  trois suivants. Chaque coupe se remplit de ses couches — cacao, mascarpone,
+  biscuit — dès que son chiffre est saisi, par une règle CSS sur
+  `:not(:placeholder-shown)` : le retour visuel ne doit rien à JavaScript.
+
+  Le chiffre reste masqué : la tablette est posée au poste, à portée de tous.
+  C'est la coupe qui confirme la frappe, pas le chiffre.
+#}
+{% macro pin_field(label, autofocus) %}
+  <div class="pin">
+    <span class="field__label" id="pin-label">{{ label }}</span>
+
+    <div class="pin__cups" role="group" aria-labelledby="pin-label">
+      {% for rang in 1..6 %}
+        <input class="pin__cup"
+               type="password"
+               id="{{ rang == 1 ? 'secret' : 'secret-' ~ rang }}"
+               name="secret[]"
+               inputmode="numeric"
+               pattern="[0-9]"
+               maxlength="1"
+               {# Un espace en guise d'invite : c'est lui qui rend
+                  `:not(:placeholder-shown)` utilisable pour détecter la
+                  saisie, sans une ligne de script. #}
+               placeholder=" "
+               autocomplete="{{ rang == 1 ? 'one-time-code' : 'off' }}"
+               aria-label="{{ label }} — {{ rang }}/6"
+               {{ autofocus and rang == 1 ? 'autofocus' : '' }}
+               required>
+      {% endfor %}
+    </div>
+  </div>
+{% endmacro %}
+
+{#
   Champ de comptage par contenant.
 
   Le vendeur saisit ce qu'il voit : des bacs pleins au compteur, et le dernier
