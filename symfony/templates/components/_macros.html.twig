@@ -112,6 +112,10 @@
       <path d="M15 5.5h2A1.5 1.5 0 0 1 18.5 7v12A1.5 1.5 0 0 1 17 20.5H7A1.5 1.5 0 0 1 5.5 19V7A1.5 1.5 0 0 1 7 5.5h2"/>
       <path d="m8.5 12.2 1.6 1.6 3-3.2"/>
       <path d="m8.5 16.6 1.6 1.6 3-3.2"/>
+    {% elseif name == 'arrow-left' %}
+      {# Retour au menu. En SVG comme les autres : le glyphe « ← » changeait
+         de taille et d'alignement selon la police disponible. #}
+      <path d="M15 5.5 8.5 12l6.5 6.5"/>
     {% elseif name == 'shield' %}
       {# Contrôle qualité. #}
       <path d="M12 3.5 19 6v5.5c0 4-2.9 7.3-7 8.9-4.1-1.6-7-4.9-7-8.9V6Z"/>

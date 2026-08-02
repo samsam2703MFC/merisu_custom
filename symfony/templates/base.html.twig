@@ -8,6 +8,7 @@
   · aucun texte en dur : tout passe par `trans` (translations/messages.*.yaml) ;
   · les blocs ci-dessous sont les points d'extension des pages filles.
 #}
+{% import 'components/_macros.html.twig' as ui %}
 <!doctype html>
 <html lang="{{ app.request.locale }}">
 <head>
@@ -37,7 +38,7 @@
     <div class="app-header__side app-header__side--left">
       {% if current_user().isLoggedIn and app.request.attributes.get('_route') != 'home' %}
         <a class="app-header__back" href="{{ path('home') }}" title="{{ 'tasks.title'|trans }}">
-          <span aria-hidden="true">←</span>
+          <span class="app-header__back-arrow">{{ ui.icon('arrow-left') }}</span>
           <span class="app-header__back-label">{{ 'tasks.title'|trans }}</span>
         </a>
       {% endif %}

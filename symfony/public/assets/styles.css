@@ -593,28 +593,80 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 
 /* ── Retour au menu, dans l'entête ───────────────────────────────────────── */
 
+/*
+ * Le retour prend les couleurs de la marque plutôt que le beige neutre : c'est
+ * le seul chemin de sortie d'un écran de saisie, il doit se voir du premier
+ * coup d'œil, y compris sur une tablette éclairée par une baie vitrée.
+ *
+ * Framboise clair au repos, framboise pleine au contact : l'écart de contraste
+ * signale que l'élément est vivant, sans ajouter de bordure ni d'ombre au
+ * repos, qui alourdiraient un entête volontairement léger.
+ */
 .app-header__back {
   display: inline-flex;
   align-items: center;
-  gap: .4rem;
+  gap: .45rem;
   min-height: var(--touch);
-  padding: .3rem .8rem .3rem .6rem;
+  padding: .3rem .9rem .3rem .7rem;
   border-radius: var(--radius-pill);
-  background: var(--cream-outline);
-  color: var(--coffee-800);
+  background: var(--brand-light);
+  /* Framboise foncée plutôt que la framboise vive : 5,98:1 contre 4,68:1 sur
+     ce fond clair, une marge qui compte sur une tablette en plein soleil. */
+  color: var(--brand-dark);
   text-decoration: none;
   font-weight: 600;
   font-size: .82rem;
   letter-spacing: .06em;
   text-transform: uppercase;
+  transition:
+    background .25s var(--ease),
+    color .25s var(--ease),
+    box-shadow .25s var(--ease);
 }
 
-.app-header__back:hover { background: var(--border); }
+.app-header__back-arrow {
+  display: grid;
+  place-items: center;
+  transition: transform .25s cubic-bezier(.16, 1, .3, 1);
+}
 
-/* Sur petit écran, la flèche suffit : le libellé mangerait la largeur. */
+.app-header__back-arrow .icon { width: 20px; height: 20px; }
+
+.app-header__back:hover,
+.app-header__back:focus-visible {
+  background: var(--brand);
+  color: #fff;
+  box-shadow: var(--shadow-accent);
+  outline: none;
+}
+
+/* La flèche glisse vers la gauche : le geste précède le déplacement. */
+.app-header__back:hover .app-header__back-arrow,
+.app-header__back:focus-visible .app-header__back-arrow { transform: translateX(-3px); }
+
+/* À l'appui, la couleur s'enfonce : retour tactile sur écran sans survol. */
+.app-header__back:active {
+  background: var(--brand-dark);
+  color: #fff;
+  box-shadow: none;
+}
+
+/* Sur petit écran, la flèche suffit : le libellé mangerait la largeur. Le
+   bouton devient alors un disque parfait, aligné sur l'avatar d'en face. */
 @media (max-width: 599px) {
   .app-header__back-label { display: none; }
-  .app-header__back { padding: .3rem .7rem; }
+  .app-header__back {
+    width: var(--touch);
+    padding: 0;
+    justify-content: center;
+  }
+}
+
+/* Certains postes désactivent les animations : la couleur suffit à signaler. */
+@media (prefers-reduced-motion: reduce) {
+  .app-header__back,
+  .app-header__back-arrow { transition: none; }
+  .app-header__back:hover .app-header__back-arrow { transform: none; }
 }
 
 /* ── Connexion administration ────────────────────────────────────────────── */
