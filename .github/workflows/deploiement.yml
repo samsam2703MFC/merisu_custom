@@ -65,6 +65,28 @@ jobs:
           printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/id_deploiement ~/.ssh/known_hosts
 
+          # Sans ce contrôle, une clé mal collée ne se manifeste que par un
+          # « error in libcrypto » suivi d'un « Permission denied » — deux
+          # messages qui ne disent pas où est le problème. Autant le nommer.
+          if ! ssh-keygen -y -f ~/.ssh/id_deploiement > /dev/null 2>&1; then
+            echo "::error::DEPLOY_SSH_KEY n'est pas une clé privée exploitable."
+            echo "Vérifications, dans l'ordre :"
+            echo "  1. c'est bien la clé PRIVÉE (~/.ssh/merisu_deploy), pas le .pub ;"
+            echo "  2. les lignes BEGIN et END sont présentes ;"
+            echo "  3. les sauts de ligne ont survécu au copier-coller."
+            echo "Première ligne reçue : $(head -1 ~/.ssh/id_deploiement | cut -c1-40)"
+            echo "Nombre de lignes reçues : $(wc -l < ~/.ssh/id_deploiement)"
+            exit 1
+          fi
+
+          if ! grep -q 'ssh-' ~/.ssh/known_hosts; then
+            echo "::error::DEPLOY_KNOWN_HOSTS ne contient aucune clé d'hôte exploitable."
+            exit 1
+          fi
+
+          echo "Clé de déploiement : $(ssh-keygen -l -f ~/.ssh/id_deploiement | cut -d' ' -f1,2)"
+          echo "Hôtes connus : $(grep -c 'ssh-\|ecdsa-' ~/.ssh/known_hosts) entrée(s)"
+
       - name: Déployer le commit ${{ github.sha }}
         env:
           HOST: ${{ secrets.DEPLOY_HOST }}
