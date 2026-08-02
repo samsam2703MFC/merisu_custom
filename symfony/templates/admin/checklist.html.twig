@@ -1,0 +1,91 @@
+{#
+  Administration de la check-list.
+
+  Les points sont des DONNÉES, comme les produits : ils se créent, se renomment
+  et se retirent ici, sans redéploiement. Aucun contrôle n'est écrit dans le
+  code — une cuisine n'a pas les mêmes que la voisine.
+#}
+{% extends 'admin/_layout.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'checklist.admin.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block admin_content %}
+
+  {{ ui.page_header('checklist.admin.title'|trans, 'checklist.admin.intro'|trans) }}
+
+  <form method="post" action="{{ path('admin_checklist_save') }}">
+
+    {% for section in sections %}
+      {% set items = itemsBySection[section.value] %}
+
+      <section class="card">
+        <header class="card__header">
+          <h2 class="card__title">{{ section.labelKey|trans }}</h2>
+          {{ ui.badge('neutral', items|length ~ '') }}
+        </header>
+
+        {% for item in items %}
+          {{ _self.ligne(item.id, item, section, locales) }}
+        {% endfor %}
+
+        {#
+          Une ligne vierge par volet : ajouter un point ne demande donc ni
+          bouton ni JavaScript. Laissée vide, elle est simplement ignorée.
+        #}
+        {{ _self.ligne(newIds[section.value], null, section, locales) }}
+      </section>
+    {% endfor %}
+
+    <div class="form-actions">
+      <button type="submit" class="button button--primary button--large">{{ 'common.save'|trans }}</button>
+    </div>
+  </form>
+
+{% endblock %}
+
+{#
+  Une ligne de réglage. `item` vaut null pour la ligne d'ajout : les champs
+  sont alors vides et le point n'est créé que si un libellé est saisi.
+#}
+{% macro ligne(id, item, section, locales) %}
+  <div class="admin-row{{ item is null ? ' admin-row--new' : '' }}">
+    <input type="hidden" name="item[{{ id }}][section]" value="{{ section.value }}">
+
+    <div class="field-grid">
+      {% for locale in locales %}
+        <div class="field">
+          <label class="field__label" for="l-{{ id }}-{{ locale.value }}">
+            {{ ('locales.' ~ locale.value)|trans }}
+          </label>
+          <input class="field__input" type="text"
+                 id="l-{{ id }}-{{ locale.value }}"
+                 name="item[{{ id }}][label_{{ locale.value }}]"
+                 value="{{ item ? (item.label[locale.value] ?? '') : '' }}"
+                 placeholder="{{ item is null ? 'checklist.admin.newLabel'|trans : '' }}">
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="admin-row__options">
+      <div class="field field--narrow">
+        <label class="field__label" for="o-{{ id }}">{{ 'checklist.admin.order'|trans }}</label>
+        <input class="field__input" type="number" min="0" step="1"
+               id="o-{{ id }}" name="item[{{ id }}][sortOrder]"
+               value="{{ item ? item.sortOrder : 99 }}">
+      </div>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="a-{{ id }}" name="item[{{ id }}][active]" value="1"
+               {{ item is null or item.active ? 'checked' : '' }}>
+        <label for="a-{{ id }}">{{ 'checklist.admin.active'|trans }}</label>
+      </div>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="r-{{ id }}" name="item[{{ id }}][required]" value="1"
+               {{ item is null or item.required ? 'checked' : '' }}>
+        <label for="r-{{ id }}">{{ 'checklist.admin.required'|trans }}</label>
+      </div>
+    </div>
+  </div>
+{% endmacro %}

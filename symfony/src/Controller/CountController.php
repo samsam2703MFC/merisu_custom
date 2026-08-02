@@ -23,6 +23,7 @@ final class CountController extends AbstractController
         private readonly CurrentUser $currentUser,
         private readonly Store $store,
         private readonly PhotoStorage $photos,
+        private readonly ChecklistController $checklist,
     ) {
     }
 
@@ -51,6 +52,7 @@ final class CountController extends AbstractController
 
         $morning = $this->inventory->daySheet($date, $workstationId, CountMoment::Open0800);
         $evening = $this->inventory->daySheet($date, $workstationId, CountMoment::Close2200);
+        $checklist = $this->checklist->progress($date, $workstationId);
 
         return $this->render('count/tasks.html.twig', [
             'date' => $date,
@@ -60,6 +62,8 @@ final class CountController extends AbstractController
                 [
                     'route' => 'count_morning', 'icon' => 'sunrise',
                     'label' => 'nav.morning',
+                    'progressKey' => 'tasks.inProgress',
+                    'todoKey' => 'tasks.todo',
                     'title' => 'morning.title',
                     'time' => $settings->openingTime,
                     'done' => $morning['validated'],
@@ -70,12 +74,30 @@ final class CountController extends AbstractController
                 [
                     'route' => 'count_evening', 'icon' => 'moon',
                     'label' => 'nav.evening',
+                    'progressKey' => 'tasks.inProgress',
+                    'todoKey' => 'tasks.todo',
                     'title' => 'evening.title',
                     'time' => $settings->closingTime,
                     'done' => $evening['validated'],
                     'saved' => \count($evening['counts']),
                     'total' => \count($evening['products']),
                     'highlight' => $suggested->isEvening(),
+                ],
+                // La check-list n'a pas d'heure : elle accompagne la journée
+                // entière, d'où l'absence de `time` et de mise en avant.
+                [
+                    'route' => 'checklist', 'icon' => 'checklist',
+                    'label' => 'nav.checklist',
+                    // « 4 sur 6 produits saisis » n'aurait aucun sens ici :
+                    // une check-list compte des points, pas des produits.
+                    'progressKey' => 'tasks.checklistProgress',
+                    'todoKey' => 'tasks.checklistTodo',
+                    'title' => 'checklist.title',
+                    'time' => null,
+                    'done' => $checklist['complete'],
+                    'saved' => $checklist['done'],
+                    'total' => $checklist['total'],
+                    'highlight' => false,
                 ],
             ],
             // Le plan du jour vient du soir précédent : c'est une consultation,

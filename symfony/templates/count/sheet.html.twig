@@ -1,8 +1,8 @@
 {#
   §7.2 / §7.3 — Écrans de saisie du matin (08:00) et du soir (22:00).
 
-  Un seul gabarit sert les deux moments : seuls la photo et la validation
-  verrouillante sont propres au comptage du soir.
+  Un seul gabarit sert les deux moments : seule la validation verrouillante,
+  qui fige le plan du lendemain, est propre au comptage du soir.
 #}
 {% extends 'base.html.twig' %}
 {% import 'components/_macros.html.twig' as ui %}
@@ -118,13 +118,6 @@
     </section>
   {% endif %}
 
-  {% if isEvening and settings.photoRequired %}
-    <div class="banner banner--info">
-      <strong>{{ 'evening.photoRequired'|trans }}</strong>
-      {{ (settings.photoPerProduct ? 'evening.photoPerProduct' : 'evening.photoGlobal')|trans }}
-    </div>
-  {% endif %}
-
   {#
     Formulaire de comptage.
     `data-count-form` est le point d'accroche de la file hors-ligne (app.js).
@@ -165,13 +158,6 @@
             <p class="badge badge--danger">{{ ('validation.' ~ issueCode)|trans }}</p>
           {% endif %}
 
-          {% if count and count.photos is not empty %}
-            <div class="photo-strip">
-              {% for photo in count.photos %}
-                <img class="photo-strip__thumb" src="{{ photo.url }}" alt="" loading="lazy">
-              {% endfor %}
-            </div>
-          {% endif %}
         </article>
       {% endfor %}
     </div>
@@ -190,41 +176,5 @@
       </button>
     </div>
   </form>
-
-  {#
-    Photos : formulaire distinct car il transporte un fichier. Le comptage doit
-    exister côté serveur pour porter la photo, d'où l'enregistrement préalable.
-  #}
-  {% if isEvening and not validated %}
-    <section class="card">
-      <h2 class="card__title">{{ 'evening.photo'|trans }}</h2>
-
-      <form method="post"
-            action="{{ path('count_photo', { moment: momentSlug }) }}"
-            enctype="multipart/form-data"
-            class="photo-form">
-
-        <input type="hidden" name="date" value="{{ date }}">
-        <input type="hidden" name="workstationId" value="{{ workstationId }}">
-
-        <div class="field">
-          <label class="field__label" for="photo-product">{{ 'common.product'|trans }}</label>
-          <select class="field__input" id="photo-product" name="productId">
-            {% for product in products %}
-              <option value="{{ product.id }}">{{ product_label(product) }}</option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <div class="field">
-          <label class="field__label" for="photo-file">{{ 'evening.addPhoto'|trans }}</label>
-          <input class="field__input" type="file" id="photo-file" name="photo"
-                 accept="image/*" capture="environment" required>
-        </div>
-
-        <button type="submit" class="button button--secondary">{{ 'evening.addPhoto'|trans }}</button>
-      </form>
-    </section>
-  {% endif %}
 
 {% endblock %}

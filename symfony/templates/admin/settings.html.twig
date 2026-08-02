@@ -1,4 +1,4 @@
-{# §7.7 — Paramètres généraux : horaires, fuseau, langue, photo, tolérance. #}
+{# §7.7 — Paramètres généraux : horaires, fuseau, langue, tolérance. #}
 {% extends 'admin/_layout.html.twig' %}
 {% import 'components/_macros.html.twig' as ui %}
 
@@ -57,18 +57,11 @@
         </div>
       </div>
 
-      <div class="checkbox-row">
-        <input type="checkbox" id="photoRequired" name="photoRequired" value="1"
-               {{ settings.photoRequired ? 'checked' : '' }}>
-        <label for="photoRequired">{{ 'admin.settings.photoRequired'|trans }}</label>
-      </div>
-
-      <div class="checkbox-row">
-        <input type="checkbox" id="photoPerProduct" name="photoPerProduct" value="1"
-               {{ settings.photoPerProduct ? 'checked' : '' }}>
-        <label for="photoPerProduct">{{ 'admin.settings.photoPerProduct'|trans }}</label>
-      </div>
-      <p class="field__hint">{{ 'admin.settings.photoPerProductHint'|trans }}</p>
+      {#
+        Les réglages photo ne figurent plus ici : les photos ont été retirées
+        des écrans de comptage. Un interrupteur qui ne commande plus rien est
+        un piège pour qui l'actionne.
+      #}
 
       <div class="form-actions">
         <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>

@@ -78,6 +78,8 @@ tasks:
     title: 'Mes tâches'
     todo: '%total% produits à compter'
     inProgress: '%saved% sur %total% produits saisis'
+    checklistProgress: '%saved% sur %total% points cochés'
+    checklistTodo: '%total% points à vérifier'
     validated: 'Validé — saisie verrouillée'
     doneShort: Fait
     nowShort: 'À faire maintenant'
@@ -93,6 +95,7 @@ adminLogin:
     backToSeller: 'Retour à la connexion du poste'
 
 nav:
+    checklist: 'Check-list'
     morning: Matin
     evening: Soir
     toProduce: 'À produire'
@@ -276,3 +279,28 @@ errors:
     INVALID_PHOTO_DATA: 'Photo illisible.'
     UNSUPPORTED_IMAGE_TYPE: "Format d'image non supporté (JPEG, PNG ou WebP)."
     UPLOAD_DIR_UNAVAILABLE: "Dossier de stockage des photos inaccessible."
+
+checklist:
+    title: 'Check-list'
+    progress: '%done% / %total% points'
+    complete: Complet
+    optional: (facultatif)
+    note: Précision
+    notePlaceholder: 'Précision (température, anomalie…)'
+    empty: "Aucun point de check-list n'est encore défini. Un administrateur les crée dans Admin ▸ Check-list."
+    emptySection: 'Aucun point dans ce volet.'
+    sections:
+        OPENING: 'Ouverture'
+        CLOSING: 'Fermeture'
+        QUALITY: 'Contrôle qualité'
+    admin:
+        title: 'Check-list'
+        intro: "Les points affichés au poste. Vider le libellé d'un point le supprime."
+        label: Libellé
+        section: Volet
+        order: Ordre
+        active: Actif
+        required: Obligatoire
+        requiredHint: "Un point obligatoire doit être coché pour que le volet soit complet."
+        add: 'Ajouter un point'
+        newLabel: 'Nouveau point'

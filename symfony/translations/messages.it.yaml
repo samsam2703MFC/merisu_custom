@@ -75,6 +75,8 @@ tasks:
     title: 'I miei compiti'
     todo: '%total% prodotti da contare'
     inProgress: '%saved% di %total% prodotti inseriti'
+    checklistProgress: '%saved% di %total% punti spuntati'
+    checklistTodo: '%total% punti da verificare'
     validated: 'Convalidato — inserimento bloccato'
     doneShort: Fatto
     nowShort: 'Da fare ora'
@@ -90,6 +92,7 @@ adminLogin:
     backToSeller: 'Torna al login della postazione'
 
 nav:
+    checklist: 'Check-list'
     morning: Mattina
     evening: Sera
     toProduce: 'Da produrre'
@@ -273,3 +276,28 @@ errors:
     INVALID_PHOTO_DATA: 'Foto illeggibile.'
     UNSUPPORTED_IMAGE_TYPE: 'Formato immagine non supportato (JPEG, PNG o WebP).'
     UPLOAD_DIR_UNAVAILABLE: 'Cartella delle foto non accessibile.'
+
+checklist:
+    title: 'Check-list'
+    progress: '%done% / %total% punti'
+    complete: Completo
+    optional: (facoltativo)
+    note: Nota
+    notePlaceholder: 'Nota (temperatura, anomalia…)'
+    empty: "Nessun punto è ancora definito. Un amministratore li crea in Amministrazione ▸ Check-list."
+    emptySection: 'Nessun punto in questa sezione.'
+    sections:
+        OPENING: 'Apertura'
+        CLOSING: 'Chiusura'
+        QUALITY: 'Controllo qualità'
+    admin:
+        title: 'Check-list'
+        intro: "I punti mostrati alla postazione. Svuotare l'etichetta elimina il punto."
+        label: Etichetta
+        section: Sezione
+        order: Ordine
+        active: Attivo
+        required: Obbligatorio
+        requiredHint: 'Un punto obbligatorio deve essere spuntato perché la sezione sia completa.'
+        add: 'Aggiungi un punto'
+        newLabel: 'Nuovo punto'

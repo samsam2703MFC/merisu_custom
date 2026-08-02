@@ -1,0 +1,102 @@
+{#
+  Check-list du poste : ouverture, fermeture, contrôle qualité.
+
+  Un seul formulaire pour les trois volets : le vendeur coche au fil de la
+  journée et enregistre une fois. Découper en trois formulaires l'obligerait à
+  enregistrer trois fois, et perdrait ce qu'il vient de cocher ailleurs.
+#}
+{% extends 'base.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'checklist.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block content %}
+
+  <div class="identity-bar">
+    <span class="muted">{{ current_user().consultant.displayName }}</span>
+    <span class="identity-bar__workstation">{{ workstation_name(workstationId) }}</span>
+  </div>
+
+  <div class="page-header page-header--with-icon">
+    <span class="page-header__icon">{{ ui.icon('checklist') }}</span>
+    <div class="page-header__text">
+      <h1 class="page-header__title">{{ 'checklist.title'|trans }}</h1>
+      <p class="page-header__subtitle">{{ date|long_date }}</p>
+    </div>
+  </div>
+
+  {% set aucunPoint = sections|reduce((total, s) => total + s.total, 0) == 0 %}
+
+  {% if aucunPoint %}
+    {{ ui.banner('info', 'checklist.empty'|trans) }}
+  {% else %}
+    <form method="post" action="{{ path('checklist_save') }}">
+
+      {% for bloc in sections %}
+        <section class="card checklist{{ bloc.complete ? ' checklist--complete' : '' }}">
+          <header class="checklist__header">
+            <span class="checklist__icon">{{ ui.icon(bloc.section.icon) }}</span>
+
+            <div class="checklist__heading">
+              <h2 class="card__title">{{ bloc.section.labelKey|trans }}</h2>
+              <p class="muted">{{ 'checklist.progress'|trans({ '%done%': bloc.done, '%total%': bloc.total }) }}</p>
+            </div>
+
+            {% if bloc.complete %}
+              {{ ui.badge('ok', 'checklist.complete'|trans) }}
+            {% endif %}
+          </header>
+
+          {% if bloc.rows is empty %}
+            <p class="muted">{{ 'checklist.emptySection'|trans }}</p>
+          {% else %}
+            <ul class="checklist__list">
+              {% for ligne in bloc.rows %}
+                {% set item = ligne.item %}
+                <li class="checklist__row{{ ligne.checked ? ' is-checked' : '' }}">
+                  {#
+                    Toute la ligne est cliquable : au poste, on coche debout,
+                    parfois avec des gants. Viser une case de 24 px serait
+                    pénible — le <label> étend la cible à la ligne entière.
+                  #}
+                  <label class="checklist__point" for="point-{{ item.id }}">
+                    <input type="checkbox"
+                           id="point-{{ item.id }}"
+                           name="checked[{{ item.id }}]"
+                           value="1"
+                           {{ ligne.checked ? 'checked' : '' }}>
+
+                    <span class="checklist__text">
+                      {{ checklist_text(item) }}
+                      {% if not item.required %}
+                        <span class="checklist__optional">{{ 'checklist.optional'|trans }}</span>
+                      {% endif %}
+                    </span>
+                  </label>
+
+                  {% if ligne.at %}
+                    <span class="checklist__stamp muted">{{ ligne.at|time_short }}</span>
+                  {% endif %}
+
+                  <input class="checklist__note"
+                         type="text"
+                         name="note[{{ item.id }}]"
+                         value="{{ ligne.note }}"
+                         placeholder="{{ 'checklist.notePlaceholder'|trans }}"
+                         aria-label="{{ 'checklist.note'|trans }}">
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </section>
+      {% endfor %}
+
+      <div class="form-actions">
+        <button type="submit" class="button button--primary button--large">
+          {{ 'common.save'|trans }}
+        </button>
+      </div>
+    </form>
+  {% endif %}
+
+{% endblock %}

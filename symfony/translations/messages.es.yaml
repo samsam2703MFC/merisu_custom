@@ -75,6 +75,8 @@ tasks:
     title: 'Mis tareas'
     todo: '%total% productos por contar'
     inProgress: '%saved% de %total% productos registrados'
+    checklistProgress: '%saved% de %total% puntos marcados'
+    checklistTodo: '%total% puntos por verificar'
     validated: 'Validado — registro bloqueado'
     doneShort: Hecho
     nowShort: 'Por hacer ahora'
@@ -90,6 +92,7 @@ adminLogin:
     backToSeller: 'Volver al acceso del puesto'
 
 nav:
+    checklist: 'Lista de control'
     morning: Mañana
     evening: Tarde
     toProduce: 'Por producir'
@@ -273,3 +276,28 @@ errors:
     INVALID_PHOTO_DATA: 'Foto ilegible.'
     UNSUPPORTED_IMAGE_TYPE: 'Formato de imagen no admitido (JPEG, PNG o WebP).'
     UPLOAD_DIR_UNAVAILABLE: 'Carpeta de fotos no accesible.'
+
+checklist:
+    title: 'Lista de control'
+    progress: '%done% / %total% puntos'
+    complete: Completo
+    optional: (opcional)
+    note: Observación
+    notePlaceholder: 'Observación (temperatura, anomalía…)'
+    empty: 'Todavía no hay ningún punto definido. Un administrador los crea en Administración ▸ Lista de control.'
+    emptySection: 'Ningún punto en esta sección.'
+    sections:
+        OPENING: 'Apertura'
+        CLOSING: 'Cierre'
+        QUALITY: 'Control de calidad'
+    admin:
+        title: 'Lista de control'
+        intro: 'Los puntos mostrados en el puesto. Vaciar la etiqueta elimina el punto.'
+        label: Etiqueta
+        section: Sección
+        order: Orden
+        active: Activo
+        required: Obligatorio
+        requiredHint: 'Un punto obligatorio debe marcarse para que la sección esté completa.'
+        add: 'Añadir un punto'
+        newLabel: 'Nuevo punto'

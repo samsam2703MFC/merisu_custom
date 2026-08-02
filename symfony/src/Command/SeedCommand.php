@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Merisu\Inventory\Command;
 
+use Merisu\Inventory\Domain\ChecklistItem;
+use Merisu\Inventory\Domain\ChecklistSection;
 use Merisu\Inventory\Domain\DayOfWeek;
 use Merisu\Inventory\Domain\Product;
 use Merisu\Inventory\Domain\RoundingMode;
@@ -32,6 +34,22 @@ final class SeedCommand extends Command
     private const PLACEHOLDER_LABELS = [
         'Cream 1', 'Cream 2', 'Cream 3', 'Coffee',
         'Biscuit', 'Coffee 2', 'Slot 7', 'Slot 8',
+    ];
+
+    /**
+     * Points de check-list de départ, un par volet.
+     *
+     * Volontairement génériques et peu nombreux : ils montrent la mécanique et
+     * se renomment en administration. Y coder les vrais contrôles d'hygiène
+     * d'une cuisine imposerait un redéploiement à chaque ajustement — et ces
+     * contrôles diffèrent d'un site à l'autre.
+     *
+     * @var array<string, list<string>>
+     */
+    private const PLACEHOLDER_CHECKLIST = [
+        ChecklistSection::Opening->value => ['Point d\'ouverture 1', 'Point d\'ouverture 2'],
+        ChecklistSection::Closing->value => ['Point de fermeture 1', 'Point de fermeture 2'],
+        ChecklistSection::Quality->value => ['Contrôle qualité 1', 'Contrôle qualité 2'],
     ];
 
     /** Matrice fictive : même seuil en semaine, renforcé le week-end. */
@@ -101,8 +119,27 @@ final class SeedCommand extends Command
             $io->writeln("+ $cells seuils fictifs créés");
         }
 
+        if ($this->store->checklistItems() !== []) {
+            $io->writeln('· check-list déjà remplie, inchangée');
+        } else {
+            $points = 0;
+            foreach (self::PLACEHOLDER_CHECKLIST as $section => $labels) {
+                foreach ($labels as $rang => $label) {
+                    $this->store->saveChecklistItem(new ChecklistItem(
+                        strtolower($section) . '-' . ($rang + 1),
+                        ChecklistSection::from($section),
+                        ['fr' => $label, 'pl' => $label, 'it' => $label, 'es' => $label],
+                        $rang + 1,
+                        true,
+                    ));
+                    ++$points;
+                }
+            }
+            $io->writeln("+ $points points de check-list créés");
+        }
+
         $io->newLine();
-        $io->warning('Données PLACEHOLDER : à remplacer via Admin ▸ Produits et Admin ▸ Seuils.');
+        $io->warning('Données PLACEHOLDER : à remplacer via Admin ▸ Produits, Seuils et Check-list.');
         // La connexion se fait au seul code PIN à 6 chiffres.
         $io->writeln('Codes PIN de démonstration : admin 000000 · consultant1 111111 · consultant2 222222');
         $io->writeln('⚠️  À retirer avant toute ouverture aux utilisateurs (voir DEPLOIEMENT.md).');

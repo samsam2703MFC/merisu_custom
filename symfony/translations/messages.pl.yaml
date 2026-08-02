@@ -75,6 +75,8 @@ tasks:
     title: 'Moje zadania'
     todo: 'Do policzenia: %total% produktów'
     inProgress: 'Wprowadzono %saved% z %total% produktów'
+    checklistProgress: 'odhaczono %saved% z %total% punktów'
+    checklistTodo: '%total% punktów do sprawdzenia'
     validated: 'Zatwierdzone — wpis zablokowany'
     doneShort: Gotowe
     nowShort: 'Do zrobienia teraz'
@@ -90,6 +92,7 @@ adminLogin:
     backToSeller: 'Powrót do logowania stanowiska'
 
 nav:
+    checklist: 'Lista kontrolna'
     morning: Rano
     evening: Wieczór
     toProduce: 'Do wyprodukowania'
@@ -273,3 +276,28 @@ errors:
     INVALID_PHOTO_DATA: 'Nieczytelne zdjęcie.'
     UNSUPPORTED_IMAGE_TYPE: 'Nieobsługiwany format obrazu (JPEG, PNG lub WebP).'
     UPLOAD_DIR_UNAVAILABLE: 'Katalog zdjęć niedostępny.'
+
+checklist:
+    title: 'Lista kontrolna'
+    progress: '%done% / %total% punktów'
+    complete: Kompletne
+    optional: (opcjonalnie)
+    note: Uwaga
+    notePlaceholder: 'Uwaga (temperatura, nieprawidłowość…)'
+    empty: 'Nie zdefiniowano jeszcze żadnego punktu. Administrator tworzy je w Administracja ▸ Lista kontrolna.'
+    emptySection: 'Brak punktów w tej części.'
+    sections:
+        OPENING: 'Otwarcie'
+        CLOSING: 'Zamknięcie'
+        QUALITY: 'Kontrola jakości'
+    admin:
+        title: 'Lista kontrolna'
+        intro: 'Punkty widoczne na stanowisku. Wyczyszczenie nazwy usuwa punkt.'
+        label: Nazwa
+        section: Część
+        order: Kolejność
+        active: Aktywny
+        required: Obowiązkowy
+        requiredHint: 'Punkt obowiązkowy musi być odhaczony, aby część była kompletna.'
+        add: 'Dodaj punkt'
+        newLabel: 'Nowy punkt'

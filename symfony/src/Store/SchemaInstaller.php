@@ -40,7 +40,7 @@ final class SchemaInstaller
             $t->addColumn('closing_time', 'string', ['length' => 5, 'default' => '22:00']);
             $t->addColumn('timezone', 'string', ['length' => 64, 'default' => 'Europe/Warsaw']);
             $t->addColumn('default_locale', 'string', ['length' => 5, 'default' => 'fr']);
-            $t->addColumn('photo_required', 'boolean', ['default' => true]);
+            $t->addColumn('photo_required', 'boolean', ['default' => false]);
             $t->addColumn('photo_per_product', 'boolean', ['default' => false]);
             $t->addColumn('delta_tolerance', 'float', ['default' => 0.05]);
             $t->setPrimaryKey(['id']);
@@ -133,6 +133,38 @@ final class SchemaInstaller
             $t->addColumn('note', 'text', ['notnull' => false]);
             $t->setPrimaryKey(['id']);
             $t->addIndex(['business_date'], 'inv_movement_by_date');
+        }
+
+        // ── Check-list du poste ─────────────────────────────────────────────
+        // Deux tables, comme pour les comptages : le référentiel des points
+        // (administrable) d'un côté, ce qui a été coché de l'autre. Les mêler
+        // rendrait impossible de renommer un point sans réécrire l'historique.
+        if (!\in_array('inv_checklist_item', $existing, true)) {
+            $t = $schema->createTable('inv_checklist_item');
+            $t->addColumn('id', 'string', ['length' => 64]);
+            $t->addColumn('section', 'string', ['length' => 16]);
+            $t->addColumn('label', 'text');             // JSON : { "fr": "…", "pl": "…" }
+            $t->addColumn('sort_order', 'integer', ['default' => 0]);
+            $t->addColumn('active', 'boolean', ['default' => true]);
+            $t->addColumn('required', 'boolean', ['default' => true]);
+            $t->setPrimaryKey(['id']);
+            $t->addIndex(['section', 'sort_order'], 'inv_checklist_by_section');
+        }
+
+        if (!\in_array('inv_checklist_entry', $existing, true)) {
+            $t = $schema->createTable('inv_checklist_entry');
+            $t->addColumn('id', 'string', ['length' => 64]);
+            $t->addColumn('business_date', 'string', ['length' => 10]);
+            $t->addColumn('workstation_id', 'string', ['length' => 64]);
+            $t->addColumn('item_id', 'string', ['length' => 64]);
+            $t->addColumn('checked', 'boolean', ['default' => false]);
+            $t->addColumn('consultant_id', 'string', ['length' => 64]);
+            $t->addColumn('checked_at', 'string', ['length' => 32]);
+            $t->addColumn('note', 'text', ['notnull' => false]);
+            $t->setPrimaryKey(['id']);
+            // Un point, un jour, un poste : une seule ligne, mise à jour.
+            $t->addUniqueIndex(['business_date', 'workstation_id', 'item_id'], 'inv_checklist_entry_unique');
+            $t->addIndex(['business_date', 'workstation_id'], 'inv_checklist_by_date');
         }
 
         if (!\in_array('inv_audit', $existing, true)) {

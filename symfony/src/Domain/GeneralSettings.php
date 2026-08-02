@@ -26,6 +26,7 @@ final readonly class GeneralSettings
     /** Défauts techniques de premier démarrage, pas des données métier. */
     public static function defaults(): self
     {
-        return new self('08:00', '22:00', 'Europe/Warsaw', Locale::Fr, true, false, 0.05);
+        // Photos désactivées : elles ne figurent plus aux écrans de comptage.
+        return new self('08:00', '22:00', 'Europe/Warsaw', Locale::Fr, false, false, 0.05);
     }
 }

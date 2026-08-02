@@ -7,6 +7,8 @@ namespace Merisu\Inventory\Controller;
 use Merisu\Inventory\Adapter\ConsultantServiceInterface;
 use Merisu\Inventory\Adapter\RecipeServiceInterface;
 use Merisu\Inventory\Domain\BusinessDate;
+use Merisu\Inventory\Domain\ChecklistItem;
+use Merisu\Inventory\Domain\ChecklistSection;
 use Merisu\Inventory\Domain\CountMoment;
 use Merisu\Inventory\Domain\DayOfWeek;
 use Merisu\Inventory\Domain\GeneralSettings;
@@ -92,6 +94,103 @@ final class AdminController extends AbstractController
         $this->addFlash('success', 'common.saved');
 
         return $this->redirectToRoute('admin_products');
+    }
+
+    // ── Check-list ──────────────────────────────────────────────────────────
+
+    #[Route('/check-list', name: 'admin_checklist', methods: ['GET'])]
+    public function checklist(): Response
+    {
+        $this->currentUser->requireAdmin();
+
+        $parSection = [];
+        foreach (ChecklistSection::all() as $section) {
+            $parSection[$section->value] = [];
+        }
+
+        foreach ($this->store->checklistItems() as $item) {
+            $parSection[$item->section->value][] = $item;
+        }
+
+        // Un identifiant neuf par volet pour la ligne d'ajout : le réutiliser
+        // ou le tirer au sort dans le gabarit risquerait d'écraser un point.
+        $nouveaux = [];
+        foreach (ChecklistSection::all() as $section) {
+            $nouveaux[$section->value] = strtolower($section->value) . '-' . Store::uuid();
+        }
+
+        return $this->render('admin/checklist.html.twig', [
+            'sections' => ChecklistSection::all(),
+            'itemsBySection' => $parSection,
+            'newIds' => $nouveaux,
+            'locales' => Locale::all(),
+        ]);
+    }
+
+    /**
+     * Enregistre la check-list entière : libellés, ordre, activation.
+     *
+     * Un seul envoi pour tout l'écran, comme la matrice des seuils : régler
+     * point par point ferait autant d'allers-retours que de contrôles.
+     */
+    #[Route('/check-list', name: 'admin_checklist_save', methods: ['POST'])]
+    public function saveChecklist(Request $request): Response
+    {
+        $admin = $this->currentUser->requireAdmin();
+
+        /** @var array<string,array<string,mixed>> $lignes */
+        $lignes = $request->request->all('item');
+        $enregistres = 0;
+        $supprimes = 0;
+
+        foreach ($lignes as $id => $champs) {
+            $id = trim((string) $id);
+            if ($id === '') {
+                continue;
+            }
+
+            $labels = [];
+            foreach (Locale::all() as $locale) {
+                $valeur = trim((string) ($champs['label_' . $locale->value] ?? ''));
+                if ($valeur !== '') {
+                    $labels[$locale->value] = mb_substr($valeur, 0, 200);
+                }
+            }
+
+            // Tous les libellés vides = suppression. C'est le geste naturel
+            // pour retirer un point, et il évite un bouton « Supprimer » par
+            // ligne sur un écran qui en compte déjà beaucoup.
+            if ($labels === []) {
+                if ($this->store->checklistItem($id) !== null) {
+                    $this->store->deleteChecklistItem($id);
+                    ++$supprimes;
+                }
+
+                continue;
+            }
+
+            $section = ChecklistSection::tryFromLoose((string) ($champs['section'] ?? ''))
+                ?? ChecklistSection::Opening;
+
+            $this->store->saveChecklistItem(new ChecklistItem(
+                $id,
+                $section,
+                $labels,
+                (int) ($champs['sortOrder'] ?? 0),
+                (bool) ($champs['active'] ?? false),
+                (bool) ($champs['required'] ?? false),
+            ));
+            ++$enregistres;
+        }
+
+        $this->store->audit($admin->id, $admin->role->value, 'CHECKLIST_ITEMS_UPDATE', null, null, [
+            'saved' => $enregistres,
+            'deleted' => $supprimes,
+        ]);
+
+        $this->addFlash('success', 'common.saved');
+
+        return $this->redirectToRoute('admin_checklist');
     }
 
     // ── §7.5 Matrice des seuils ─────────────────────────────────────────────
@@ -195,8 +294,11 @@ final class AdminController extends AbstractController
             $time('closingTime', $current->closingTime),
             $timezone,
             Locale::tryFromLoose((string) $request->request->get('defaultLocale')) ?? $current->defaultLocale,
-            $request->request->getBoolean('photoRequired'),
-            $request->request->getBoolean('photoPerProduct'),
+            // Les photos ayant quitté les écrans de comptage, ces deux
+            // réglages ne sont plus proposés : on les remet à faux plutôt que
+            // de laisser traîner une valeur que plus rien n'honore.
+            false,
+            false,
             $tolerance >= 0 ? $tolerance : $current->deltaTolerance,
         ));
 

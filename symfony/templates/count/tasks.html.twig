@@ -37,13 +37,14 @@
         <span class="task__body">
           <span class="task__label">{{ task.title|trans }}</span>
           <span class="task__meta">
-            <span class="task__time">{{ task.time }}</span> ·
+            {# La check-list n'a pas d'heure : le séparateur disparaît avec. #}
+            {% if task.time %}<span class="task__time">{{ task.time }}</span> · {% endif %}
             {% if task.done %}
               {{ 'tasks.validated'|trans }}
             {% elseif task.saved > 0 %}
-              {{ 'tasks.inProgress'|trans({ '%saved%': task.saved, '%total%': task.total }) }}
+              {{ task.progressKey|trans({ '%saved%': task.saved, '%total%': task.total }) }}
             {% else %}
-              {{ 'tasks.todo'|trans({ '%total%': task.total }) }}
+              {{ task.todoKey|trans({ '%total%': task.total }) }}
             {% endif %}
           </span>
 

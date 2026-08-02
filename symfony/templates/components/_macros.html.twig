@@ -106,6 +106,16 @@
       <path d="M9 4h6v3H9z"/>
       <path d="M15 5.5h2A1.5 1.5 0 0 1 18.5 7v12A1.5 1.5 0 0 1 17 20.5H7A1.5 1.5 0 0 1 5.5 19V7A1.5 1.5 0 0 1 7 5.5h2"/>
       <path d="M8.5 12h7M8.5 15.5h4.5"/>
+    {% elseif name == 'checklist' %}
+      {# Check-list : le presse-papiers, mais coché. #}
+      <path d="M9 4h6v3H9z"/>
+      <path d="M15 5.5h2A1.5 1.5 0 0 1 18.5 7v12A1.5 1.5 0 0 1 17 20.5H7A1.5 1.5 0 0 1 5.5 19V7A1.5 1.5 0 0 1 7 5.5h2"/>
+      <path d="m8.5 12.2 1.6 1.6 3-3.2"/>
+      <path d="m8.5 16.6 1.6 1.6 3-3.2"/>
+    {% elseif name == 'shield' %}
+      {# Contrôle qualité. #}
+      <path d="M12 3.5 19 6v5.5c0 4-2.9 7.3-7 8.9-4.1-1.6-7-4.9-7-8.9V6Z"/>
+      <path d="m9 12 2 2 4-4.2"/>
     {% endif %}
   </svg>
 {% endmacro %}

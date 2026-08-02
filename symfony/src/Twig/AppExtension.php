@@ -7,6 +7,7 @@ namespace Merisu\Inventory\Twig;
 use Merisu\Inventory\Adapter\ConsultantServiceInterface;
 use Merisu\Inventory\Adapter\Material;
 use Merisu\Inventory\Adapter\Workstation;
+use Merisu\Inventory\Domain\ChecklistItem;
 use Merisu\Inventory\Domain\Locale;
 use Merisu\Inventory\Domain\Product;
 use Merisu\Inventory\Security\CurrentUser;
@@ -38,6 +39,7 @@ final class AppExtension extends AbstractExtension
         return [
             new TwigFunction('product_label', $this->productLabel(...)),
             new TwigFunction('material_label', $this->materialLabel(...)),
+            new TwigFunction('checklist_text', $this->checklistText(...)),
             new TwigFunction('current_user', fn () => $this->currentUser),
             new TwigFunction('app_settings', fn () => $this->store->settings()),
             new TwigFunction('supported_locales', static fn (): array => Locale::all()),
@@ -102,6 +104,12 @@ final class AppExtension extends AbstractExtension
     public function productLabel(Product $product): string
     {
         return $product->label($this->locale(), $this->store->settings()->defaultLocale);
+    }
+
+    /** Libellé d'un point de check-list, même repli que les produits. */
+    public function checklistText(ChecklistItem $item): string
+    {
+        return $item->text($this->locale(), $this->store->settings()->defaultLocale);
     }
 
     public function materialLabel(?Material $material, string $fallback = ''): string

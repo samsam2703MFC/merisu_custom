@@ -238,9 +238,14 @@ final class InventoryService
             $alreadyValidated = $alreadyValidated || $count->validated;
         }
 
-        // La photo n'est exigée qu'au comptage du soir : le matin, la preuve
-        // photo n'a pas d'objet, elle porte sur la clôture (§3.2.2).
-        $photoRequired = $moment->isEvening() && $settings->photoRequired;
+        // Les photos ont été retirées des écrans de comptage : le vendeur n'a
+        // plus aucun moyen d'en fournir une. Continuer à en exiger bloquerait
+        // la validation sans recours possible au poste — un verrou qu'aucun
+        // geste ne peut ouvrir est pire que l'absence de contrôle.
+        //
+        // La règle reste implémentée et testée dans EveningValidation : rendre
+        // les photos aux écrans suffira à la réactiver, sans la réécrire.
+        $photoRequired = false;
 
         $result = EveningValidation::validate(
             $products,

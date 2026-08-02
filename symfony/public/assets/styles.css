@@ -786,3 +786,98 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 @media (min-width: 600px) {
   .profile__field { grid-template-columns: 220px 1fr; align-items: baseline; gap: 1rem; }
 }
+
+/* ── Check-list ──────────────────────────────────────────────────────────── */
+
+.checklist__header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: .8rem;
+  margin-bottom: .9rem;
+}
+
+.checklist__icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-pill);
+  background: var(--cream-outline);
+  color: var(--coffee);
+  flex: none;
+}
+
+.checklist__icon .icon { width: 22px; height: 22px; }
+.checklist__heading .card__title { margin: 0; }
+.checklist__heading .muted { margin: 0; font-size: .85rem; }
+
+.checklist--complete .checklist__icon { background: var(--ok-bg); color: var(--ok); }
+
+.checklist__list { list-style: none; margin: 0; padding: 0; }
+
+.checklist__row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: .5rem .75rem;
+  padding: .55rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.checklist__row:first-child { border-top: none; }
+
+/* Toute la ligne est une cible tactile : au poste, on coche debout. */
+.checklist__point {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  min-height: var(--touch);
+  margin: 0;
+  cursor: pointer;
+}
+
+.checklist__text { font-size: 1rem; color: var(--text); }
+.is-checked .checklist__text { color: var(--latte); text-decoration: line-through; }
+
+.checklist__optional {
+  font-size: .75rem;
+  color: var(--latte);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-left: .35rem;
+}
+
+.checklist__stamp { font-size: .78rem; white-space: nowrap; }
+
+.checklist__note {
+  grid-column: 1 / -1;
+  font-size: .9rem;
+  min-height: 38px;
+  padding: .35rem .7rem;
+  background: var(--bg);
+  border-color: transparent;
+}
+
+.checklist__note:focus { background: #fff; border-color: var(--brand); }
+
+/* Ligne de réglage en administration. */
+.admin-row { padding: .9rem 0; border-top: 1px solid var(--border); }
+.admin-row:first-of-type { border-top: none; }
+.admin-row--new { opacity: .75; }
+.admin-row--new:focus-within { opacity: 1; }
+
+.admin-row__options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-top: .5rem;
+}
+
+.field--narrow { margin-bottom: 0; width: 110px; }
+
+@media (min-width: 600px) {
+  .checklist__row { grid-template-columns: 1fr auto 220px; }
+  .checklist__note { grid-column: auto; }
+}

@@ -6,6 +6,9 @@ namespace Merisu\Inventory\Store;
 
 use Doctrine\DBAL\Connection;
 use Merisu\Inventory\Domain\AuditEntry;
+use Merisu\Inventory\Domain\ChecklistEntry;
+use Merisu\Inventory\Domain\ChecklistItem;
+use Merisu\Inventory\Domain\ChecklistSection;
 use Merisu\Inventory\Domain\CountMoment;
 use Merisu\Inventory\Domain\CountPhoto;
 use Merisu\Inventory\Domain\DayOfWeek;
@@ -413,6 +416,118 @@ final class Store
         ]);
     }
 
+    // ── Check-list ──────────────────────────────────────────────────────────
+
+    /** @return list<ChecklistItem> */
+    public function checklistItems(bool $activeOnly = false): array
+    {
+        $sql = 'SELECT * FROM inv_checklist_item'
+            . ($activeOnly ? ' WHERE active = 1' : '')
+            . ' ORDER BY section, sort_order, id';
+
+        return array_map($this->hydrateChecklistItem(...), $this->db->fetchAllAssociative($sql));
+    }
+
+    public function checklistItem(string $id): ?ChecklistItem
+    {
+        $row = $this->db->fetchAssociative('SELECT * FROM inv_checklist_item WHERE id = ?', [$id]);
+
+        return $row === false ? null : $this->hydrateChecklistItem($row);
+    }
+
+    public function saveChecklistItem(ChecklistItem $item): void
+    {
+        $data = [
+            'section' => $item->section->value,
+            'label' => json_encode($item->label, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+            'sort_order' => $item->sortOrder,
+            'active' => $item->active ? 1 : 0,
+            'required' => $item->required ? 1 : 0,
+        ];
+
+        $exists = (int) $this->db->fetchOne('SELECT COUNT(*) FROM inv_checklist_item WHERE id = ?', [$item->id]) > 0;
+
+        if ($exists) {
+            $this->db->update('inv_checklist_item', $data, ['id' => $item->id]);
+        } else {
+            $this->db->insert('inv_checklist_item', $data + ['id' => $item->id]);
+        }
+    }
+
+    public function deleteChecklistItem(string $id): void
+    {
+        // Les cochages passés sont conservés : ils documentent ce qui a été
+        // fait, même si le point n'est plus au programme aujourd'hui.
+        $this->db->delete('inv_checklist_item', ['id' => $id]);
+    }
+
+    /** @return array<string,ChecklistEntry> Indexé par identifiant de point. */
+    public function checklistEntries(string $businessDate, string $workstationId): array
+    {
+        $rows = $this->db->fetchAllAssociative(
+            'SELECT * FROM inv_checklist_entry WHERE business_date = ? AND workstation_id = ?',
+            [$businessDate, $workstationId],
+        );
+
+        $entries = [];
+
+        foreach ($rows as $row) {
+            $entries[(string) $row['item_id']] = new ChecklistEntry(
+                (string) $row['id'],
+                (string) $row['business_date'],
+                (string) $row['workstation_id'],
+                (string) $row['item_id'],
+                (bool) $row['checked'],
+                (string) $row['consultant_id'],
+                (string) $row['checked_at'],
+                $row['note'] === null || $row['note'] === '' ? null : (string) $row['note'],
+            );
+        }
+
+        return $entries;
+    }
+
+    /**
+     * Enregistre l'état d'un point.
+     *
+     * L'auteur et l'horodatage sont RÉÉCRITS à chaque changement : c'est la
+     * dernière personne à avoir statué qui engage sa responsabilité, pas la
+     * première à avoir touché la case.
+     */
+    public function setChecklistEntry(
+        string $businessDate,
+        string $workstationId,
+        string $itemId,
+        bool $checked,
+        string $consultantId,
+        ?string $note = null,
+    ): void {
+        $existing = $this->db->fetchOne(
+            'SELECT id FROM inv_checklist_entry WHERE business_date = ? AND workstation_id = ? AND item_id = ?',
+            [$businessDate, $workstationId, $itemId],
+        );
+
+        $data = [
+            'checked' => $checked ? 1 : 0,
+            'consultant_id' => $consultantId,
+            'checked_at' => self::now(),
+            'note' => $note,
+        ];
+
+        if ($existing !== false) {
+            $this->db->update('inv_checklist_entry', $data, ['id' => (string) $existing]);
+
+            return;
+        }
+
+        $this->db->insert('inv_checklist_entry', $data + [
+            'id' => self::uuid(),
+            'business_date' => $businessDate,
+            'workstation_id' => $workstationId,
+            'item_id' => $itemId,
+        ]);
+    }
+
     // ── Audit ───────────────────────────────────────────────────────────────
 
     /** @param array<string,mixed> $details */
@@ -462,6 +577,19 @@ final class Store
     }
 
     // ── Hydratation ─────────────────────────────────────────────────────────
+
+    /** @param array<string,mixed> $row */
+    private function hydrateChecklistItem(array $row): ChecklistItem
+    {
+        return new ChecklistItem(
+            (string) $row['id'],
+            ChecklistSection::tryFromLoose((string) $row['section']) ?? ChecklistSection::Opening,
+            json_decode((string) $row['label'], true) ?: [],
+            (int) $row['sort_order'],
+            (bool) $row['active'],
+            (bool) $row['required'],
+        );
+    }
 
     /** @param array<string,mixed> $row */
     private function hydrateProduct(array $row): Product
