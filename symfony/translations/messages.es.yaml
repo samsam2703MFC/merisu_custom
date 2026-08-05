@@ -177,6 +177,7 @@ admin:
         ingredients: 'Ingredientes (%locale%)'
         allergens: 'Alérgenos (%locale%)'
         allergensHint: 'Impresos aparte y en negrita: la normativa exige que destaquen.'
+        countModeBadge: 'Recipiente'
         countModes:
             PIECES: 'Por unidad'
             CONTAINER: 'Por recipiente'

@@ -33,9 +33,27 @@
           {{ ui.badge('neutral', product.code) }}
           <span class="admin-item__name">{{ product_label(product) }}</span>
         </span>
-        {% if not product.active %}
-          {{ ui.badge('warn', 'admin.products.inactive'|trans) }}
-        {% endif %}
+        {#
+          Mode de comptage annoncé dès la liste repliée.
+
+          C'est lui qui décide si le vendeur pourra saisir une fraction de
+          contenant : sans cette pastille, il fallait ouvrir les huit fiches
+          l'une après l'autre pour savoir lesquelles acceptent un
+          pourcentage, et l'absence du curseur à l'écran de comptage passait
+          alors pour une fonction manquante.
+
+          Seul le mode « contenant » se signale : compter à l'unité est le
+          cas ordinaire, et l'annoncer partout ne dirait rien.
+        #}
+        <span class="admin-item__tags">
+          {% if product.countMode.isContainer %}
+            {{ ui.badge('info', 'admin.products.countModeBadge'|trans) }}
+          {% endif %}
+
+          {% if not product.active %}
+            {{ ui.badge('warn', 'admin.products.inactive'|trans) }}
+          {% endif %}
+        </span>
       </summary>
 
       <form method="post" action="{{ path('admin_product_save', { id: product.id }) }}" class="form">

@@ -180,6 +180,7 @@ admin:
         ingredients: 'Ingrédients (%locale%)'
         allergens: 'Allergènes (%locale%)'
         allergensHint: "Imprimés à part et en gras sur l'étiquette : la réglementation impose qu'ils ressortent."
+        countModeBadge: 'Contenant'
         countModes:
             PIECES: "À l'unité"
             CONTAINER: 'Par contenant'

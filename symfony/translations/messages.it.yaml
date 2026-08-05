@@ -177,6 +177,7 @@ admin:
         ingredients: 'Ingredienti (%locale%)'
         allergens: 'Allergeni (%locale%)'
         allergensHint: "Stampati a parte e in grassetto: la normativa impone che risaltino."
+        countModeBadge: 'Contenitore'
         countModes:
             PIECES: 'A unità'
             CONTAINER: 'Per contenitore'

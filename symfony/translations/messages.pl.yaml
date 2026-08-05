@@ -177,6 +177,7 @@ admin:
         ingredients: 'Składniki (%locale%)'
         allergens: 'Alergeny (%locale%)'
         allergensHint: 'Drukowane osobno i pogrubione: przepisy wymagają, aby się wyróżniały.'
+        countModeBadge: 'Pojemnik'
         countModes:
             PIECES: 'Na sztuki'
             CONTAINER: 'Na pojemniki'
