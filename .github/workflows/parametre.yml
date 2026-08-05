@@ -1,0 +1,120 @@
+# Réglage d'un paramètre général sur le serveur, à la demande.
+#
+# ⚠️ CE N'EST PAS LE CHEMIN NORMAL. Tout se règle dans Admin ▸ Paramètres, sans
+# accès au serveur ni redéploiement (§2). Ce workflow existe pour les cas où cet
+# écran n'est pas atteignable : première mise en service, code administrateur
+# perdu, ou réglage à poser depuis un poste qui n'a pas accès au serveur.
+#
+# Il ne peut rien faire d'autre : la commande appelée n'accepte qu'une liste
+# CLOSE de paramètres, ceux qu'un administrateur pourrait déjà changer à
+# l'écran. Elle ne touche ni aux comptages, ni aux produits, ni aux comptes.
+#
+# Il utilise les MÊMES secrets que le déploiement — rien de nouveau à créer.
+
+name: Régler un paramètre
+
+on:
+  workflow_dispatch:
+    inputs:
+      nom:
+        description: Paramètre à régler
+        required: true
+        type: choice
+        options:
+          - monthlyTiramisuTarget
+          - openingTime
+          - closingTime
+          - timezone
+          - defaultLocale
+          - deltaTolerance
+      valeur:
+        description: 'Nouvelle valeur (ex. 4000, 08:00, Europe/Warsaw, fr, 0.05)'
+        required: true
+        type: string
+
+# Il écrit dans la même base que le déploiement : les deux ne doivent pas se
+# croiser pendant un cache:clear.
+concurrency:
+  group: deploiement-production
+  cancel-in-progress: false
+
+jobs:
+  regler:
+    name: Régler ${{ inputs.nom }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Préparer la connexion SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${SSH_KEY:-}" ] || [ -z "${KNOWN_HOSTS:-}" ]; then
+            echo "::error::Secrets manquants — les mêmes que le déploiement."
+            exit 1
+          fi
+
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploiement
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_deploiement ~/.ssh/known_hosts
+
+          # Même réparation d'enveloppe que le déploiement : une clé collée
+          # sans ses lignes BEGIN/END ne se signale autrement que par un
+          # « error in libcrypto » qui n'explique rien.
+          if ! ssh-keygen -y -f ~/.ssh/id_deploiement > /dev/null 2>&1 \
+             && head -1 ~/.ssh/id_deploiement | grep -q '^b3BlbnNzaC1rZXktdjE'; then
+            {
+              echo "-----BEGIN OPENSSH PRIVATE KEY-----"
+              grep -v '^-----' ~/.ssh/id_deploiement
+              echo "-----END OPENSSH PRIVATE KEY-----"
+            } > ~/.ssh/id_deploiement.reparee
+            mv ~/.ssh/id_deploiement.reparee ~/.ssh/id_deploiement
+            chmod 600 ~/.ssh/id_deploiement
+          fi
+
+          if ! ssh-keygen -y -f ~/.ssh/id_deploiement > /dev/null 2>&1; then
+            echo "::error::DEPLOY_SSH_KEY n'est pas une clé privée exploitable."
+            exit 1
+          fi
+
+      - name: Appliquer ${{ inputs.nom }} = ${{ inputs.valeur }}
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          APP_PATH: ${{ secrets.DEPLOY_PATH }}
+          PORT: ${{ vars.DEPLOY_PORT || '22' }}
+          PHP_BIN: ${{ vars.DEPLOY_PHP_BIN || 'php' }}
+          NOM: ${{ inputs.nom }}
+          VALEUR: ${{ inputs.valeur }}
+        run: |
+          set -euo pipefail
+
+          APP_PATH="${APP_PATH//$'\r'/}"
+          APP_PATH="${APP_PATH#"${APP_PATH%%[![:space:]]*}"}"
+          APP_PATH="${APP_PATH%"${APP_PATH##*[![:space:]]}"}"
+
+          ssh -i ~/.ssh/id_deploiement -p "$PORT" -o BatchMode=yes \
+              "$USER@$HOST" bash -euo pipefail -s -- \
+              "$APP_PATH" "$PHP_BIN" "$NOM" "$VALEUR" <<'DISTANT'
+          APP_PATH="$1"; PHP_BIN="$2"; NOM="$3"; VALEUR="$4"
+
+          cd "$APP_PATH/symfony"
+
+          echo "▸ Avant"
+          "$PHP_BIN" bin/console --env=prod merisu:parametre
+
+          echo "▸ Application"
+          "$PHP_BIN" bin/console --env=prod merisu:parametre "$NOM" "$VALEUR"
+
+          echo "▸ Après"
+          "$PHP_BIN" bin/console --env=prod merisu:parametre
+          DISTANT
+
+      - name: Effacer la clé privée
+        if: always()
+        run: rm -f ~/.ssh/id_deploiement

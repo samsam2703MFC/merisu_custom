@@ -58,9 +58,11 @@ final class NetworkController extends AbstractController
             }
         }
 
-        // Le pays demandé prime, sinon celui de la boutique courante : le
-        // vendeur ouvre l'écran pour se situer chez lui d'abord.
-        $pays = strtoupper(trim((string) $request->query->get('country', ''))) ?: $paysCourant;
+        // Le pays de la boutique du poste, et lui seul. Laisser choisir un
+        // autre pays n'apprenait rien : le classement mondial le dit déjà, et
+        // « Dans votre pays » vu depuis un pays qui n'est pas le sien n'a plus
+        // de sens. Aucun paramètre d'URL, donc aucun état à retenir.
+        $pays = $paysCourant;
 
         $national = $pays === null ? [] : ShopRanking::build($performances, $metric, $currentShopId, $pays);
         $mondial = ShopRanking::build($performances, $metric, $currentShopId);
@@ -71,7 +73,6 @@ final class NetworkController extends AbstractController
             'metric' => $metric,
             'metrics' => RankingMetric::all(),
             'country' => $pays,
-            'countries' => ShopRanking::countries($performances),
             'national' => $national,
             'worldwide' => $mondial,
             'myNational' => ShopRanking::positionOf($national, $currentShopId),

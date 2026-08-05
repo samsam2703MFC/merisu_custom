@@ -125,7 +125,7 @@
           <span class="task__label">{{ 'produce.tileTitle'|trans }}</span>
           <span class="task__meta">
             {% if produce.count > 0 %}
-              {{ 'tasks.planReady'|trans({ '%count%': produce.count }) }}
+              {{ 'tasks.planReadyTomorrow'|trans({ '%count%': produce.count }) }}
             {% else %}
               {{ 'tasks.noPlanTomorrow'|trans }}
             {% endif %}

@@ -82,7 +82,8 @@ tasks:
     nowShort: 'Do zrobienia teraz'
     noPlan: 'Brak planu na dziś'
     planReady: 'Do przygotowania: %count% produktów'
-    noPlanTomorrow: 'Na jutro nic do przygotowania'
+    planReadyTomorrow: 'Jutro · %count% produktów do przygotowania'
+    noPlanTomorrow: 'Jutro · na razie nic do przygotowania'
 
 adminLogin:
     title: 'Logowanie do administracji'
@@ -140,7 +141,7 @@ produce:
     computedFrom: 'Obliczone na podstawie stanu zamknięcia z %date%'
     shortcutToday: Dziś
     shortcutTomorrow: Jutro
-    tileTitle: 'Do przygotowania jutro'
+    tileTitle: 'Lista produkcji'
     todayTitle: 'Plan na dziś'
     category: Kategoria
     allCategories: 'Wszystkie kategorie'

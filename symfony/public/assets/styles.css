@@ -622,7 +622,18 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 .task--done .task__label { color: var(--latte); }
 .task--done .task__icon { background: var(--ok-bg); color: var(--ok); }
 
-.task--secondary { min-height: 72px; background: transparent; box-shadow: none; border: 1px dashed var(--border); }
+/*
+  Consultations : mêmes carte et ombre que les tâches, seulement un cran plus
+  bas. Les pointillés sur fond transparent les faisaient passer pour des
+  emplacements vides — le Réseau ne se voyait tout simplement pas.
+*/
+.task--secondary {
+  min-height: 76px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
 .task--secondary .task__label { font-size: 1.1rem; }
 
 /* ── Retour au menu, dans l'entête ───────────────────────────────────────── */
@@ -1882,6 +1893,24 @@ body { overflow-x: hidden; }
   flex: none;
 }
 
+/*
+  Drapeau en indice, dans une ligne de classement. `inline-block` et calé sur
+  la ligne de base : il suit le nom comme une note, sans casser l'alignement
+  des chiffres à droite.
+*/
+.rank__shop .flag {
+  display: inline-block;
+  width: 16px;
+  height: 11px;
+  border-radius: 2px;
+  margin-left: .35rem;
+  vertical-align: baseline;
+}
+
+/* Le drapeau du pays, dans l'entête du classement national : à la taille du
+   titre, pas à celle d'un bouton — ce n'en est plus un. */
+.card__header > .flag { width: 30px; height: 20px; }
+
 /* Sous 380 px, l'entête de connexion porte quatre drapeaux à côté du logo :
    on resserre plutôt que de les faire passer à la ligne. */
 @media (max-width: 380px) {
@@ -1996,9 +2025,14 @@ body { overflow-x: hidden; }
   display: block;
   margin-bottom: var(--space-3);
   padding: var(--space-4);
+  padding-left: calc(var(--space-4) - 2px);
   border-radius: var(--radius-card);
-  background: linear-gradient(140deg, var(--gold), #FFE07A 70%);
-  border: 1px solid #F0BE12;
+  /* Crème, et le jaune en accent seulement : un aplat jaune pleine largeur
+     criait plus fort que la tâche du moment, qui est pourtant la seule à
+     porter la couleur d'action. Le filet suffit à désigner le bloc. */
+  background: var(--cream-outline);
+  border: 1px solid var(--border);
+  border-left: 6px solid var(--gold);
   text-decoration: none;
   color: inherit;
   box-shadow: var(--shadow);
@@ -2016,9 +2050,11 @@ body { overflow-x: hidden; }
   width: 48px;
   height: 48px;
   border-radius: var(--radius-pill);
-  /* Café sur jaune : 6,9:1. Le blanc sur jaune tombait à 1,6:1, illisible en
-     plein soleil derrière une vitrine. */
-  background: rgba(111, 78, 55, .12);
+  /* La pastille reprend le jaune : c'est le second point d'accent, et il
+     suffit à faire lire le bloc comme « la note du jour » avant le titre.
+     Encre café dessus — 6,9:1 ; le blanc sur jaune tombait à 1,6:1,
+     illisible en plein soleil derrière une vitrine. */
+  background: var(--gold);
   color: var(--coffee);
   flex: none;
 }
@@ -2035,19 +2071,21 @@ body { overflow-x: hidden; }
   overflow-wrap: anywhere;
 }
 
-.daynote__meta { font-size: .9rem; color: var(--coffee-800); }
+.daynote__meta { font-size: .9rem; color: var(--latte); }
 
 /*
   La note de marque. Affichée, jamais repliée : une consigne qu'il faut ouvrir
-  pour lire n'est pas lue. Fond crème et non jaune — deux blocs jaunes de suite
-  se seraient annulés, et c'est le plan du jour qu'on doit voir en premier.
+  pour lire n'est pas lue. Blanche là où le plan du jour est crème : les deux
+  se suivent, et c'est le plan qu'on doit voir en premier. Le même filet jaune
+  les rattache l'un à l'autre.
 */
 .daynote-card {
   margin-bottom: var(--space-4);
   padding: var(--space-4);
   border-radius: var(--radius-card);
   background: var(--surface);
-  border-left: 4px solid var(--gold);
+  border: 1px solid var(--border);
+  border-left: 6px solid var(--gold);
   box-shadow: var(--shadow);
 }
 
@@ -2093,4 +2131,62 @@ body { overflow-x: hidden; }
   margin-top: var(--space-4);
   padding-top: var(--space-3);
   border-top: 1px solid var(--border-soft);
+}
+
+/* ── Listes déroulantes ──────────────────────────────────────────────────── */
+
+/*
+  La flèche du navigateur est remplacée par la nôtre, en mauve.
+
+  Celle du système change de forme, de taille et de couleur d'un navigateur à
+  l'autre — grise et minuscule sur l'un, triangle noir sur l'autre — et rien
+  ne la reliait au reste de l'interface. La nôtre reprend le mauve de la
+  production, et surtout elle BOUGE : elle se retourne quand la liste s'ouvre,
+  ce qui confirme le geste sur un écran tactile où le doigt masque le champ.
+
+  `appearance: none` retire la flèche native ; le champ reste un vrai <select>,
+  avec le sélecteur natif du système, sa recherche au clavier et son rendu
+  plein écran sur téléphone. Rien n'est réimplémenté.
+
+  Les attributs du SVG sont en guillemets SIMPLES : un guillemet double y
+  refermerait le url("…") et la règle entière passerait à la trappe, sans
+  message d'erreur — la flèche disparaîtrait purement et simplement.
+*/
+select,
+select.field__input {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B3FA0' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right var(--space-3) center;
+  background-size: 20px 20px;
+  /* La place de la flèche, plus une respiration : sans elle, une option longue
+     passait DERRIÈRE le chevron. */
+  padding-right: calc(var(--space-3) * 2 + 20px);
+}
+
+/*
+  Liste ouverte : le navigateur donne la mise au point au champ. C'est le seul
+  signal exploitable en CSS — il n'existe pas d'état « ouvert » —, et il suffit :
+  ouvrir une liste la met toujours au point.
+
+  Le retournement passe par une SECONDE image plutôt qu'un `transform` : un
+  fond ne se transforme pas, et un pseudo-élément par-dessus un <select> ne
+  recevrait pas le clic sur certains navigateurs.
+*/
+select:focus,
+select.field__input:focus {
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2355317E' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='m6 15 6-6 6 6'/></svg>");
+  border-color: var(--plum);
+  box-shadow: 0 0 0 3px var(--plum-light);
+}
+
+select:hover:not(:disabled), select.field__input:hover:not(:disabled) { border-color: #DFD3F0; }
+select:disabled, select.field__input:disabled { background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238C715F' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>"); opacity: .6; }
+
+/* Le sélecteur de l'entête est plus étroit : la flèche s'y resserre. */
+.locale-switcher__select {
+  background-position: right var(--space-2) center;
+  padding-right: calc(var(--space-2) * 2 + 18px);
+  background-size: 18px 18px;
 }

@@ -38,7 +38,7 @@
     {% for choix in metrics %}
       <a class="metric-switch__item {{ choix == metric ? 'is-active' : '' }}"
          role="tab" aria-selected="{{ choix == metric ? 'true' : 'false' }}"
-         href="{{ path('network', { metric: choix.value, country: country }) }}">
+         href="{{ path('network', { metric: choix.value }) }}">
         {{ choix.labelKey|trans }}
       </a>
     {% endfor %}
@@ -119,21 +119,10 @@
         {{ country ? ('countries.' ~ country)|trans : 'network.nationalRanking'|trans }}
       </h2>
 
-      {# Un drapeau par pays plutôt qu'une liste : ils sont quatre, ils tiennent
-         sur la ligne du titre, et le pays courant se voit sans l'ouvrir. #}
-      {% if countries|length > 1 %}
-        <nav class="flags" aria-label="{{ 'network.country'|trans }}">
-          {% for code in countries %}
-            <a class="flags__choice {{ code == country ? 'is-active' : '' }}"
-               href="{{ path('network', { metric: metric.value, country: code }) }}"
-               title="{{ ('countries.' ~ code)|trans }}"
-               aria-label="{{ ('countries.' ~ code)|trans }}"
-               {{ code == country ? 'aria-current="page"' : '' }}>
-              {{ ui.flag(code) }}
-            </a>
-          {% endfor %}
-        </nav>
-      {% endif %}
+      {# Le pays de la boutique du poste, et lui seul : on vient voir où l'on
+         se situe chez soi. Naviguer vers le classement polonais depuis Paris
+         n'apprenait rien qu'on ne lise déjà dans le classement mondial. #}
+      {% if country %}{{ ui.flag(country, ('countries.' ~ country)|trans) }}{% endif %}
     </header>
 
     {{ _self.classement(national, metric, 'network.empty'|trans) }}
@@ -169,6 +158,13 @@
              sur téléphone. Le repère reste lisible sans lecture. #}
           <span class="rank__shop">
             {{ ligne.shop.name }}
+            {# Drapeau en indice : dans le classement mondial, « Merisù Centrum »
+               et « Merisù Marais » ne disent pas de quel pays elles sortent. Un
+               drapeau minuscule le dit sans allonger la ligne — le nom du pays
+               en toutes lettres l'aurait fait passer à la ligne sur téléphone. #}
+            {% if ligne.shop.country %}
+              {{ ui.flag(ligne.shop.country, ('countries.' ~ ligne.shop.country|upper)|trans) }}
+            {% endif %}
             {% if ligne.isCurrent %}
               <span class="visually-hidden">— {{ 'network.yourShop'|trans }}</span>
             {% endif %}
