@@ -998,58 +998,66 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
   gap: var(--space-3);
 }
 
+/* La jauge prend la largeur restante, la lecture chiffrée garde sa colonne :
+   « 62.5 % » et « 0 % » ne doivent pas faire respirer la jauge différemment
+   d'un produit à l'autre. */
+.vessel__choices > .vessel__jar { flex: 1; min-width: 0; }
+
 /*
- * Le contenant. Un bocal évasé, dessiné en CSS : pas d'image à charger, donc
- * disponible hors-ligne, et il prend la couleur de la marque.
+ * La jauge de remplissage du contenant, dessinée en CSS : pas d'image à
+ * charger, donc disponible hors-ligne, et elle prend les couleurs de la marque.
  *
- * Il n'est plus seulement un témoin : c'est LE contrôle. Le vendeur touche la
- * hauteur qu'il a sous les yeux au lieu de traduire un niveau en pourcentage.
- * Assez haut pour que chaque huitième reste visable au doigt — huit pilules
- * « 12,5 % / 25 % / 37,5 %… » sur une ligne auraient été illisibles, et sur
- * deux lignes elles auraient mangé l'écran de saisie.
+ * Elle n'est pas un témoin mais LE contrôle : le vendeur touche le niveau qu'il
+ * a sous les yeux au lieu de traduire un remplissage en pourcentage.
+ *
+ * HORIZONTALE. En vertical, elle imposait 192 px de haut par produit — une
+ * carte deux fois plus grande que les autres, et six écrans de défilement pour
+ * vingt-cinq références. En largeur, elle tient sur la place d'une ligne et se
+ * lit de gauche à droite, comme tout le reste de l'écran.
  */
 .vessel__jar {
   position: relative;
-  flex: none;
-  /*
-    72 × 192 : chaque huitième fait 72 × 24 px. C'est en dessous des 44 px
-    d'une cible tactile ordinaire, et c'est assumé — huit bandes de 44 px
-    feraient un bocal de 352 px, plus haut que la moitié d'un écran de
-    téléphone, pour UN produit. 24 px reste au-dessus du minimum tenable, et
-    la largeur généreuse rattrape la hauteur : on vise une bande, pas un point.
-  */
-  width: 72px;
-  height: 192px;
+  display: flex;
+  width: 100%;
+  height: 44px;          /* la cible tactile ordinaire, en hauteur */
   border: 2px solid var(--latte);
-  border-top-width: 3px;
-  border-radius: 6px 6px 16px 16px;
+  border-radius: 10px;
   background: #fff;
   overflow: hidden;
 }
 
+/*
+  Le niveau, et sa couleur.
+
+  Un bac presque vide et un bac presque plein ne demandent pas la même chose :
+  l'un est à recommander tout de suite, l'autre tiendra la journée. La couleur
+  le dit avant le chiffre — rouge sombre en fond de cuve, vert clair quand il
+  reste de quoi tenir. C'est le seul endroit de l'application où la couleur
+  porte une VALEUR et non un état, d'où une échelle à part.
+*/
 .vessel__level {
   position: absolute;
-  left: 0;
-  right: 0;
+  top: 0;
   bottom: 0;
-  height: 0;
-  background: linear-gradient(180deg, var(--brand) 0%, var(--brand-dark) 100%);
-  transition: height var(--dur-slow) var(--ease-out);
+  left: 0;
+  width: 0;
+  background: var(--niveau, var(--brand));
+  transition: width var(--dur-slow) var(--ease-out), background var(--dur) var(--ease);
 }
 
 /*
   Graduations : sans elles, un niveau à 62,5 % ne se distingue pas de 50 %.
   Dessinées en dégradé répété — un seul élément plutôt que huit.
 
-  En POURCENTAGE et non en pixels : les bordures du bocal rognent sa boîte
-  interne de cinq pixels, et des traits calés au pixel finissaient décalés
-  d'un huitième complet en haut de la jauge.
+  En POURCENTAGE et non en pixels : les bordures rognent la boîte interne de
+  quatre pixels, et des traits calés au pixel finissaient décalés d'un huitième
+  complet au bout de la jauge.
 */
 .vessel__ticks {
   position: absolute;
   inset: 0;
   background: repeating-linear-gradient(
-    to top,
+    to right,
     transparent 0,
     transparent calc(12.5% - 1px),
     rgba(111, 78, 55, .22) calc(12.5% - 1px),
@@ -1058,17 +1066,12 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
   pointer-events: none;
 }
 
-/*
- * Les huit bandes tactiles, empilées du haut vers le bas. Chacune est
- * l'étiquette de son bouton radio : le clic, le clavier et les lecteurs
- * d'écran passent tous par le même mécanisme natif.
- */
-/* Un huitième de la hauteur chacune, donc toujours alignées sur les traits,
-   quelle que soit la taille du bocal. */
+/* Un huitième de la largeur chacune, donc toujours alignées sur les traits,
+   quelle que soit la taille de la jauge. */
 .vessel__band {
   position: relative;   /* au-dessus du niveau et des graduations */
-  display: block;
-  height: 12.5%;
+  flex: 1;
+  height: 100%;
   cursor: pointer;
 }
 
@@ -1079,15 +1082,29 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
  * précèdent le dessin dans le DOM, le sélecteur `~` fait le reste. Le retour
  * visuel survit donc à un script qui n'a pas pu se charger au poste.
  */
-.vessel__radio[value="12.5"]:checked ~ .vessel__jar .vessel__level { height: 12.5%; }
-.vessel__radio[value="25"]:checked ~ .vessel__jar .vessel__level { height: 25%; }
-.vessel__radio[value="37.5"]:checked ~ .vessel__jar .vessel__level { height: 37.5%; }
-.vessel__radio[value="50"]:checked ~ .vessel__jar .vessel__level { height: 50%; }
-.vessel__radio[value="62.5"]:checked ~ .vessel__jar .vessel__level { height: 62.5%; }
-.vessel__radio[value="75"]:checked ~ .vessel__jar .vessel__level { height: 75%; }
-.vessel__radio[value="87.5"]:checked ~ .vessel__jar .vessel__level { height: 87.5%; }
+.vessel__radio[value="12.5"]:checked ~ .vessel__jar .vessel__level { width: 12.5%; background: #8E1B12; }
+.vessel__radio[value="25"]:checked ~ .vessel__jar .vessel__level { width: 25%; background: #B3261E; }
+.vessel__radio[value="37.5"]:checked ~ .vessel__jar .vessel__level { width: 37.5%; background: #C85A17; }
+.vessel__radio[value="50"]:checked ~ .vessel__jar .vessel__level { width: 50%; background: #C9901A; }
+.vessel__radio[value="62.5"]:checked ~ .vessel__jar .vessel__level { width: 62.5%; background: #A8A114; }
+.vessel__radio[value="75"]:checked ~ .vessel__jar .vessel__level { width: 75%; background: #6BA23C; }
+.vessel__radio[value="87.5"]:checked ~ .vessel__jar .vessel__level { width: 87.5%; background: #7FC95E; }
 
-/* Mise au point au clavier : le bocal entier se souligne, on voit qu'on y est. */
+/*
+  Le chiffre reprend la couleur du niveau, en plus sombre : les mêmes teintes
+  sur du blanc tomberaient sous le seuil de contraste — le vert clair du
+  remplissage donne 2,1:1 en texte, ce qui ne se lit pas de biais.
+*/
+.vessel__radio[value="0"]:checked ~ .vessel__read { color: var(--latte); }
+.vessel__radio[value="12.5"]:checked ~ .vessel__read { color: #8E1B12; }
+.vessel__radio[value="25"]:checked ~ .vessel__read { color: #A8231C; }
+.vessel__radio[value="37.5"]:checked ~ .vessel__read { color: #9E4712; }
+.vessel__radio[value="50"]:checked ~ .vessel__read { color: #8A6410; }
+.vessel__radio[value="62.5"]:checked ~ .vessel__read { color: #74700E; }
+.vessel__radio[value="75"]:checked ~ .vessel__read { color: #4A7228; }
+.vessel__radio[value="87.5"]:checked ~ .vessel__read { color: #3F7A24; }
+
+/* Mise au point au clavier : la jauge entière se souligne, on voit qu'on y est. */
 .vessel__radio:focus-visible ~ .vessel__jar {
   outline: 2px solid var(--brand);
   outline-offset: 3px;
@@ -1101,8 +1118,10 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 .vessel__read {
   display: block;
   min-width: 4.2rem;
+  text-align: right;
   font-size: 1.05rem;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
   color: var(--brand-dark);
 }
 
@@ -1131,10 +1150,6 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 
 @media (prefers-reduced-motion: reduce) {
   .vessel__level { transition: none; }
-}
-
-@media (min-width: 600px) {
-  .vessel-field { grid-template-columns: minmax(180px, 1fr) auto; gap: var(--space-4); }
 }
 
 /* ── Code PIN : six coupes de tiramisu ───────────────────────────────────── */

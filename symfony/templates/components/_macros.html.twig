@@ -145,10 +145,13 @@
         {% endfor %}
 
         {#
-          Le bocal EST le contrôle : on touche la hauteur qu'on a sous les
-          yeux, sans traduire un niveau en pourcentage dans sa tête. Les huit
-          bandes sont empilées à l'envers — la plus haute en premier — pour
-          que le geste corresponde au dessin.
+          La jauge EST le contrôle : on touche le niveau qu'on a sous les yeux,
+          sans traduire un remplissage en pourcentage dans sa tête.
+
+          HORIZONTALE : une jauge verticale imposait 192 px de haut par produit,
+          soit une carte deux fois plus grande que les autres. En largeur, elle
+          occupe la place d'une ligne et se lit de gauche à droite, comme tout
+          le reste de l'écran.
 
           Chaque bande est une étiquette de son bouton radio : le clavier, les
           lecteurs d'écran et la saisie sans script continuent de fonctionner.
@@ -157,10 +160,9 @@
           <span class="vessel__level" aria-hidden="true"></span>
           <span class="vessel__ticks" aria-hidden="true"></span>
 
-          {% for fraction in container_fractions()|reverse %}
-            {% set rang = container_fractions()|length - loop.index %}
+          {% for fraction in container_fractions() %}
             <label class="vessel__band"
-                   for="frac-{{ product.id }}-{{ rang }}"
+                   for="frac-{{ product.id }}-{{ loop.index0 }}"
                    title="{{ fraction }} %"
                    aria-label="{{ label }} — {{ fraction }} %"></label>
           {% endfor %}
