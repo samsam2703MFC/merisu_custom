@@ -148,7 +148,7 @@
   {% if lignes is empty %}
     <p class="muted">{{ vide }}</p>
   {% else %}
-    <ol class="rank">
+    <ol class="rank {{ avecDrapeaux ? 'rank--flagged' : '' }}">
       {% for ligne in lignes %}
         <li class="rank__row{{ ligne.isCurrent ? ' rank__row--mine' : '' }}">
           <span class="rank__badge rank__badge--{{ ligne.rank <= 3 ? ligne.rank : 'other' }}">{{ ligne.rank }}</span>
@@ -158,18 +158,25 @@
              sur téléphone. Le repère reste lisible sans lecture. #}
           <span class="rank__shop">
             {{ ligne.shop.name }}
-            {# Drapeau en indice, dans le classement MONDIAL seulement : là,
-               « Merisù Centrum » et « Merisù Marais » ne disent pas de quel
-               pays elles sortent. Dans le classement national, elles sont
-               toutes du même — un drapeau par ligne n'y apprendrait rien et
-               ferait du bruit. #}
-            {% if avecDrapeaux and ligne.shop.country %}
-              {{ ui.flag(ligne.shop.country, ('countries.' ~ ligne.shop.country|upper)|trans) }}
-            {% endif %}
             {% if ligne.isCurrent %}
               <span class="visually-hidden">— {{ 'network.yourShop'|trans }}</span>
             {% endif %}
           </span>
+
+          {# Le drapeau a sa propre colonne, juste avant le chiffre : en suivant
+             le nom, il se décalait à chaque ligne au gré de la longueur des
+             noms, et l'œil devait le chercher. Aligné, il se lit en une seule
+             descente du regard.
+
+             Classement MONDIAL seulement : dans le national, toutes les
+             boutiques sont du même pays et la colonne ne dirait rien. #}
+          {% if avecDrapeaux %}
+            <span class="rank__flag">
+              {% if ligne.shop.country %}
+                {{ ui.flag(ligne.shop.country, ('countries.' ~ ligne.shop.country|upper)|trans) }}
+              {% endif %}
+            </span>
+          {% endif %}
 
           <span class="rank__value">{{ ligne.value|qty }}</span>
         </li>

@@ -25,66 +25,66 @@
   </div>
 
   {#
-    Le plan du jour ouvre l'écran, et la note de marque se déplie dessous.
+    Le menu est une liste de tuiles, et le plan du jour en est une.
 
-    Un seul bloc et non deux : la note n'est pas une information à part, c'est
-    ce qu'il faut avoir en tête AVANT de suivre le plan. Bâti sur <details>,
-    donc il s'ouvre et se ferme sans une ligne de JavaScript, et le chevron
-    tourne avec.
+    Il a d'abord été un bloc à part — fond crème, gros filet jaune, panneau
+    séparé — et il cassait la page en deux : un bandeau, puis une liste. Il
+    reprend maintenant la forme exacte des autres tuiles ; seule la pastille
+    d'icône garde le jaune, en accent. Toute la page se lit d'une traite.
 
-    Ouvert par défaut : une consigne qu'il faut aller chercher n'est pas lue.
-    Le repli sert à qui la connaît déjà, pas à qui la découvre.
+    La note de marque se déplie dessous, dans le même cadre : ce n'est pas une
+    information à part, c'est ce qu'il faut avoir en tête avant de suivre le
+    plan. Bâti sur <details>, donc sans une ligne de JavaScript, chevron
+    compris. Ouvert par défaut — une consigne qu'il faut aller chercher n'est
+    pas lue.
   #}
-  <details class="daynote" open>
-    <summary class="daynote__summary">
-      <span class="daynote__icon">{{ ui.icon('tray') }}</span>
+  <div class="task-list">
+    <details class="task task--daynote" open>
+      <summary class="task__summary">
+        <span class="task__icon">{{ ui.icon('tray') }}</span>
 
-      <span class="daynote__titles">
-        <span class="daynote__title">{{ 'produce.todayTitle'|trans }}</span>
-        <span class="daynote__meta">
-          {% if planForToday is empty %}
-            {{ 'tasks.noPlan'|trans }}
-          {% else %}
-            {{ 'tasks.planReady'|trans({ '%count%': planForToday|length }) }}
-          {% endif %}
+        <span class="task__body">
+          <span class="task__label">{{ 'produce.todayTitle'|trans }}</span>
+          <span class="task__meta">
+            {% if planForToday is empty %}
+              {{ 'tasks.noPlan'|trans }}
+            {% else %}
+              {{ 'tasks.planReady'|trans({ '%count%': planForToday|length }) }}
+            {% endif %}
+            · {{ 'daynote.title'|trans }}
+          </span>
         </span>
-      </span>
 
-      <span class="daynote__chevron" aria-hidden="true"></span>
-    </summary>
+        <span class="task__chevron" aria-hidden="true"></span>
+      </summary>
 
-    <div class="daynote__panel">
-      <h2 class="daynote-card__title">{{ 'daynote.title'|trans }}</h2>
+      <div class="task__panel">
+        <div class="daynote-item">
+          <h2 class="daynote-item__heading">{{ 'daynote.tiramishow.title'|trans }}</h2>
+          <p class="daynote-item__text">{{ 'daynote.tiramishow.body'|trans }}</p>
+          <p class="daynote-item__text muted">{{ 'daynote.tiramishow.website'|trans }}</p>
+        </div>
 
-      <div class="daynote-card__item">
-        <h3 class="daynote-card__heading">{{ 'daynote.tiramishow.title'|trans }}</h3>
-        <p class="daynote-card__text">{{ 'daynote.tiramishow.body'|trans }}</p>
-        <p class="daynote-card__text muted">{{ 'daynote.tiramishow.website'|trans }}</p>
-      </div>
+        <div class="daynote-item">
+          <h2 class="daynote-item__heading">{{ 'daynote.greeting.title'|trans }}</h2>
+          <p class="daynote-item__text">
+            <span class="daynote-item__word">{{ 'daynote.greeting.hello'|trans }}</span>
+            {{ 'daynote.greeting.helloWhen'|trans }}
+          </p>
+          <p class="daynote-item__text">
+            <span class="daynote-item__word">{{ 'daynote.greeting.thanks'|trans }}</span>
+            {{ 'daynote.greeting.thanksWhen'|trans }}
+          </p>
+        </div>
 
-      <div class="daynote-card__item">
-        <h3 class="daynote-card__heading">{{ 'daynote.greeting.title'|trans }}</h3>
-        <p class="daynote-card__text">
-          <span class="daynote-card__word">{{ 'daynote.greeting.hello'|trans }}</span>
-          {{ 'daynote.greeting.helloWhen'|trans }}
-        </p>
-        <p class="daynote-card__text">
-          <span class="daynote-card__word">{{ 'daynote.greeting.thanks'|trans }}</span>
-          {{ 'daynote.greeting.thanksWhen'|trans }}
-        </p>
-      </div>
-
-      {# Le plan lui-même reste à un clic : le résumé sert au dépli, il ne peut
-         donc pas être aussi un lien. #}
-      <div class="form-actions">
-        <a class="button button--secondary" href="{{ path('production', { forDate: date }) }}">
+        {# Le plan reste à un clic : le résumé sert au dépli, il ne peut donc
+           pas être aussi un lien. #}
+        <a class="daynote-item__link" href="{{ path('production', { forDate: date }) }}">
           {{ 'produce.openToday'|trans }}
         </a>
       </div>
-    </div>
-  </details>
+    </details>
 
-  <div class="task-list">
     {% for task in tasks %}
       <a class="task {{ task.highlight ? 'task--now' : '' }} {{ task.done ? 'task--done' : '' }}"
          href="{{ path(task.route) }}">
