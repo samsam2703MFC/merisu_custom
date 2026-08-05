@@ -206,6 +206,8 @@ admin:
         photoPerProductHint: 'Décoché : une seule photo globale du stock suffit.'
         deltaTolerance: 'Tolérance du delta technique'
         deltaToleranceHint: "0.05 = 5 %. Au-delà, l'écart est signalé en rouge."
+        monthlyTiramisuTarget: 'Objectif de tiramisu par mois'
+        monthlyTiramisuTargetHint: "Alimente la jauge de l'écran Réseau. 0 = aucun objectif, la jauge disparaît."
     delta:
         title: 'Delta technique'
         subtitle: 'Croisement des recettes et de la consommation réelle de matières.'
@@ -342,15 +344,33 @@ network:
     country: Pays
     yourShop: 'votre boutique'
     empty: 'Aucune boutique sur cette période.'
-    sameCurrencyOnly: "Classement limité aux boutiques en %currency% : sans taux de change, deux devises ne se comparent pas."
     demoWarning: "Chiffres de DÉMONSTRATION : la caisse n'est pas encore branchée. Aucune décision ne doit s'appuyer dessus."
     metrics:
-        REVENUE: "Chiffre d'affaires"
         CUSTOMERS: Clients
         TIRAMISU: 'Tiramisu vendus'
+    gauge:
+        title: 'Jauge tiramisu du mois'
+        unit: tiramisu
+        progress: '%sold% tiramisu vendus sur un objectif de %target%'
+        reached: 'Objectif atteint. Tout ce qui suit est du bonus.'
+        remaining: 'Encore %count% pour atteindre l''objectif'
+        pace: '%percent% du mois écoulé'
 
 countries:
     PL: Pologne
     IT: Italie
     FR: France
     ES: Espagne
+
+daynote:
+    title: 'Note du jour'
+    tiramishow:
+        title: 'Le Tiramishow'
+        body: "Le tiramisu se monte DEVANT le client, jamais en coulisse. Le geste fait partie du produit : on annonce ce qu'on pose, couche après couche, et on prend le temps de la dernière pluie de cacao."
+        website: 'Le détail du geste est sur le site de la marque.'
+    greeting:
+        title: 'Ciao et Grazie'
+        hello: Ciao
+        helloWhen: "à chaque client qui entre, dès qu'il franchit la porte — même les mains prises."
+        thanks: Grazie
+        thanksWhen: 'à chaque client qui repart, en le regardant.'

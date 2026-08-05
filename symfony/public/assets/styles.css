@@ -357,19 +357,6 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 .locale-switcher { display: flex; align-items: center; gap: .4rem; margin: 0; min-width: 0; }
 .locale-switcher__select { width: auto; min-width: 130px; max-width: 100%; }
 
-/* Écran de connexion sur petit écran : le sélecteur de langue cède la place au
-   logo, qui reste l'élément identitaire. Placé APRÈS la règle générale — à
-   spécificité égale, c'est la dernière écrite qui l'emporte, et la précédente
-   version de cette règle, écrite plus haut, ne s'appliquait donc jamais. */
-@media (max-width: 599px) {
-  .locale-switcher__select {
-    min-width: 0;
-    max-width: 116px;
-    padding-left: .5rem;
-    padding-right: .5rem;
-  }
-}
-
 /* ── Boutons ─────────────────────────────────────────────────────────────── */
 
 /* Pilule Merisù : capitales espacées, framboise = primaire uniquement. */
@@ -997,52 +984,34 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 .vessel__choices {
   display: flex;
   align-items: center;
-  gap: .4rem;
+  gap: var(--space-3);
 }
-
-.vessel__choice {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: var(--touch);
-  padding: .3rem .5rem;
-  border-radius: var(--radius-pill);
-  background: var(--cream-outline);
-  border: 1px solid var(--border);
-  color: var(--coffee-800);
-  font-size: .82rem;
-  font-weight: 600;
-  letter-spacing: .04em;
-  cursor: pointer;
-  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
-}
-
-.vessel__choice:hover { background: var(--border); }
-
-.vessel__radio:checked + .vessel__choice {
-  background: var(--brand);
-  border-color: transparent;
-  color: #fff;
-  box-shadow: var(--shadow-accent);
-}
-
-.vessel__radio:focus-visible + .vessel__choice { outline: 2px solid var(--brand); outline-offset: 2px; }
-
-.vessel:disabled .vessel__choice { opacity: .55; cursor: default; }
 
 /*
  * Le contenant. Un bocal évasé, dessiné en CSS : pas d'image à charger, donc
  * disponible hors-ligne, et il prend la couleur de la marque.
+ *
+ * Il n'est plus seulement un témoin : c'est LE contrôle. Le vendeur touche la
+ * hauteur qu'il a sous les yeux au lieu de traduire un niveau en pourcentage.
+ * Assez haut pour que chaque huitième reste visable au doigt — huit pilules
+ * « 12,5 % / 25 % / 37,5 %… » sur une ligne auraient été illisibles, et sur
+ * deux lignes elles auraient mangé l'écran de saisie.
  */
 .vessel__jar {
   position: relative;
   flex: none;
-  width: 34px;
-  height: 44px;
+  /*
+    72 × 192 : chaque huitième fait 72 × 24 px. C'est en dessous des 44 px
+    d'une cible tactile ordinaire, et c'est assumé — huit bandes de 44 px
+    feraient un bocal de 352 px, plus haut que la moitié d'un écran de
+    téléphone, pour UN produit. 24 px reste au-dessus du minimum tenable, et
+    la largeur généreuse rattrape la hauteur : on vise une bande, pas un point.
+  */
+  width: 72px;
+  height: 192px;
   border: 2px solid var(--latte);
   border-top-width: 3px;
-  border-radius: 4px 4px 12px 12px;
+  border-radius: 6px 6px 16px 16px;
   background: #fff;
   overflow: hidden;
 }
@@ -1058,21 +1027,103 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 }
 
 /*
- * Le niveau suit la fraction cochée SANS JavaScript : les boutons radio
+  Graduations : sans elles, un niveau à 62,5 % ne se distingue pas de 50 %.
+  Dessinées en dégradé répété — un seul élément plutôt que huit.
+
+  En POURCENTAGE et non en pixels : les bordures du bocal rognent sa boîte
+  interne de cinq pixels, et des traits calés au pixel finissaient décalés
+  d'un huitième complet en haut de la jauge.
+*/
+.vessel__ticks {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to top,
+    transparent 0,
+    transparent calc(12.5% - 1px),
+    rgba(111, 78, 55, .22) calc(12.5% - 1px),
+    rgba(111, 78, 55, .22) 12.5%
+  );
+  pointer-events: none;
+}
+
+/*
+ * Les huit bandes tactiles, empilées du haut vers le bas. Chacune est
+ * l'étiquette de son bouton radio : le clic, le clavier et les lecteurs
+ * d'écran passent tous par le même mécanisme natif.
+ */
+/* Un huitième de la hauteur chacune, donc toujours alignées sur les traits,
+   quelle que soit la taille du bocal. */
+.vessel__band {
+  position: relative;   /* au-dessus du niveau et des graduations */
+  display: block;
+  height: 12.5%;
+  cursor: pointer;
+}
+
+.vessel__band:hover { background: rgba(196, 48, 106, .12); }
+
+/*
+ * Le niveau suit la graduation cochée SANS JavaScript : les boutons radio
  * précèdent le dessin dans le DOM, le sélecteur `~` fait le reste. Le retour
  * visuel survit donc à un script qui n'a pas pu se charger au poste.
  */
+.vessel__radio[value="12.5"]:checked ~ .vessel__jar .vessel__level { height: 12.5%; }
 .vessel__radio[value="25"]:checked ~ .vessel__jar .vessel__level { height: 25%; }
+.vessel__radio[value="37.5"]:checked ~ .vessel__jar .vessel__level { height: 37.5%; }
 .vessel__radio[value="50"]:checked ~ .vessel__jar .vessel__level { height: 50%; }
+.vessel__radio[value="62.5"]:checked ~ .vessel__jar .vessel__level { height: 62.5%; }
 .vessel__radio[value="75"]:checked ~ .vessel__jar .vessel__level { height: 75%; }
+.vessel__radio[value="87.5"]:checked ~ .vessel__jar .vessel__level { height: 87.5%; }
+
+/* Mise au point au clavier : le bocal entier se souligne, on voit qu'on y est. */
+.vessel__radio:focus-visible ~ .vessel__jar {
+  outline: 2px solid var(--brand);
+  outline-offset: 3px;
+}
+
+/*
+ * Le niveau en chiffres. Les huit valeurs sont dans le DOM ; une seule
+ * s'affiche, celle du rang coché. C'est le même principe que le remplissage :
+ * du CSS, pas du script.
+ */
+.vessel__read {
+  display: block;
+  min-width: 4.2rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--brand-dark);
+}
+
+.vessel__read-value { display: none; }
+.vessel__read-value:first-child { display: inline; }
+
+.vessel__radio:nth-of-type(1):checked ~ .vessel__read .vessel__read-value:nth-child(1),
+.vessel__radio:nth-of-type(2):checked ~ .vessel__read .vessel__read-value:nth-child(2),
+.vessel__radio:nth-of-type(3):checked ~ .vessel__read .vessel__read-value:nth-child(3),
+.vessel__radio:nth-of-type(4):checked ~ .vessel__read .vessel__read-value:nth-child(4),
+.vessel__radio:nth-of-type(5):checked ~ .vessel__read .vessel__read-value:nth-child(5),
+.vessel__radio:nth-of-type(6):checked ~ .vessel__read .vessel__read-value:nth-child(6),
+.vessel__radio:nth-of-type(7):checked ~ .vessel__read .vessel__read-value:nth-child(7),
+.vessel__radio:nth-of-type(8):checked ~ .vessel__read .vessel__read-value:nth-child(8) {
+  display: inline;
+}
+
+/* Dès qu'une graduation autre que la première est cochée, la valeur par
+   défaut s'efface — sans quoi deux chiffres s'afficheraient côte à côte. */
+.vessel__radio:nth-of-type(n+2):checked ~ .vessel__read .vessel__read-value:first-child {
+  display: none;
+}
+
+.vessel:disabled .vessel__band { cursor: default; }
+.vessel:disabled .vessel__jar { opacity: .55; }
 
 @media (prefers-reduced-motion: reduce) {
   .vessel__level { transition: none; }
 }
 
 @media (min-width: 600px) {
-  .vessel-field { grid-template-columns: minmax(180px, 1fr) auto; gap: 1rem; }
-  .vessel__jar { width: 40px; height: 52px; }
+  .vessel-field { grid-template-columns: minmax(180px, 1fr) auto; gap: var(--space-4); }
 }
 
 /* ── Code PIN : six coupes de tiramisu ───────────────────────────────────── */
@@ -1278,8 +1329,43 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
   border: 1px solid #DFD3F0;
 }
 
+.task--produce {
+  /* Deux zones voisines : le lien principal, puis la pastille d'impression. */
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
 .task--produce .task__icon { background: var(--plum); color: #fff; }
 .task--produce .task__label { color: var(--plum-dark); }
+
+/* Le lien principal reprend la mise en page de la tuile — icône puis texte —
+   et prend toute la place que la pastille lui laisse. */
+.task__main {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-4);
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.task__main:focus-visible { outline: 2px solid var(--plum); outline-offset: 3px; border-radius: var(--radius); }
+
+.task__print {
+  display: grid;
+  place-items: center;
+  width: var(--touch);
+  height: var(--touch);
+  border-radius: var(--radius-pill);
+  background: rgba(107, 63, 160, .12);
+  color: var(--plum-dark);
+  flex: none;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+.task__print:hover { background: var(--plum); color: #fff; }
+.task__print:focus-visible { outline: 2px solid var(--plum); outline-offset: 2px; }
+.task__print .icon { width: 22px; height: 22px; }
 
 /* ── Verrou : la check-list n'est pas terminée ──────────────────────────── */
 
@@ -1740,4 +1826,262 @@ body { overflow-x: hidden; }
   /* « Appliquer » commande les deux champs au-dessus : il prend la ligne
      entière, les deux raccourcis se partagent la suivante. */
   .filters__actions > :first-child { grid-column: 1 / -1; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Drapeaux, jauge tiramisu, note du jour
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Drapeaux ────────────────────────────────────────────────────────────── */
+
+/*
+  Ils remplacent les listes déroulantes de langue et de pays. Une liste
+  demandait trois gestes — ouvrir, faire défiler, choisir — et affichait le nom
+  de la langue dans la langue COURANTE : un vendeur polonais tombé sur
+  l'italien y cherchait « Polski » au milieu de « Polacco ».
+*/
+.flags {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+  margin: 0;
+}
+
+.flags__choice {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--touch);
+  min-height: var(--touch);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
+}
+
+.flags__choice:hover { background: rgba(111, 78, 55, .07); }
+.flags__choice:active { transform: translateY(1px); }
+.flags__choice:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+/* Le drapeau courant sort du lot par un anneau framboise, pas par la taille :
+   quatre drapeaux de hauteurs inégales donneraient une ligne bancale. */
+.flags__choice.is-active {
+  background: var(--brand-light);
+  box-shadow: inset 0 0 0 2px var(--brand);
+}
+
+.flag {
+  display: block;
+  width: 27px;
+  height: 18px;
+  border-radius: 3px;
+  flex: none;
+}
+
+/* Sous 380 px, l'entête de connexion porte quatre drapeaux à côté du logo :
+   on resserre plutôt que de les faire passer à la ligne. */
+@media (max-width: 380px) {
+  .flags__choice { min-width: 38px; }
+  .flag { width: 24px; height: 16px; }
+}
+
+/* ── Interrupteur à deux mesures ─────────────────────────────────────────── */
+
+/*
+  Deux critères, deux moitiés égales. `1fr 1fr` et non `flex` : à largeurs
+  libres, « Clients » occupait un tiers et « Tiramisu vendus » deux, ce qui
+  suggérait une hiérarchie qui n'existe pas.
+*/
+.metric-switch--pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--cream-outline);
+  border: 1px solid var(--border);
+}
+
+.metric-switch--pair .metric-switch__item {
+  justify-content: center;
+  text-align: center;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.metric-switch--pair .metric-switch__item.is-active {
+  background: var(--brand);
+  color: #fff;
+  box-shadow: var(--shadow-accent);
+}
+
+/* ── Jauge tiramisu ──────────────────────────────────────────────────────── */
+
+.gauge__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-1);
+}
+
+.gauge__percent { font-size: 1.3rem; font-weight: 700; color: var(--brand); }
+.gauge--reached .gauge__percent { color: var(--ok); }
+.gauge--late .gauge__percent { color: var(--warn); }
+
+.gauge__figures { margin: 0 0 var(--space-3); display: flex; align-items: baseline; gap: var(--space-2); }
+.gauge__sold { font-family: var(--font-display); font-size: 2.2rem; font-weight: 600; color: var(--coffee); }
+
+.gauge__track {
+  position: relative;
+  height: 20px;
+  border-radius: var(--radius-pill);
+  background: var(--cream-outline);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+/*
+  La largeur vient du serveur : c'est une VALEUR, pas une règle de style, et
+  aucune feuille statique ne peut la connaître à l'avance. La feuille garde la
+  main sur tout le reste — couleur, forme, animation — donc la convention
+  « aucun style en ligne » tient toujours : un restylage complet n'a qu'à lire
+  la même variable.
+*/
+.gauge__fill {
+  height: 100%;
+  width: var(--fill, 0%);
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, var(--brand), var(--brand-dark));
+  transition: width var(--dur-slow) var(--ease-out);
+}
+
+.gauge--reached .gauge__fill { background: linear-gradient(90deg, #2E9C64, var(--ok)); }
+.gauge--late .gauge__fill { background: linear-gradient(90deg, #D08B00, var(--warn)); }
+
+/*
+  Le repère de rythme : où l'on DEVRAIT en être vu le jour du mois. C'est lui
+  qui rend la jauge utile — « 600 sur 1 000 » est excellent le 10 et inquiétant
+  le 28, et la barre seule ne le dit pas.
+*/
+.gauge__pace {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  left: var(--pace, 0%);
+  width: 2px;
+  background: var(--coffee);
+  opacity: .55;
+}
+
+.gauge__hint { margin: var(--space-2) 0 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gauge__fill { transition: none; }
+}
+
+/* ── Plan du jour et note de marque ──────────────────────────────────────── */
+
+/*
+  Le jaune Merisù, en tête d'écran. Il ne concurrence pas la framboise : la
+  framboise est la couleur d'ACTION, le jaune celle de l'INFORMATION du jour.
+  Deux rôles, deux couleurs, jamais l'inverse.
+*/
+.daynote {
+  display: block;
+  margin-bottom: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-card);
+  background: linear-gradient(140deg, var(--gold), #FFE07A 70%);
+  border: 1px solid #F0BE12;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: var(--shadow);
+  transition: transform var(--dur-slow) var(--ease-out), box-shadow var(--dur) var(--ease);
+}
+
+.daynote:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.daynote:focus-visible { outline: 2px solid var(--coffee); outline-offset: 3px; }
+
+.daynote__head { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+
+.daynote__icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-pill);
+  /* Café sur jaune : 6,9:1. Le blanc sur jaune tombait à 1,6:1, illisible en
+     plein soleil derrière une vitrine. */
+  background: rgba(111, 78, 55, .12);
+  color: var(--coffee);
+  flex: none;
+}
+
+.daynote__icon .icon { width: 26px; height: 26px; }
+
+.daynote__titles { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+
+.daynote__title {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--coffee);
+  overflow-wrap: anywhere;
+}
+
+.daynote__meta { font-size: .9rem; color: var(--coffee-800); }
+
+/*
+  La note de marque. Affichée, jamais repliée : une consigne qu'il faut ouvrir
+  pour lire n'est pas lue. Fond crème et non jaune — deux blocs jaunes de suite
+  se seraient annulés, et c'est le plan du jour qu'on doit voir en premier.
+*/
+.daynote-card {
+  margin-bottom: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  border-left: 4px solid var(--gold);
+  box-shadow: var(--shadow);
+}
+
+.daynote-card__title {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--coffee);
+}
+
+.daynote-card__item + .daynote-card__item {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-soft);
+}
+
+.daynote-card__heading {
+  margin: 0 0 var(--space-1);
+  font-size: .74rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--brand-dark);
+}
+
+.daynote-card__text { margin: 0 0 var(--space-1); font-size: .95rem; line-height: 1.5; }
+.daynote-card__text:last-child { margin-bottom: 0; }
+
+/* « Ciao » et « Grazie » se détachent du reste de la phrase : ce sont les
+   deux mots à retenir, pas la consigne qui les accompagne. */
+.daynote-card__word {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--brand);
 }

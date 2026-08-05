@@ -7,23 +7,27 @@ namespace Merisu\Inventory\Domain;
 use Merisu\Inventory\Adapter\ShopPerformance;
 
 /**
- * Les trois classements du réseau.
+ * Les deux classements du réseau : clients et tiramisu vendus.
  *
- * Trois et pas un seul, parce qu'ils ne disent pas la même chose : une
- * boutique de gare fait beaucoup de clients et peu de panier, une boutique de
+ * Deux et pas un seul, parce qu'ils ne disent pas la même chose : une boutique
+ * de gare fait beaucoup de clients et peu de tiramisu chacun, une boutique de
  * centre-ville l'inverse. Les mettre côte à côte évite qu'un unique palmarès
  * ne désigne toujours les mêmes gagnants.
+ *
+ * Le chiffre d'affaires n'y figure pas, et c'est délibéré : il se compare en
+ * devise, ce qui obligeait à restreindre le classement mondial aux boutiques
+ * d'une même monnaie — un « classement mondial » amputé de la moitié du
+ * réseau. Des clients et des tiramisu se comptent à l'identique partout.
  */
 enum RankingMetric: string
 {
-    case Revenue = 'REVENUE';
     case Customers = 'CUSTOMERS';
     case TiramisuSold = 'TIRAMISU';
 
     /** @return list<self> */
     public static function all(): array
     {
-        return [self::Revenue, self::Customers, self::TiramisuSold];
+        return [self::Customers, self::TiramisuSold];
     }
 
     public static function tryFromLoose(?string $value): ?self
@@ -35,21 +39,9 @@ enum RankingMetric: string
     public function valueOf(ShopPerformance $shop): float
     {
         return match ($this) {
-            self::Revenue => $shop->revenue,
             self::Customers => (float) $shop->customers,
             self::TiramisuSold => (float) $shop->tiramisuSold,
         };
-    }
-
-    /**
-     * Un chiffre d'affaires se compare en devise, pas les deux autres.
-     *
-     * Sans taux de change fiable, comparer 1 000 PLN et 1 000 EUR serait faux ;
-     * des clients et des tiramisu se comptent, eux, à l'identique partout.
-     */
-    public function isMonetary(): bool
-    {
-        return $this === self::Revenue;
     }
 
     public function labelKey(): string

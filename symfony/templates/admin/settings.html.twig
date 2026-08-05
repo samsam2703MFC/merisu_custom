@@ -55,6 +55,18 @@
                  id="deltaTolerance" name="deltaTolerance" value="{{ settings.deltaTolerance }}">
           <p class="field__hint">{{ 'admin.settings.deltaToleranceHint'|trans }}</p>
         </div>
+
+        {# Objectif de la jauge tiramisu de l'écran Réseau. Vide ou zéro : pas
+           d'objectif, donc pas de jauge — plutôt qu'une barre sans repère. #}
+        <div class="field">
+          <label class="field__label" for="monthlyTiramisuTarget">
+            {{ 'admin.settings.monthlyTiramisuTarget'|trans }}
+          </label>
+          <input class="field__input" type="number" min="0" step="1"
+                 id="monthlyTiramisuTarget" name="monthlyTiramisuTarget"
+                 value="{{ settings.monthlyTiramisuTarget }}">
+          <p class="field__hint">{{ 'admin.settings.monthlyTiramisuTargetHint'|trans }}</p>
+        </div>
       </div>
 
       {#

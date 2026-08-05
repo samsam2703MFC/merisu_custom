@@ -129,20 +129,50 @@
       <legend class="visually-hidden">{{ 'count.openedContainer'|trans }}</legend>
 
       <div class="vessel__choices">
+        {#
+          Les huit graduations, en boutons radio cachés. Ils viennent EN
+          PREMIER dans le DOM : c'est ce qui permet au sélecteur `~` de
+          remplir le bocal et d'allumer la bonne bande, sans JavaScript.
+        #}
         {% for fraction in container_fractions() %}
           <input class="vessel__radio visually-hidden"
                  type="radio"
-                 id="frac-{{ product.id }}-{{ fraction }}"
+                 id="frac-{{ product.id }}-{{ loop.index0 }}"
                  name="frac[{{ product.id }}]"
                  value="{{ fraction }}"
+                 data-level="{{ loop.index0 }}"
                  {{ fraction == percent ? 'checked' : '' }}>
-          <label class="vessel__choice" for="frac-{{ product.id }}-{{ fraction }}">{{ fraction }} %</label>
         {% endfor %}
 
-        {# Placé APRÈS les radios : c'est ce qui permet au CSS de le remplir. #}
-        <span class="vessel__jar" aria-hidden="true">
-          <span class="vessel__level"></span>
+        {#
+          Le bocal EST le contrôle : on touche la hauteur qu'on a sous les
+          yeux, sans traduire un niveau en pourcentage dans sa tête. Les huit
+          bandes sont empilées à l'envers — la plus haute en premier — pour
+          que le geste corresponde au dessin.
+
+          Chaque bande est une étiquette de son bouton radio : le clavier, les
+          lecteurs d'écran et la saisie sans script continuent de fonctionner.
+        #}
+        <span class="vessel__jar">
+          <span class="vessel__level" aria-hidden="true"></span>
+          <span class="vessel__ticks" aria-hidden="true"></span>
+
+          {% for fraction in container_fractions()|reverse %}
+            {% set rang = container_fractions()|length - loop.index %}
+            <label class="vessel__band"
+                   for="frac-{{ product.id }}-{{ rang }}"
+                   title="{{ fraction }} %"
+                   aria-label="{{ label }} — {{ fraction }} %"></label>
+          {% endfor %}
         </span>
+
+        {# Le niveau en clair : le bocal se lit d'un coup d'œil, le chiffre
+           lève le doute sur deux graduations voisines. #}
+        <output class="vessel__read" for="frac-{{ product.id }}-0">
+          {% for fraction in container_fractions() %}
+            <span class="vessel__read-value">{{ fraction }} %</span>
+          {% endfor %}
+        </output>
       </div>
     </fieldset>
   </div>
@@ -169,6 +199,46 @@
   Le sélecteur de poste a quitté les écrans : il vit désormais dans le menu de
   l'avatar (base.html.twig), avec la langue. Un réglage, un seul endroit.
 #}
+
+{#
+  Drapeaux — SVG inline, comme les icônes.
+
+  Pas d'émoji : Windows n'a jamais livré les drapeaux, et la moitié des postes
+  y verrait deux lettres dans un rectangle. Pas d'images non plus : elles
+  demanderaient une requête réseau, et l'application doit rester lisible
+  hors-ligne (§2).
+
+  Rapport 3:2, bords arrondis, un filet pour que le blanc du drapeau polonais
+  ou italien ne se fonde pas dans le fond crème.
+
+  `code` : FR | PL | IT | ES (majuscules ou non).
+#}
+{% macro flag(code, label) %}
+  {% set c = code|upper %}
+  <svg class="flag" viewBox="0 0 24 16"
+       {% if label %}role="img" aria-label="{{ label }}"{% else %}aria-hidden="true"{% endif %}>
+    {% if c == 'FR' %}
+      <rect width="8" height="16" fill="#002395"/>
+      <rect x="8" width="8" height="16" fill="#fff"/>
+      <rect x="16" width="8" height="16" fill="#ED2939"/>
+    {% elseif c == 'PL' %}
+      <rect width="24" height="8" fill="#fff"/>
+      <rect y="8" width="24" height="8" fill="#DC143C"/>
+    {% elseif c == 'IT' %}
+      <rect width="8" height="16" fill="#008C45"/>
+      <rect x="8" width="8" height="16" fill="#F4F5F0"/>
+      <rect x="16" width="8" height="16" fill="#CD212A"/>
+    {% elseif c == 'ES' %}
+      <rect width="24" height="16" fill="#AA151B"/>
+      <rect y="4" width="24" height="8" fill="#F1BF00"/>
+    {% else %}
+      {# Pays inconnu : un rectangle neutre plutôt qu'un trou dans la ligne. #}
+      <rect width="24" height="16" fill="#E4D8C4"/>
+    {% endif %}
+    <rect x=".5" y=".5" width="23" height="15" rx="2" fill="none"
+          stroke="rgba(111, 78, 55, .25)"/>
+  </svg>
+{% endmacro %}
 
 {#
   Icônes — SVG inline, tracé en `currentColor`.

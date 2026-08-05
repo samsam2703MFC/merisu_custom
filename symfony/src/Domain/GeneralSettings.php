@@ -20,6 +20,13 @@ final readonly class GeneralSettings
         public bool $photoPerProduct,
         /** Tolérance du delta technique : 0.05 = 5 %. */
         public float $deltaTolerance,
+        /**
+         * Objectif de tiramisu vendus dans le mois, pour la jauge du réseau.
+         *
+         * 0 = aucun objectif fixé : la jauge ne s'affiche pas plutôt que de
+         * montrer une barre pleine ou une division par zéro.
+         */
+        public int $monthlyTiramisuTarget = 0,
     ) {
     }
 
@@ -27,6 +34,6 @@ final readonly class GeneralSettings
     public static function defaults(): self
     {
         // Photos désactivées : elles ne figurent plus aux écrans de comptage.
-        return new self('08:00', '22:00', 'Europe/Warsaw', Locale::Fr, false, false, 0.05);
+        return new self('08:00', '22:00', 'Europe/Warsaw', Locale::Fr, false, false, 0.05, 0);
     }
 }

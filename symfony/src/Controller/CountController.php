@@ -408,11 +408,17 @@ final class CountController extends AbstractController
             // découpage n'existe qu'à l'écran ; la base ne connaît qu'une
             // quantité décimale, et tous les calculs restent inchangés.
             if (\array_key_exists($productId, $fractions)) {
-                $percent = is_scalar($fractions[$productId]) ? (int) $fractions[$productId] : 0;
+                // Décimal, et non entier : les graduations vont par huitièmes,
+                // et (int) '12.5' vaudrait 12 — soit un niveau jamais proposé,
+                // ramené ensuite au plus proche. La saisie serait faussée en
+                // silence à chaque bac entamé.
+                $percent = is_scalar($fractions[$productId])
+                    ? (float) str_replace(',', '.', (string) $fractions[$productId])
+                    : 0.0;
 
                 // Ni contenant plein ni fraction : rien n'a été compté. Un
                 // contenant entamé seul, lui, est bien une saisie.
-                if ($value === '' && $percent === 0) {
+                if ($value === '' && $percent === 0.0) {
                     $quantities[$productId] = null;
                     continue;
                 }

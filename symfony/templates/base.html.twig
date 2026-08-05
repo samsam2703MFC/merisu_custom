@@ -97,17 +97,32 @@
               <noscript><button type="submit" class="button button--secondary button--small">{{ 'common.apply'|trans }}</button></noscript>
             </form>
 
-            <form class="usermenu__field" method="post" action="{{ path('select_locale') }}">
-              <label class="field__label" for="menu-locale">{{ 'common.language'|trans }}</label>
-              <select id="menu-locale" name="locale" class="field__input" data-autosubmit>
+            {#
+              Quatre drapeaux plutôt qu'une liste déroulante.
+
+              Une liste demande trois gestes — ouvrir, faire défiler, choisir —
+              et le nom de la langue s'y lit dans la langue COURANTE : un
+              vendeur polonais tombé par erreur sur l'italien y cherche
+              « Polski » au milieu de « Polacco ». Un drapeau se reconnaît
+              quelle que soit la langue affichée, et se touche d'un seul geste.
+
+              Ce sont de vrais boutons de formulaire : aucun script, la langue
+              change au clic comme avant.
+            #}
+            <div class="usermenu__field">
+              <span class="field__label">{{ 'common.language'|trans }}</span>
+              <form class="flags" method="post" action="{{ path('select_locale') }}">
                 {% for locale in supported_locales() %}
-                  <option value="{{ locale.value }}" {{ locale.value == app.request.locale ? 'selected' : '' }}>
-                    {{ ('locales.' ~ locale.value)|trans }}
-                  </option>
+                  <button type="submit" name="locale" value="{{ locale.value }}"
+                          class="flags__choice {{ locale.value == app.request.locale ? 'is-active' : '' }}"
+                          title="{{ ('locales.' ~ locale.value)|trans }}"
+                          aria-label="{{ ('locales.' ~ locale.value)|trans }}"
+                          {{ locale.value == app.request.locale ? 'aria-current="true"' : '' }}>
+                    {{ ui.flag(locale.value) }}
+                  </button>
                 {% endfor %}
-              </select>
-              <noscript><button type="submit" class="button button--secondary button--small">{{ 'common.apply'|trans }}</button></noscript>
-            </form>
+              </form>
+            </div>
 
             <a class="usermenu__link" href="{{ path('profile') }}">{{ 'profile.title'|trans }}</a>
 
@@ -117,17 +132,20 @@
           </div>
         </details>
       {% else %}
-        {# Hors session, seule la langue a du sens. #}
-        <form class="locale-switcher" method="post" action="{{ path('select_locale') }}">
-          <label class="visually-hidden" for="locale-select">{{ 'common.language'|trans }}</label>
-          <select id="locale-select" name="locale" class="locale-switcher__select" data-autosubmit>
-            {% for locale in supported_locales() %}
-              <option value="{{ locale.value }}" {{ locale.value == app.request.locale ? 'selected' : '' }}>
-                {{ ('locales.' ~ locale.value)|trans }}
-              </option>
-            {% endfor %}
-          </select>
-          <noscript><button type="submit" class="button button--ghost">{{ 'common.apply'|trans }}</button></noscript>
+        {# Hors session, seule la langue a du sens — et c'est là qu'elle compte
+           le plus : personne ne s'est encore identifié, l'écran s'affiche dans
+           la langue du dernier passage. Quatre drapeaux règlent cela d'un
+           geste, sans avoir à lire. #}
+        <form class="flags" method="post" action="{{ path('select_locale') }}">
+          {% for locale in supported_locales() %}
+            <button type="submit" name="locale" value="{{ locale.value }}"
+                    class="flags__choice {{ locale.value == app.request.locale ? 'is-active' : '' }}"
+                    title="{{ ('locales.' ~ locale.value)|trans }}"
+                    aria-label="{{ ('locales.' ~ locale.value)|trans }}"
+                    {{ locale.value == app.request.locale ? 'aria-current="true"' : '' }}>
+              {{ ui.flag(locale.value) }}
+            </button>
+          {% endfor %}
         </form>
       {% endif %}
     </div>

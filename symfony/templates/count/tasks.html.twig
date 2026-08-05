@@ -24,6 +24,60 @@
     </div>
   </div>
 
+  {#
+    Le plan du jour ouvre l'écran, en jaune.
+
+    Il était en dernier, en pointillés, au bas d'une liste qu'on ne fait pas
+    défiler quand on sait déjà ce qu'on vient faire. C'est pourtant la seule
+    chose à savoir avant de commencer : ce qu'il faut sortir aujourd'hui, et
+    ce que la marque attend au comptoir. Le jaune Merisù le distingue des
+    tâches sans lui voler la framboise, réservée à l'action.
+  #}
+  <a class="daynote" href="{{ path('production', { forDate: date }) }}">
+    <span class="daynote__head">
+      <span class="daynote__icon">{{ ui.icon('tray') }}</span>
+      <span class="daynote__titles">
+        <span class="daynote__title">{{ 'produce.todayTitle'|trans }}</span>
+        <span class="daynote__meta">
+          {% if planForToday is empty %}
+            {{ 'tasks.noPlan'|trans }}
+          {% else %}
+            {{ 'tasks.planReady'|trans({ '%count%': planForToday|length }) }}
+          {% endif %}
+        </span>
+      </span>
+    </span>
+  </a>
+
+  {#
+    Note du jour — les consignes de marque, rappelées là où on les lit.
+
+    Affichées et non repliées : une consigne qu'il faut ouvrir pour lire n'est
+    jamais lue. Le texte vit dans les traductions, comme tout le reste : la
+    marque le fait évoluer sans redéploiement, dans les quatre langues.
+  #}
+  <section class="daynote-card">
+    <h2 class="daynote-card__title">{{ 'daynote.title'|trans }}</h2>
+
+    <div class="daynote-card__item">
+      <h3 class="daynote-card__heading">{{ 'daynote.tiramishow.title'|trans }}</h3>
+      <p class="daynote-card__text">{{ 'daynote.tiramishow.body'|trans }}</p>
+      <p class="daynote-card__text muted">{{ 'daynote.tiramishow.website'|trans }}</p>
+    </div>
+
+    <div class="daynote-card__item">
+      <h3 class="daynote-card__heading">{{ 'daynote.greeting.title'|trans }}</h3>
+      <p class="daynote-card__text">
+        <span class="daynote-card__word">{{ 'daynote.greeting.hello'|trans }}</span>
+        {{ 'daynote.greeting.helloWhen'|trans }}
+      </p>
+      <p class="daynote-card__text">
+        <span class="daynote-card__word">{{ 'daynote.greeting.thanks'|trans }}</span>
+        {{ 'daynote.greeting.thanksWhen'|trans }}
+      </p>
+    </div>
+  </section>
+
   <div class="task-list">
     {% for task in tasks %}
       <a class="task {{ task.highlight ? 'task--now' : '' }} {{ task.done ? 'task--done' : '' }}"
@@ -60,24 +114,37 @@
       texte. L'icône suit l'état — cagette vide ou chargée — pour que la tuile
       se lise d'un coup d'œil, de loin, en cuisine.
     #}
-    <a class="task task--produce" href="{{ path('production', { forDate: produce.forDate }) }}">
-      <span class="task__icon">{{ ui.icon(produce.icon) }}</span>
+    <div class="task task--produce">
+      {# Deux liens VOISINS, jamais superposés : le premier occupe tout ce qui
+         reste, le second sa pastille. Un lien étiré par-dessus la tuile aurait
+         recouvert le bouton d'impression, qui n'aurait plus été cliquable. #}
+      <a class="task__main" href="{{ path('production', { forDate: produce.forDate }) }}">
+        <span class="task__icon">{{ ui.icon(produce.icon) }}</span>
 
-      <span class="task__body">
-        <span class="task__label">{{ 'produce.tileTitle'|trans }}</span>
-        <span class="task__meta">
-          {% if produce.count > 0 %}
-            {{ 'tasks.planReady'|trans({ '%count%': produce.count }) }}
-          {% else %}
-            {{ 'tasks.noPlanTomorrow'|trans }}
-          {% endif %}
+        <span class="task__body">
+          <span class="task__label">{{ 'produce.tileTitle'|trans }}</span>
+          <span class="task__meta">
+            {% if produce.count > 0 %}
+              {{ 'tasks.planReady'|trans({ '%count%': produce.count }) }}
+            {% else %}
+              {{ 'tasks.noPlanTomorrow'|trans }}
+            {% endif %}
+          </span>
         </span>
+      </a>
 
-        {% if produce.count > 0 %}
-          <span class="task__state">{{ ui.badge('neutral', produce.count) }}</span>
-        {% endif %}
-      </span>
-    </a>
+      {# Raccourci vers la planche d'étiquettes : c'est le geste qui SUIT la
+         consultation du plan, et le faire depuis le menu épargne deux écrans
+         à qui vient seulement imprimer sa journée. #}
+      {% if produce.count > 0 %}
+        <a class="task__print"
+           href="{{ path('production_labels', { forDate: produce.forDate }) }}"
+           title="{{ 'produce.printLabels'|trans }}"
+           aria-label="{{ 'produce.printLabels'|trans }}">
+          {{ ui.icon('printer') }}
+        </a>
+      {% endif %}
+    </div>
 
     {# Consultations, présentées à part des tâches à faire. #}
     <a class="task task--secondary" href="{{ path('network') }}">
@@ -89,22 +156,6 @@
       </span>
     </a>
 
-    {# Le plan du JOUR reste consultable, mais discrètement : c'est un rappel
-       de ce qui est en cours, pas une tâche à ouvrir. #}
-    <a class="task task--secondary" href="{{ path('production', { forDate: date }) }}">
-      <span class="task__icon">{{ ui.icon('tray') }}</span>
-
-      <span class="task__body">
-        <span class="task__label">{{ 'produce.todayTitle'|trans }}</span>
-        <span class="task__meta">
-          {% if planForToday is empty %}
-            {{ 'tasks.noPlan'|trans }}
-          {% else %}
-            {{ 'tasks.planReady'|trans({ '%count%': planForToday|length }) }}
-          {% endif %}
-        </span>
-      </span>
-    </a>
   </div>
 
 {% endblock %}

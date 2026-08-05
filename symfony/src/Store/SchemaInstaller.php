@@ -43,6 +43,7 @@ final class SchemaInstaller
             $t->addColumn('photo_required', 'boolean', ['default' => false]);
             $t->addColumn('photo_per_product', 'boolean', ['default' => false]);
             $t->addColumn('delta_tolerance', 'float', ['default' => 0.05]);
+            $t->addColumn('monthly_tiramisu_target', 'integer', ['default' => 0]);
             $t->setPrimaryKey(['id']);
         }
 
@@ -208,6 +209,12 @@ final class SchemaInstaller
     private function ensureColumns(): void
     {
         $attendues = [
+            'inv_settings' => [
+                // Objectif de la jauge tiramisu, ajouté avec l'écran Réseau.
+                // 0 par défaut : aucun objectif, donc aucune jauge — jamais
+                // une barre pleine inventée pour les bases déjà en service.
+                'monthly_tiramisu_target' => 'INTEGER DEFAULT 0 NOT NULL',
+            ],
             'inv_product' => [
                 // Ajoutée avec le comptage par contenant : les bases installées
                 // avant ne l'ont pas, et tous leurs produits se comptent à

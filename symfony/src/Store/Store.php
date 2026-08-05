@@ -59,6 +59,9 @@ final class Store
             (bool) $row['photo_required'],
             (bool) $row['photo_per_product'],
             (float) $row['delta_tolerance'],
+            // Colonne ajoutée après coup : une base installée avant ne l'a pas
+            // encore au moment où `settings()` est appelé la première fois.
+            (int) ($row['monthly_tiramisu_target'] ?? 0),
         );
     }
 
@@ -72,6 +75,7 @@ final class Store
             'photo_required' => $settings->photoRequired ? 1 : 0,
             'photo_per_product' => $settings->photoPerProduct ? 1 : 0,
             'delta_tolerance' => $settings->deltaTolerance,
+            'monthly_tiramisu_target' => $settings->monthlyTiramisuTarget,
         ], ['id' => 1]);
     }
 

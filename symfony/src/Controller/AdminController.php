@@ -322,6 +322,10 @@ final class AdminController extends AbstractController
             false,
             false,
             $tolerance >= 0 ? $tolerance : $current->deltaTolerance,
+            // Objectif de la jauge tiramisu. Négatif ramené à zéro, ce qui
+            // signifie « pas d'objectif » et fait simplement disparaître la
+            // jauge — jamais une barre qui se remplirait à l'envers.
+            max(0, (int) $request->request->get('monthlyTiramisuTarget', 0)),
         ));
 
         $this->store->audit($admin->id, $admin->role->value, 'SETTINGS_UPDATED');

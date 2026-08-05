@@ -203,6 +203,8 @@ admin:
         photoPerProductHint: 'Deselezionato: basta una sola foto complessiva della scorta.'
         deltaTolerance: 'Tolleranza del delta tecnico'
         deltaToleranceHint: '0.05 = 5 %. Oltre, lo scarto è segnalato in rosso.'
+        monthlyTiramisuTarget: 'Obiettivo di tiramisù al mese'
+        monthlyTiramisuTargetHint: "Alimenta l'indicatore della schermata Rete. 0 = nessun obiettivo, l'indicatore sparisce."
     delta:
         title: 'Delta tecnico'
         subtitle: 'Confronto tra ricette e consumo reale delle materie prime.'
@@ -339,15 +341,33 @@ network:
     country: Paese
     yourShop: 'il tuo negozio'
     empty: 'Nessun negozio in questo periodo.'
-    sameCurrencyOnly: 'Classifica limitata ai negozi in %currency%: senza tasso di cambio due valute non si confrontano.'
     demoWarning: 'Cifre DIMOSTRATIVE: la cassa non è ancora collegata. Nessuna decisione deve basarsi su questi dati.'
     metrics:
-        REVENUE: Fatturato
         CUSTOMERS: Clienti
         TIRAMISU: 'Tiramisù venduti'
+    gauge:
+        title: 'Indicatore tiramisù del mese'
+        unit: tiramisù
+        progress: '%sold% tiramisù venduti su un obiettivo di %target%'
+        reached: 'Obiettivo raggiunto. Tutto il resto è guadagnato.'
+        remaining: 'Ancora %count% per raggiungere l''obiettivo'
+        pace: '%percent% del mese trascorso'
 
 countries:
     PL: Polonia
     IT: Italia
     FR: Francia
     ES: Spagna
+
+daynote:
+    title: 'Nota del giorno'
+    tiramishow:
+        title: 'Il Tiramishow'
+        body: "Il tiramisù si monta DAVANTI al cliente, mai dietro le quinte. Il gesto fa parte del prodotto: si annuncia ciò che si posa, strato dopo strato, e ci si prende il tempo per l'ultima pioggia di cacao."
+        website: 'Il dettaglio del gesto è sul sito del marchio.'
+    greeting:
+        title: 'Ciao e Grazie'
+        hello: Ciao
+        helloWhen: 'a ogni cliente che entra, appena varca la porta — anche con le mani occupate.'
+        thanks: Grazie
+        thanksWhen: 'a ogni cliente che esce, guardandolo negli occhi.'

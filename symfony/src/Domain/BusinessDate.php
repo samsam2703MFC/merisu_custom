@@ -65,6 +65,24 @@ final class BusinessDate
             ->format('Y-m-d');
     }
 
+    /** Premier jour du mois de `$date`, au même format. */
+    public static function firstOfMonth(string $date): string
+    {
+        self::assertValid($date);
+
+        return substr($date, 0, 7) . '-01';
+    }
+
+    /** Jour du mois (1-31) et longueur du mois — repères de la jauge mensuelle. */
+    public static function monthProgress(string $date): array
+    {
+        self::assertValid($date);
+
+        $d = new \DateTimeImmutable($date);
+
+        return ['day' => (int) $d->format('j'), 'days' => (int) $d->format('t')];
+    }
+
     /**
      * Liste inclusive des dates entre `$from` et `$to`.
      *

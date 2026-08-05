@@ -43,10 +43,6 @@ final class ShopRanking
         // Le chiffre d'affaires ne se compare qu'à devise égale : sans taux de
         // change fiable, mettre 1 000 PLN et 1 000 EUR sur la même échelle
         // fabriquerait un classement faux et personne ne le verrait.
-        if ($metric->isMonetary()) {
-            $shops = self::sameCurrencyAs($shops, $currentShopId);
-        }
-
         usort($shops, static function (ShopPerformance $a, ShopPerformance $b) use ($metric): int {
             $ecart = $metric->valueOf($b) <=> $metric->valueOf($a);
 
@@ -112,46 +108,5 @@ final class ShopRanking
         sort($pays);
 
         return $pays;
-    }
-
-    /**
-     * Restreint à la devise de la boutique courante.
-     *
-     * Sans boutique courante connue, on retient la devise la plus représentée :
-     * mieux vaut un classement partiel mais juste qu'un palmarès qui additionne
-     * des monnaies.
-     *
-     * @param list<ShopPerformance> $shops
-     *
-     * @return list<ShopPerformance>
-     */
-    private static function sameCurrencyAs(array $shops, ?string $currentShopId): array
-    {
-        if ($shops === []) {
-            return [];
-        }
-
-        $devise = null;
-
-        foreach ($shops as $shop) {
-            if ($shop->id === $currentShopId) {
-                $devise = $shop->currency;
-                break;
-            }
-        }
-
-        if ($devise === null) {
-            $comptes = [];
-            foreach ($shops as $shop) {
-                $comptes[$shop->currency] = ($comptes[$shop->currency] ?? 0) + 1;
-            }
-            arsort($comptes);
-            $devise = array_key_first($comptes);
-        }
-
-        return array_values(array_filter(
-            $shops,
-            static fn (ShopPerformance $s): bool => $s->currency === $devise,
-        ));
     }
 }

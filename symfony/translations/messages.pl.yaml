@@ -203,6 +203,8 @@ admin:
         photoPerProductHint: 'Odznaczone: wystarczy jedno ogólne zdjęcie stanu.'
         deltaTolerance: 'Tolerancja delty technicznej'
         deltaToleranceHint: '0.05 = 5 %. Powyżej odchylenie jest oznaczone na czerwono.'
+        monthlyTiramisuTarget: 'Miesięczny cel tiramisu'
+        monthlyTiramisuTargetHint: 'Zasila wskaźnik na ekranie Sieć. 0 = brak celu, wskaźnik znika.'
     delta:
         title: 'Delta techniczna'
         subtitle: 'Zestawienie receptur z rzeczywistym zużyciem surowców.'
@@ -339,15 +341,33 @@ network:
     country: Kraj
     yourShop: 'twój sklep'
     empty: 'Brak sklepów w tym okresie.'
-    sameCurrencyOnly: 'Ranking ograniczony do sklepów w walucie %currency%: bez kursu wymiany dwóch walut nie da się porównać.'
     demoWarning: 'Dane DEMONSTRACYJNE: kasa nie jest jeszcze podłączona. Nie podejmuj na ich podstawie żadnych decyzji.'
     metrics:
-        REVENUE: Obrót
         CUSTOMERS: Klienci
         TIRAMISU: 'Sprzedane tiramisu'
+    gauge:
+        title: 'Miesięczny wskaźnik tiramisu'
+        unit: tiramisu
+        progress: 'Sprzedano %sold% tiramisu przy celu %target%'
+        reached: 'Cel osiągnięty. Wszystko dalej to bonus.'
+        remaining: 'Jeszcze %count% do celu'
+        pace: 'Minęło %percent% miesiąca'
 
 countries:
     PL: Polska
     IT: Włochy
     FR: Francja
     ES: Hiszpania
+
+daynote:
+    title: 'Notatka dnia'
+    tiramishow:
+        title: Tiramishow
+        body: 'Tiramisu składamy PRZY kliencie, nigdy na zapleczu. Ten gest jest częścią produktu: mówimy, co kładziemy, warstwa po warstwie, i nie spieszymy się z ostatnią posypką kakao.'
+        website: 'Szczegóły gestu znajdziesz na stronie marki.'
+    greeting:
+        title: 'Ciao i Grazie'
+        hello: Ciao
+        helloWhen: 'do każdego klienta wchodzącego do sklepu, od progu — nawet z zajętymi rękami.'
+        thanks: Grazie
+        thanksWhen: 'do każdego wychodzącego klienta, patrząc mu w oczy.'

@@ -31,15 +31,59 @@
     {{ ui.banner('warn', 'network.demoWarning'|trans) }}
   {% endif %}
 
-  {# Le critère : trois classements qui ne désignent pas les mêmes gagnants. #}
-  <div class="metric-switch">
+  {# Deux critères, deux moitiés : un interrupteur, pas une liste de choix.
+     Ils ne désignent pas les mêmes gagnants — une boutique de gare fait
+     beaucoup de clients et peu de tiramisu chacun. #}
+  <div class="metric-switch metric-switch--pair" role="tablist">
     {% for choix in metrics %}
       <a class="metric-switch__item {{ choix == metric ? 'is-active' : '' }}"
+         role="tab" aria-selected="{{ choix == metric ? 'true' : 'false' }}"
          href="{{ path('network', { metric: choix.value, country: country }) }}">
         {{ choix.labelKey|trans }}
       </a>
     {% endfor %}
   </div>
+
+  {#
+    Jauge tiramisu du mois.
+
+    Elle ne s'affiche que si un objectif est fixé en administration : une barre
+    sans repère ne dit rien, et une barre pleine par défaut serait un mensonge.
+
+    Le repère de rythme (le trait vertical) est ce qui rend la jauge utile :
+    « 600 sur 1 000 » est excellent le 10 du mois et inquiétant le 28.
+  #}
+  {% if gauge %}
+    <section class="card gauge {{ gauge.reached ? 'gauge--reached' : (gauge.onTrack ? 'gauge--ontrack' : 'gauge--late') }}">
+      <header class="gauge__header">
+        <h2 class="card__title">{{ 'network.gauge.title'|trans }}</h2>
+        <span class="gauge__percent">{{ gauge.percent }} %</span>
+      </header>
+
+      <p class="gauge__figures">
+        <span class="gauge__sold">{{ gauge.sold }}</span>
+        <span class="muted">/ {{ gauge.target }} {{ 'network.gauge.unit'|trans }}</span>
+      </p>
+
+      {# `role=img` plutôt qu'une barre de progression : le texte au-dessus dit
+         déjà les chiffres, et un lecteur d'écran n'a pas à les entendre deux
+         fois. La barre est ici un dessin, rien de plus. #}
+      <div class="gauge__track" role="img"
+           aria-label="{{ 'network.gauge.progress'|trans({ '%sold%': gauge.sold, '%target%': gauge.target }) }}">
+        <div class="gauge__fill" style="--fill: {{ gauge.barPercent }}%"></div>
+        <div class="gauge__pace" style="--pace: {{ gauge.monthElapsed }}%"></div>
+      </div>
+
+      <p class="muted gauge__hint">
+        {% if gauge.reached %}
+          {{ 'network.gauge.reached'|trans }}
+        {% else %}
+          {{ 'network.gauge.remaining'|trans({ '%count%': gauge.remaining }) }}
+          · {{ 'network.gauge.pace'|trans({ '%percent%': gauge.monthElapsed }) }}
+        {% endif %}
+      </p>
+    </section>
+  {% endif %}
 
   {% if myNational or myWorldwide %}
     <section class="card standing">
@@ -75,19 +119,20 @@
         {{ country ? ('countries.' ~ country)|trans : 'network.nationalRanking'|trans }}
       </h2>
 
+      {# Un drapeau par pays plutôt qu'une liste : ils sont quatre, ils tiennent
+         sur la ligne du titre, et le pays courant se voit sans l'ouvrir. #}
       {% if countries|length > 1 %}
-        <form method="get" action="{{ path('network') }}" class="locale-switcher">
-          <input type="hidden" name="metric" value="{{ metric.value }}">
-          <label class="visually-hidden" for="country">{{ 'network.country'|trans }}</label>
-          <select class="locale-switcher__select" id="country" name="country" data-autosubmit>
-            {% for code in countries %}
-              <option value="{{ code }}" {{ code == country ? 'selected' : '' }}>
-                {{ ('countries.' ~ code)|trans }}
-              </option>
-            {% endfor %}
-          </select>
-          <noscript><button type="submit" class="button button--secondary button--small">{{ 'common.apply'|trans }}</button></noscript>
-        </form>
+        <nav class="flags" aria-label="{{ 'network.country'|trans }}">
+          {% for code in countries %}
+            <a class="flags__choice {{ code == country ? 'is-active' : '' }}"
+               href="{{ path('network', { metric: metric.value, country: code }) }}"
+               title="{{ ('countries.' ~ code)|trans }}"
+               aria-label="{{ ('countries.' ~ code)|trans }}"
+               {{ code == country ? 'aria-current="page"' : '' }}>
+              {{ ui.flag(code) }}
+            </a>
+          {% endfor %}
+        </nav>
       {% endif %}
     </header>
 
@@ -98,18 +143,9 @@
   <section class="card">
     <h2 class="card__title">{{ 'network.worldwide'|trans }}</h2>
 
-    {#
-      Sur le chiffre d'affaires, ce classement ne retient qu'une devise : sans
-      taux de change fiable, comparer des zlotys à des euros donnerait un ordre
-      faux. Le dire ici, sinon « Dans le monde » avec quatre boutiques d'un
-      seul pays passerait pour une donnée manquante.
-    #}
-    {% if metric.isMonetary and worldwide is not empty %}
-      <p class="field__hint">
-        {{ 'network.sameCurrencyOnly'|trans({ '%currency%': worldwide|first.shop.currency }) }}
-      </p>
-    {% endif %}
-
+    {# Vraiment mondial, depuis que le chiffre d'affaires n'est plus proposé :
+       des clients et des tiramisu se comptent à l'identique partout, et aucune
+       boutique n'est plus écartée faute de partager la devise. #}
     {{ _self.classement(worldwide, metric, 'network.empty'|trans) }}
   </section>
 
@@ -138,13 +174,7 @@
             {% endif %}
           </span>
 
-          <span class="rank__value">
-            {% if metric.isMonetary %}
-              {{ ligne.value|qty }} <span class="rank__unit">{{ ligne.shop.currency }}</span>
-            {% else %}
-              {{ ligne.value|qty }}
-            {% endif %}
-          </span>
+          <span class="rank__value">{{ ligne.value|qty }}</span>
         </li>
       {% endfor %}
     </ol>
