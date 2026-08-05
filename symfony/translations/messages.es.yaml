@@ -8,6 +8,7 @@ locales:
 
 common:
     workstation: Puesto de trabajo
+    skipToContent: 'Ir al contenido'
     appName: 'MERISU — Inventario y producción'
     save: Guardar
     saved: Guardado
@@ -75,6 +76,7 @@ tasks:
     inProgress: '%saved% de %total% productos registrados'
     checklistProgress: '%saved% de %total% puntos marcados'
     checklistTodo: '%total% puntos por verificar'
+    checklistDone: 'Todos los puntos están marcados'
     validated: 'Validado — registro bloqueado'
     doneShort: Hecho
     nowShort: 'Por hacer ahora'

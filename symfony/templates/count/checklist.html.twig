@@ -14,7 +14,6 @@
 
   <div class="identity-bar">
     <span class="muted">{{ current_user().consultant.displayName }}</span>
-    <span class="identity-bar__workstation">{{ workstation_name(workstationId) }}</span>
   </div>
 
   <div class="page-header page-header--with-icon">
@@ -31,6 +30,15 @@
     {{ ui.banner('info', 'checklist.empty'|trans) }}
   {% else %}
     <form method="post" action="{{ path('checklist_save') }}">
+
+      {# D'où l'on vient, pour y retourner une fois enregistré. Champ caché
+         plutôt que paramètre d'URL sur l'action : le formulaire reste une
+         adresse unique, et le retour survit à un rechargement de page. #}
+      {% if app.request.query.get('retour') == 'production' %}
+        <input type="hidden" name="retour" value="production">
+        <input type="hidden" name="forDate" value="{{ app.request.query.get('forDate') }}">
+        <input type="hidden" name="category" value="{{ app.request.query.get('category') }}">
+      {% endif %}
 
       {% for bloc in sections %}
         <section class="card checklist{{ bloc.complete ? ' checklist--complete' : '' }}">

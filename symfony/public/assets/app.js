@@ -128,6 +128,100 @@
     if (message && !window.confirm(message)) event.preventDefault();
   });
 
+  // ── 3 quater. Le champ actif reste sous les yeux ──────────────────────────
+
+  /*
+   * Sur un téléphone, le clavier logiciel recouvre la moitié basse de l'écran.
+   * Le champ que l'on vient de toucher se retrouve dessous, invisible : on tape
+   * à l'aveugle, ou on fait défiler d'une main en tenant l'autre au-dessus du
+   * clavier. C'est le geste le plus pénible de toute la saisie de stock.
+   *
+   * On recentre donc le champ dans la bande RÉELLEMENT visible — sous l'entête
+   * collant, au-dessus du clavier — que `visualViewport` sait mesurer, à la
+   * différence de `window.innerHeight` qui ignore le clavier.
+   *
+   * Deux précautions :
+   * · on ne bouge QUE si le champ n'est pas déjà confortablement visible. Un
+   *   défilement à chaque tabulation donnerait le mal de mer ;
+   * · on fait défiler la page, jamais on ne redimensionne quoi que ce soit :
+   *   la mise en page ne bouge pas d'un pixel, seul le point de vue change.
+   */
+  (function () {
+    var vue = window.visualViewport;
+    var marge = 16;             // respiration minimale autour du champ
+    var actif = null;
+
+    function doux() {
+      return !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    }
+
+    function estSaisie(el) {
+      if (!el || !el.matches) return false;
+      if (!el.matches('input, select, textarea, [contenteditable="true"]')) return false;
+
+      // Cases, boutons radio et boutons déguisés en <input> n'ouvrent aucun
+      // clavier : les recentrer serait un mouvement gratuit.
+      return !el.matches(
+        '[type=hidden], [type=checkbox], [type=radio], [type=submit], [type=button], [type=reset], [type=file]'
+      );
+    }
+
+    /** Bande visible, en coordonnées de page. */
+    function bande() {
+      var haut = vue ? vue.offsetTop : 0;
+      var hauteur = vue ? vue.height : window.innerHeight;
+
+      var entete = document.querySelector('.app-header');
+      if (entete) {
+        var rect = entete.getBoundingClientRect();
+        // Entête collant : il mange le sommet de la bande.
+        if (rect.bottom > haut) haut = rect.bottom;
+      }
+
+      return { haut: haut, bas: (vue ? vue.offsetTop : 0) + hauteur };
+    }
+
+    function recentrer(el) {
+      if (!el || !el.isConnected) return;
+
+      var b = bande();
+      var rect = el.getBoundingClientRect();
+
+      // Déjà bien placé : on ne touche à rien.
+      if (rect.top >= b.haut + marge && rect.bottom <= b.bas - marge) return;
+
+      var hauteurBande = b.bas - b.haut;
+      var cible = b.haut + Math.max(0, (hauteurBande - rect.height) / 2);
+      var delta = rect.top - cible;
+
+      if (Math.abs(delta) < 2) return;
+
+      window.scrollBy({ top: delta, behavior: doux() ? 'smooth' : 'auto' });
+    }
+
+    document.addEventListener('focusin', function (event) {
+      if (!estSaisie(event.target)) return;
+      actif = event.target;
+
+      // Un cran d'attente : le clavier n'est pas encore monté, et mesurer la
+      // bande maintenant donnerait la hauteur d'avant. `visualViewport` nous
+      // rappellera de toute façon quand il aura fini de s'ouvrir.
+      window.requestAnimationFrame(function () { recentrer(actif); });
+    });
+
+    document.addEventListener('focusout', function () { actif = null; });
+
+    // Ouverture du clavier, rotation de l'écran : la bande visible change de
+    // hauteur sans que le champ ait bougé. C'est ici que se joue l'essentiel.
+    if (vue) {
+      var attente = null;
+      vue.addEventListener('resize', function () {
+        if (attente) window.clearTimeout(attente);
+        attente = window.setTimeout(function () { recentrer(actif); }, 80);
+      });
+    }
+  }());
+
   // ── 3 ter. Impression de la planche d'étiquettes ──────────────────────────
 
   // Raccourci, rien de plus : la page est déjà mise en page pour l'impression,

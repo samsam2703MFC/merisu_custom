@@ -74,6 +74,7 @@ final class CountController extends AbstractController
                     'label' => 'nav.morning',
                     'progressKey' => 'tasks.inProgress',
                     'todoKey' => 'tasks.todo',
+                    'doneKey' => 'tasks.validated',
                     'title' => 'morning.title',
                     'time' => $settings->openingTime,
                     'done' => $morning['validated'],
@@ -86,6 +87,7 @@ final class CountController extends AbstractController
                     'label' => 'nav.evening',
                     'progressKey' => 'tasks.inProgress',
                     'todoKey' => 'tasks.todo',
+                    'doneKey' => 'tasks.validated',
                     'title' => 'evening.title',
                     'time' => $settings->closingTime,
                     'done' => $evening['validated'],
@@ -102,6 +104,10 @@ final class CountController extends AbstractController
                     // une check-list compte des points, pas des produits.
                     'progressKey' => 'tasks.checklistProgress',
                     'todoKey' => 'tasks.checklistTodo',
+                    // « Saisie verrouillée » ne veut rien dire pour une
+                    // check-list : elle se coche et se décoche toute la
+                    // journée, rien ne s'y verrouille.
+                    'doneKey' => 'tasks.checklistDone',
                     'title' => 'checklist.title',
                     'time' => null,
                     'done' => $checklist['complete'],

@@ -95,6 +95,18 @@ final class ChecklistController extends AbstractController
 
         $this->addFlash('success', 'common.saved');
 
+        // L'opérateur venu du verrou de production y retourne directement : il
+        // cochait ces points POUR produire, le renvoyer à la check-list lui
+        // laisserait retrouver seul un écran situé deux pas plus loin.
+        if ($request->request->get('retour') === 'production') {
+            $params = array_filter([
+                'forDate' => (string) $request->request->get('forDate', ''),
+                'category' => (string) $request->request->get('category', ''),
+            ], static fn (string $v): bool => $v !== '');
+
+            return $this->redirectToRoute('production', $params);
+        }
+
         return $this->redirectToRoute('checklist');
     }
 

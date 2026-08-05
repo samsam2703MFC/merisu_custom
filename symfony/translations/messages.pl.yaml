@@ -8,6 +8,7 @@ locales:
 
 common:
     workstation: Stanowisko
+    skipToContent: 'Przejdź do treści'
     appName: 'MERISU — Inwentaryzacja i produkcja'
     save: Zapisz
     saved: Zapisano
@@ -75,6 +76,7 @@ tasks:
     inProgress: 'Wprowadzono %saved% z %total% produktów'
     checklistProgress: 'odhaczono %saved% z %total% punktów'
     checklistTodo: '%total% punktów do sprawdzenia'
+    checklistDone: 'Wszystkie punkty odhaczone'
     validated: 'Zatwierdzone — wpis zablokowany'
     doneShort: Gotowe
     nowShort: 'Do zrobienia teraz'

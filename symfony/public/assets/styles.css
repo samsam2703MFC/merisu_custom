@@ -42,14 +42,49 @@
   --danger: #B3261E;
   --danger-bg: #FDECEA;
   --radius: 16px;
+  --radius-card: 24px;   /* cartes et tuiles : le grand rayon Merisù */
   --radius-pill: 999px;
   --touch: 44px;
+
+  /*
+   * ÉCHELLE D'ESPACEMENT — une seule suite, quatre pas utiles.
+   *
+   * Avant, chaque composant avait sa valeur : .6rem ici, .85rem là, 1.25rem
+   * plus loin. À l'œil, les écarts se ressemblaient sans jamais s'aligner, et
+   * la page paraissait « à peu près » rangée. Un pas commun suffit à ce que
+   * les marges se répondent d'un écran à l'autre.
+   *
+   * Règle d'emploi : --space-2 entre éléments d'un même bloc, --space-3 entre
+   * blocs, --space-4 autour d'une carte, --space-5 entre sections.
+   */
+  --space-1: .25rem;
+  --space-2: .5rem;
+  --space-3: .75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+
   --shadow: 0 4px 16px rgba(111, 78, 55, .07);
   --shadow-lg: 0 12px 32px rgba(111, 78, 55, .10);
   --shadow-accent: 0 6px 20px rgba(196, 48, 106, .30);
   --font: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-display: "Playfair Display", Georgia, serif;
+
+  /*
+   * MOUVEMENT — trois durées, deux courbes, rien d'autre.
+   *
+   * Des durées disparates (.15s, .25s, .3s au hasard des composants) donnent
+   * une impression de bricolage : deux éléments voisins ne réagissent pas au
+   * même rythme. Les mêmes valeurs partout, et l'interface paraît d'un bloc.
+   *
+   * --ease-out (décélération franche) pour ce qui APPARAÎT ou se soulève ;
+   * --ease pour ce qui change simplement d'état (couleur, bordure).
+   */
+  --dur-fast: 120ms;   /* retour tactile : doit paraître instantané */
+  --dur: 200ms;        /* changement d'état courant */
+  --dur-slow: 320ms;   /* apparition, élévation */
   --ease: cubic-bezier(.4, 0, .2, 1);
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
 }
 
 * { box-sizing: border-box; }
@@ -70,9 +105,9 @@ body {
   min-height: 100dvh;
 }
 
-h1, h2, h3 { margin: 0 0 .25rem; line-height: 1.25; }
+h1, h2, h3 { margin: 0 0 var(--space-1); line-height: 1.25; }
 h1, h2 { font-family: var(--font-display); font-weight: 500; letter-spacing: -.01em; color: var(--coffee); }
-p { margin: 0 0 .5rem; }
+p { margin: 0 0 var(--space-2); }
 
 .muted { color: var(--latte); font-size: .9rem; }
 
@@ -84,7 +119,7 @@ p { margin: 0 0 .5rem; }
   white-space: nowrap;
 }
 
-.separator { border: 0; border-top: 1px solid var(--border); margin: 1rem 0; }
+.separator { border: 0; border-top: 1px solid var(--border); margin: var(--space-4) 0; }
 
 /* ── Structure ───────────────────────────────────────────────────────────── */
 
@@ -145,8 +180,8 @@ p { margin: 0 0 .5rem; }
 
 .app-main {
   flex: 1;
-  padding: 1rem;
-  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+  padding: var(--space-4);
+  padding-bottom: calc(var(--space-5) + env(safe-area-inset-bottom));
   max-width: 1200px;
   width: 100%;
   margin: 0 auto;
@@ -154,7 +189,7 @@ p { margin: 0 0 .5rem; }
 
 .app--centered .app-main { display: grid; place-items: center; padding-bottom: 1rem; }
 
-.admin-nav { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1rem; }
+.admin-nav { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-4); }
 
 /* Pilules Merisù : crème par défaut, framboise = section active. */
 .admin-nav__link {
@@ -171,7 +206,7 @@ p { margin: 0 0 .5rem; }
   font-size: .82rem;
   letter-spacing: .08em;
   text-transform: uppercase;
-  transition: background .25s var(--ease), color .25s var(--ease);
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 
 .admin-nav__link:hover { background: var(--border); }
@@ -183,28 +218,15 @@ p { margin: 0 0 .5rem; }
   box-shadow: var(--shadow-accent);
 }
 
+/* Ligne d'identité : le seul nom du vendeur, désormais. Le poste de travail
+   se règle dans le menu de l'avatar ; le répéter ici en pastille encombrait
+   le haut de chaque écran pour une information qui ne change jamais. */
 .identity-bar {
   display: flex;
   align-items: center;
-  gap: .75rem;
+  gap: var(--space-3);
   flex-wrap: wrap;
-  margin-bottom: .75rem;
-}
-
-/* Poste courant : rappel discret, le réglage vit dans le menu de l'avatar. */
-.identity-bar__workstation {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  padding: .25rem .7rem;
-  border-radius: var(--radius-pill);
-  background: var(--cream-outline);
-  border: 1px solid var(--border);
-  color: var(--coffee-800);
-  font-size: .72rem;
-  font-weight: 700;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  margin-bottom: var(--space-2);
 }
 
 /* ── Cartes ──────────────────────────────────────────────────────────────── */
@@ -212,30 +234,34 @@ p { margin: 0 0 .5rem; }
 .card {
   background: var(--surface);
   border: none;
-  border-radius: 24px;
-  padding: 1.25rem;
-  margin-bottom: 1rem;
+  border-radius: var(--radius-card);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
   box-shadow: var(--shadow);
 }
 
-.card--login { width: 100%; max-width: 420px; padding: 2rem 1.5rem; }
-.card--link { display: block; text-decoration: none; color: inherit; transition: transform .25s cubic-bezier(.16, 1, .3, 1), box-shadow .25s var(--ease); }
+/* Deux cartes qui se suivent respirent ; la dernière ne laisse pas un vide
+   en bas de page — cette marge-là était de l'espace perdu, pas du rythme. */
+.card:last-child { margin-bottom: 0; }
+
+.card--login { width: 100%; max-width: 420px; padding: var(--space-6) var(--space-5); }
+.card--link { display: block; text-decoration: none; color: inherit; transition: transform var(--dur-slow) var(--ease-out), box-shadow var(--dur) var(--ease); }
 .card--link:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
 
 .card__header {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: .5rem;
+  gap: var(--space-2);
   flex-wrap: wrap;
-  margin-bottom: .75rem;
+  margin-bottom: var(--space-3);
 }
 
 .card__title { font-family: var(--font-display); font-weight: 500; font-size: 1.3rem; color: var(--coffee); }
 
-.card-grid { display: grid; gap: 1rem; grid-template-columns: 1fr; }
+.card-grid { display: grid; gap: var(--space-4); grid-template-columns: 1fr; }
 
-.page-header { margin-bottom: 1.25rem; }
+.page-header { margin-bottom: var(--space-5); }
 .page-header__title { font-family: var(--font-display); font-weight: 500; font-size: 1.7rem; letter-spacing: -.01em; color: var(--coffee); }
 .page-header__subtitle { color: var(--latte); font-size: .95rem; }
 
@@ -243,8 +269,8 @@ p { margin: 0 0 .5rem; }
 
 .banner {
   border-radius: var(--radius);
-  padding: .7rem 1rem;
-  margin-bottom: .9rem;
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-3);
   font-size: .92rem;
   border: 1px solid transparent;
 }
@@ -254,7 +280,7 @@ p { margin: 0 0 .5rem; }
 .banner--warn { background: var(--warn-bg); border-color: var(--warn); color: var(--warn); }
 .banner--danger { background: var(--danger-bg); border-color: var(--danger); color: var(--danger); }
 
-.banner__list { margin: .5rem 0 0; padding-left: 1.2rem; }
+.banner__list { margin: var(--space-2) 0 0; padding-left: 1.2rem; }
 
 .badge {
   display: inline-flex;
@@ -279,7 +305,7 @@ p { margin: 0 0 .5rem; }
 
 /* ── Formulaires ─────────────────────────────────────────────────────────── */
 
-.field { margin-bottom: .75rem; }
+.field { margin-bottom: var(--space-3); }
 .field__label {
   display: block;
   font-size: .74rem;
@@ -287,9 +313,9 @@ p { margin: 0 0 .5rem; }
   letter-spacing: .1em;
   text-transform: uppercase;
   color: var(--latte);
-  margin-bottom: .3rem;
+  margin-bottom: var(--space-1);
 }
-.field__hint { font-size: .82rem; color: var(--latte); margin: .2rem 0 0; }
+.field__hint { font-size: .82rem; color: var(--latte); margin: var(--space-1) 0 0; }
 
 .field__input,
 input[type="text"], input[type="password"], input[type="number"],
@@ -304,22 +330,22 @@ select, textarea {
   background: #fff;
   color: var(--coffee-800);
   width: 100%;
-  transition: border-color .25s var(--ease);
+  transition: border-color var(--dur) var(--ease);
 }
 
 .field__input:focus, input:focus, select:focus, textarea:focus { border-color: var(--brand); }
 
 input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-color: var(--brand); }
 
-.checkbox-row { display: flex; align-items: center; gap: .6rem; min-height: var(--touch); }
+.checkbox-row { display: flex; align-items: center; gap: var(--space-2); min-height: var(--touch); }
 .checkbox-row label { font-size: 1rem; color: var(--text); margin: 0; }
 
-.field-grid { display: grid; gap: .75rem; grid-template-columns: 1fr; }
+.field-grid { display: grid; gap: var(--space-3); grid-template-columns: 1fr; }
 
-.form-actions { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-top: 1rem; }
+.form-actions { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; margin-top: var(--space-4); }
 .form-actions .button--large { margin-left: auto; }
 
-.filters { display: flex; gap: .75rem; align-items: flex-end; flex-wrap: wrap; }
+.filters { display: flex; gap: var(--space-3); align-items: flex-end; flex-wrap: wrap; }
 .filters .field { margin-bottom: 0; }
 
 .locale-switcher { display: flex; align-items: center; gap: .4rem; margin: 0; min-width: 0; }
@@ -359,7 +385,7 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
   align-items: center;
   justify-content: center;
   text-decoration: none;
-  transition: background .25s var(--ease), color .25s var(--ease), transform .15s var(--ease), box-shadow .25s var(--ease);
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), transform var(--dur-fast) var(--ease), box-shadow var(--dur) var(--ease);
 }
 
 .button:active { transform: translateY(1px); }
@@ -376,26 +402,26 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 
 /* ── Saisie rapide au doigt (§2) ─────────────────────────────────────────── */
 
-.count-list { display: grid; gap: .75rem; }
+.count-list { display: grid; gap: var(--space-3); }
 
 .count-item {
   background: var(--surface);
   border: 1px solid transparent;
   border-radius: var(--radius);
-  padding: .85rem;
+  padding: var(--space-4);
   box-shadow: var(--shadow);
   display: grid;
-  gap: .6rem;
+  gap: var(--space-2);
 }
 
 .count-item--invalid { border-color: var(--danger); background: var(--danger-bg); }
 
-.count-item__header { display: flex; align-items: center; gap: .5rem; }
+.count-item__header { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
 .count-item__name { font-weight: 600; font-size: 1.05rem; color: var(--coffee-800); }
 .count-item__unit { margin-left: auto; }
 .count-item__net { margin: 0; }
 
-.qty { display: grid; grid-template-columns: var(--touch) 1fr var(--touch); gap: .5rem; align-items: center; }
+.qty { display: grid; grid-template-columns: var(--touch) minmax(0, 1fr) var(--touch); gap: var(--space-2); align-items: center; }
 
 /* Boutons − / + : pilules crème ; framboise à l'appui. */
 .qty__step {
@@ -410,7 +436,7 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
   cursor: pointer;
   user-select: none;
   touch-action: manipulation;
-  transition: background .15s var(--ease), color .15s var(--ease);
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 .qty__step:active { background: var(--brand); border-color: transparent; color: #fff; }
@@ -502,7 +528,7 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 /* ── Tablette ────────────────────────────────────────────────────────────── */
 
 @media (min-width: 600px) {
-  .app-main { padding: 1.25rem; }
+  .app-main { padding: var(--space-5); }
   .count-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .qty { grid-template-columns: 56px 1fr 56px; }
   .field-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -515,7 +541,7 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 @media (min-width: 1024px) {
   /* La navigation revient en haut : plus de barre d'onglets basse. */
 
-  .app-main { padding: 1.5rem; }
+  .app-main { padding: var(--space-5) var(--space-6); }
   .count-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .field-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .card-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -531,7 +557,7 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 
 /* ── Menu des tâches ─────────────────────────────────────────────────────── */
 
-.task-list { display: grid; gap: .75rem; }
+.task-list { display: grid; gap: var(--space-3); }
 
 /*
  * Une tâche est une ligne cliquable pleine largeur : cible large, atteignable
@@ -541,16 +567,16 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
   display: grid;
   grid-template-columns: auto 1fr;
   align-items: center;
-  gap: 1rem;
+  gap: var(--space-4);
   min-height: 88px;
-  padding: 1rem 1.25rem;
+  padding: var(--space-4);
   background: var(--surface);
   border: 1px solid transparent;
-  border-radius: 20px;
+  border-radius: var(--radius-card);
   box-shadow: var(--shadow);
   text-decoration: none;
   color: inherit;
-  transition: transform .25s cubic-bezier(.16, 1, .3, 1), box-shadow .25s var(--ease);
+  transition: transform var(--dur-slow) var(--ease-out), box-shadow var(--dur) var(--ease);
 }
 
 .task:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
@@ -571,7 +597,7 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 
 .task__time { font-weight: 700; color: var(--coffee-800); }
 
-.task__body { display: flex; flex-direction: column; gap: .25rem; min-width: 0; align-items: flex-start; }
+.task__body { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; align-items: flex-start; }
 
 /* La pastille suit le texte plutôt que d'occuper une colonne : sur écran
    étroit, une troisième colonne comprimait le titre jusqu'à le casser. */
@@ -633,15 +659,15 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
   letter-spacing: .06em;
   text-transform: uppercase;
   transition:
-    background .25s var(--ease),
-    color .25s var(--ease),
-    box-shadow .25s var(--ease);
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
 }
 
 .app-header__back-arrow {
   display: grid;
   place-items: center;
-  transition: transform .25s cubic-bezier(.16, 1, .3, 1);
+  transition: transform var(--dur-slow) var(--ease-out);
 }
 
 .app-header__back-arrow .icon { width: 20px; height: 20px; }
@@ -982,7 +1008,7 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
   font-weight: 600;
   letter-spacing: .04em;
   cursor: pointer;
-  transition: background .2s var(--ease), color .2s var(--ease);
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 
 .vessel__choice:hover { background: var(--border); }
@@ -1021,7 +1047,7 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
   bottom: 0;
   height: 0;
   background: linear-gradient(180deg, var(--brand) 0%, var(--brand-dark) 100%);
-  transition: height .3s cubic-bezier(.16, 1, .3, 1);
+  transition: height var(--dur-slow) var(--ease-out);
 }
 
 /*
@@ -1078,8 +1104,8 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
   box-shadow: inset 0 3px 0 rgba(255, 203, 29, .35);
 
   transition:
-    border-color .2s var(--ease),
-    box-shadow .25s var(--ease),
+    border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease),
     transform .2s cubic-bezier(.16, 1, .3, 1);
 }
 
@@ -1144,7 +1170,7 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
   font-weight: 600;
   font-size: .82rem;
   letter-spacing: .06em;
-  transition: background .25s var(--ease), color .25s var(--ease);
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 
 .metric-switch__item:hover { background: var(--border); }
@@ -1411,4 +1437,218 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
   .print-header__title, .print-header__meta { color: #000; }
 
   .labels { grid-template-columns: repeat(auto-fill, minmax(52mm, 1fr)); gap: 4mm; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Passe d'ergonomie — mise au point, mouvement, accessibilité
+   ══════════════════════════════════════════════════════════════════════════
+
+   Ce bloc ferme la feuille volontairement : à spécificité égale, la dernière
+   règle écrite l'emporte. Il harmonise ce que les composants avaient chacun
+   réglé de leur côté, sans avoir à les réécrire un par un.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Défilement et mise au point ─────────────────────────────────────────── */
+
+/*
+  Sans JavaScript, c'est le navigateur qui amène le champ à l'écran, et il le
+  colle au bord — souvent sous l'entête. `scroll-margin` lui réserve la place
+  de l'entête plus une respiration : le champ arrive dégagé, dans les deux cas.
+*/
+html { scroll-behavior: smooth; }
+
+input, select, textarea, [tabindex], .task, .card--link, summary {
+  scroll-margin-block: 6rem 2rem;
+}
+
+/*
+  Mise au point d'un champ : la bordure framboise ne suffit pas au soleil. Un
+  halo la double, en `box-shadow` — qui ne prend aucune place et ne décale donc
+  RIEN autour. Une bordure plus épaisse, elle, aurait fait sauter la ligne.
+*/
+.field__input:focus,
+input:focus, select:focus, textarea:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-light);
+  outline: none;
+}
+
+/* Le libellé s'allume avec son champ : de quoi retrouver où l'on en est dans
+   un formulaire long, sans relire. */
+.field:focus-within .field__label { color: var(--brand-dark); }
+
+/* Au clavier, le halo ne suffit pas — il faut le contour franc. */
+.field__input:focus-visible,
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* Tuiles, cartes-liens, menu de l'avatar : mêmes règles que les champs. Une
+   cible cliquable sans repère de mise au point est inutilisable au clavier. */
+.task:focus-visible,
+.card--link:focus-visible,
+.button:focus-visible,
+.admin-nav__link:focus-visible,
+.app-header__back:focus-visible,
+.usermenu__trigger:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 3px;
+}
+
+/* ── Cohérence des composants ────────────────────────────────────────────── */
+
+/* Toutes les cibles tactiles au même gabarit : boutons, pilules, pas de demi-
+   mesure à 38 px qui oblige à viser. */
+.button, .admin-nav__link, .app-header__back, .usermenu__link {
+  min-height: var(--touch);
+}
+
+/* Icône dans un bouton : centrée sur la ligne de base du texte, pas au-dessus. */
+.button__icon .icon { display: block; }
+
+/* Retour tactile identique partout : un enfoncement bref, jamais un saut. */
+.button:active, .task:active, .card--link:active, .admin-nav__link:active {
+  transform: translateY(1px);
+  transition-duration: var(--dur-fast);
+}
+
+/* Une tuile ne se soulève qu'au survol d'une souris. Sur écran tactile, il n'y
+   a pas de survol : le navigateur simulait un « hover » collant après le
+   toucher, et la tuile restait soulevée. */
+@media (hover: none) {
+  .task:hover, .card--link:hover { transform: none; box-shadow: var(--shadow); }
+}
+
+/* ── Débordements ────────────────────────────────────────────────────────── */
+
+/*
+  Un nom de produit saisi en administration peut être long, et le polonais
+  n'aide pas. Sans coupure, il pousse sa carte hors de l'écran et c'est TOUTE
+  la page qui défile latéralement — le défaut le plus visible sur un téléphone.
+*/
+body { overflow-x: hidden; }
+
+.card__title, .task__label, .task__meta,
+.count-item__name, .page-header__title, .page-header__subtitle,
+.field__label, .field__hint, .banner {
+  overflow-wrap: anywhere;
+}
+
+/* Les tableaux, eux, ont le droit de défiler — mais dans leur propre boîte. */
+.table-scroll { max-width: 100%; }
+
+/* ── Apparition des messages ─────────────────────────────────────────────── */
+
+/*
+  Un bandeau qui apparaît d'un coup passe pour un défaut d'affichage. Une
+  entrée de 320 ms le fait lire comme une réponse à ce qu'on vient de faire.
+*/
+@keyframes merisu-apparition {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.banner { animation: merisu-apparition var(--dur-slow) var(--ease-out) both; }
+
+/* ── Petits écrans ───────────────────────────────────────────────────────── */
+
+@media (max-width: 380px) {
+  /* Sous 380 px, la marge latérale prend une part démesurée de la largeur
+     utile : on la réduit plutôt que de comprimer les champs. */
+  .app-main { padding-left: var(--space-3); padding-right: var(--space-3); }
+  .card { padding: var(--space-3); }
+  .task { padding: var(--space-3); gap: var(--space-3); }
+  .task__icon { width: 44px; height: 44px; }
+  .task__label { font-size: 1.1rem; }
+}
+
+/* ── Mouvement réduit ────────────────────────────────────────────────────── */
+
+/*
+  Le réglage système l'emporte sur tout le reste, y compris le défilement doux
+  ajouté plus haut : pour qui souffre de troubles vestibulaires, un défilement
+  animé n'est pas un confort, c'est un malaise.
+*/
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { transition: none !important; animation: none !important; }
+}
+
+/* ── Lien d'évitement ────────────────────────────────────────────────────── */
+
+/*
+  Premier élément de la page, invisible jusqu'à la première tabulation : il
+  permet de sauter l'entête et d'atteindre le contenu directement, au lieu de
+  traverser le menu de l'avatar à chaque écran.
+*/
+.skip-link {
+  position: absolute;
+  left: var(--space-2);
+  top: var(--space-2);
+  z-index: 100;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--brand);
+  color: #fff;
+  font-size: .82rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  box-shadow: var(--shadow-accent);
+  /* Calculé sur sa propre hauteur plutôt qu'en pourcentage approximatif : le
+     lien sort entièrement du cadre quelle que soit la longueur du libellé —
+     « Przejdź do treści » tient sur une ligne de plus que « Aller au contenu ». */
+  transform: translateY(calc(-100% - var(--space-4)));
+  transition: transform var(--dur) var(--ease);
+}
+
+.skip-link:focus { transform: none; }
+
+/* ── Passage d'un écran à l'autre ────────────────────────────────────────── */
+
+/*
+  L'application est multi-pages : chaque tuile provoque une vraie navigation, et
+  l'écran clignote en blanc entre les deux. Une transition de vue efface ce
+  clignotement — le contenu se croise en fondu, l'entête reste en place.
+
+  Les navigateurs qui ne connaissent pas la règle l'ignorent, et retrouvent
+  exactement le comportement d'avant : rien à détecter, rien à charger.
+*/
+@view-transition { navigation: auto; }
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--dur);
+  animation-timing-function: var(--ease);
+}
+
+/* L'entête ne participe pas au fondu : il est le point fixe de l'application,
+   le voir disparaître et revenir à chaque écran serait un mouvement de trop. */
+.app-header { view-transition-name: merisu-entete; }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation: none !important; }
+}
+
+/* ── Menu des tâches sur grand écran ─────────────────────────────────────── */
+
+/*
+  Au-delà de 900 px, une tuile occupe toute la largeur pour trois mots : le
+  regard traverse un vide de 800 px entre le titre et le bord droit, et la
+  liste déborde sous la ligne de flottaison alors qu'elle tiendrait d'un coup.
+  Deux colonnes remettent l'ensemble sous les yeux.
+*/
+@media (min-width: 900px) {
+  .task-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  /* La tâche du moment garde la pleine largeur : c'est elle qu'on doit voir
+     en premier, et une tuile deux fois plus large se voit deux fois mieux. */
+  .task--now { grid-column: 1 / -1; }
 }

@@ -38,6 +38,10 @@
 
 <body class="app{% block body_class %}{% endblock %}">
 
+{# Premier arrêt de tabulation : sauter l'entête et son menu pour atteindre
+   directement le contenu. Invisible tant qu'il n'a pas la mise au point. #}
+<a class="skip-link" href="#contenu">{{ 'common.skipToContent'|trans }}</a>
+
 {% block header %}
   <header class="app-header">
     {# Trois zones : gauche, logo centré, contrôles à droite. Les zones latérales
@@ -137,7 +141,9 @@
 #}
 {% block nav %}{% endblock %}
 
-<main class="app-main">
+{# tabindex="-1" : sans lui, le saut déplace le défilement mais pas la mise au
+   point, et la tabulation suivante repartirait du haut de l'entête. #}
+<main class="app-main" id="contenu" tabindex="-1">
 
   {#
     Bandeau affiché par app.js dès que le réseau est coupé.

@@ -8,7 +8,6 @@
 
   <div class="identity-bar">
     <span class="muted">{{ current_user().consultant.displayName }}</span>
-    <span class="identity-bar__workstation">{{ workstation_name(workstationId) }}</span>
   </div>
 
   {{ ui.page_header(
@@ -56,7 +55,11 @@
       </ul>
 
       <div class="form-actions">
-        <a class="button button--primary" href="{{ path('checklist') }}">
+        {# `retour` ramène ici une fois la check-list enregistrée : sans lui,
+           l'opérateur coche ses points puis doit retrouver seul le chemin du
+           plan de production — deux écrans plus loin. #}
+        <a class="button button--primary"
+           href="{{ path('checklist', { retour: 'production', forDate: forDate, category: category }) }}">
           {{ 'produce.openChecklist'|trans }}
         </a>
       </div>
@@ -76,7 +79,9 @@
         {% if categories|length > 0 %}
           <div class="field">
             <label class="field__label" for="category">{{ 'produce.category'|trans }}</label>
-            <select class="field__input" id="category" name="category">
+            {# Choisir une catégorie applique le filtre : un clic de moins, et
+               le bouton « Appliquer » reste là pour qui n'a pas de script. #}
+            <select class="field__input" id="category" name="category" data-autosubmit>
               <option value="">{{ 'produce.allCategories'|trans }}</option>
               {% for name in categories %}
                 <option value="{{ name }}" {{ name == category ? 'selected' : '' }}>{{ name }}</option>
