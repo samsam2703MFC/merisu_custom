@@ -35,11 +35,14 @@
     La note de marque se déplie dessous, dans le même cadre : ce n'est pas une
     information à part, c'est ce qu'il faut avoir en tête avant de suivre le
     plan. Bâti sur <details>, donc sans une ligne de JavaScript, chevron
-    compris. Ouvert par défaut — une consigne qu'il faut aller chercher n'est
-    pas lue.
+    compris.
+
+    Replié par défaut : la page reste une liste de tuiles nette. Ce qui dit
+    qu'il y a quelque chose dessous, c'est le chevron mauve qui rebondit tant
+    que le bloc est fermé — et la ligne du résumé, qui annonce la note.
   #}
   <div class="task-list">
-    <details class="task task--daynote" open>
+    <details class="task task--daynote">
       <summary class="task__summary">
         <span class="task__icon">{{ ui.icon('tray') }}</span>
 

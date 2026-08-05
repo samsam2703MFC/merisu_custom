@@ -2086,20 +2086,50 @@ body { overflow-x: hidden; }
 .task--daynote .task__icon { background: var(--gold); color: var(--coffee); }
 
 /*
-  Le chevron, dessiné en CSS et animé : il pivote d'un quart de tour à
-  l'ouverture. C'est le seul signal qui dise que le bloc se déplie.
+  Le chevron, dessiné en CSS et animé.
+
+  Mauve, comme celui des listes déroulantes : c'est devenu la couleur de
+  « ceci s'ouvre » dans toute l'application, et le vendeur n'a pas à
+  réapprendre un signe par écran.
+
+  Il REBONDIT tant que le bloc est fermé. Le repli laissait la note du jour
+  invisible, et un chevron immobile ne dit pas assez qu'il y a quelque chose
+  dessous : deux petits sauts espacés attirent l'œil sans réclamer, comme un
+  doigt qui tapote. Le rebond s'arrête à l'ouverture — il a fait son travail.
 */
 .task__chevron {
   width: 11px;
   height: 11px;
   flex: none;
-  border-right: 2.5px solid var(--latte);
-  border-bottom: 2.5px solid var(--latte);
+  border-right: 2.5px solid var(--plum);
+  border-bottom: 2.5px solid var(--plum);
   transform: rotate(45deg) translate(-2px, -2px);
   transition: transform var(--dur) var(--ease);
+  animation: merisu-rebond 2.4s var(--ease) infinite;
 }
 
-.task--daynote[open] .task__chevron { transform: rotate(-135deg) translate(-2px, -2px); }
+/*
+  Le rebond porte sur la translation, à l'intérieur de la rotation de 45° :
+  translater après avoir tourné déplace le chevron en diagonale. Ces valeurs
+  le font descendre bien droit.
+*/
+@keyframes merisu-rebond {
+  0%, 62%, 100% { transform: rotate(45deg) translate(-2px, -2px); }
+  70% { transform: rotate(45deg) translate(1px, 1px); }
+  78% { transform: rotate(45deg) translate(-2px, -2px); }
+  86% { transform: rotate(45deg) translate(0, 0); }
+}
+
+.task--daynote[open] .task__chevron {
+  transform: rotate(-135deg) translate(-2px, -2px);
+  animation: none;
+}
+
+.task--daynote:hover .task__chevron { animation: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .task__chevron { animation: none; }
+}
 
 /*
   Le panneau déplié : du texte, un filet, rien de plus. Une sous-carte avec son
