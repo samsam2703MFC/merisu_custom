@@ -125,7 +125,7 @@
       {% if country %}{{ ui.flag(country, ('countries.' ~ country)|trans) }}{% endif %}
     </header>
 
-    {{ _self.classement(national, metric, 'network.empty'|trans) }}
+    {{ _self.classement(national, metric, 'network.empty'|trans, false) }}
   </section>
 
   {# ── Classement mondial ───────────────────────────────────────────────── #}
@@ -135,7 +135,7 @@
     {# Vraiment mondial, depuis que le chiffre d'affaires n'est plus proposé :
        des clients et des tiramisu se comptent à l'identique partout, et aucune
        boutique n'est plus écartée faute de partager la devise. #}
-    {{ _self.classement(worldwide, metric, 'network.empty'|trans) }}
+    {{ _self.classement(worldwide, metric, 'network.empty'|trans, true) }}
   </section>
 
 {% endblock %}
@@ -144,7 +144,7 @@
   Un classement. Les trois premiers portent une médaille : c'est ce qu'on
   cherche des yeux avant de lire les chiffres.
 #}
-{% macro classement(lignes, metric, vide) %}
+{% macro classement(lignes, metric, vide, avecDrapeaux) %}
   {% if lignes is empty %}
     <p class="muted">{{ vide }}</p>
   {% else %}
@@ -158,11 +158,12 @@
              sur téléphone. Le repère reste lisible sans lecture. #}
           <span class="rank__shop">
             {{ ligne.shop.name }}
-            {# Drapeau en indice : dans le classement mondial, « Merisù Centrum »
-               et « Merisù Marais » ne disent pas de quel pays elles sortent. Un
-               drapeau minuscule le dit sans allonger la ligne — le nom du pays
-               en toutes lettres l'aurait fait passer à la ligne sur téléphone. #}
-            {% if ligne.shop.country %}
+            {# Drapeau en indice, dans le classement MONDIAL seulement : là,
+               « Merisù Centrum » et « Merisù Marais » ne disent pas de quel
+               pays elles sortent. Dans le classement national, elles sont
+               toutes du même — un drapeau par ligne n'y apprendrait rien et
+               ferait du bruit. #}
+            {% if avecDrapeaux and ligne.shop.country %}
               {{ ui.flag(ligne.shop.country, ('countries.' ~ ligne.shop.country|upper)|trans) }}
             {% endif %}
             {% if ligne.isCurrent %}
