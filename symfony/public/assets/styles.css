@@ -64,6 +64,12 @@
   --space-5: 1.5rem;
   --space-6: 2rem;
 
+  /* Marge latérale du contenu. Ce qui doit s'étendre d'un bord à l'autre
+     (barre d'action collante) la reprend en négatif : deux valeurs
+     indépendantes, et l'élément dépassait, faisant défiler la page en
+     travers sur téléphone. */
+  --gutter: 1rem;
+
   --shadow: 0 4px 16px rgba(111, 78, 55, .07);
   --shadow-lg: 0 12px 32px rgba(111, 78, 55, .10);
   --shadow-accent: 0 6px 20px rgba(196, 48, 106, .30);
@@ -180,7 +186,7 @@ p { margin: 0 0 var(--space-2); }
 
 .app-main {
   flex: 1;
-  padding: var(--space-4);
+  padding: var(--gutter);
   padding-bottom: calc(var(--space-5) + env(safe-area-inset-bottom));
   max-width: 1200px;
   width: 100%;
@@ -528,7 +534,7 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 /* ── Tablette ────────────────────────────────────────────────────────────── */
 
 @media (min-width: 600px) {
-  .app-main { padding: var(--space-5); }
+  :root { --gutter: 1.5rem; }
   .count-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .qty { grid-template-columns: 56px 1fr 56px; }
   .field-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -541,7 +547,8 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 @media (min-width: 1024px) {
   /* La navigation revient en haut : plus de barre d'onglets basse. */
 
-  .app-main { padding: var(--space-5) var(--space-6); }
+  :root { --gutter: 2rem; }
+  .app-main { padding-block: var(--space-5); }
   .count-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .field-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .card-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -1217,7 +1224,13 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
   padding-left: .6rem;
   padding-right: .6rem;
   border-top-color: transparent;
+  /* Depuis que l'étiquette « votre boutique » a disparu, la surbrillance porte
+     seule le repère : un filet framboise l'ancre, et le nom passe en gras
+     framboise. Un fond rosé seul se perd sur un écran vu de biais. */
+  box-shadow: inset 3px 0 0 var(--brand);
 }
+
+.rank__row--mine .rank__shop { color: var(--brand-dark); font-weight: 700; }
 
 .rank__badge {
   display: grid;
@@ -1239,29 +1252,15 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 
 .rank__shop { font-weight: 600; color: var(--coffee); min-width: 0; overflow-wrap: anywhere; }
 
-.rank__mine {
-  display: inline-block;
-  margin-left: .4rem;
-  padding: .1rem .5rem;
-  border-radius: var(--radius-pill);
-  background: var(--brand);
-  color: #fff;
-  font-size: .66rem;
-  font-weight: 700;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  vertical-align: middle;
-}
-
 .rank__value { font-weight: 700; color: var(--coffee); white-space: nowrap; }
 .rank__unit { font-weight: 600; font-size: .78rem; color: var(--latte); }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   Arrêt de production, verrou de check-list, production J+1
+   Verrou de check-list et production J+1
    ══════════════════════════════════════════════════════════════════════════ */
 
 /*
-  Le violet n'appartient pas encore à la palette : il est introduit ici, et
+  Le violet n'appartient pas au reste de la palette : il est introduit ici, et
   seulement ici, pour la production de demain. La framboise reste la couleur
   d'action (§ conventions de design) ; le violet ne sert qu'à identifier une
   famille de tuiles, jamais un bouton.
@@ -1282,78 +1281,37 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 .task--produce .task__icon { background: var(--plum); color: #fff; }
 .task--produce .task__label { color: var(--plum-dark); }
 
-/* Arrêt en cours : la tuile passe au rouge, où qu'elle soit. Le vendeur doit
-   voir l'arrêt depuis le menu, sans ouvrir quoi que ce soit. */
-.task--halted {
-  background: var(--danger-bg);
-  border: 1px solid #F3CFCC;
-  box-shadow: none;
-}
+/* ── Verrou : la check-list n'est pas terminée ──────────────────────────── */
 
-.task--halted .task__icon { background: var(--danger); color: #fff; }
-.task--halted .task__label { color: var(--danger); }
-
-/* ── État d'arrêt ───────────────────────────────────────────────────────── */
-
-.card--stopped { border: 2px solid var(--danger); background: var(--danger-bg); }
 .card--gate { border: 2px solid var(--warn); background: var(--warn-bg); }
 
-.stop-state {
+.gate-state {
   display: flex;
   align-items: center;
-  gap: .6rem;
-  margin: 0 0 .5rem;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
   font-weight: 700;
+  color: var(--warn);
 }
 
-.stop-state__icon {
+.gate-state__icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 40px;
   height: 40px;
   border-radius: var(--radius-pill);
+  background: var(--warn);
+  color: #fff;
   flex: none;
 }
 
-.stop-state__icon .icon { width: 24px; height: 24px; }
-
-.stop-state--on { color: var(--danger); }
-.stop-state--on .stop-state__icon { background: var(--danger); color: #fff; }
-
-.stop-state--gate { color: var(--warn); }
-.stop-state--gate .stop-state__icon { background: var(--warn); color: #fff; }
-
-.stop-state--off { color: var(--ok); }
-
-.stop-state__label { font-size: 1.05rem; }
-
-.stop-reason {
-  margin: 0 0 .35rem;
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: var(--coffee);
-  overflow-wrap: anywhere;
-}
-
-.stop-history { list-style: none; margin: 0; padding: 0; display: grid; gap: .55rem; }
-
-.stop-history__item {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .25rem .6rem;
-  align-items: baseline;
-  padding-bottom: .55rem;
-  border-bottom: 1px solid var(--border-soft);
-}
-
-.stop-history__item:last-child { border-bottom: 0; padding-bottom: 0; }
-.stop-history__reason { font-weight: 600; color: var(--coffee); overflow-wrap: anywhere; }
-.stop-history__item--active .stop-history__reason { color: var(--danger); }
+.gate-state__icon .icon { width: 24px; height: 24px; }
+.gate-state__label { font-size: 1.05rem; }
 
 /* ── Points de check-list qui bloquent la production ────────────────────── */
 
-.gate-list { list-style: none; margin: .5rem 0 1rem; padding: 0; display: grid; gap: .4rem; }
+.gate-list { list-style: none; margin: var(--space-2) 0 var(--space-4); padding: 0; display: grid; gap: var(--space-1); }
 
 .gate-list__item {
   padding-left: 1.4rem;
@@ -1556,7 +1514,7 @@ body { overflow-x: hidden; }
 @media (max-width: 380px) {
   /* Sous 380 px, la marge latérale prend une part démesurée de la largeur
      utile : on la réduit plutôt que de comprimer les champs. */
-  .app-main { padding-left: var(--space-3); padding-right: var(--space-3); }
+  :root { --gutter: .75rem; }
   .card { padding: var(--space-3); }
   .task { padding: var(--space-3); gap: var(--space-3); }
   .task__icon { width: 44px; height: 44px; }
@@ -1651,4 +1609,135 @@ body { overflow-x: hidden; }
   /* La tâche du moment garde la pleine largeur : c'est elle qu'on doit voir
      en premier, et une tuile deux fois plus large se voit deux fois mieux. */
   .task--now { grid-column: 1 / -1; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Téléphone — formulaires et écrans denses
+   ══════════════════════════════════════════════════════════════════════════
+
+   L'application se remplit debout, au poste, sur un téléphone tenu d'une
+   main. Ce bloc traite ce que la mise en page de bureau, seulement rétrécie,
+   rendait pénible.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Fiche repliable (administration) ────────────────────────────────────── */
+
+.admin-item { padding: 0; }
+
+.admin-item__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 56px;
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  list-style: none;
+  border-radius: var(--radius-card);
+  font-weight: 600;
+  color: var(--coffee);
+}
+
+/* Le chevron du navigateur est remplacé par le nôtre : sa taille et sa
+   position varient d'un navigateur à l'autre, et il désalignait la ligne. */
+.admin-item__summary::-webkit-details-marker { display: none; }
+
+.admin-item__summary::after {
+  content: "";
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-right: 2px solid var(--latte);
+  border-bottom: 2px solid var(--latte);
+  transform: rotate(45deg) translate(-2px, -2px);
+  transition: transform var(--dur) var(--ease);
+}
+
+.admin-item[open] > .admin-item__summary::after { transform: rotate(-135deg) translate(-2px, -2px); }
+.admin-item[open] > .admin-item__summary { border-bottom: 1px solid var(--border); border-radius: var(--radius-card) var(--radius-card) 0 0; }
+
+.admin-item__head { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+.admin-item__name { overflow-wrap: anywhere; }
+
+.admin-item .form { padding: var(--space-4); }
+
+/* ── Barre d'action collante ─────────────────────────────────────────────── */
+
+/*
+  Elle suit le défilement en bas d'écran. Le fond est opaque : translucide,
+  les chiffres du produit d'en dessous transparaissaient sous les libellés.
+*/
+/* Une rangée d'actions suivie de contenu doit s'en détacher : sans cela le
+   bouton « Imprimer » collait à la première carte de la liste. */
+.form-actions:not(:last-child) { margin-bottom: var(--space-4); }
+
+.form-actions--sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  margin: var(--space-4) calc(var(--gutter) * -1) 0;
+  padding: var(--space-3) var(--gutter);
+  padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -6px 20px rgba(111, 78, 55, .08);
+}
+
+/* ── Formulaires sur petit écran ─────────────────────────────────────────── */
+
+@media (max-width: 599px) {
+  /*
+    Les filtres cessent d'être une rangée souple. En flex, chaque champ prenait
+    la largeur de son contenu : la date occupait la moitié de la ligne, la
+    catégorie un peu plus, et les trois boutons se répartissaient sur deux
+    rangs inégaux. Quatre lignes en escalier pour trois réglages.
+  */
+  .filters { display: grid; grid-template-columns: 1fr; gap: var(--space-3); }
+  .filters .field { margin-bottom: 0; }
+  .filters .field__input { width: 100%; }
+
+  /* Une seule action par ligne, pleine largeur : au pouce, deux boutons
+     côte à côte se touchent l'un pour l'autre. */
+  .form-actions { flex-direction: column; align-items: stretch; }
+  .form-actions .button { width: 100%; }
+  .form-actions .button--large { margin-left: 0; }
+
+  /* L'action principale passe en tête dans la barre collante : c'est elle
+     qu'on cherche, et le bas de l'écran est la zone la plus accessible. */
+  .form-actions--sticky { flex-direction: column-reverse; }
+
+  /* Le clavier numérique du comptage mérite toute la largeur disponible. */
+  .qty { gap: var(--space-3); }
+
+  .page-header__title { font-size: 1.5rem; }
+  .card__title { font-size: 1.15rem; }
+
+  /* Un tableau ne se lit pas sur 360 px : on annonce qu'il se fait glisser
+     plutôt que de laisser croire à une colonne manquante. */
+  .table-scroll { position: relative; }
+}
+
+/* ── Boutons des filtres ─────────────────────────────────────────────────── */
+
+/*
+  Les raccourcis vont par paire et restent côte à côte, même étroits : les
+  empiler ferait trois rangs pour trois mots. `1fr` partout, donc des largeurs
+  égales — trois pilules de tailles différentes donnaient un bord droit en
+  dents de scie.
+*/
+.filters__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.filters__actions .button { flex: 1 1 auto; }
+
+@media (max-width: 599px) {
+  .filters__actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  /* « Appliquer » commande les deux champs au-dessus : il prend la ligne
+     entière, les deux raccourcis se partagent la suivante. */
+  .filters__actions > :first-child { grid-column: 1 / -1; }
 }

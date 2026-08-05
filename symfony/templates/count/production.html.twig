@@ -15,32 +15,14 @@
     'produce.subtitle'|trans({ '%date%': forDate|long_date }) ~ ' · ' ~ ('days.' ~ dayOfWeek.value)|trans
   ) }}
 
-  {% if stop %}
+  {% if blocking|length > 0 %}
 
-    {# Verrou n° 1 : décision. La liste ne s'affiche pas — une liste visible
-       finit toujours par être suivie, arrêt ou pas. #}
-    <section class="card card--stopped">
-      <p class="stop-state stop-state--on">
-        <span class="stop-state__icon">{{ ui.icon('stop') }}</span>
-        <span class="stop-state__label">{{ 'stop.active'|trans }}</span>
-      </p>
-
-      <p class="stop-reason">{{ stop.reason }}</p>
-      <p class="muted">{{ 'stop.since'|trans({ '%datetime%': stop.startedAt|datetime_short }) }}</p>
-
-      <div class="form-actions">
-        <a class="button button--primary" href="{{ path('stop') }}">{{ 'stop.manage'|trans }}</a>
-      </div>
-    </section>
-
-  {% elseif blocking|length > 0 %}
-
-    {# Verrou n° 2 : condition. Rien n'est interdit, il reste des points à
-       cocher — d'où la liste exacte de ce qui manque plutôt qu'un refus sec. #}
+    {# Rien n'est interdit, il reste des points à cocher — d'où la liste exacte
+       de ce qui manque plutôt qu'un refus sec. #}
     <section class="card card--gate">
-      <p class="stop-state stop-state--gate">
-        <span class="stop-state__icon">{{ ui.icon('checklist') }}</span>
-        <span class="stop-state__label">{{ 'produce.checklistGate'|trans }}</span>
+      <p class="gate-state">
+        <span class="gate-state__icon">{{ ui.icon('checklist') }}</span>
+        <span class="gate-state__label">{{ 'produce.checklistGate'|trans }}</span>
       </p>
 
       <p class="muted">{{ 'produce.checklistGateHint'|trans }}</p>
@@ -90,15 +72,18 @@
           </div>
         {% endif %}
 
-        <button type="submit" class="button button--secondary">{{ 'common.apply'|trans }}</button>
+        <div class="filters__actions">
+          <button type="submit" class="button button--secondary">{{ 'common.apply'|trans }}</button>
 
-        {# Raccourcis : le consultant regarde presque toujours aujourd'hui ou demain. #}
-        <a class="button button--secondary" href="{{ path('production', { forDate: today, category: category }) }}">
-          {{ 'produce.shortcutToday'|trans }}
-        </a>
-        <a class="button button--secondary" href="{{ path('production', { forDate: tomorrow, category: category }) }}">
-          {{ 'produce.shortcutTomorrow'|trans }}
-        </a>
+          {# Raccourcis : le consultant regarde presque toujours aujourd'hui ou
+             demain. Ils vont par paire et restent côte à côte, même étroits. #}
+          <a class="button button--secondary" href="{{ path('production', { forDate: today, category: category }) }}">
+            {{ 'produce.shortcutToday'|trans }}
+          </a>
+          <a class="button button--secondary" href="{{ path('production', { forDate: tomorrow, category: category }) }}">
+            {{ 'produce.shortcutTomorrow'|trans }}
+          </a>
+        </div>
       </form>
     </section>
 

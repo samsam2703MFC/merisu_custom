@@ -7,7 +7,6 @@ namespace Merisu\Inventory\Controller;
 use Merisu\Inventory\Domain\BusinessDate;
 use Merisu\Inventory\Domain\ContainerQuantity;
 use Merisu\Inventory\Domain\CountMoment;
-use Merisu\Inventory\Domain\ProductionGate;
 use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Service\InventoryService;
 use Merisu\Inventory\Service\PhotoStorage;
@@ -62,7 +61,6 @@ final class CountController extends AbstractController
         $tomorrow = BusinessDate::next($date);
         $planForTomorrow = $this->store->plan($tomorrow, $workstationId);
         $toProduce = \count(array_filter($planForTomorrow, static fn ($l): bool => $l->qtyToProduce > 0));
-        $stop = $this->store->activeStop($workstationId);
 
         return $this->render('count/tasks.html.twig', [
             'date' => $date,
@@ -120,19 +118,13 @@ final class CountController extends AbstractController
             // pas une saisie, d'où sa présentation distincte.
             'planForToday' => $morning['planForToday'],
             // Tuile « À produire (J+1) » : violette, et son icône suit l'état.
-            // Un pictogramme figé n'apprend rien ; celui-ci dit, avant même la
-            // lecture, s'il y a du travail, s'il n'y en a pas, ou si tout est
-            // à l'arrêt.
+            // Un pictogramme figé n'apprend rien ; la cagette chargée dit qu'il
+            // y a du travail avant même qu'on ait lu la ligne.
             'produce' => [
                 'forDate' => $tomorrow,
                 'count' => $toProduce,
-                'icon' => match (true) {
-                    $stop !== null => 'stop',
-                    $toProduce > 0 => 'tray-full',
-                    default => 'tray',
-                },
+                'icon' => $toProduce > 0 ? 'tray-full' : 'tray',
             ],
-            'stop' => $stop,
         ]);
     }
 
@@ -283,11 +275,9 @@ final class CountController extends AbstractController
      *
      * Par défaut J+1 : c'est la production de demain qu'on prépare ce soir.
      *
-     * Deux verrous peuvent s'y opposer, et ils ne disent pas la même chose.
-     * L'arrêt de production est une décision : on ne produit plus, point.
-     * La check-list est une condition : on ne produit pas ENCORE, il reste des
-     * points obligatoires à cocher. Les deux masquent la liste plutôt que de
-     * l'afficher barrée — une liste visible finit toujours par être suivie.
+     * La check-list peut s'y opposer : tant que des points obligatoires ne sont
+     * pas cochés, le plan reste masqué plutôt qu'affiché barré — une liste
+     * visible finit toujours par être suivie.
      */
     #[Route('/a-produire', name: 'production', methods: ['GET'])]
     public function production(Request $request): Response
@@ -317,9 +307,9 @@ final class CountController extends AbstractController
 
         $view = $this->productionView($request);
 
-        // Les verrous valent aussi ici : sans cela, l'impression contournerait
-        // l'arrêt de production et la check-list d'un simple lien.
-        if (!ProductionGate::allows($view['stop'], $view['blocking'])) {
+        // Le verrou vaut aussi ici : sans cela, l'impression contournerait la
+        // check-list d'un simple lien.
+        if ($view['blocking'] !== []) {
             return $this->redirectToRoute('production', [
                 'forDate' => $view['forDate'],
                 'category' => $view['category'],
@@ -374,7 +364,6 @@ final class CountController extends AbstractController
             // Catégories réellement portées par les produits : la liste ne se
             // configure nulle part, elle se déduit. Aucune donnée en dur (§2).
             'categories' => $this->categories($products),
-            'stop' => $this->store->activeStop($workstationId),
             'blocking' => $this->checklist->blockingItems($today, $workstationId),
         ];
     }

@@ -159,7 +159,9 @@
       <label class="field__label" for="to">{{ 'common.to'|trans }}</label>
       <input class="field__input" type="date" id="to" name="to" value="{{ to }}">
     </div>
-    <button type="submit" class="button button--secondary">{{ 'common.apply'|trans }}</button>
+    <div class="filters__actions">
+      <button type="submit" class="button button--secondary">{{ 'common.apply'|trans }}</button>
+    </div>
   </form>
 {% endmacro %}
 
@@ -176,7 +178,7 @@
   contexte, y compris l'accent framboise de la tâche en cours.
 
   Noms disponibles : sunrise, moon, tray, tray-full, clipboard, checklist,
-  arrow-left, network, shield, stop, printer.
+  arrow-left, network, shield, printer.
 #}
 {% macro icon(name, label) %}
   <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -228,11 +230,6 @@
       <path d="M3 8.5 5 4h14l2 4.5"/>
       <path d="M3 8.5h18V19a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Z"/>
       <path d="M6.5 12h11M6.5 15.5h11"/>
-    {% elseif name == 'stop' %}
-      {# Arrêt de production : l'octogone du panneau routier. Aucune légende
-         n'est nécessaire, la forme se lit avant le texte. #}
-      <path d="M8.6 3.5h6.8L20.5 8.6v6.8L15.4 20.5H8.6L3.5 15.4V8.6Z"/>
-      <path d="M9 15V9M15 15V9"/>
     {% elseif name == 'printer' %}
       {# Impression des étiquettes. #}
       <path d="M7 9V4h10v5"/>

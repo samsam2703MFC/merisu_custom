@@ -171,6 +171,8 @@
       var haut = vue ? vue.offsetTop : 0;
       var hauteur = vue ? vue.height : window.innerHeight;
 
+      var bas = (vue ? vue.offsetTop : 0) + hauteur;
+
       var entete = document.querySelector('.app-header');
       if (entete) {
         var rect = entete.getBoundingClientRect();
@@ -178,7 +180,16 @@
         if (rect.bottom > haut) haut = rect.bottom;
       }
 
-      return { haut: haut, bas: (vue ? vue.offsetTop : 0) + hauteur };
+      // La barre d'action collante mange le bas, exactement de la même façon.
+      // Sans elle dans le calcul, un champ « recentré » pouvait atterrir
+      // derrière les boutons Enregistrer / Valider.
+      var barre = document.querySelector('.form-actions--sticky');
+      if (barre) {
+        var rectBarre = barre.getBoundingClientRect();
+        if (rectBarre.top < bas && rectBarre.height > 0) bas = rectBarre.top;
+      }
+
+      return { haut: haut, bas: bas };
     }
 
     function recentrer(el) {

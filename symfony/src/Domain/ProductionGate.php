@@ -7,12 +7,9 @@ namespace Merisu\Inventory\Domain;
 /**
  * Ce qui autorise — ou non — à produire.
  *
- * Deux verrous, de natures différentes :
- *
- * · l'ARRÊT est une décision. Quelqu'un a dit « on ne produit plus », pour un
- *   motif daté. Rien d'autre ne le lève que la reprise explicite.
- * · la CHECK-LIST est une condition. On ne produit pas ENCORE : il reste des
- *   points obligatoires à cocher, et cocher suffit à ouvrir.
+ * Un seul verrou, et c'est une condition, pas une interdiction : on ne produit
+ * pas ENCORE, il reste des points obligatoires à cocher, et cocher suffit à
+ * ouvrir.
  *
  * La règle est ici plutôt que dans le contrôleur parce qu'elle porte une
  * subtilité qu'aucun écran ne rend évidente : le volet « Fermeture » ne bloque
@@ -47,19 +44,5 @@ final readonly class ProductionGate
         }
 
         return $blocking;
-    }
-
-    /**
-     * @param list<ChecklistItem> $blocking Résultat de `blockingItems()`
-     */
-    public static function allows(?ProductionStop $stop, array $blocking): bool
-    {
-        // Un arrêt levé ne bloque plus rien : c'est `isActive()` qui tranche,
-        // pas la simple existence d'un arrêt dans l'historique.
-        if ($stop !== null && $stop->isActive()) {
-            return false;
-        }
-
-        return $blocking === [];
     }
 }

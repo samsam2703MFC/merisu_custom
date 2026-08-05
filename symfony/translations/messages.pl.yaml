@@ -298,7 +298,6 @@ errors:
     INVALID_PHOTO_DATA: 'Nieczytelne zdjęcie.'
     UNSUPPORTED_IMAGE_TYPE: 'Nieobsługiwany format obrazu (JPEG, PNG lub WebP).'
     UPLOAD_DIR_UNAVAILABLE: 'Katalog zdjęć niedostępny.'
-    STOP_REASON_REQUIRED: 'Podaj powód wstrzymania.'
 
 checklist:
     title: 'Lista kontrolna'
@@ -352,24 +351,3 @@ countries:
     IT: Włochy
     FR: Francja
     ES: Hiszpania
-
-stop:
-    title: 'Wstrzymanie produkcji'
-    subtitle: 'Wstrzymuje produkcję i przyjmowanie zamówień na tym stanowisku.'
-    active: 'Produkcja wstrzymana'
-    running: 'Produkcja w toku'
-    reason: 'Powód wstrzymania'
-    reasonPlaceholder: 'Awaria pieca, brak surowca…'
-    reasonHint: 'Powód jest obowiązkowy: dzięki niemu jutro będzie wiadomo, co się stało.'
-    start: 'Wstrzymaj produkcję'
-    lift: 'Wznów produkcję'
-    confirmStart: 'Wstrzymać produkcję i przyjmowanie zamówień na tym stanowisku?'
-    confirmLift: 'Wznowić produkcję na tym stanowisku?'
-    since: 'Od %datetime%'
-    by: 'Przez: %name%'
-    effect: 'W czasie wstrzymania plan produkcji i drukowanie etykiet są niedostępne. Liczenie stanów pozostaje możliwe.'
-    history: 'Ostatnie wstrzymania'
-    ongoing: 'trwa'
-    manage: 'Zarządzaj wstrzymaniem'
-    startedFlash: 'Produkcja wstrzymana.'
-    liftedFlash: 'Produkcja wznowiona.'

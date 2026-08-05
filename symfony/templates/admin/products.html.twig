@@ -15,19 +15,36 @@
     {% for name in categories %}<option value="{{ name }}"></option>{% endfor %}
   </datalist>
 
+  {#
+    Une fiche par produit, repliée par défaut.
+
+    Onze champs par produit et huit produits : la page dépliée faisait plus de
+    vingt écrans de haut sur téléphone, et atteindre le huitième produit
+    demandait une minute de défilement. Repliée, elle tient sur un écran et
+    demi, et l'on ouvre la seule fiche que l'on vient modifier.
+
+    Bâti sur <details> : aucun script, donc le repli fonctionne aussi quand
+    le réseau du poste n'a pas laissé passer app.js.
+  #}
   {% for product in products %}
-    <section class="card">
+    <details class="card admin-item">
+      <summary class="admin-item__summary">
+        <span class="admin-item__head">
+          {{ ui.badge('neutral', product.code) }}
+          <span class="admin-item__name">{{ product_label(product) }}</span>
+        </span>
+        {% if not product.active %}
+          {{ ui.badge('warn', 'admin.products.inactive'|trans) }}
+        {% endif %}
+      </summary>
+
       <form method="post" action="{{ path('admin_product_save', { id: product.id }) }}" class="form">
 
-        <header class="card__header">
-          <h2 class="card__title">{{ ui.badge('neutral', product.code) }}</h2>
-
-          <div class="checkbox-row">
-            <input type="checkbox" id="active-{{ product.id }}" name="active" value="1"
-                   {{ product.active ? 'checked' : '' }}>
-            <label for="active-{{ product.id }}">{{ 'admin.products.active'|trans }}</label>
-          </div>
-        </header>
+        <div class="checkbox-row">
+          <input type="checkbox" id="active-{{ product.id }}" name="active" value="1"
+                 {{ product.active ? 'checked' : '' }}>
+          <label for="active-{{ product.id }}">{{ 'admin.products.active'|trans }}</label>
+        </div>
 
         {# Un libellé par langue : ce sont des DONNÉES saisies ici, pas des
            chaînes d'interface (celles-ci vivent dans translations/). #}
@@ -123,7 +140,7 @@
           <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
         </div>
       </form>
-    </section>
+    </details>
   {% endfor %}
 
 {% endblock %}

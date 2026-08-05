@@ -7,15 +7,13 @@ namespace Merisu\Inventory\Tests\Domain;
 use Merisu\Inventory\Domain\ChecklistItem;
 use Merisu\Inventory\Domain\ChecklistSection;
 use Merisu\Inventory\Domain\ProductionGate;
-use Merisu\Inventory\Domain\ProductionStop;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Ce qui ouvre et ce qui ferme l'accès à la production.
  *
- * Deux erreurs coûteraient cher en cuisine : laisser produire alors qu'un
- * arrêt court (four en panne, contrôle sanitaire), et bloquer la production
- * pour un point de check-list qu'il est impossible de cocher à cette heure-là.
+ * L'erreur qui coûterait cher en cuisine : bloquer la production pour un point
+ * de check-list qu'il est impossible de cocher à cette heure-là.
  */
 final class ProductionGateTest extends TestCase
 {
@@ -25,19 +23,6 @@ final class ProductionGateTest extends TestCase
         bool $required = true,
     ): ChecklistItem {
         return new ChecklistItem($id, $section, ['fr' => $id], 1, true, $required);
-    }
-
-    private function stop(?string $liftedAt = null): ProductionStop
-    {
-        return new ProductionStop(
-            'arret-1',
-            'poste-1',
-            'Four en panne',
-            'consultant-1',
-            '2026-08-05 09:12:00',
-            $liftedAt === null ? null : 'consultant-2',
-            $liftedAt,
-        );
     }
 
     // ── Verrou de check-list ────────────────────────────────────────────────
@@ -108,47 +93,5 @@ final class ProductionGateTest extends TestCase
         $ids = array_map(static fn (ChecklistItem $i): string => $i->id, ProductionGate::blockingItems($items, []));
 
         self::assertSame(['a', 'b', 'c'], $ids);
-    }
-
-    // ── Décision d'ensemble ─────────────────────────────────────────────────
-
-    public function testProduitQuandRienNeSyOppose(): void
-    {
-        self::assertTrue(ProductionGate::allows(null, []));
-    }
-
-    public function testUnArretEnCoursInterditDeProduire(): void
-    {
-        self::assertFalse(ProductionGate::allows($this->stop(), []));
-    }
-
-    /** Un arrêt levé appartient à l'historique : il ne bloque plus rien. */
-    public function testUnArretLeveNInterditPlusRien(): void
-    {
-        $leve = $this->stop('2026-08-05 11:30:00');
-
-        self::assertFalse($leve->isActive());
-        self::assertTrue(ProductionGate::allows($leve, []));
-    }
-
-    public function testUnPointObligatoireManquantInterditDeProduire(): void
-    {
-        $blocking = [$this->item('ouverture-1', ChecklistSection::Opening)];
-
-        self::assertFalse(ProductionGate::allows(null, $blocking));
-    }
-
-    /**
-     * Les deux verrous s'additionnent : lever l'arrêt sans finir la check-list
-     * n'ouvre pas davantage que finir la check-list sous arrêt.
-     */
-    public function testLesDeuxVerrousSAdditionnent(): void
-    {
-        $blocking = [$this->item('ouverture-1', ChecklistSection::Opening)];
-
-        self::assertFalse(ProductionGate::allows($this->stop(), $blocking));
-        self::assertFalse(ProductionGate::allows($this->stop('2026-08-05 11:30:00'), $blocking));
-        self::assertFalse(ProductionGate::allows($this->stop(), []));
-        self::assertTrue(ProductionGate::allows($this->stop('2026-08-05 11:30:00'), []));
     }
 }

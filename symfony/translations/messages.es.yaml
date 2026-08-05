@@ -298,7 +298,6 @@ errors:
     INVALID_PHOTO_DATA: 'Foto ilegible.'
     UNSUPPORTED_IMAGE_TYPE: 'Formato de imagen no admitido (JPEG, PNG o WebP).'
     UPLOAD_DIR_UNAVAILABLE: 'Carpeta de fotos no accesible.'
-    STOP_REASON_REQUIRED: 'Indique el motivo de la parada.'
 
 checklist:
     title: 'Lista de control'
@@ -352,24 +351,3 @@ countries:
     IT: Italia
     FR: Francia
     ES: España
-
-stop:
-    title: 'Parada de producción'
-    subtitle: 'Suspende la producción y la toma de pedidos en este puesto.'
-    active: 'Producción parada'
-    running: 'Producción en curso'
-    reason: 'Motivo de la parada'
-    reasonPlaceholder: 'Horno averiado, falta de materia prima…'
-    reasonHint: 'El motivo es obligatorio: es lo que mañana hará comprensible la parada.'
-    start: 'Parar la producción'
-    lift: 'Levantar la parada'
-    confirmStart: '¿Parar la producción y la toma de pedidos en este puesto?'
-    confirmLift: '¿Reanudar la producción en este puesto?'
-    since: 'Desde el %datetime%'
-    by: 'Por %name%'
-    effect: 'Mientras dure la parada, el plan de producción y la impresión de etiquetas quedan inaccesibles. Los recuentos siguen siendo posibles.'
-    history: 'Últimas paradas'
-    ongoing: 'en curso'
-    manage: 'Gestionar la parada'
-    startedFlash: 'Producción parada.'
-    liftedFlash: 'Producción reanudada.'

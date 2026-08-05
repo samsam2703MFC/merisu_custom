@@ -170,7 +170,7 @@ admin:
             CONTAINER: 'Per contenitore'
         unit: Unità
         active: Attivo
-        inactive: 'Non attivo'
+        inactive: Inattivo
         wasteFactor: 'Fattore di perdita'
         wasteFactorHint: '0.05 = +5 % di produzione per coprire le perdite.'
         roundingStep: 'Passo di arrotondamento'
@@ -298,7 +298,6 @@ errors:
     INVALID_PHOTO_DATA: 'Foto illeggibile.'
     UNSUPPORTED_IMAGE_TYPE: 'Formato immagine non supportato (JPEG, PNG o WebP).'
     UPLOAD_DIR_UNAVAILABLE: 'Cartella delle foto non accessibile.'
-    STOP_REASON_REQUIRED: "Indica il motivo dell'arresto."
 
 checklist:
     title: 'Check-list'
@@ -352,24 +351,3 @@ countries:
     IT: Italia
     FR: Francia
     ES: Spagna
-
-stop:
-    title: 'Arresto della produzione'
-    subtitle: 'Sospende la produzione e la presa degli ordini su questa postazione.'
-    active: 'Produzione ferma'
-    running: 'Produzione in corso'
-    reason: "Motivo dell'arresto"
-    reasonPlaceholder: 'Forno guasto, materia prima esaurita…'
-    reasonHint: "Il motivo è obbligatorio: è quello che domani renderà comprensibile l'arresto."
-    start: 'Ferma la produzione'
-    lift: "Togli l'arresto"
-    confirmStart: 'Fermare la produzione e la presa degli ordini su questa postazione?'
-    confirmLift: 'Riprendere la produzione su questa postazione?'
-    since: 'Dal %datetime%'
-    by: 'Da %name%'
-    effect: "Finché l'arresto dura, il piano di produzione e la stampa delle etichette restano inaccessibili. I conteggi restano possibili."
-    history: 'Ultimi arresti'
-    ongoing: 'in corso'
-    manage: "Gestisci l'arresto"
-    startedFlash: 'Produzione fermata.'
-    liftedFlash: 'Produzione ripresa.'

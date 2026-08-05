@@ -128,10 +128,13 @@
         <li class="rank__row{{ ligne.isCurrent ? ' rank__row--mine' : '' }}">
           <span class="rank__badge rank__badge--{{ ligne.rank <= 3 ? ligne.rank : 'other' }}">{{ ligne.rank }}</span>
 
+          {# Plus d'étiquette « votre boutique » : la ligne est déjà mise en
+             surbrillance, et un libellé de plus la faisait passer à la ligne
+             sur téléphone. Le repère reste lisible sans lecture. #}
           <span class="rank__shop">
             {{ ligne.shop.name }}
             {% if ligne.isCurrent %}
-              <span class="rank__mine">{{ 'network.yourShop'|trans }}</span>
+              <span class="visually-hidden">— {{ 'network.yourShop'|trans }}</span>
             {% endif %}
           </span>
 

@@ -301,7 +301,6 @@ errors:
     INVALID_PHOTO_DATA: 'Photo illisible.'
     UNSUPPORTED_IMAGE_TYPE: "Format d'image non supporté (JPEG, PNG ou WebP)."
     UPLOAD_DIR_UNAVAILABLE: "Dossier de stockage des photos inaccessible."
-    STOP_REASON_REQUIRED: "Indiquez le motif de l'arrêt."
 
 checklist:
     title: 'Check-list'
@@ -355,24 +354,3 @@ countries:
     IT: Italie
     FR: France
     ES: Espagne
-
-stop:
-    title: 'Arrêt de production'
-    subtitle: 'Suspend la production et la prise de commande sur ce poste.'
-    active: 'Production arrêtée'
-    running: 'Production en cours'
-    reason: "Motif de l'arrêt"
-    reasonPlaceholder: 'Four en panne, rupture de matière…'
-    reasonHint: "Le motif est obligatoire : c'est lui qui rendra l'arrêt compréhensible demain."
-    start: 'Arrêter la production'
-    lift: "Lever l'arrêt"
-    confirmStart: 'Arrêter la production et la prise de commande sur ce poste ?'
-    confirmLift: 'Reprendre la production sur ce poste ?'
-    since: 'Depuis le %datetime%'
-    by: 'Par %name%'
-    effect: "Tant que l'arrêt court, le plan de production et l'impression des étiquettes sont inaccessibles. Les comptages restent possibles."
-    history: 'Derniers arrêts'
-    ongoing: 'en cours'
-    manage: "Gérer l'arrêt"
-    startedFlash: 'Production arrêtée.'
-    liftedFlash: 'Production reprise.'

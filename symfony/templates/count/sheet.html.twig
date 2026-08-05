@@ -176,7 +176,15 @@
       {% endfor %}
     </div>
 
-    <div class="form-actions">
+    {#
+      Barre d'action collée au bas de l'écran sur téléphone.
+
+      Huit produits, c'est déjà trois hauteurs d'écran : avec les boutons en
+      fin de page, le vendeur comptait, puis devait redescendre pour
+      enregistrer — et un comptage non enregistré est un comptage perdu.
+      La barre suit maintenant le défilement, l'action reste sous le pouce.
+    #}
+    <div class="form-actions form-actions--sticky">
       <button type="submit" class="button button--secondary" {{ validated ? 'disabled' : '' }}>
         {{ 'common.save'|trans }}
       </button>
