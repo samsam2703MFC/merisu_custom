@@ -131,23 +131,10 @@
             </form>
           </div>
         </details>
-      {% else %}
-        {# Hors session, seule la langue a du sens — et c'est là qu'elle compte
-           le plus : personne ne s'est encore identifié, l'écran s'affiche dans
-           la langue du dernier passage. Quatre drapeaux règlent cela d'un
-           geste, sans avoir à lire. #}
-        <form class="flags" method="post" action="{{ path('select_locale') }}">
-          {% for locale in supported_locales() %}
-            <button type="submit" name="locale" value="{{ locale.value }}"
-                    class="flags__choice {{ locale.value == app.request.locale ? 'is-active' : '' }}"
-                    title="{{ ('locales.' ~ locale.value)|trans }}"
-                    aria-label="{{ ('locales.' ~ locale.value)|trans }}"
-                    {{ locale.value == app.request.locale ? 'aria-current="true"' : '' }}>
-              {{ ui.flag(locale.value) }}
-            </button>
-          {% endfor %}
-        </form>
       {% endif %}
+      {# Hors session, l'entête ne porte rien : quatre drapeaux à côté du logo
+         passaient à la ligne sous 400 px et doublaient la hauteur de la barre.
+         Ils vivent dans la carte de connexion, là où l'on regarde déjà. #}
     </div>
   </header>
 {% endblock %}

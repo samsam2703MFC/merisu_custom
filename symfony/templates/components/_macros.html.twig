@@ -201,6 +201,27 @@
 #}
 
 {#
+  Choix de la langue par drapeau, au bas d'une carte de connexion.
+
+  Là plutôt que dans l'entête : quatre drapeaux à côté du logo passaient à la
+  ligne sous 400 px. Et c'est le bon endroit — on choisit sa langue en
+  regardant le formulaire qu'on s'apprête à remplir.
+#}
+{% macro locale_flags(current) %}
+  <form class="flags flags--login" method="post" action="{{ path('select_locale') }}">
+    {% for locale in supported_locales() %}
+      <button type="submit" name="locale" value="{{ locale.value }}"
+              class="flags__choice {{ locale.value == current ? 'is-active' : '' }}"
+              title="{{ ('locales.' ~ locale.value)|trans }}"
+              aria-label="{{ ('locales.' ~ locale.value)|trans }}"
+              {{ locale.value == current ? 'aria-current="true"' : '' }}>
+        {{ _self.flag(locale.value) }}
+      </button>
+    {% endfor %}
+  </form>
+{% endmacro %}
+
+{#
   Drapeaux — SVG inline, comme les icônes.
 
   Pas d'émoji : Windows n'a jamais livré les drapeaux, et la moitié des postes

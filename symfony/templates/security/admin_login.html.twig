@@ -36,5 +36,8 @@
     <p class="muted">
       <a href="{{ path('login') }}">{{ 'adminLogin.backToSeller'|trans }}</a>
     </p>
+
+    {# La langue se choisit ici, au pied du formulaire. #}
+    {{ ui.locale_flags(app.request.locale) }}
   </section>
 {% endblock %}

@@ -2085,3 +2085,12 @@ body { overflow-x: hidden; }
   font-weight: 600;
   color: var(--brand);
 }
+
+/* Drapeaux au pied d'une carte de connexion : centrés, détachés du formulaire
+   par un filet — ce n'est pas un champ de plus à remplir. */
+.flags--login {
+  justify-content: center;
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-soft);
+}
