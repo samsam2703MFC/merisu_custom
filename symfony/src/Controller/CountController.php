@@ -7,6 +7,7 @@ namespace Merisu\Inventory\Controller;
 use Merisu\Inventory\Domain\BusinessDate;
 use Merisu\Inventory\Domain\ContainerQuantity;
 use Merisu\Inventory\Domain\CountMoment;
+use Merisu\Inventory\Domain\ProductionGate;
 use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Service\InventoryService;
 use Merisu\Inventory\Service\PhotoStorage;
@@ -54,6 +55,14 @@ final class CountController extends AbstractController
         $morning = $this->inventory->daySheet($date, $workstationId, CountMoment::Open0800);
         $evening = $this->inventory->daySheet($date, $workstationId, CountMoment::Close2200);
         $checklist = $this->checklist->progress($date, $workstationId);
+
+        // Le plan qui compte pour la tuile « À produire », c'est celui de
+        // DEMAIN : c'est lui qu'on prépare, celui d'aujourd'hui est déjà en
+        // cours. D'où J+1 ici comme sur l'écran.
+        $tomorrow = BusinessDate::next($date);
+        $planForTomorrow = $this->store->plan($tomorrow, $workstationId);
+        $toProduce = \count(array_filter($planForTomorrow, static fn ($l): bool => $l->qtyToProduce > 0));
+        $stop = $this->store->activeStop($workstationId);
 
         return $this->render('count/tasks.html.twig', [
             'date' => $date,
@@ -104,6 +113,20 @@ final class CountController extends AbstractController
             // Le plan du jour vient du soir précédent : c'est une consultation,
             // pas une saisie, d'où sa présentation distincte.
             'planForToday' => $morning['planForToday'],
+            // Tuile « À produire (J+1) » : violette, et son icône suit l'état.
+            // Un pictogramme figé n'apprend rien ; celui-ci dit, avant même la
+            // lecture, s'il y a du travail, s'il n'y en a pas, ou si tout est
+            // à l'arrêt.
+            'produce' => [
+                'forDate' => $tomorrow,
+                'count' => $toProduce,
+                'icon' => match (true) {
+                    $stop !== null => 'stop',
+                    $toProduce > 0 => 'tray-full',
+                    default => 'tray',
+                },
+            ],
+            'stop' => $stop,
         ]);
     }
 
@@ -249,12 +272,66 @@ final class CountController extends AbstractController
         return $this->redirectToSheet($countMoment, $date);
     }
 
-    /** §7.4 — Écran « À produire » : plan figé pour une date donnée. */
+    /**
+     * §7.4 — Écran « À produire » : plan figé pour une date donnée.
+     *
+     * Par défaut J+1 : c'est la production de demain qu'on prépare ce soir.
+     *
+     * Deux verrous peuvent s'y opposer, et ils ne disent pas la même chose.
+     * L'arrêt de production est une décision : on ne produit plus, point.
+     * La check-list est une condition : on ne produit pas ENCORE, il reste des
+     * points obligatoires à cocher. Les deux masquent la liste plutôt que de
+     * l'afficher barrée — une liste visible finit toujours par être suivie.
+     */
     #[Route('/a-produire', name: 'production', methods: ['GET'])]
     public function production(Request $request): Response
     {
         $this->currentUser->requireConsultant();
 
+        $view = $this->productionView($request);
+
+        return $this->render('count/production.html.twig', $view);
+    }
+
+    /**
+     * Étiquettes de production, prêtes à imprimer.
+     *
+     * Une page à part, sans navigation : ce qui sort de l'imprimante ne doit
+     * porter que les étiquettes. Elle suit le filtre par catégorie de l'écran
+     * précédent — on imprime ce qu'on regarde, sinon la planche d'étiquettes ne
+     * correspond plus à la liste qu'on a sous les yeux.
+     *
+     * Sans JavaScript, la page reste imprimable par le navigateur : le bouton
+     * n'est qu'un raccourci.
+     */
+    #[Route('/a-produire/etiquettes', name: 'production_labels', methods: ['GET'])]
+    public function labels(Request $request): Response
+    {
+        $consultant = $this->currentUser->requireConsultant();
+
+        $view = $this->productionView($request);
+
+        // Les verrous valent aussi ici : sans cela, l'impression contournerait
+        // l'arrêt de production et la check-list d'un simple lien.
+        if (!ProductionGate::allows($view['stop'], $view['blocking'])) {
+            return $this->redirectToRoute('production', [
+                'forDate' => $view['forDate'],
+                'category' => $view['category'],
+            ]);
+        }
+
+        return $this->render('count/labels.html.twig', $view + [
+            'printedBy' => $consultant->displayName(),
+        ]);
+    }
+
+    /**
+     * État commun à l'écran « À produire » et à sa planche d'étiquettes.
+     *
+     * @return array<string, mixed>
+     */
+    private function productionView(Request $request): array
+    {
         $workstationId = $this->currentUser->resolveWorkstation($request->query->get('workstationId'));
         $today = $this->inventory->today();
 
@@ -268,15 +345,53 @@ final class CountController extends AbstractController
             $products[$product->id] = $product;
         }
 
-        return $this->render('count/production.html.twig', [
+        $category = trim((string) $request->query->get('category', ''));
+        $lines = $this->store->plan($forDate, $workstationId);
+
+        if ($category !== '') {
+            $lines = array_values(array_filter(
+                $lines,
+                static fn ($line): bool => ($products[$line->productId] ?? null)?->category === $category,
+            ));
+        }
+
+        return [
             'forDate' => $forDate,
             'dayOfWeek' => BusinessDate::dayOfWeek($forDate),
             'computedFromDate' => BusinessDate::previous($forDate),
             'today' => $today,
             'tomorrow' => BusinessDate::next($today),
-            'lines' => $this->store->plan($forDate, $workstationId),
+            'workstationId' => $workstationId,
+            'lines' => $lines,
             'products' => $products,
-        ]);
+            'category' => $category,
+            // Catégories réellement portées par les produits : la liste ne se
+            // configure nulle part, elle se déduit. Aucune donnée en dur (§2).
+            'categories' => $this->categories($products),
+            'stop' => $this->store->activeStop($workstationId),
+            'blocking' => $this->checklist->blockingItems($today, $workstationId),
+        ];
+    }
+
+    /**
+     * @param array<string, \Merisu\Inventory\Domain\Product> $products
+     *
+     * @return list<string>
+     */
+    private function categories(array $products): array
+    {
+        $found = [];
+
+        foreach ($products as $product) {
+            if ($product->active && $product->category !== '') {
+                $found[$product->category] = true;
+            }
+        }
+
+        $names = array_keys($found);
+        sort($names, \SORT_NATURAL | \SORT_FLAG_CASE);
+
+        return $names;
     }
 
     // ── Utilitaires ─────────────────────────────────────────────────────────

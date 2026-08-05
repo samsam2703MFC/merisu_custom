@@ -21,6 +21,7 @@ use Merisu\Inventory\Domain\ParMatrixEntry;
 use Merisu\Inventory\Domain\Product;
 use Merisu\Inventory\Domain\ProductionPlanRow;
 use Merisu\Inventory\Domain\ProductionPlanStatus;
+use Merisu\Inventory\Domain\ProductionStop;
 use Merisu\Inventory\Domain\RoundingMode;
 
 /**
@@ -105,6 +106,7 @@ final class Store
             'recipe_ref' => $product->recipeRef,
             'sort_order' => $product->sortOrder,
             'count_mode' => $product->countMode->value,
+            'category' => $product->category,
         ];
 
         $exists = (int) $this->db->fetchOne('SELECT COUNT(*) FROM inv_product WHERE id = ?', [$product->id]) > 0;
@@ -530,6 +532,69 @@ final class Store
         ]);
     }
 
+    // ── Arrêt de production ─────────────────────────────────────────────────
+
+    /** Arrêt en cours sur un poste, s'il y en a un. */
+    public function activeStop(string $workstationId): ?ProductionStop
+    {
+        $row = $this->db->fetchAssociative(
+            'SELECT * FROM inv_production_stop WHERE workstation_id = ? AND lifted_at IS NULL ORDER BY started_at DESC',
+            [$workstationId],
+        );
+
+        return $row === false ? null : $this->hydrateStop($row);
+    }
+
+    public function startStop(string $workstationId, string $reason, string $consultantId): void
+    {
+        // Un arrêt déjà en cours n'est pas redoublé : le premier motif et son
+        // auteur restent ceux qui font foi.
+        if ($this->activeStop($workstationId) !== null) {
+            return;
+        }
+
+        $this->db->insert('inv_production_stop', [
+            'id' => self::uuid(),
+            'workstation_id' => $workstationId,
+            'reason' => $reason,
+            'started_by' => $consultantId,
+            'started_at' => self::now(),
+        ]);
+    }
+
+    public function liftStop(string $workstationId, string $consultantId): void
+    {
+        $this->db->executeStatement(
+            'UPDATE inv_production_stop SET lifted_at = ?, lifted_by = ? WHERE workstation_id = ? AND lifted_at IS NULL',
+            [self::now(), $consultantId, $workstationId],
+        );
+    }
+
+    /** @return list<ProductionStop> Historique, du plus récent au plus ancien. */
+    public function stops(string $workstationId, int $limit = 20): array
+    {
+        $rows = $this->db->fetchAllAssociative(
+            'SELECT * FROM inv_production_stop WHERE workstation_id = ? ORDER BY started_at DESC LIMIT ' . max(1, $limit),
+            [$workstationId],
+        );
+
+        return array_map($this->hydrateStop(...), $rows);
+    }
+
+    /** @param array<string,mixed> $row */
+    private function hydrateStop(array $row): ProductionStop
+    {
+        return new ProductionStop(
+            (string) $row['id'],
+            (string) $row['workstation_id'],
+            (string) $row['reason'],
+            (string) $row['started_by'],
+            (string) $row['started_at'],
+            $row['lifted_by'] === null ? null : (string) $row['lifted_by'],
+            $row['lifted_at'] === null ? null : (string) $row['lifted_at'],
+        );
+    }
+
     // ── Audit ───────────────────────────────────────────────────────────────
 
     /** @param array<string,mixed> $details */
@@ -610,6 +675,7 @@ final class Store
             // Repli sur l'unité : une base installée avant l'ajout du mode
             // n'a que des produits comptés à la pièce.
             CountMode::tryFromLoose($row['count_mode'] ?? null) ?? CountMode::Pieces,
+            trim((string) ($row['category'] ?? '')),
         );
     }
 

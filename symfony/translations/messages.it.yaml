@@ -80,6 +80,7 @@ tasks:
     nowShort: 'Da fare ora'
     noPlan: 'Nessun piano per oggi'
     planReady: '%count% prodotti da preparare'
+    noPlanTomorrow: 'Per domani non c''è ancora nulla da produrre'
 
 adminLogin:
     title: 'Accesso amministrazione'
@@ -137,6 +138,20 @@ produce:
     computedFrom: 'Calcolato dalla scorta di chiusura del %date%'
     shortcutToday: Oggi
     shortcutTomorrow: Domani
+    tileTitle: 'Da produrre domani'
+    todayTitle: 'Piano di oggi'
+    category: Categoria
+    allCategories: 'Tutte le categorie'
+    emptyCategory: 'Nessun prodotto da preparare nella categoria « %category% » per questa data.'
+    printLabels: 'Stampa le etichette'
+    labelsTitle: 'Etichette di produzione'
+    print: Stampa
+    printedBy: 'Stampato da %name%'
+    backToList: 'Torna alla lista'
+    labelFor: 'Per il %date%'
+    checklistGate: 'Check-list da completare prima di produrre'
+    checklistGateHint: 'Questi punti obbligatori vanno spuntati prima di aprire il piano di produzione.'
+    openChecklist: 'Apri la check-list'
 
 admin:
     title: Amministrazione
@@ -146,6 +161,8 @@ admin:
         namePerLocale: 'Denominazione (%locale%)'
         countMode: 'Modo di conteggio'
         countModeHint: "Contenitore: l'addetto conta i contenitori pieni e la frazione dell'ultimo aperto, invece di un numero con la virgola."
+        category: 'Categoria di produzione'
+        categoryHint: "Serve a filtrare la schermata « Da produrre ». Testo libero: Tiramisù, Bevande, Bicchierini…"
         countModes:
             PIECES: 'A unità'
             CONTAINER: 'Per contenitore'
@@ -279,6 +296,7 @@ errors:
     INVALID_PHOTO_DATA: 'Foto illeggibile.'
     UNSUPPORTED_IMAGE_TYPE: 'Formato immagine non supportato (JPEG, PNG o WebP).'
     UPLOAD_DIR_UNAVAILABLE: 'Cartella delle foto non accessibile.'
+    STOP_REASON_REQUIRED: "Indica il motivo dell'arresto."
 
 checklist:
     title: 'Check-list'
@@ -332,3 +350,24 @@ countries:
     IT: Italia
     FR: Francia
     ES: Spagna
+
+stop:
+    title: 'Arresto della produzione'
+    subtitle: 'Sospende la produzione e la presa degli ordini su questa postazione.'
+    active: 'Produzione ferma'
+    running: 'Produzione in corso'
+    reason: "Motivo dell'arresto"
+    reasonPlaceholder: 'Forno guasto, materia prima esaurita…'
+    reasonHint: "Il motivo è obbligatorio: è quello che domani renderà comprensibile l'arresto."
+    start: 'Ferma la produzione'
+    lift: "Togli l'arresto"
+    confirmStart: 'Fermare la produzione e la presa degli ordini su questa postazione?'
+    confirmLift: 'Riprendere la produzione su questa postazione?'
+    since: 'Dal %datetime%'
+    by: 'Da %name%'
+    effect: "Finché l'arresto dura, il piano di produzione e la stampa delle etichette restano inaccessibili. I conteggi restano possibili."
+    history: 'Ultimi arresti'
+    ongoing: 'in corso'
+    manage: "Gestisci l'arresto"
+    startedFlash: 'Produzione fermata.'
+    liftedFlash: 'Produzione ripresa.'

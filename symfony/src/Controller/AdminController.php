@@ -53,8 +53,23 @@ final class AdminController extends AbstractController
     {
         $this->currentUser->requireAdmin();
 
+        $products = $this->store->products();
+
+        // Catégories déjà employées, proposées en autocomplétion : sans elles,
+        // « Tiramisu » et « tiramisus » finiraient par cohabiter et le filtre
+        // de production les traiterait comme deux catégories distinctes.
+        $categories = [];
+        foreach ($products as $product) {
+            if ($product->category !== '') {
+                $categories[$product->category] = true;
+            }
+        }
+        $categories = array_keys($categories);
+        sort($categories, \SORT_NATURAL | \SORT_FLAG_CASE);
+
         return $this->render('admin/products.html.twig', [
-            'products' => $this->store->products(),
+            'products' => $products,
+            'categories' => $categories,
             'roundingModes' => RoundingMode::cases(),
             'countModes' => CountMode::all(),
         ]);
@@ -91,6 +106,10 @@ final class AdminController extends AbstractController
             roundingMode: RoundingMode::tryFrom((string) $request->request->get('roundingMode')) ?? $product->roundingMode,
             recipeRef: trim((string) $request->request->get('recipeRef', '')) ?: null,
             countMode: CountMode::tryFromLoose($request->request->get('countMode')) ?? $product->countMode,
+            // Catégorie de production, en texte libre : c'est l'atelier qui
+            // décide de son vocabulaire (Tiramisu, Boissons, Verrines…), et il
+            // peut le changer sans redéploiement (§2). Vide = non classé.
+            category: mb_substr(trim((string) $request->request->get('category', '')), 0, 64),
         ));
 
         $this->store->audit($admin->id, $admin->role->value, 'PRODUCT_UPDATED', null, null, ['productId' => $id]);

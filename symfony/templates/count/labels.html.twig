@@ -1,0 +1,80 @@
+{#
+  Planche d'étiquettes de production, imprimable depuis la liste « À produire ».
+
+  Le gabarit principal est conservé — mêmes styles, même feuille — mais son
+  entête est vidé : ce qui sort de l'imprimante ne doit porter que les
+  étiquettes. Les éléments d'écran restants (retour, bouton d'impression)
+  disparaissent au tirage via `@media print`.
+
+  Aucun produit en dur, aucune dimension figée : les étiquettes se répartissent
+  d'elles-mêmes sur la feuille selon la place disponible.
+#}
+{% extends 'base.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'produce.labelsTitle'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block body_class %} app--print{% endblock %}
+
+{# Entête vidé : le logo et le menu de l'avatar n'ont rien à faire sur une
+   planche d'étiquettes, ni à l'écran ni au tirage. #}
+{% block header %}{% endblock %}
+
+{% block content %}
+
+  <div class="print-toolbar">
+    <a class="button button--secondary"
+       href="{{ path('production', { forDate: forDate, category: category }) }}">
+      <span class="button__icon">{{ ui.icon('arrow-left') }}</span>
+      {{ 'produce.backToList'|trans }}
+    </a>
+
+    {# Raccourci seulement : sans JavaScript, l'impression du navigateur
+       produit exactement la même planche. #}
+    <button type="button" class="button button--primary" data-print>
+      <span class="button__icon">{{ ui.icon('printer') }}</span>
+      {{ 'produce.print'|trans }}
+    </button>
+  </div>
+
+  <header class="print-header">
+    <h1 class="print-header__title">{{ 'produce.labelsTitle'|trans }}</h1>
+    <p class="print-header__meta">
+      {{ forDate|long_date }} · {{ workstation_name(workstationId) }}
+      {% if category %} · {{ category }}{% endif %}
+    </p>
+    <p class="print-header__meta muted">{{ 'produce.printedBy'|trans({ '%name%': printedBy }) }}</p>
+  </header>
+
+  {% if lines is empty %}
+    <div class="banner banner--warn">{{ 'produce.empty'|trans }}</div>
+  {% else %}
+    <div class="labels">
+      {% for line in lines %}
+        {# Un produit sans rien à produire n'a pas d'étiquette : imprimer
+           « 0 » gaspille du papier et embrouille le plan de travail. #}
+        {% if line.qtyToProduce > 0 %}
+          {% set product = products[line.productId] ?? null %}
+
+          <article class="label">
+            <p class="label__name">{{ product ? product_label(product) : line.productId }}</p>
+
+            <p class="label__qty">
+              <span class="label__value">{{ line.qtyToProduce|qty }}</span>
+              <span class="label__unit">{{ product ? product.unit : '' }}</span>
+            </p>
+
+            <p class="label__meta">
+              {{ 'produce.labelFor'|trans({ '%date%': forDate|long_date }) }}
+            </p>
+            <p class="label__meta">
+              {{ workstation_name(workstationId) }}
+              {% if product and product.category %} · {{ product.category }}{% endif %}
+            </p>
+          </article>
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% endif %}
+
+{% endblock %}

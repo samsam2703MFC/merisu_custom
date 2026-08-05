@@ -168,6 +168,22 @@ final class SchemaInstaller
             $t->addIndex(['business_date', 'workstation_id'], 'inv_checklist_by_date');
         }
 
+        // Arrêt de production : un événement daté, avec son motif et son
+        // auteur, conservé même une fois levé — un arrêt d'hier doit rester
+        // explicable aujourd'hui.
+        if (!\in_array('inv_production_stop', $existing, true)) {
+            $t = $schema->createTable('inv_production_stop');
+            $t->addColumn('id', 'string', ['length' => 64]);
+            $t->addColumn('workstation_id', 'string', ['length' => 64]);
+            $t->addColumn('reason', 'text');
+            $t->addColumn('started_by', 'string', ['length' => 64]);
+            $t->addColumn('started_at', 'string', ['length' => 32]);
+            $t->addColumn('lifted_by', 'string', ['length' => 64, 'notnull' => false]);
+            $t->addColumn('lifted_at', 'string', ['length' => 32, 'notnull' => false]);
+            $t->setPrimaryKey(['id']);
+            $t->addIndex(['workstation_id'], 'inv_stop_by_workstation');
+        }
+
         if (!\in_array('inv_audit', $existing, true)) {
             $t = $schema->createTable('inv_audit');
             $t->addColumn('id', 'string', ['length' => 64]);
@@ -213,6 +229,9 @@ final class SchemaInstaller
                 // avant ne l'ont pas, et tous leurs produits se comptent à
                 // l'unité — ce que dit précisément la valeur par défaut.
                 'count_mode' => "VARCHAR(16) DEFAULT 'PIECES' NOT NULL",
+                // Catégorie de production, pour filtrer la liste du lendemain.
+                // Vide par défaut : un produit sans catégorie reste visible.
+                'category' => "VARCHAR(64) DEFAULT '' NOT NULL",
             ],
         ];
 

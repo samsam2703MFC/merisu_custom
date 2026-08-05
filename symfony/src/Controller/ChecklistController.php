@@ -6,6 +6,7 @@ namespace Merisu\Inventory\Controller;
 
 use Merisu\Inventory\Domain\ChecklistItem;
 use Merisu\Inventory\Domain\ChecklistSection;
+use Merisu\Inventory\Domain\ProductionGate;
 use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Service\InventoryService;
 use Merisu\Inventory\Store\Store;
@@ -178,5 +179,27 @@ final class ChecklistController extends AbstractController
         }
 
         return ['done' => $done, 'total' => $total, 'complete' => $total > 0 && $manquants === 0];
+    }
+
+    /**
+     * Points obligatoires qui manquent AVANT de produire.
+     *
+     * La règle vit dans `ProductionGate` : ici on ne fait que lui présenter
+     * l'état du jour. Un point n'est bloquant que si un administrateur l'a
+     * marqué obligatoire — la sévérité du verrou se règle en administration,
+     * pas dans le code.
+     *
+     * @return list<ChecklistItem> Vide = rien ne s'oppose à la production.
+     */
+    public function blockingItems(string $date, string $workstationId): array
+    {
+        $entries = $this->store->checklistEntries($date, $workstationId);
+
+        $checked = [];
+        foreach ($entries as $id => $entry) {
+            $checked[(string) $id] = $entry->checked;
+        }
+
+        return ProductionGate::blockingItems($this->store->checklistItems(true), $checked);
     }
 }

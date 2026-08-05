@@ -57,7 +57,46 @@
       </a>
     {% endfor %}
 
-    {# Consultations, présentées à part des tâches à faire. #}
+    {#
+      Production de demain. Tuile violette, à part des comptages : ce n'est pas
+      une saisie mais une consigne de travail, et la couleur le dit avant le
+      texte. L'icône suit l'état — cagette vide, cagette chargée, ou panneau
+      d'arrêt — pour que la tuile se lise d'un coup d'œil, de loin, en cuisine.
+    #}
+    <a class="task task--produce {{ stop ? 'task--halted' : '' }}"
+       href="{{ path('production', { forDate: produce.forDate }) }}">
+      <span class="task__icon">{{ ui.icon(produce.icon) }}</span>
+
+      <span class="task__body">
+        <span class="task__label">{{ 'produce.tileTitle'|trans }}</span>
+        <span class="task__meta">
+          {% if stop %}
+            {{ 'stop.active'|trans }}
+          {% elseif produce.count > 0 %}
+            {{ 'tasks.planReady'|trans({ '%count%': produce.count }) }}
+          {% else %}
+            {{ 'tasks.noPlanTomorrow'|trans }}
+          {% endif %}
+        </span>
+
+        {% if not stop and produce.count > 0 %}
+          <span class="task__state">{{ ui.badge('neutral', produce.count) }}</span>
+        {% endif %}
+      </span>
+    </a>
+
+    {# Consultations et commandes de poste, présentées à part des tâches. #}
+    <a class="task task--secondary {{ stop ? 'task--halted' : '' }}" href="{{ path('stop') }}">
+      <span class="task__icon">{{ ui.icon('stop') }}</span>
+
+      <span class="task__body">
+        <span class="task__label">{{ 'stop.title'|trans }}</span>
+        <span class="task__meta">
+          {{ stop ? 'stop.active'|trans : 'stop.running'|trans }}
+        </span>
+      </span>
+    </a>
+
     <a class="task task--secondary" href="{{ path('network') }}">
       <span class="task__icon">{{ ui.icon('network') }}</span>
 
@@ -67,11 +106,13 @@
       </span>
     </a>
 
-    <a class="task task--secondary" href="{{ path('production') }}">
+    {# Le plan du JOUR reste consultable, mais discrètement : c'est un rappel
+       de ce qui est en cours, pas une tâche à ouvrir. #}
+    <a class="task task--secondary" href="{{ path('production', { forDate: date }) }}">
       <span class="task__icon">{{ ui.icon('tray') }}</span>
 
       <span class="task__body">
-        <span class="task__label">{{ 'produce.title'|trans }}</span>
+        <span class="task__label">{{ 'produce.todayTitle'|trans }}</span>
         <span class="task__meta">
           {% if planForToday is empty %}
             {{ 'tasks.noPlan'|trans }}

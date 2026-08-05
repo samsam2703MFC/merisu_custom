@@ -80,6 +80,7 @@ tasks:
     nowShort: 'Do zrobienia teraz'
     noPlan: 'Brak planu na dziś'
     planReady: 'Do przygotowania: %count% produktów'
+    noPlanTomorrow: 'Na jutro nic do przygotowania'
 
 adminLogin:
     title: 'Logowanie do administracji'
@@ -137,6 +138,20 @@ produce:
     computedFrom: 'Obliczone na podstawie stanu zamknięcia z %date%'
     shortcutToday: Dziś
     shortcutTomorrow: Jutro
+    tileTitle: 'Do przygotowania jutro'
+    todayTitle: 'Plan na dziś'
+    category: Kategoria
+    allCategories: 'Wszystkie kategorie'
+    printLabels: 'Drukuj etykiety'
+    emptyCategory: 'Brak produktów do przygotowania w kategorii „%category%” na ten dzień.'
+    labelsTitle: 'Etykiety produkcyjne'
+    print: Drukuj
+    printedBy: 'Wydrukował(a): %name%'
+    backToList: 'Powrót do listy'
+    labelFor: 'Na dzień %date%'
+    checklistGate: 'Uzupełnij listę kontrolną przed produkcją'
+    checklistGateHint: 'Te obowiązkowe punkty trzeba odhaczyć, zanim otworzy się plan produkcji.'
+    openChecklist: 'Otwórz listę kontrolną'
 
 admin:
     title: Administracja
@@ -146,6 +161,8 @@ admin:
         namePerLocale: 'Nazwa (%locale%)'
         countMode: 'Sposób liczenia'
         countModeHint: 'Pojemnik: sprzedawca liczy pełne pojemniki i ułamek napoczętego, zamiast liczby z przecinkiem.'
+        category: 'Kategoria produkcji'
+        categoryHint: 'Służy do filtrowania ekranu „Do przygotowania”. Dowolny tekst: Tiramisu, Napoje, Deserki…'
         countModes:
             PIECES: 'Na sztuki'
             CONTAINER: 'Na pojemniki'
@@ -279,6 +296,7 @@ errors:
     INVALID_PHOTO_DATA: 'Nieczytelne zdjęcie.'
     UNSUPPORTED_IMAGE_TYPE: 'Nieobsługiwany format obrazu (JPEG, PNG lub WebP).'
     UPLOAD_DIR_UNAVAILABLE: 'Katalog zdjęć niedostępny.'
+    STOP_REASON_REQUIRED: 'Podaj powód wstrzymania.'
 
 checklist:
     title: 'Lista kontrolna'
@@ -332,3 +350,24 @@ countries:
     IT: Włochy
     FR: Francja
     ES: Hiszpania
+
+stop:
+    title: 'Wstrzymanie produkcji'
+    subtitle: 'Wstrzymuje produkcję i przyjmowanie zamówień na tym stanowisku.'
+    active: 'Produkcja wstrzymana'
+    running: 'Produkcja w toku'
+    reason: 'Powód wstrzymania'
+    reasonPlaceholder: 'Awaria pieca, brak surowca…'
+    reasonHint: 'Powód jest obowiązkowy: dzięki niemu jutro będzie wiadomo, co się stało.'
+    start: 'Wstrzymaj produkcję'
+    lift: 'Wznów produkcję'
+    confirmStart: 'Wstrzymać produkcję i przyjmowanie zamówień na tym stanowisku?'
+    confirmLift: 'Wznowić produkcję na tym stanowisku?'
+    since: 'Od %datetime%'
+    by: 'Przez: %name%'
+    effect: 'W czasie wstrzymania plan produkcji i drukowanie etykiet są niedostępne. Liczenie stanów pozostaje możliwe.'
+    history: 'Ostatnie wstrzymania'
+    ongoing: 'trwa'
+    manage: 'Zarządzaj wstrzymaniem'
+    startedFlash: 'Produkcja wstrzymana.'
+    liftedFlash: 'Produkcja wznowiona.'

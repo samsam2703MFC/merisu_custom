@@ -1,0 +1,98 @@
+{#
+  Arrêt de production et de prise de commande.
+
+  L'écran ne montre qu'un seul bouton à la fois : déclencher, ou lever. Un
+  écran qui propose les deux fait hésiter au mauvais moment — et le mauvais
+  moment, ici, c'est celui où le four vient de lâcher.
+#}
+{% extends 'base.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'stop.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block content %}
+
+  <div class="identity-bar">
+    <span class="muted">{{ current_user().consultant.displayName }}</span>
+    <span class="identity-bar__workstation">{{ workstation_name(workstationId) }}</span>
+  </div>
+
+  {{ ui.page_header('stop.title'|trans, 'stop.subtitle'|trans) }}
+
+  {% if active %}
+
+    <section class="card card--stopped">
+      <p class="stop-state stop-state--on">
+        <span class="stop-state__icon">{{ ui.icon('stop') }}</span>
+        <span class="stop-state__label">{{ 'stop.active'|trans }}</span>
+      </p>
+
+      <p class="stop-reason">{{ active.reason }}</p>
+      <p class="muted">
+        {{ 'stop.since'|trans({ '%datetime%': active.startedAt|datetime_short }) }}
+        · {{ 'stop.by'|trans({ '%name%': active.startedBy }) }}
+      </p>
+
+      <p class="banner banner--warn">{{ 'stop.effect'|trans }}</p>
+
+      <form method="post" action="{{ path('stop_lift') }}" class="form">
+        <div class="form-actions">
+          <button type="submit" class="button button--primary"
+                  data-confirm="{{ 'stop.confirmLift'|trans }}">
+            {{ 'stop.lift'|trans }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+  {% else %}
+
+    <section class="card">
+      <p class="stop-state stop-state--off">
+        <span class="stop-state__label">{{ 'stop.running'|trans }}</span>
+      </p>
+
+      <form method="post" action="{{ path('stop_start') }}" class="form">
+        <div class="field">
+          <label class="field__label" for="reason">{{ 'stop.reason'|trans }}</label>
+          {# Obligatoire côté serveur aussi : `required` n'est qu'un confort. #}
+          <input class="field__input" type="text" id="reason" name="reason"
+                 maxlength="240" required
+                 placeholder="{{ 'stop.reasonPlaceholder'|trans }}">
+          <p class="field__hint">{{ 'stop.reasonHint'|trans }}</p>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="button button--danger"
+                  data-confirm="{{ 'stop.confirmStart'|trans }}">
+            {{ 'stop.start'|trans }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+  {% endif %}
+
+  {% if history|length > 0 %}
+    <section class="card">
+      <h2 class="card__title">{{ 'stop.history'|trans }}</h2>
+
+      <ul class="stop-history">
+        {% for entry in history %}
+          <li class="stop-history__item {{ entry.isActive ? 'stop-history__item--active' : '' }}">
+            <span class="stop-history__reason">{{ entry.reason }}</span>
+            <span class="muted">
+              {{ entry.startedAt|datetime_short }}
+              {% if entry.liftedAt %}
+                → {{ entry.liftedAt|datetime_short }}
+              {% else %}
+                · {{ 'stop.ongoing'|trans }}
+              {% endif %}
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+{% endblock %}

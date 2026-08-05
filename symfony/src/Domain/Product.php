@@ -33,6 +33,8 @@ final readonly class Product
          * jamais le calcul : la quantité reste décimale en base.
          */
         public CountMode $countMode = CountMode::Pieces,
+        /** Catégorie de production, libre et administrable. Vide = non classé. */
+        public string $category = '',
     ) {
     }
 
@@ -73,6 +75,7 @@ final readonly class Product
             \array_key_exists('recipeRef', $changes) ? $changes['recipeRef'] : $this->recipeRef,
             $changes['sortOrder'] ?? $this->sortOrder,
             $changes['countMode'] ?? $this->countMode,
+            $changes['category'] ?? $this->category,
         );
     }
 }

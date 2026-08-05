@@ -1229,3 +1229,186 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 
 .rank__value { font-weight: 700; color: var(--coffee); white-space: nowrap; }
 .rank__unit { font-weight: 600; font-size: .78rem; color: var(--latte); }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Arrêt de production, verrou de check-list, production J+1
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/*
+  Le violet n'appartient pas encore à la palette : il est introduit ici, et
+  seulement ici, pour la production de demain. La framboise reste la couleur
+  d'action (§ conventions de design) ; le violet ne sert qu'à identifier une
+  famille de tuiles, jamais un bouton.
+*/
+:root {
+  --plum: #6B3FA0;
+  --plum-dark: #55317E;
+  --plum-light: #F1ECF9;
+}
+
+/* ── Tuile « À produire (J+1) » ─────────────────────────────────────────── */
+
+.task--produce {
+  background: linear-gradient(140deg, var(--plum-light), var(--surface) 70%);
+  border: 1px solid #DFD3F0;
+}
+
+.task--produce .task__icon { background: var(--plum); color: #fff; }
+.task--produce .task__label { color: var(--plum-dark); }
+
+/* Arrêt en cours : la tuile passe au rouge, où qu'elle soit. Le vendeur doit
+   voir l'arrêt depuis le menu, sans ouvrir quoi que ce soit. */
+.task--halted {
+  background: var(--danger-bg);
+  border: 1px solid #F3CFCC;
+  box-shadow: none;
+}
+
+.task--halted .task__icon { background: var(--danger); color: #fff; }
+.task--halted .task__label { color: var(--danger); }
+
+/* ── État d'arrêt ───────────────────────────────────────────────────────── */
+
+.card--stopped { border: 2px solid var(--danger); background: var(--danger-bg); }
+.card--gate { border: 2px solid var(--warn); background: var(--warn-bg); }
+
+.stop-state {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  margin: 0 0 .5rem;
+  font-weight: 700;
+}
+
+.stop-state__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-pill);
+  flex: none;
+}
+
+.stop-state__icon .icon { width: 24px; height: 24px; }
+
+.stop-state--on { color: var(--danger); }
+.stop-state--on .stop-state__icon { background: var(--danger); color: #fff; }
+
+.stop-state--gate { color: var(--warn); }
+.stop-state--gate .stop-state__icon { background: var(--warn); color: #fff; }
+
+.stop-state--off { color: var(--ok); }
+
+.stop-state__label { font-size: 1.05rem; }
+
+.stop-reason {
+  margin: 0 0 .35rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--coffee);
+  overflow-wrap: anywhere;
+}
+
+.stop-history { list-style: none; margin: 0; padding: 0; display: grid; gap: .55rem; }
+
+.stop-history__item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .25rem .6rem;
+  align-items: baseline;
+  padding-bottom: .55rem;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.stop-history__item:last-child { border-bottom: 0; padding-bottom: 0; }
+.stop-history__reason { font-weight: 600; color: var(--coffee); overflow-wrap: anywhere; }
+.stop-history__item--active .stop-history__reason { color: var(--danger); }
+
+/* ── Points de check-list qui bloquent la production ────────────────────── */
+
+.gate-list { list-style: none; margin: .5rem 0 1rem; padding: 0; display: grid; gap: .4rem; }
+
+.gate-list__item {
+  padding-left: 1.4rem;
+  position: relative;
+  color: var(--coffee);
+  overflow-wrap: anywhere;
+}
+
+/* Case vide dessinée en CSS : elle dit « à cocher » sans image ni caractère
+   dépendant de la police installée au poste. */
+.gate-list__item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: .28em;
+  width: .85em;
+  height: .85em;
+  border: 2px solid var(--warn);
+  border-radius: 4px;
+}
+
+/* ── Planche d'étiquettes ───────────────────────────────────────────────── */
+
+.button__icon { display: inline-flex; margin-right: .4rem; }
+.button__icon .icon { width: 18px; height: 18px; }
+
+.print-toolbar { display: flex; flex-wrap: wrap; gap: .6rem; margin-bottom: 1rem; }
+
+.print-header { margin-bottom: 1rem; }
+.print-header__title { margin: 0 0 .2rem; font-size: 1.5rem; }
+.print-header__meta { margin: 0; font-size: .9rem; color: var(--latte); }
+
+/* Grille souple : les étiquettes se répartissent selon la largeur disponible,
+   à l'écran comme sur la feuille. Aucune dimension figée, donc aucun format de
+   papier imposé. */
+.labels {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
+  gap: .75rem;
+}
+
+.label {
+  border: 2px solid var(--coffee);
+  border-radius: 10px;
+  padding: .8rem;
+  background: var(--surface);
+  break-inside: avoid;
+}
+
+.label__name {
+  margin: 0 0 .3rem;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--coffee);
+  overflow-wrap: anywhere;
+}
+
+.label__qty { margin: 0 0 .4rem; display: flex; align-items: baseline; gap: .35rem; }
+.label__value { font-size: 2rem; font-weight: 700; line-height: 1; color: var(--coffee); }
+.label__unit { font-size: .95rem; color: var(--latte); }
+.label__meta { margin: 0; font-size: .8rem; color: var(--latte); }
+
+/*
+  Au tirage : plus de fond crème (l'encre coûte), plus de bouton ni de barre
+  d'outils, et des bordures franches. Ce qui reste sur la feuille, ce sont les
+  étiquettes et leur entête.
+*/
+@media print {
+  .app { background: #fff; }
+  .app-main { padding: 0; max-width: none; }
+
+  .print-toolbar,
+  .app-header,
+  .banner,
+  [data-offline-banner] { display: none !important; }
+
+  .label { border-color: #000; box-shadow: none; }
+  .label__name, .label__value { color: #000; }
+  .label__unit, .label__meta { color: #333; }
+  .print-header__title, .print-header__meta { color: #000; }
+
+  .labels { grid-template-columns: repeat(auto-fill, minmax(52mm, 1fr)); gap: 4mm; }
+}

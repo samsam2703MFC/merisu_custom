@@ -83,6 +83,7 @@ tasks:
     nowShort: 'À faire maintenant'
     noPlan: 'Aucun plan pour aujourd''hui'
     planReady: '%count% produits à préparer'
+    noPlanTomorrow: 'Rien à produire demain pour l''instant'
 
 adminLogin:
     title: 'Connexion administration'
@@ -140,6 +141,20 @@ produce:
     computedFrom: 'Calculé à partir du stock de clôture du %date%'
     shortcutToday: "Aujourd'hui"
     shortcutTomorrow: Demain
+    tileTitle: 'À produire demain'
+    todayTitle: "Plan d'aujourd'hui"
+    category: Catégorie
+    allCategories: 'Toutes les catégories'
+    emptyCategory: 'Aucun produit à préparer dans la catégorie « %category% » pour cette date.'
+    printLabels: 'Imprimer les étiquettes'
+    labelsTitle: 'Étiquettes de production'
+    print: Imprimer
+    printedBy: 'Édité par %name%'
+    backToList: 'Retour à la liste'
+    labelFor: 'Pour le %date%'
+    checklistGate: 'Check-list à terminer avant de produire'
+    checklistGateHint: "Ces points obligatoires doivent être cochés avant d'ouvrir le plan de production."
+    openChecklist: 'Ouvrir la check-list'
 
 admin:
     title: Administration
@@ -149,6 +164,8 @@ admin:
         namePerLocale: 'Libellé (%locale%)'
         countMode: 'Mode de comptage'
         countModeHint: "Contenant : le vendeur compte des bacs pleins et la fraction du dernier entamé, plutôt qu'un nombre à virgule."
+        category: 'Catégorie de production'
+        categoryHint: "Sert à filtrer l'écran « À produire ». Texte libre : Tiramisu, Boissons, Verrines…"
         countModes:
             PIECES: "À l'unité"
             CONTAINER: 'Par contenant'
@@ -282,6 +299,7 @@ errors:
     INVALID_PHOTO_DATA: 'Photo illisible.'
     UNSUPPORTED_IMAGE_TYPE: "Format d'image non supporté (JPEG, PNG ou WebP)."
     UPLOAD_DIR_UNAVAILABLE: "Dossier de stockage des photos inaccessible."
+    STOP_REASON_REQUIRED: "Indiquez le motif de l'arrêt."
 
 checklist:
     title: 'Check-list'
@@ -335,3 +353,24 @@ countries:
     IT: Italie
     FR: France
     ES: Espagne
+
+stop:
+    title: 'Arrêt de production'
+    subtitle: 'Suspend la production et la prise de commande sur ce poste.'
+    active: 'Production arrêtée'
+    running: 'Production en cours'
+    reason: "Motif de l'arrêt"
+    reasonPlaceholder: 'Four en panne, rupture de matière…'
+    reasonHint: "Le motif est obligatoire : c'est lui qui rendra l'arrêt compréhensible demain."
+    start: 'Arrêter la production'
+    lift: "Lever l'arrêt"
+    confirmStart: 'Arrêter la production et la prise de commande sur ce poste ?'
+    confirmLift: 'Reprendre la production sur ce poste ?'
+    since: 'Depuis le %datetime%'
+    by: 'Par %name%'
+    effect: "Tant que l'arrêt court, le plan de production et l'impression des étiquettes sont inaccessibles. Les comptages restent possibles."
+    history: 'Derniers arrêts'
+    ongoing: 'en cours'
+    manage: "Gérer l'arrêt"
+    startedFlash: 'Production arrêtée.'
+    liftedFlash: 'Production reprise.'

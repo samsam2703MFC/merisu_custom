@@ -80,6 +80,7 @@ tasks:
     nowShort: 'Por hacer ahora'
     noPlan: 'Sin plan para hoy'
     planReady: '%count% productos por preparar'
+    noPlanTomorrow: 'Por ahora nada que producir mañana'
 
 adminLogin:
     title: 'Acceso a administración'
@@ -137,6 +138,20 @@ produce:
     computedFrom: 'Calculado a partir del stock de cierre del %date%'
     shortcutToday: Hoy
     shortcutTomorrow: Mañana
+    tileTitle: 'Por producir mañana'
+    todayTitle: 'Plan de hoy'
+    category: Categoría
+    allCategories: 'Todas las categorías'
+    emptyCategory: 'Ningún producto por preparar en la categoría « %category% » para esta fecha.'
+    printLabels: 'Imprimir las etiquetas'
+    labelsTitle: 'Etiquetas de producción'
+    print: Imprimir
+    printedBy: 'Impreso por %name%'
+    backToList: 'Volver a la lista'
+    labelFor: 'Para el %date%'
+    checklistGate: 'Check-list por completar antes de producir'
+    checklistGateHint: 'Estos puntos obligatorios deben marcarse antes de abrir el plan de producción.'
+    openChecklist: 'Abrir la check-list'
 
 admin:
     title: Administración
@@ -146,6 +161,8 @@ admin:
         namePerLocale: 'Denominación (%locale%)'
         countMode: 'Modo de recuento'
         countModeHint: 'Recipiente: el vendedor cuenta recipientes llenos y la fracción del último empezado, en vez de un número con coma.'
+        category: 'Categoría de producción'
+        categoryHint: 'Sirve para filtrar la pantalla « Por producir ». Texto libre: Tiramisú, Bebidas, Vasitos…'
         countModes:
             PIECES: 'Por unidad'
             CONTAINER: 'Por recipiente'
@@ -279,6 +296,7 @@ errors:
     INVALID_PHOTO_DATA: 'Foto ilegible.'
     UNSUPPORTED_IMAGE_TYPE: 'Formato de imagen no admitido (JPEG, PNG o WebP).'
     UPLOAD_DIR_UNAVAILABLE: 'Carpeta de fotos no accesible.'
+    STOP_REASON_REQUIRED: 'Indique el motivo de la parada.'
 
 checklist:
     title: 'Lista de control'
@@ -332,3 +350,24 @@ countries:
     IT: Italia
     FR: Francia
     ES: España
+
+stop:
+    title: 'Parada de producción'
+    subtitle: 'Suspende la producción y la toma de pedidos en este puesto.'
+    active: 'Producción parada'
+    running: 'Producción en curso'
+    reason: 'Motivo de la parada'
+    reasonPlaceholder: 'Horno averiado, falta de materia prima…'
+    reasonHint: 'El motivo es obligatorio: es lo que mañana hará comprensible la parada.'
+    start: 'Parar la producción'
+    lift: 'Levantar la parada'
+    confirmStart: '¿Parar la producción y la toma de pedidos en este puesto?'
+    confirmLift: '¿Reanudar la producción en este puesto?'
+    since: 'Desde el %datetime%'
+    by: 'Por %name%'
+    effect: 'Mientras dure la parada, el plan de producción y la impresión de etiquetas quedan inaccesibles. Los recuentos siguen siendo posibles.'
+    history: 'Últimas paradas'
+    ongoing: 'en curso'
+    manage: 'Gestionar la parada'
+    startedFlash: 'Producción parada.'
+    liftedFlash: 'Producción reanudada.'

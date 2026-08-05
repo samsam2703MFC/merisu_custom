@@ -128,6 +128,15 @@
     if (message && !window.confirm(message)) event.preventDefault();
   });
 
+  // ── 3 ter. Impression de la planche d'étiquettes ──────────────────────────
+
+  // Raccourci, rien de plus : la page est déjà mise en page pour l'impression,
+  // donc le Ctrl+P du navigateur donne exactement le même résultat. Sans ce
+  // script, on perd un bouton, pas une fonction.
+  document.addEventListener('click', function (event) {
+    if (event.target.closest('[data-print]')) window.print();
+  });
+
   // ── 3 bis. Révélation du code PIN sur la fiche profil ─────────────────────
 
   document.addEventListener('click', function (event) {

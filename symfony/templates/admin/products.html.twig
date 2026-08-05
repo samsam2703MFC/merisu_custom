@@ -10,6 +10,11 @@
 
   <div class="banner banner--warn">{{ 'admin.products.placeholderWarning'|trans }}</div>
 
+  {# Partagée par tous les formulaires de la page : une seule liste suffit. #}
+  <datalist id="product-categories">
+    {% for name in categories %}<option value="{{ name }}"></option>{% endfor %}
+  </datalist>
+
   {% for product in products %}
     <section class="card">
       <form method="post" action="{{ path('admin_product_save', { id: product.id }) }}" class="form">
@@ -57,6 +62,19 @@
             <label class="field__label" for="unit-{{ product.id }}">{{ 'admin.products.unit'|trans }}</label>
             <input class="field__input" type="text" id="unit-{{ product.id }}"
                    name="unit" value="{{ product.unit }}">
+          </div>
+
+          {# Catégorie de production, en texte libre : elle sert à filtrer
+             l'écran « À produire ». La liste proposée est celle déjà utilisée
+             ailleurs, pour éviter deux orthographes d'une même catégorie. #}
+          <div class="field">
+            <label class="field__label" for="category-{{ product.id }}">
+              {{ 'admin.products.category'|trans }}
+            </label>
+            <input class="field__input" type="text" id="category-{{ product.id }}"
+                   name="category" value="{{ product.category }}" maxlength="64"
+                   list="product-categories">
+            <p class="field__hint">{{ 'admin.products.categoryHint'|trans }}</p>
           </div>
 
           <div class="field">
