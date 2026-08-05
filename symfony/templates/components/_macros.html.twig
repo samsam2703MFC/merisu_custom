@@ -145,34 +145,38 @@
         {% endfor %}
 
         {#
-          La jauge EST le contrôle : on touche le niveau qu'on a sous les yeux,
-          sans traduire un remplissage en pourcentage dans sa tête.
+          La jauge EST le contrôle : on touche le point qui correspond au
+          niveau, sans traduire un remplissage en pourcentage dans sa tête.
 
-          HORIZONTALE : une jauge verticale imposait 192 px de haut par produit,
-          soit une carte deux fois plus grande que les autres. En largeur, elle
-          occupe la place d'une ligne et se lit de gauche à droite, comme tout
-          le reste de l'écran.
+          Une rangée de POINTS plutôt qu'une barre continue : on lit un niveau
+          d'un coup d'œil comme on lit une note sur cinq, sans estimer une
+          longueur. Et huit points se touchent, là où une barre demande de
+          viser une position.
 
-          Chaque bande est une étiquette de son bouton radio : le clavier, les
+          Elle est calée sur la largeur du champ de saisie, entre le − et le +,
+          pour que les deux lignes s'alignent au pixel.
+
+          Chaque point est l'étiquette de son bouton radio : le clavier, les
           lecteurs d'écran et la saisie sans script continuent de fonctionner.
         #}
-        <span class="vessel__jar">
-          <span class="vessel__level" aria-hidden="true"></span>
-          <span class="vessel__ticks" aria-hidden="true"></span>
-
+        <span class="vessel__dots">
           {% for fraction in container_fractions() %}
-            <label class="vessel__band"
+            <label class="vessel__dot"
                    for="frac-{{ product.id }}-{{ loop.index0 }}"
                    title="{{ fraction }} %"
                    aria-label="{{ label }} — {{ fraction }} %"></label>
           {% endfor %}
         </span>
 
-        {# Le niveau en clair : le bocal se lit d'un coup d'œil, le chiffre
-           lève le doute sur deux graduations voisines. #}
+        {# Le niveau en clair : les points se lisent d'un coup d'œil, le
+           chiffre lève le doute sur deux niveaux voisins.
+
+           Espace FINE INSÉCABLE avant le pourcent : la typographie française
+           demande une espace, et une espace ordinaire faisait passer le « % »
+           à la ligne dans sa colonne de 44 px. #}
         <output class="vessel__read" for="frac-{{ product.id }}-0">
           {% for fraction in container_fractions() %}
-            <span class="vessel__read-value">{{ fraction }} %</span>
+            <span class="vessel__read-value">{{ fraction }}&#8239;%</span>
           {% endfor %}
         </output>
       </div>

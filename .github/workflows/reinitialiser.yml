@@ -1,0 +1,139 @@
+# Remise à zéro des SAISIES sur le serveur, à la demande.
+#
+# ⚠️ ACTION DESTRUCTRICE. Elle efface les comptages, les plans figés, les
+# cochages de check-list, les mouvements et l'historique. Elle NE TOUCHE PAS à
+# la configuration : produits, seuils, paramètres, points de check-list et note
+# du jour restent intacts — la commande appelée ne sait pas les effacer.
+#
+# Sert à rejouer un cycle complet sur un poste de test, sans avoir à
+# reconfigurer l'application.
+#
+# Deux garde-fous, parce qu'un déclenchement par erreur ne se rattrape pas :
+#   · l'action ne fait RIEN par défaut — elle compte et s'arrête ;
+#   · pour effacer, il faut taper EFFACER dans le champ de confirmation.
+#
+# Elle utilise les mêmes secrets que le déploiement.
+
+name: Réinitialiser les saisies
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmer:
+        description: 'Taper EFFACER pour supprimer les saisies. Vide = compter seulement.'
+        required: false
+        default: ''
+        type: string
+
+# Elle écrit dans la même base que le déploiement : les deux ne doivent pas se
+# croiser pendant un cache:clear.
+concurrency:
+  group: deploiement-production
+  cancel-in-progress: false
+
+jobs:
+  reinitialiser:
+    name: Réinitialiser les saisies
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Préparer la connexion SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${SSH_KEY:-}" ] || [ -z "${KNOWN_HOSTS:-}" ]; then
+            echo "::error::Secrets manquants — les mêmes que le déploiement."
+            exit 1
+          fi
+
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploiement
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_deploiement ~/.ssh/known_hosts
+
+          # Même réparation d'enveloppe que le déploiement : une clé collée
+          # sans ses lignes BEGIN/END ne se signale autrement que par un
+          # « error in libcrypto » qui n'explique rien.
+          if ! ssh-keygen -y -f ~/.ssh/id_deploiement > /dev/null 2>&1 \
+             && head -1 ~/.ssh/id_deploiement | grep -q '^b3BlbnNzaC1rZXktdjE'; then
+            {
+              echo "-----BEGIN OPENSSH PRIVATE KEY-----"
+              grep -v '^-----' ~/.ssh/id_deploiement
+              echo "-----END OPENSSH PRIVATE KEY-----"
+            } > ~/.ssh/id_deploiement.reparee
+            mv ~/.ssh/id_deploiement.reparee ~/.ssh/id_deploiement
+            chmod 600 ~/.ssh/id_deploiement
+          fi
+
+          if ! ssh-keygen -y -f ~/.ssh/id_deploiement > /dev/null 2>&1; then
+            echo "::error::DEPLOY_SSH_KEY n'est pas une clé privée exploitable."
+            exit 1
+          fi
+
+      - name: Sauvegarder la base avant toute suppression
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          APP_PATH: ${{ secrets.DEPLOY_PATH }}
+          PORT: ${{ vars.DEPLOY_PORT || '22' }}
+        run: |
+          set -euo pipefail
+
+          APP_PATH="${APP_PATH//$'\r'/}"
+          APP_PATH="${APP_PATH#"${APP_PATH%%[![:space:]]*}"}"
+          APP_PATH="${APP_PATH%"${APP_PATH##*[![:space:]]}"}"
+
+          # Une copie datée avant d'effacer : la remise à zéro se veut sans
+          # regret, mais « sans regret » suppose de pouvoir revenir en arrière.
+          ssh -i ~/.ssh/id_deploiement -p "$PORT" -o BatchMode=yes \
+              "$USER@$HOST" bash -euo pipefail -s -- "$APP_PATH" <<'DISTANT'
+          APP_PATH="$1"
+          cd "$APP_PATH/symfony"
+
+          if [ -f var/data/merisu.sqlite ]; then
+            HORODATAGE="$(date +%Y%m%d-%H%M%S)"
+            cp var/data/merisu.sqlite "var/data/merisu-avant-reinit-$HORODATAGE.sqlite"
+            echo "▸ Sauvegarde : var/data/merisu-avant-reinit-$HORODATAGE.sqlite"
+            ls -1 var/data/merisu-avant-reinit-*.sqlite | tail -5
+          else
+            echo "▸ Pas de fichier SQLite : base ailleurs, rien à copier ici." >&2
+          fi
+          DISTANT
+
+      - name: Réinitialiser
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          APP_PATH: ${{ secrets.DEPLOY_PATH }}
+          PORT: ${{ vars.DEPLOY_PORT || '22' }}
+          PHP_BIN: ${{ vars.DEPLOY_PHP_BIN || 'php' }}
+          CONFIRMER: ${{ inputs.confirmer }}
+        run: |
+          set -euo pipefail
+
+          APP_PATH="${APP_PATH//$'\r'/}"
+          APP_PATH="${APP_PATH#"${APP_PATH%%[![:space:]]*}"}"
+          APP_PATH="${APP_PATH%"${APP_PATH##*[![:space:]]}"}"
+
+          ssh -i ~/.ssh/id_deploiement -p "$PORT" -o BatchMode=yes \
+              "$USER@$HOST" bash -euo pipefail -s -- \
+              "$APP_PATH" "$PHP_BIN" "$CONFIRMER" <<'DISTANT'
+          APP_PATH="$1"; PHP_BIN="$2"; CONFIRMER="$3"
+
+          cd "$APP_PATH/symfony"
+
+          if [ "$CONFIRMER" = "EFFACER" ]; then
+            "$PHP_BIN" bin/console --env=prod merisu:reinitialiser --confirmer=EFFACER
+          else
+            "$PHP_BIN" bin/console --env=prod merisu:reinitialiser
+          fi
+          DISTANT
+
+      - name: Effacer la clé privée
+        if: always()
+        run: rm -f ~/.ssh/id_deploiement
