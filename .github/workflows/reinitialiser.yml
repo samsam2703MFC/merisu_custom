@@ -112,7 +112,10 @@ jobs:
           APP_PATH: ${{ secrets.DEPLOY_PATH }}
           PORT: ${{ vars.DEPLOY_PORT || '22' }}
           PHP_BIN: ${{ vars.DEPLOY_PHP_BIN || 'php' }}
-          CONFIRMER: ${{ inputs.confirmer }}
+          # « NON » plutôt que le vide : `ssh` assemble les arguments en une
+          # seule ligne de commande, et une chaîne vide y disparaît. Le shell
+          # distant, lancé avec `set -u`, tombait alors sur un $3 inexistant.
+          CONFIRMER: ${{ inputs.confirmer || 'NON' }}
         run: |
           set -euo pipefail
 
@@ -123,7 +126,9 @@ jobs:
           ssh -i ~/.ssh/id_deploiement -p "$PORT" -o BatchMode=yes \
               "$USER@$HOST" bash -euo pipefail -s -- \
               "$APP_PATH" "$PHP_BIN" "$CONFIRMER" <<'DISTANT'
-          APP_PATH="$1"; PHP_BIN="$2"; CONFIRMER="$3"
+          # Valeur de repli quand même : `set -u` ne pardonne pas, et cette
+          # action doit échouer en NE FAISANT RIEN, jamais l'inverse.
+          APP_PATH="$1"; PHP_BIN="$2"; CONFIRMER="${3:-NON}"
 
           cd "$APP_PATH/symfony"
 
