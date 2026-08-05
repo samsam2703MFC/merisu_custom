@@ -111,12 +111,37 @@ final class AdminController extends AbstractController
             // décide de son vocabulaire (Tiramisu, Boissons, Verrines…), et il
             // peut le changer sans redéploiement (§2). Vide = non classé.
             category: mb_substr(trim((string) $request->request->get('category', '')), 0, 64),
+            // Mentions de l'étiquette. La durée de vie à 0 signifie « non
+            // renseignée » : l'étiquette n'imprime alors aucune DLC, plutôt
+            // qu'une date fausse qui engagerait la boutique.
+            shelfLifeDays: max(0, (int) $request->request->get('shelfLifeDays', 0)),
+            ingredients: $this->parLangue($request, 'ingredients'),
+            allergens: $this->parLangue($request, 'allergens'),
         ));
 
         $this->store->audit($admin->id, $admin->role->value, 'PRODUCT_UPDATED', null, null, ['productId' => $id]);
         $this->addFlash('success', 'common.saved');
 
         return $this->redirectToRoute('admin_products');
+    }
+
+    /**
+     * Champ multilingue d'un formulaire produit : `ingredients_fr`, `_pl`…
+     *
+     * @return array<string,string>
+     */
+    private function parLangue(Request $request, string $champ): array
+    {
+        $valeurs = [];
+
+        foreach (Locale::all() as $locale) {
+            $valeur = trim((string) $request->request->get($champ . '_' . $locale->value, ''));
+            if ($valeur !== '') {
+                $valeurs[$locale->value] = mb_substr($valeur, 0, 600);
+            }
+        }
+
+        return $valeurs;
     }
 
     // ── Note du jour ────────────────────────────────────────────────────────

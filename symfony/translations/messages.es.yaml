@@ -157,6 +157,9 @@ produce:
     printedBy: 'Impreso por %name%'
     backToList: 'Volver a la lista'
     labelFor: 'Para el %date%'
+    useBy: 'Consumir preferentemente antes del'
+    ingredients: 'Ingredientes'
+    allergens: 'Alérgenos'
 
 admin:
     title: Administración
@@ -168,6 +171,12 @@ admin:
         countModeHint: 'Recipiente: el vendedor cuenta recipientes llenos y la fracción del último empezado, en vez de un número con coma.'
         category: 'Categoría de producción'
         categoryHint: 'Sirve para filtrar la pantalla « Por producir ». Texto libre: Tiramisú, Bebidas, Vasitos…'
+        labelSection: 'Menciones de la etiqueta'
+        shelfLifeDays: 'Vida útil (días)'
+        shelfLifeDaysHint: 'A partir del día de producción. 0 = sin indicar: no se imprime ninguna fecha.'
+        ingredients: 'Ingredientes (%locale%)'
+        allergens: 'Alérgenos (%locale%)'
+        allergensHint: 'Impresos aparte y en negrita: la normativa exige que destaquen.'
         countModes:
             PIECES: 'Por unidad'
             CONTAINER: 'Por recipiente'

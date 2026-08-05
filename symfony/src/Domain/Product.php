@@ -35,7 +35,65 @@ final readonly class Product
         public CountMode $countMode = CountMode::Pieces,
         /** Catégorie de production, libre et administrable. Vide = non classé. */
         public string $category = '',
+        /**
+         * Durée de vie en jours, à partir du jour de production. L'étiquette
+         * en déduit la DLC. 0 = non renseignée : aucune date n'est imprimée
+         * plutôt qu'une date fausse, qui engagerait la responsabilité de la
+         * boutique.
+         */
+        public int $shelfLifeDays = 0,
+        /** @var array<string,string> Ingrédients par langue, tels qu'affichés. */
+        public array $ingredients = [],
+        /**
+         * @var array<string,string> Allergènes par langue.
+         *
+         * Séparés des ingrédients bien qu'ils en fassent partie : la
+         * réglementation impose de les faire ressortir, et l'étiquette les
+         * imprime donc à part, en évidence.
+         */
+        public array $allergens = [],
     ) {
+    }
+
+    /** Ingrédients dans la langue demandée, avec le même repli que le libellé. */
+    public function ingredientsText(Locale $locale, Locale $default = Locale::Fr): string
+    {
+        return self::pick($this->ingredients, $locale, $default);
+    }
+
+    /** Allergènes dans la langue demandée, avec le même repli que le libellé. */
+    public function allergensText(Locale $locale, Locale $default = Locale::Fr): string
+    {
+        return self::pick($this->allergens, $locale, $default);
+    }
+
+    /**
+     * Langue demandée → langue par défaut → première renseignée → vide.
+     *
+     * Vide et non le code du produit, contrairement au libellé : une liste
+     * d'ingrédients absente ne s'imprime pas, alors qu'un identifiant technique
+     * imprimé à sa place serait illisible et pourrait passer pour une mention
+     * réglementaire.
+     *
+     * @param array<string,string> $valeurs
+     */
+    private static function pick(array $valeurs, Locale $locale, Locale $default): string
+    {
+        foreach ([$locale->value, $default->value] as $candidat) {
+            $valeur = trim($valeurs[$candidat] ?? '');
+            if ($valeur !== '') {
+                return $valeur;
+            }
+        }
+
+        foreach (Locale::all() as $repli) {
+            $valeur = trim($valeurs[$repli->value] ?? '');
+            if ($valeur !== '') {
+                return $valeur;
+            }
+        }
+
+        return '';
     }
 
     /**
@@ -76,6 +134,9 @@ final readonly class Product
             $changes['sortOrder'] ?? $this->sortOrder,
             $changes['countMode'] ?? $this->countMode,
             $changes['category'] ?? $this->category,
+            $changes['shelfLifeDays'] ?? $this->shelfLifeDays,
+            $changes['ingredients'] ?? $this->ingredients,
+            $changes['allergens'] ?? $this->allergens,
         );
     }
 }

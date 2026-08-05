@@ -236,6 +236,12 @@ final class SchemaInstaller
                 // Catégorie de production, pour filtrer la liste du lendemain.
                 // Vide par défaut : un produit sans catégorie reste visible.
                 'category' => "VARCHAR(64) DEFAULT '' NOT NULL",
+                // Mentions de l'étiquette de production, ajoutées après coup.
+                // Durée de vie à 0 = non renseignée : aucune DLC n'est
+                // imprimée plutôt qu'une date fausse.
+                'shelf_life_days' => 'INTEGER DEFAULT 0 NOT NULL',
+                'ingredients' => "TEXT DEFAULT '{}' NOT NULL",
+                'allergens' => "TEXT DEFAULT '{}' NOT NULL",
             ],
         ];
 

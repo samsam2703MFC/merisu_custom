@@ -128,6 +128,72 @@
     if (message && !window.confirm(message)) event.preventDefault();
   });
 
+  // ── 3 quinquies. Carrousel des catégories de comptage ─────────────────────
+
+  /*
+   * Le confort attendu d'un carrousel, et rien de plus : la puce touchée ouvre
+   * son groupe et vient se centrer, et la puce du groupe ouvert reste marquée.
+   *
+   * Sans ce bloc, tout fonctionne encore : les puces sont des ancres, le
+   * navigateur défile jusqu'au groupe, et `<details name>` n'en laisse qu'un
+   * ouvert. On n'ajoute ici que le centrage et la mise en évidence.
+   */
+  (function () {
+    var rangee = document.querySelector('.cat-swipe');
+    if (!rangee) return;
+
+    var puces = Array.prototype.slice.call(rangee.querySelectorAll('[data-cat-chip]'));
+
+    function doux() {
+      return window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+    }
+
+    /** Amène une puce au centre de la rangée, sans faire défiler la page. */
+    function centrer(puce) {
+      var r = rangee.getBoundingClientRect();
+      var p = puce.getBoundingClientRect();
+      var delta = (p.left + p.width / 2) - (r.left + r.width / 2);
+
+      rangee.scrollBy({ left: delta, behavior: doux() });
+    }
+
+    function marquer(id) {
+      puces.forEach(function (puce) {
+        puce.classList.toggle('is-current', puce.getAttribute('data-cat-chip') === id);
+      });
+    }
+
+    rangee.addEventListener('click', function (event) {
+      var puce = event.target.closest('[data-cat-chip]');
+      if (!puce) return;
+
+      var groupe = document.getElementById(puce.getAttribute('data-cat-chip'));
+      if (!groupe) return;
+
+      event.preventDefault();
+      groupe.open = true;
+      marquer(puce.getAttribute('data-cat-chip'));
+      centrer(puce);
+
+      // Le groupe vient sous l'entête, pas dessous l'écran. `scrollIntoView`
+      // seul l'aurait collé au bord supérieur ; la marge de défilement de la
+      // feuille s'en charge.
+      groupe.scrollIntoView({ behavior: doux(), block: 'start' });
+    });
+
+    // Un groupe ouvert au clavier ou par le résumé lui-même doit aussi marquer
+    // sa puce : l'accordéon ne passe pas forcément par le carrousel.
+    document.querySelectorAll('details.cat').forEach(function (groupe) {
+      groupe.addEventListener('toggle', function () {
+        if (groupe.open) {
+          marquer(groupe.id);
+          var puce = rangee.querySelector('[data-cat-chip="' + groupe.id + '"]');
+          if (puce) centrer(puce);
+        }
+      });
+    });
+  }());
+
   // ── 3 quater. Le champ actif reste sous les yeux ──────────────────────────
 
   /*

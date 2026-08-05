@@ -157,6 +157,9 @@ produce:
     printedBy: 'Wydrukował(a): %name%'
     backToList: 'Powrót do listy'
     labelFor: 'Na dzień %date%'
+    useBy: 'Należy spożyć do'
+    ingredients: 'Składniki'
+    allergens: 'Alergeny'
 
 admin:
     title: Administracja
@@ -168,6 +171,12 @@ admin:
         countModeHint: 'Pojemnik: sprzedawca liczy pełne pojemniki i ułamek napoczętego, zamiast liczby z przecinkiem.'
         category: 'Kategoria produkcji'
         categoryHint: 'Służy do filtrowania ekranu „Do przygotowania”. Dowolny tekst: Tiramisu, Napoje, Deserki…'
+        labelSection: 'Informacje na etykiecie'
+        shelfLifeDays: 'Termin przydatności (dni)'
+        shelfLifeDaysHint: 'Liczony od dnia produkcji. 0 = nie podano: data nie jest drukowana.'
+        ingredients: 'Składniki (%locale%)'
+        allergens: 'Alergeny (%locale%)'
+        allergensHint: 'Drukowane osobno i pogrubione: przepisy wymagają, aby się wyróżniały.'
         countModes:
             PIECES: 'Na sztuki'
             CONTAINER: 'Na pojemniki'

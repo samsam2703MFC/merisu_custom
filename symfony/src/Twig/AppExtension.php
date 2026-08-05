@@ -9,6 +9,7 @@ use Merisu\Inventory\Adapter\LocalShopRankingService;
 use Merisu\Inventory\Adapter\Material;
 use Merisu\Inventory\Adapter\ShopRankingServiceInterface;
 use Merisu\Inventory\Adapter\Workstation;
+use Merisu\Inventory\Domain\BusinessDate;
 use Merisu\Inventory\Domain\ChecklistItem;
 use Merisu\Inventory\Domain\DayNote;
 use Merisu\Inventory\Domain\ContainerQuantity;
@@ -47,6 +48,9 @@ final class AppExtension extends AbstractExtension
             new TwigFunction('product_label', $this->productLabel(...)),
             new TwigFunction('material_label', $this->materialLabel(...)),
             new TwigFunction('checklist_text', $this->checklistText(...)),
+            new TwigFunction('use_by', $this->useBy(...)),
+            new TwigFunction('product_ingredients', $this->productIngredients(...)),
+            new TwigFunction('product_allergens', $this->productAllergens(...)),
             new TwigFunction('day_note_heading', $this->dayNoteHeading(...)),
             new TwigFunction('day_note_body', $this->dayNoteBody(...)),
             new TwigFunction('current_user', fn () => $this->currentUser),
@@ -125,6 +129,32 @@ final class AppExtension extends AbstractExtension
     public function checklistText(ChecklistItem $item): string
     {
         return $item->text($this->locale(), $this->store->settings()->defaultLocale);
+    }
+
+    /**
+     * Date limite de consommation : jour de production + durée de vie.
+     *
+     * Null si la durée n'est pas renseignée. L'étiquette n'imprime alors
+     * AUCUNE date : une date fausse sur une barquette engage la boutique,
+     * une date absente se remarque et se corrige.
+     */
+    public function useBy(string $productionDate, int $shelfLifeDays): ?string
+    {
+        if ($shelfLifeDays <= 0 || !BusinessDate::isValid($productionDate)) {
+            return null;
+        }
+
+        return BusinessDate::addDays($productionDate, $shelfLifeDays);
+    }
+
+    public function productIngredients(Product $product): string
+    {
+        return $product->ingredientsText($this->locale(), $this->store->settings()->defaultLocale);
+    }
+
+    public function productAllergens(Product $product): string
+    {
+        return $product->allergensText($this->locale(), $this->store->settings()->defaultLocale);
     }
 
     /** Intertitre d'une consigne, dans la langue du poste. */

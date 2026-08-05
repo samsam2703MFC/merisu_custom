@@ -3236,23 +3236,62 @@ select:disabled, select.field__input:disabled { background-image: url("data:imag
 /* ── Comptage par catégorie ──────────────────────────────────────────────── */
 
 /*
-  Vingt-cinq produits font six hauteurs d'écran sur un téléphone. Une liste à
-  plat oblige alors à chercher du regard en faisant défiler, et rien ne dit où
-  l'on en est. Deux repères suffisent : des raccourcis en tête, et un entête de
-  groupe qui reste sous les yeux.
-*/
+  Carrousel des catégories : une seule rangée qui se fait glisser au doigt.
 
-.cat-nav {
+  À plat, cinq puces débordaient sur trois lignes et poussaient la première
+  saisie hors de l'écran. En rangée glissante, elles tiennent sur une ligne
+  quel que soit leur nombre.
+
+  Les marges négatives la font toucher les deux bords : une rangée glissante
+  qui s'arrête avant le bord n'invite pas au geste, on croit la voir entière.
+*/
+.cat-swipe {
+  /*
+    Collée sous l'entête de l'application. Sans cela, ouvrir un groupe faisait
+    défiler la page jusqu'à lui et le carrousel sortait de l'écran : la
+    catégorie choisie, si soigneusement centrée, n'était plus visible.
+    Collée, elle reste sous les yeux pendant toute la saisie du groupe.
+  */
+  position: sticky;
+  top: 60px;
+  z-index: 6;
   display: flex;
   gap: var(--space-2);
-  flex-wrap: wrap;
-  margin-bottom: var(--space-4);
+  margin: 0 calc(var(--gutter) * -1) var(--space-4);
+  padding: var(--space-3) var(--gutter);
+  /* Opaque : translucide, les chiffres du produit d'en dessous
+     transparaissaient sous les noms de catégorie. */
+  background: var(--bg);
+  box-shadow: 0 6px 12px -8px rgba(111, 78, 55, .25);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  /* Chaque puce s'aligne d'elle-même en fin de glissement : le doigt n'a pas
+     à viser, et aucune puce ne reste coupée en deux au bord de l'écran. */
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
 }
 
-.cat-nav__chip {
+.cat-swipe::-webkit-scrollbar { display: none; }
+
+/*
+  Réserve en fin de rangée. Sans elle, la dernière puce butait sur le bord et
+  ne pouvait pas atteindre le centre : le défilement s'arrêtait cent pixels
+  trop tôt et la puce choisie restait à droite.
+
+  À la fin seulement : la première puce est bien à sa place au début, une
+  réserve en tête l'aurait décalée pour rien à l'ouverture de l'écran.
+*/
+.cat-swipe::after {
+  content: "";
+  flex: none;
+  width: calc(50% - var(--space-4));
+}
+
+.cat-swipe__chip {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+  flex: none;
   min-height: var(--touch);
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-pill);
@@ -3261,70 +3300,165 @@ select:disabled, select.field__input:disabled { background-image: url("data:imag
   color: var(--coffee-800);
   text-decoration: none;
   font-weight: 600;
-  font-size: .88rem;
-  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  font-size: .92rem;
+  white-space: nowrap;
+  scroll-snap-align: center;
+  /* La puce visée doit arriver dégagée du bord, pas collée dessus. */
+  scroll-margin-inline: var(--space-4);
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 
-.cat-nav__chip:hover { background: var(--cream-outline); }
+.cat-swipe__chip:hover { background: var(--cream-outline); }
+.cat-swipe__chip:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 
-.cat-nav__count {
+.cat-swipe__count {
   font-variant-numeric: tabular-nums;
-  font-size: .78rem;
+  font-size: .8rem;
   color: var(--latte);
 }
 
-/* Catégorie entièrement saisie : elle s'éteint plutôt que de s'allumer. Le
-   regard doit se poser sur ce qui reste à faire, pas sur ce qui est fait. */
-.cat-nav__chip.is-done { background: var(--ok-bg); border-color: transparent; color: var(--ok); }
-.cat-nav__chip.is-done .cat-nav__count { color: var(--ok); }
+/* La catégorie ouverte : mauve, comme tout ce qui se déplie dans
+   l'application. Le vendeur n'a pas à réapprendre un signe par écran. */
+.cat-swipe__chip.is-current {
+  background: var(--plum);
+  border-color: transparent;
+  color: #fff;
+}
+
+.cat-swipe__chip.is-current .cat-swipe__count { color: rgba(255, 255, 255, .8); }
+
+/* Catégorie terminée : elle s'éteint plutôt que de s'allumer. Le regard doit
+   se poser sur ce qui reste à faire, pas sur ce qui est fait. */
+.cat-swipe__chip.is-done { background: var(--ok-bg); border-color: transparent; color: var(--ok); }
+.cat-swipe__chip.is-done .cat-swipe__count { color: var(--ok); }
+.cat-swipe__chip.is-done.is-current { background: var(--ok); color: #fff; }
+.cat-swipe__chip.is-done.is-current .cat-swipe__count { color: rgba(255, 255, 255, .85); }
+
 
 /*
-  L'entête de groupe suit le défilement, calé sous celui de l'application.
-  Au milieu de vingt-cinq champs, savoir dans quelle catégorie on compte évite
-  de poser un chiffre sur le mauvais produit.
+  Vingt-cinq produits à plat font six hauteurs d'écran sur un téléphone.
+  Repliés par catégorie, les cinq groupes tiennent sur un seul : on voit d'un
+  coup ce qui reste à compter, et on n'ouvre que le groupe qu'on a devant soi.
 
-  `top` vaut la hauteur de l'entête : les deux se superposeraient sinon.
+  Bâti sur <details>, donc sans une ligne de JavaScript. Les champs d'un groupe
+  replié restent dans le formulaire et s'envoient normalement — un repli cache,
+  il ne retire pas.
 */
-.cat-head {
-  position: sticky;
-  /* Sous l'entête de l'application, jamais dessus : celui-ci mesure 60 px
-     quand il porte le retour, et un `top` plus court les faisait se
-     chevaucher de six pixels. */
-  top: 62px;
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  margin: var(--space-5) 0 var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-pill);
-  /* Opaque : translucide, les chiffres du produit d'en dessous
-     transparaissaient sous le nom de la catégorie. */
-  background: var(--cream-outline);
+.cat {
+  margin-bottom: var(--space-3);
+  /* Le groupe visé arrive sous l'entête ET sous le carrousel collant, jamais
+     glissé dessous : soixante pixels pour l'un, une soixantaine pour l'autre. */
+  scroll-margin-top: 128px;
+  border-radius: var(--radius-card);
+  background: var(--surface);
   border: 1px solid var(--border);
-  font-family: var(--font);
-  font-size: .78rem;
-  font-weight: 700;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--coffee-800);
-  /* Le point d'ancrage des raccourcis doit arriver DÉGAGÉ, pas collé sous
-     l'entête de l'application. */
-  scroll-margin-top: 78px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
 }
 
-.cat-head:first-of-type { margin-top: 0; }
+.cat__summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 64px;
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  list-style: none;
+}
 
-.cat-head__count {
+.cat__summary::-webkit-details-marker { display: none; }
+.cat__summary:focus-visible { outline: 2px solid var(--brand); outline-offset: -3px; }
+
+.cat__name {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--coffee);
+  overflow-wrap: anywhere;
+}
+
+/* Le compteur en chasse fixe : « 3/5 » et « 12/25 » ne doivent pas faire
+   danser le chevron d'une ligne à l'autre. */
+.cat__count {
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0;
+  font-weight: 700;
+  font-size: 1rem;
   color: var(--latte);
 }
 
-.cat-head--done { background: var(--ok-bg); border-color: transparent; color: var(--ok); }
-.cat-head--done .cat-head__count { color: var(--ok); }
+/* Catégorie terminée : elle s'éteint plutôt que de s'allumer. Le regard doit
+   se poser sur ce qui reste à faire, pas sur ce qui est fait. */
+.cat--done { background: var(--ok-bg); border-color: transparent; box-shadow: none; }
+.cat--done .cat__name { color: var(--ok); }
+.cat--done .cat__count { color: var(--ok); }
 
-@media (min-width: 600px) {
-  .cat-head { top: 66px; scroll-margin-top: 84px; }
+.cat[open] > .cat__summary { border-bottom: 1px solid var(--border-soft); }
+.cat[open] .task__chevron { transform: rotate(-135deg) translate(-2px, -2px); animation: none; }
+
+/* La liste dépliée respire à l'intérieur du cadre du groupe. */
+.cat .count-list {
+  padding: var(--space-4);
+  animation: merisu-deplie var(--dur-slow) var(--ease-out);
+}
+
+/* Les cartes de produit perdent leur ombre dans un groupe : deux niveaux
+   d'ombre imbriqués donnaient une pile de boîtes. */
+.cat .count-item { box-shadow: none; border: 1px solid var(--border-soft); }
+
+@media (prefers-reduced-motion: reduce) {
+  .cat .count-list { animation: none; }
+}
+
+/* ── Mentions réglementaires de l'étiquette ──────────────────────────────── */
+
+/*
+  La DLC en évidence : sur une barquette en vitrine, c'est la première chose
+  qu'on cherche — au comptoir comme au contrôle.
+*/
+.label__dlc {
+  margin: 0 0 var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border: 1.5px solid var(--coffee);
+  border-radius: 6px;
+  font-size: .82rem;
+  line-height: 1.3;
+}
+
+.label__dlc-tag { display: block; font-size: .62rem; text-transform: uppercase; letter-spacing: .08em; color: var(--latte); }
+.label__dlc-date { font-weight: 700; color: var(--coffee); }
+
+.label__tag {
+  display: block;
+  font-size: .62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--latte);
+}
+
+.label__ingredients { line-height: 1.35; }
+
+/*
+  Les allergènes se détachent : la réglementation impose qu'ils ressortent de
+  la liste d'ingrédients, et une mention noyée dans un paragraphe ne se lit pas
+  au comptoir. Encadrés et en gras, ils se voient sans être cherchés.
+*/
+.label__allergens {
+  margin: var(--space-1) 0;
+  padding: var(--space-1) var(--space-2);
+  border-radius: 6px;
+  background: var(--cream-outline);
+  font-size: .8rem;
+  line-height: 1.35;
+  color: var(--coffee);
+}
+
+@media print {
+  /* Au tirage, les aplats et les gris coûtent de l'encre pour rien : seuls le
+     trait et le gras portent l'information. */
+  .label__dlc { border-color: #000; }
+  .label__dlc-date, .label__allergens { color: #000; }
+  .label__allergens { background: none; border: 1px solid #000; }
+  .label__tag, .label__dlc-tag { color: #333; }
 }

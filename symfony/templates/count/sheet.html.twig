@@ -134,43 +134,57 @@
     <input type="hidden" name="workstationId" value="{{ workstationId }}">
 
     {#
-      Raccourcis de catégorie, en tête d'écran.
+      Carrousel des catégories : une seule rangée qui se fait glisser au doigt.
 
-      Vingt-cinq produits font six hauteurs d'écran : sans eux, atteindre les
-      boissons demande de faire défiler en cherchant du regard. Ce sont de
-      simples ancres — aucun script, et le navigateur défile en douceur grâce
-      au `scroll-behavior` de la feuille.
+      À plat, cinq puces débordaient sur trois lignes et poussaient la première
+      saisie hors de l'écran. En rangée glissante, elles tiennent sur une ligne
+      quel que soit leur nombre — dix catégories ne changeront rien.
 
-      Ils n'apparaissent qu'à partir de deux groupes : un seul raccourci vers
-      la seule catégorie présente n'aiderait personne.
+      La puce touchée ouvre son groupe et vient se centrer. Sans script, ce
+      sont de simples ancres : le groupe visé s'ouvre quand même, le
+      navigateur défile jusqu'à lui, et rien n'est perdu.
     #}
     {% if productGroups|length > 1 %}
-      <nav class="cat-nav" aria-label="{{ 'produce.category'|trans }}">
+      <nav class="cat-swipe" aria-label="{{ 'produce.category'|trans }}">
         {% for groupe in productGroups %}
           {% set saisis = groupe.products|filter(p => counts[p.id] is defined)|length %}
-          <a class="cat-nav__chip {{ saisis == groupe.products|length ? 'is-done' : '' }}"
-             href="#cat-{{ loop.index }}">
-            {{ groupe.category ?: 'produce.uncategorised'|trans }}
-            <span class="cat-nav__count">{{ saisis }}/{{ groupe.products|length }}</span>
+          <a class="cat-swipe__chip {{ saisis == groupe.products|length ? 'is-done' : '' }}"
+             href="#cat-{{ loop.index }}"
+             data-cat-chip="cat-{{ loop.index }}">
+            <span class="cat-swipe__name">{{ groupe.category ?: 'produce.uncategorised'|trans }}</span>
+            <span class="cat-swipe__count">{{ saisis }}/{{ groupe.products|length }}</span>
           </a>
         {% endfor %}
       </nav>
     {% endif %}
 
+    {#
+      Une catégorie, un repli.
+
+      Vingt-cinq produits à plat font six hauteurs d'écran. Repliés, les cinq
+      groupes tiennent sur un seul : on voit d'un coup ce qui reste à compter,
+      et on n'ouvre que le groupe qu'on a devant soi. Le compteur « 3/5 » du
+      résumé suffit à suivre l'avancement sans rien déplier.
+
+      Tous repliés à l'ouverture, y compris ceux déjà terminés : le vendeur
+      choisit par quoi il commence, l'écran ne choisit pas pour lui.
+
+      Les champs d'un groupe replié restent dans le formulaire et s'envoient
+      normalement — un repli cache, il ne retire pas.
+    #}
     {% for groupe in productGroups %}
-      {#
-        L'entête de groupe reste collé sous celui de l'application pendant le
-        défilement : au milieu de vingt-cinq champs, savoir dans quelle
-        catégorie on compte évite de saisir un chiffre sur le mauvais produit.
-      #}
-      {% if productGroups|length > 1 %}
-        {% set saisis = groupe.products|filter(p => counts[p.id] is defined)|length %}
-        <h2 class="cat-head {{ saisis == groupe.products|length ? 'cat-head--done' : '' }}"
-            id="cat-{{ loop.index }}">
-          <span class="cat-head__name">{{ groupe.category ?: 'produce.uncategorised'|trans }}</span>
-          <span class="cat-head__count">{{ saisis }}/{{ groupe.products|length }}</span>
-        </h2>
-      {% endif %}
+      {% set saisis = groupe.products|filter(p => counts[p.id] is defined)|length %}
+      {% set complet = saisis == groupe.products|length %}
+
+      {# `name` partagé : le navigateur n'en laisse qu'un ouvert à la fois, et
+         c'est lui qui referme le précédent — aucun script pour cela. #}
+      <details class="cat {{ complet ? 'cat--done' : '' }}"
+               name="categories" id="cat-{{ loop.index }}">
+        <summary class="cat__summary">
+          <span class="cat__name">{{ groupe.category ?: 'produce.uncategorised'|trans }}</span>
+          <span class="cat__count">{{ saisis }}/{{ groupe.products|length }}</span>
+          <span class="task__chevron" aria-hidden="true"></span>
+        </summary>
 
     <div class="count-list">
       {% for product in groupe.products %}
@@ -214,6 +228,7 @@
         </article>
       {% endfor %}
     </div>
+      </details>
     {% endfor %}
 
     {#

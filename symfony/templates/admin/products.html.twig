@@ -136,6 +136,47 @@
           </div>
         </div>
 
+        {#
+          Mentions de l'étiquette de production. Regroupées à part : elles ne
+          servent ni au comptage ni au calcul, elles ne sortent que sur le
+          papier collé sur la barquette.
+        #}
+        <h3 class="card__title">{{ 'admin.products.labelSection'|trans }}</h3>
+
+        <div class="field">
+          <label class="field__label" for="shelf-{{ product.id }}">
+            {{ 'admin.products.shelfLifeDays'|trans }}
+          </label>
+          <input class="field__input" type="number" min="0" step="1"
+                 id="shelf-{{ product.id }}" name="shelfLifeDays"
+                 value="{{ product.shelfLifeDays }}">
+          <p class="field__hint">{{ 'admin.products.shelfLifeDaysHint'|trans }}</p>
+        </div>
+
+        {% for locale in supported_locales() %}
+          <div class="field">
+            <label class="field__label" for="ing-{{ product.id }}-{{ locale.value }}">
+              {{ 'admin.products.ingredients'|trans({ '%locale%': ('locales.' ~ locale.value)|trans }) }}
+            </label>
+            <textarea class="field__input" rows="2" maxlength="600"
+                      id="ing-{{ product.id }}-{{ locale.value }}"
+                      name="ingredients_{{ locale.value }}">{{ product.ingredients[locale.value] ?? '' }}</textarea>
+          </div>
+        {% endfor %}
+
+        {% for locale in supported_locales() %}
+          <div class="field">
+            <label class="field__label" for="all-{{ product.id }}-{{ locale.value }}">
+              {{ 'admin.products.allergens'|trans({ '%locale%': ('locales.' ~ locale.value)|trans }) }}
+            </label>
+            <textarea class="field__input" rows="2" maxlength="600"
+                      id="all-{{ product.id }}-{{ locale.value }}"
+                      name="allergens_{{ locale.value }}">{{ product.allergens[locale.value] ?? '' }}</textarea>
+          </div>
+        {% endfor %}
+
+        <p class="field__hint">{{ 'admin.products.allergensHint'|trans }}</p>
+
         <div class="form-actions">
           <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
         </div>

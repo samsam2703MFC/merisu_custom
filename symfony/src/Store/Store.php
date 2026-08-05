@@ -111,6 +111,9 @@ final class Store
             'sort_order' => $product->sortOrder,
             'count_mode' => $product->countMode->value,
             'category' => $product->category,
+            'shelf_life_days' => $product->shelfLifeDays,
+            'ingredients' => json_encode($product->ingredients, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+            'allergens' => json_encode($product->allergens, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
         ];
 
         $exists = (int) $this->db->fetchOne('SELECT COUNT(*) FROM inv_product WHERE id = ?', [$product->id]) > 0;
@@ -673,6 +676,11 @@ final class Store
             // n'a que des produits comptés à la pièce.
             CountMode::tryFromLoose($row['count_mode'] ?? null) ?? CountMode::Pieces,
             trim((string) ($row['category'] ?? '')),
+            // Colonnes ajoutées avec l'étiquette : une base installée avant
+            // ne les a pas encore au premier appel.
+            (int) ($row['shelf_life_days'] ?? 0),
+            json_decode((string) ($row['ingredients'] ?? '{}'), true) ?: [],
+            json_decode((string) ($row['allergens'] ?? '{}'), true) ?: [],
         );
     }
 

@@ -157,6 +157,9 @@ produce:
     printedBy: 'Stampato da %name%'
     backToList: 'Torna alla lista'
     labelFor: 'Per il %date%'
+    useBy: 'Da consumarsi entro il'
+    ingredients: 'Ingredienti'
+    allergens: 'Allergeni'
 
 admin:
     title: Amministrazione
@@ -168,6 +171,12 @@ admin:
         countModeHint: "Contenitore: l'addetto conta i contenitori pieni e la frazione dell'ultimo aperto, invece di un numero con la virgola."
         category: 'Categoria di produzione'
         categoryHint: "Serve a filtrare la schermata « Da produrre ». Testo libero: Tiramisù, Bevande, Bicchierini…"
+        labelSection: "Diciture dell'etichetta"
+        shelfLifeDays: 'Durata di conservazione (giorni)'
+        shelfLifeDaysHint: 'A partire dal giorno di produzione. 0 = non indicata: nessuna data viene stampata.'
+        ingredients: 'Ingredienti (%locale%)'
+        allergens: 'Allergeni (%locale%)'
+        allergensHint: "Stampati a parte e in grassetto: la normativa impone che risaltino."
         countModes:
             PIECES: 'A unità'
             CONTAINER: 'Per contenitore'

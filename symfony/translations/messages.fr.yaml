@@ -160,6 +160,9 @@ produce:
     printedBy: 'Édité par %name%'
     backToList: 'Retour à la liste'
     labelFor: 'Pour le %date%'
+    useBy: 'À consommer jusqu''au'
+    ingredients: 'Ingrédients'
+    allergens: 'Allergènes'
 
 admin:
     title: Administration
@@ -171,6 +174,12 @@ admin:
         countModeHint: "Contenant : le vendeur compte des bacs pleins et la fraction du dernier entamé, plutôt qu'un nombre à virgule."
         category: 'Catégorie de production'
         categoryHint: "Sert à filtrer l'écran « À produire ». Texte libre : Tiramisu, Boissons, Verrines…"
+        labelSection: "Mentions de l'étiquette"
+        shelfLifeDays: 'Durée de vie (jours)'
+        shelfLifeDaysHint: "À partir du jour de production. 0 = non renseignée : aucune DLC n'est imprimée."
+        ingredients: 'Ingrédients (%locale%)'
+        allergens: 'Allergènes (%locale%)'
+        allergensHint: "Imprimés à part et en gras sur l'étiquette : la réglementation impose qu'ils ressortent."
         countModes:
             PIECES: "À l'unité"
             CONTAINER: 'Par contenant'

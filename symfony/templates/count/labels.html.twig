@@ -64,11 +64,42 @@
               <span class="label__unit">{{ product ? product.unit : '' }}</span>
             </p>
 
+            {#
+              Date limite de consommation, déduite de la durée de vie du
+              produit. Absente si la durée n'est pas renseignée : une date
+              fausse sur une barquette engage la boutique, une date absente se
+              remarque et se corrige.
+            #}
+            {% set dlc = product ? use_by(forDate, product.shelfLifeDays) : null %}
+            {% if dlc %}
+              <p class="label__dlc">
+                <span class="label__dlc-tag">{{ 'produce.useBy'|trans }}</span>
+                <span class="label__dlc-date">{{ dlc|long_date }}</span>
+              </p>
+            {% endif %}
+
+            {% if product and product_ingredients(product) %}
+              <p class="label__meta label__ingredients">
+                <span class="label__tag">{{ 'produce.ingredients'|trans }}</span>
+                {{ product_ingredients(product) }}
+              </p>
+            {% endif %}
+
+            {#
+              Les allergènes à part et en évidence : la réglementation impose
+              qu'ils ressortent du reste de la liste, et une mention noyée dans
+              un paragraphe ne se lit pas au comptoir.
+            #}
+            {% if product and product_allergens(product) %}
+              <p class="label__allergens">
+                <span class="label__tag">{{ 'produce.allergens'|trans }}</span>
+                <strong>{{ product_allergens(product) }}</strong>
+              </p>
+            {% endif %}
+
             <p class="label__meta">
               {{ 'produce.labelFor'|trans({ '%date%': forDate|long_date }) }}
-            </p>
-            <p class="label__meta">
-              {{ workstation_name(workstationId) }}
+              · {{ workstation_name(workstationId) }}
               {% if product and product.category %} · {{ product.category }}{% endif %}
             </p>
           </article>
