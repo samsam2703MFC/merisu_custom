@@ -15,39 +15,6 @@
     'produce.subtitle'|trans({ '%date%': forDate|long_date }) ~ ' · ' ~ ('days.' ~ dayOfWeek.value)|trans
   ) }}
 
-  {% if blocking|length > 0 %}
-
-    {# Rien n'est interdit, il reste des points à cocher — d'où la liste exacte
-       de ce qui manque plutôt qu'un refus sec. #}
-    <section class="card card--gate">
-      <p class="gate-state">
-        <span class="gate-state__icon">{{ ui.icon('checklist') }}</span>
-        <span class="gate-state__label">{{ 'produce.checklistGate'|trans }}</span>
-      </p>
-
-      <p class="muted">{{ 'produce.checklistGateHint'|trans }}</p>
-
-      <ul class="gate-list">
-        {% for item in blocking %}
-          <li class="gate-list__item">
-            {{ checklist_text(item) }}
-            <span class="muted">· {{ item.section.labelKey|trans }}</span>
-          </li>
-        {% endfor %}
-      </ul>
-
-      <div class="form-actions">
-        {# `retour` ramène ici une fois la check-list enregistrée : sans lui,
-           l'opérateur coche ses points puis doit retrouver seul le chemin du
-           plan de production — deux écrans plus loin. #}
-        <a class="button button--primary"
-           href="{{ path('checklist', { retour: 'production', forDate: forDate, category: category }) }}">
-          {{ 'produce.openChecklist'|trans }}
-        </a>
-      </div>
-    </section>
-
-  {% else %}
 
     <section class="card">
       <form class="filters" method="get" action="{{ path('production') }}">
@@ -88,9 +55,27 @@
     </section>
 
     {% if lines is empty %}
-      <div class="banner banner--warn">
-        {{ category ? 'produce.emptyCategory'|trans({ '%category%': category }) : 'produce.empty'|trans }}
-      </div>
+      {% if category %}
+        <div class="banner banner--warn">
+          {{ 'produce.emptyCategory'|trans({ '%category%': category }) }}
+        </div>
+      {% else %}
+        {#
+          Pas de plan, et la raison est presque toujours la même : le stock du
+          soir de la veille n'a pas été validé, donc rien n'a pu être calculé.
+          Le dire, et ouvrir la porte — « aucun plan figé » laissait chercher.
+        #}
+        <section class="card">
+          <div class="banner banner--warn">{{ 'produce.needEveningCount'|trans }}</div>
+          <p class="muted">{{ 'produce.needEveningCountHint'|trans({ '%date%': computedFromDate|long_date }) }}</p>
+
+          <div class="form-actions">
+            <a class="button button--primary" href="{{ path('count_evening') }}">
+              {{ 'evening.title'|trans }}
+            </a>
+          </div>
+        </section>
+      {% endif %}
     {% else %}
       <p class="muted">
         {{ 'produce.computedFrom'|trans({ '%date%': computedFromDate|long_date }) }}
@@ -145,7 +130,5 @@
         {% endfor %}
       </div>
     {% endif %}
-
-  {% endif %}
 
 {% endblock %}

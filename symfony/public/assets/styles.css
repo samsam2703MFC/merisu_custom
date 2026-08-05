@@ -1378,58 +1378,6 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 .task__print:focus-visible { outline: 2px solid var(--plum); outline-offset: 2px; }
 .task__print .icon { width: 22px; height: 22px; }
 
-/* ── Verrou : la check-list n'est pas terminée ──────────────────────────── */
-
-.card--gate { border: 2px solid var(--warn); background: var(--warn-bg); }
-
-.gate-state {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin: 0 0 var(--space-2);
-  font-weight: 700;
-  color: var(--warn);
-}
-
-.gate-state__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-pill);
-  background: var(--warn);
-  color: #fff;
-  flex: none;
-}
-
-.gate-state__icon .icon { width: 24px; height: 24px; }
-.gate-state__label { font-size: 1.05rem; }
-
-/* ── Points de check-list qui bloquent la production ────────────────────── */
-
-.gate-list { list-style: none; margin: var(--space-2) 0 var(--space-4); padding: 0; display: grid; gap: var(--space-1); }
-
-.gate-list__item {
-  padding-left: 1.4rem;
-  position: relative;
-  color: var(--coffee);
-  overflow-wrap: anywhere;
-}
-
-/* Case vide dessinée en CSS : elle dit « à cocher » sans image ni caractère
-   dépendant de la police installée au poste. */
-.gate-list__item::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: .28em;
-  width: .85em;
-  height: .85em;
-  border: 2px solid var(--warn);
-  border-radius: 4px;
-}
-
 /* ── Planche d'étiquettes ───────────────────────────────────────────────── */
 
 .button__icon { display: inline-flex; margin-right: .4rem; }
@@ -1960,18 +1908,31 @@ body { overflow-x: hidden; }
 }
 
 .gauge__percent { font-size: 1.3rem; font-weight: 700; color: var(--brand); }
+.gauge__track { margin-top: var(--space-1); }
 .gauge--reached .gauge__percent { color: var(--ok); }
 .gauge--late .gauge__percent { color: var(--warn); }
 
 .gauge__figures { margin: 0 0 var(--space-3); display: flex; align-items: baseline; gap: var(--space-2); }
 .gauge__sold { font-family: var(--font-display); font-size: 2.2rem; font-weight: 600; color: var(--coffee); }
 
+/*
+  La jauge est un tiramisu vu de côté, et non une barre de progression.
+
+  Elle reprend exactement les couches des coupes de la connexion — biscuit
+  imbibé, mascarpone, cacao — pour que l'application se reconnaisse d'un écran
+  à l'autre. Une barre verte pouvait être celle de n'importe quel logiciel ;
+  celle-ci ne peut être que la nôtre.
+
+  Le plat est évasé comme les coupes : plus ouvert en haut qu'au fond.
+*/
 .gauge__track {
   position: relative;
-  height: 20px;
-  border-radius: var(--radius-pill);
-  background: var(--cream-outline);
-  border: 1px solid var(--border);
+  height: 46px;
+  border-radius: 5px 5px 16px 16px;
+  background: #fff;
+  border: 2px solid var(--border);
+  /* Le liseré doré du couvercle Merisù, comme sur les coupes. */
+  box-shadow: inset 0 3px 0 rgba(255, 203, 29, .35);
   overflow: hidden;
 }
 
@@ -1985,27 +1946,588 @@ body { overflow-x: hidden; }
 .gauge__fill {
   height: 100%;
   width: var(--fill, 0%);
-  border-radius: var(--radius-pill);
-  background: linear-gradient(90deg, var(--brand), var(--brand-dark));
+  /*
+    Les couches sont HORIZONTALES et la jauge se remplit de la gauche vers la
+    droite : le dessert garde sa structure quel que soit l'avancement, comme
+    un plat qu'on entame par un bout. Un dégradé oblique aurait fait pencher
+    les couches à chaque pourcentage.
+  */
+  /*
+    Une coupe de tiramisu, dans ses proportions réelles : une pluie de cacao
+    fine sur le dessus, une épaisse couche de mascarpone, un trait de biscuit
+    imbibé, une seconde couche de crème. Des bandes d'égale épaisseur
+    donnaient un pyjama rayé, pas un dessert.
+  */
+  background: linear-gradient(
+    180deg,
+    #6F4E37 0 14%,
+    #FFFBF0 14% 46%,
+    #B98757 46% 58%,
+    #F6E8CE 58% 88%,
+    #C8A275 88% 100%
+  );
   transition: width var(--dur-slow) var(--ease-out);
 }
 
-.gauge--reached .gauge__fill { background: linear-gradient(90deg, #2E9C64, var(--ok)); }
-.gauge--late .gauge__fill { background: linear-gradient(90deg, #D08B00, var(--warn)); }
+/*
+  La dernière pluie de cacao, sur la tranche : elle marque le bord du remplissage
+  et donne au dessert son relief. Sans elle, la coupure entre le rempli et le
+  vide était un trait net qui trahissait la barre de progression.
+*/
+.gauge__fill::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--fill, 0%);
+  width: 10px;
+  transform: translateX(-10px);
+  background: linear-gradient(90deg, rgba(111, 78, 55, 0), rgba(111, 78, 55, .35));
+}
+
+/*
+  L'état ne change PAS la recette : un tiramisu en retard reste un tiramisu.
+  C'est le plat qui se colore — doré quand l'objectif est atteint, ambré quand
+  le rythme décroche.
+*/
+.gauge--reached .gauge__track { border-color: var(--gold); box-shadow: inset 0 3px 0 var(--gold); }
+.gauge--late .gauge__track { border-color: #E8C98A; }
 
 /*
   Le repère de rythme : où l'on DEVRAIT en être vu le jour du mois. C'est lui
   qui rend la jauge utile — « 600 sur 1 000 » est excellent le 10 et inquiétant
   le 28, et la barre seule ne le dit pas.
 */
+/*
+  Le repère de rythme : où l'on DEVRAIT en être vu le jour du mois. C'est lui
+  qui rend la jauge utile — « 600 sur 1 000 » est excellent le 10 et inquiétant
+  le 28, et le dessert seul ne le dit pas.
+
+  Dessiné comme la lame d'une spatule plantée dans le plat, framboise pour se
+  détacher des bruns du tiramisu.
+*/
 .gauge__pace {
   position: absolute;
-  top: -2px;
-  bottom: -2px;
+  top: 0;
+  bottom: 0;
   left: var(--pace, 0%);
-  width: 2px;
-  background: var(--coffee);
-  opacity: .55;
+  width: 3px;
+  margin-left: -1px;
+  background: var(--brand);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .55);
+}
+
+.gauge__hint { margin: var(--space-2) 0 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gauge__fill { transition: none; }
+}
+
+/* ── Plan du jour et note de marque ──────────────────────────────────────── */
+
+/*
+  Un seul bloc en tête d'écran : le plan du jour, et la note de marque qui se
+  déplie dessous. La note n'est pas une information à part — c'est ce qu'il
+  faut avoir en tête AVANT de suivre le plan.
+
+  Crème avec le jaune en accent : un aplat jaune criait plus fort que la tâche
+  du moment, seule à porter la couleur d'action. Le filet suffit à désigner le
+  bloc.
+
+  Bâti sur <details> : il s'ouvre et se ferme sans une ligne de JavaScript.
+*/
+.daynote {
+  margin-bottom: var(--space-4);
+  border-radius: var(--radius-card);
+  background: var(--cream-outline);
+  border: 1px solid var(--border);
+  border-left: 6px solid var(--gold);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.daynote__summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  cursor: pointer;
+  list-style: none;
+  min-height: 76px;
+}
+
+/* Le chevron du navigateur varie de forme et de taille d'un système à
+   l'autre, et désalignait la ligne. Le nôtre est dessiné en dessous. */
+.daynote__summary::-webkit-details-marker { display: none; }
+
+.daynote__icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-pill);
+  /* La pastille reprend le jaune : c'est le second point d'accent, et il suffit
+     à faire lire le bloc comme « la note du jour » avant même le titre. Encre
+     café dessus — 6,9:1 ; le blanc sur jaune tombait à 1,6:1, illisible en
+     plein soleil derrière une vitrine. */
+  background: var(--gold);
+  color: var(--coffee);
+  flex: none;
+}
+
+.daynote__icon .icon { width: 26px; height: 26px; }
+
+.daynote__titles {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  flex: 1;
+}
+
+.daynote__title {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--coffee);
+  overflow-wrap: anywhere;
+}
+
+.daynote__meta { font-size: .9rem; color: var(--latte); }
+
+/*
+  Le chevron, dessiné en CSS et animé : il pivote d'un quart de tour à
+  l'ouverture. C'est le seul signal qui dise que le bloc se déplie — sans lui,
+  un lecteur pressé ne saurait pas qu'il y a quelque chose dessous.
+*/
+.daynote__chevron {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  border-right: 2.5px solid var(--coffee);
+  border-bottom: 2.5px solid var(--coffee);
+  transform: rotate(45deg) translate(-2px, -2px);
+  transition: transform var(--dur) var(--ease);
+}
+
+.daynote[open] .daynote__chevron { transform: rotate(-135deg) translate(-2px, -2px); }
+
+.daynote__summary:focus-visible { outline: 2px solid var(--brand); outline-offset: -3px; }
+
+/*
+  Le panneau déplié, sur fond blanc : il se détache du résumé crème, et l'œil
+  voit tout de suite où commence la consigne.
+*/
+.daynote__panel {
+  padding: var(--space-4);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  animation: merisu-deplie var(--dur-slow) var(--ease-out);
+}
+
+@keyframes merisu-deplie {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: none; }
+}
+
+.daynote-card__title {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--coffee);
+}
+
+.daynote-card__item + .daynote-card__item {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-soft);
+}
+
+.daynote-card__heading {
+  margin: 0 0 var(--space-1);
+  font-size: .74rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--brand-dark);
+}
+
+.daynote-card__text { margin: 0 0 var(--space-1); font-size: .95rem; line-height: 1.5; }
+.daynote-card__text:last-child { margin-bottom: 0; }
+
+/* « Ciao » et « Grazie » se détachent du reste de la phrase : ce sont les deux
+   mots à retenir, pas la consigne qui les accompagne. */
+.daynote-card__word {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .daynote__panel { animation: none; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Téléphone — formulaires et écrans denses
+   ══════════════════════════════════════════════════════════════════════════
+
+   L'application se remplit debout, au poste, sur un téléphone tenu d'une
+   main. Ce bloc traite ce que la mise en page de bureau, seulement rétrécie,
+   rendait pénible.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Fiche repliable (administration) ────────────────────────────────────── */
+
+.admin-item { padding: 0; }
+
+.admin-item__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 56px;
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  list-style: none;
+  border-radius: var(--radius-card);
+  font-weight: 600;
+  color: var(--coffee);
+}
+
+/* Le chevron du navigateur est remplacé par le nôtre : sa taille et sa
+   position varient d'un navigateur à l'autre, et il désalignait la ligne. */
+.admin-item__summary::-webkit-details-marker { display: none; }
+
+.admin-item__summary::after {
+  content: "";
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-right: 2px solid var(--latte);
+  border-bottom: 2px solid var(--latte);
+  transform: rotate(45deg) translate(-2px, -2px);
+  transition: transform var(--dur) var(--ease);
+}
+
+.admin-item[open] > .admin-item__summary::after { transform: rotate(-135deg) translate(-2px, -2px); }
+.admin-item[open] > .admin-item__summary { border-bottom: 1px solid var(--border); border-radius: var(--radius-card) var(--radius-card) 0 0; }
+
+.admin-item__head { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+.admin-item__name { overflow-wrap: anywhere; }
+
+.admin-item .form { padding: var(--space-4); }
+
+/* ── Barre d'action collante ─────────────────────────────────────────────── */
+
+/*
+  Elle suit le défilement en bas d'écran. Le fond est opaque : translucide,
+  les chiffres du produit d'en dessous transparaissaient sous les libellés.
+*/
+/* Une rangée d'actions suivie de contenu doit s'en détacher : sans cela le
+   bouton « Imprimer » collait à la première carte de la liste. */
+.form-actions:not(:last-child) { margin-bottom: var(--space-4); }
+
+.form-actions--sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  margin: var(--space-4) calc(var(--gutter) * -1) 0;
+  padding: var(--space-3) var(--gutter);
+  padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -6px 20px rgba(111, 78, 55, .08);
+}
+
+/* ── Formulaires sur petit écran ─────────────────────────────────────────── */
+
+@media (max-width: 599px) {
+  /*
+    Les filtres cessent d'être une rangée souple. En flex, chaque champ prenait
+    la largeur de son contenu : la date occupait la moitié de la ligne, la
+    catégorie un peu plus, et les trois boutons se répartissaient sur deux
+    rangs inégaux. Quatre lignes en escalier pour trois réglages.
+  */
+  .filters { display: grid; grid-template-columns: 1fr; gap: var(--space-3); }
+  .filters .field { margin-bottom: 0; }
+  .filters .field__input { width: 100%; }
+
+  /* Une seule action par ligne, pleine largeur : au pouce, deux boutons
+     côte à côte se touchent l'un pour l'autre. */
+  .form-actions { flex-direction: column; align-items: stretch; }
+  .form-actions .button { width: 100%; }
+  .form-actions .button--large { margin-left: 0; }
+
+  /* L'action principale passe en tête dans la barre collante : c'est elle
+     qu'on cherche, et le bas de l'écran est la zone la plus accessible. */
+  .form-actions--sticky { flex-direction: column-reverse; }
+
+  /* Le clavier numérique du comptage mérite toute la largeur disponible. */
+  .qty { gap: var(--space-3); }
+
+  .page-header__title { font-size: 1.5rem; }
+  .card__title { font-size: 1.15rem; }
+
+  /* Un tableau ne se lit pas sur 360 px : on annonce qu'il se fait glisser
+     plutôt que de laisser croire à une colonne manquante. */
+  .table-scroll { position: relative; }
+}
+
+/* ── Boutons des filtres ─────────────────────────────────────────────────── */
+
+/*
+  Les raccourcis vont par paire et restent côte à côte, même étroits : les
+  empiler ferait trois rangs pour trois mots. `1fr` partout, donc des largeurs
+  égales — trois pilules de tailles différentes donnaient un bord droit en
+  dents de scie.
+*/
+.filters__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.filters__actions .button { flex: 1 1 auto; }
+
+@media (max-width: 599px) {
+  .filters__actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  /* « Appliquer » commande les deux champs au-dessus : il prend la ligne
+     entière, les deux raccourcis se partagent la suivante. */
+  .filters__actions > :first-child { grid-column: 1 / -1; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Drapeaux, jauge tiramisu, note du jour
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Drapeaux ────────────────────────────────────────────────────────────── */
+
+/*
+  Ils remplacent les listes déroulantes de langue et de pays. Une liste
+  demandait trois gestes — ouvrir, faire défiler, choisir — et affichait le nom
+  de la langue dans la langue COURANTE : un vendeur polonais tombé sur
+  l'italien y cherchait « Polski » au milieu de « Polacco ».
+*/
+.flags {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+  margin: 0;
+}
+
+.flags__choice {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--touch);
+  min-height: var(--touch);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
+}
+
+.flags__choice:hover { background: rgba(111, 78, 55, .07); }
+.flags__choice:active { transform: translateY(1px); }
+.flags__choice:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+/* Le drapeau courant sort du lot par un anneau framboise, pas par la taille :
+   quatre drapeaux de hauteurs inégales donneraient une ligne bancale. */
+.flags__choice.is-active {
+  background: var(--brand-light);
+  box-shadow: inset 0 0 0 2px var(--brand);
+}
+
+.flag {
+  display: block;
+  width: 27px;
+  height: 18px;
+  border-radius: 3px;
+  flex: none;
+}
+
+/*
+  Drapeau en indice, dans une ligne de classement. `inline-block` et calé sur
+  la ligne de base : il suit le nom comme une note, sans casser l'alignement
+  des chiffres à droite.
+*/
+.rank__shop .flag {
+  display: inline-block;
+  width: 16px;
+  height: 11px;
+  border-radius: 2px;
+  margin-left: .35rem;
+  vertical-align: baseline;
+}
+
+/* Le drapeau du pays, dans l'entête du classement national : à la taille du
+   titre, pas à celle d'un bouton — ce n'en est plus un. */
+.card__header > .flag { width: 30px; height: 20px; }
+
+/* Sous 380 px, l'entête de connexion porte quatre drapeaux à côté du logo :
+   on resserre plutôt que de les faire passer à la ligne. */
+@media (max-width: 380px) {
+  .flags__choice { min-width: 38px; }
+  .flag { width: 24px; height: 16px; }
+}
+
+/* ── Interrupteur à deux mesures ─────────────────────────────────────────── */
+
+/*
+  Deux critères, deux moitiés égales. `1fr 1fr` et non `flex` : à largeurs
+  libres, « Clients » occupait un tiers et « Tiramisu vendus » deux, ce qui
+  suggérait une hiérarchie qui n'existe pas.
+*/
+.metric-switch--pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--cream-outline);
+  border: 1px solid var(--border);
+}
+
+.metric-switch--pair .metric-switch__item {
+  justify-content: center;
+  text-align: center;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.metric-switch--pair .metric-switch__item.is-active {
+  background: var(--brand);
+  color: #fff;
+  box-shadow: var(--shadow-accent);
+}
+
+/* ── Jauge tiramisu ──────────────────────────────────────────────────────── */
+
+.gauge__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-1);
+}
+
+.gauge__percent { font-size: 1.3rem; font-weight: 700; color: var(--brand); }
+.gauge__track { margin-top: var(--space-1); }
+.gauge--reached .gauge__percent { color: var(--ok); }
+.gauge--late .gauge__percent { color: var(--warn); }
+
+.gauge__figures { margin: 0 0 var(--space-3); display: flex; align-items: baseline; gap: var(--space-2); }
+.gauge__sold { font-family: var(--font-display); font-size: 2.2rem; font-weight: 600; color: var(--coffee); }
+
+/*
+  La jauge est un tiramisu vu de côté, et non une barre de progression.
+
+  Elle reprend exactement les couches des coupes de la connexion — biscuit
+  imbibé, mascarpone, cacao — pour que l'application se reconnaisse d'un écran
+  à l'autre. Une barre verte pouvait être celle de n'importe quel logiciel ;
+  celle-ci ne peut être que la nôtre.
+
+  Le plat est évasé comme les coupes : plus ouvert en haut qu'au fond.
+*/
+.gauge__track {
+  position: relative;
+  height: 46px;
+  border-radius: 5px 5px 16px 16px;
+  background: #fff;
+  border: 2px solid var(--border);
+  /* Le liseré doré du couvercle Merisù, comme sur les coupes. */
+  box-shadow: inset 0 3px 0 rgba(255, 203, 29, .35);
+  overflow: hidden;
+}
+
+/*
+  La largeur vient du serveur : c'est une VALEUR, pas une règle de style, et
+  aucune feuille statique ne peut la connaître à l'avance. La feuille garde la
+  main sur tout le reste — couleur, forme, animation — donc la convention
+  « aucun style en ligne » tient toujours : un restylage complet n'a qu'à lire
+  la même variable.
+*/
+.gauge__fill {
+  height: 100%;
+  width: var(--fill, 0%);
+  /*
+    Les couches sont HORIZONTALES et la jauge se remplit de la gauche vers la
+    droite : le dessert garde sa structure quel que soit l'avancement, comme
+    un plat qu'on entame par un bout. Un dégradé oblique aurait fait pencher
+    les couches à chaque pourcentage.
+  */
+  /*
+    Une coupe de tiramisu, dans ses proportions réelles : une pluie de cacao
+    fine sur le dessus, une épaisse couche de mascarpone, un trait de biscuit
+    imbibé, une seconde couche de crème. Des bandes d'égale épaisseur
+    donnaient un pyjama rayé, pas un dessert.
+  */
+  background: linear-gradient(
+    180deg,
+    #6F4E37 0 14%,
+    #FFFBF0 14% 46%,
+    #B98757 46% 58%,
+    #F6E8CE 58% 88%,
+    #C8A275 88% 100%
+  );
+  transition: width var(--dur-slow) var(--ease-out);
+}
+
+/*
+  La dernière pluie de cacao, sur la tranche : elle marque le bord du remplissage
+  et donne au dessert son relief. Sans elle, la coupure entre le rempli et le
+  vide était un trait net qui trahissait la barre de progression.
+*/
+.gauge__fill::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--fill, 0%);
+  width: 10px;
+  transform: translateX(-10px);
+  background: linear-gradient(90deg, rgba(111, 78, 55, 0), rgba(111, 78, 55, .35));
+}
+
+/*
+  L'état ne change PAS la recette : un tiramisu en retard reste un tiramisu.
+  C'est le plat qui se colore — doré quand l'objectif est atteint, ambré quand
+  le rythme décroche.
+*/
+.gauge--reached .gauge__track { border-color: var(--gold); box-shadow: inset 0 3px 0 var(--gold); }
+.gauge--late .gauge__track { border-color: #E8C98A; }
+
+/*
+  Le repère de rythme : où l'on DEVRAIT en être vu le jour du mois. C'est lui
+  qui rend la jauge utile — « 600 sur 1 000 » est excellent le 10 et inquiétant
+  le 28, et la barre seule ne le dit pas.
+*/
+/*
+  Le repère de rythme : où l'on DEVRAIT en être vu le jour du mois. C'est lui
+  qui rend la jauge utile — « 600 sur 1 000 » est excellent le 10 et inquiétant
+  le 28, et le dessert seul ne le dit pas.
+
+  Dessiné comme la lame d'une spatule plantée dans le plat, framboise pour se
+  détacher des bruns du tiramisu.
+*/
+.gauge__pace {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--pace, 0%);
+  width: 3px;
+  margin-left: -1px;
+  background: var(--brand);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .55);
 }
 
 .gauge__hint { margin: var(--space-2) 0 0; }

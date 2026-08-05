@@ -275,9 +275,10 @@ final class CountController extends AbstractController
      *
      * Par défaut J+1 : c'est la production de demain qu'on prépare ce soir.
      *
-     * La check-list peut s'y opposer : tant que des points obligatoires ne sont
-     * pas cochés, le plan reste masqué plutôt qu'affiché barré — une liste
-     * visible finit toujours par être suivie.
+     * Rien ne s'y oppose : la tuile mène droit à la liste. Un verrou de
+     * check-list y a vécu un temps ; il transformait un écran de consultation
+     * en obstacle, alors que la production se prépare le soir et que la
+     * check-list se coche au fil de la journée.
      */
     #[Route('/a-produire', name: 'production', methods: ['GET'])]
     public function production(Request $request): Response
@@ -306,15 +307,6 @@ final class CountController extends AbstractController
         $consultant = $this->currentUser->requireConsultant();
 
         $view = $this->productionView($request);
-
-        // Le verrou vaut aussi ici : sans cela, l'impression contournerait la
-        // check-list d'un simple lien.
-        if ($view['blocking'] !== []) {
-            return $this->redirectToRoute('production', [
-                'forDate' => $view['forDate'],
-                'category' => $view['category'],
-            ]);
-        }
 
         return $this->render('count/labels.html.twig', $view + [
             'printedBy' => $consultant->displayName(),
@@ -364,7 +356,6 @@ final class CountController extends AbstractController
             // Catégories réellement portées par les produits : la liste ne se
             // configure nulle part, elle se déduit. Aucune donnée en dur (§2).
             'categories' => $this->categories($products),
-            'blocking' => $this->checklist->blockingItems($today, $workstationId),
         ];
     }
 

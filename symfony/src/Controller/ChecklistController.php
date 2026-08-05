@@ -6,7 +6,6 @@ namespace Merisu\Inventory\Controller;
 
 use Merisu\Inventory\Domain\ChecklistItem;
 use Merisu\Inventory\Domain\ChecklistSection;
-use Merisu\Inventory\Domain\ProductionGate;
 use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Service\InventoryService;
 use Merisu\Inventory\Store\Store;
@@ -95,18 +94,6 @@ final class ChecklistController extends AbstractController
 
         $this->addFlash('success', 'common.saved');
 
-        // L'opérateur venu du verrou de production y retourne directement : il
-        // cochait ces points POUR produire, le renvoyer à la check-list lui
-        // laisserait retrouver seul un écran situé deux pas plus loin.
-        if ($request->request->get('retour') === 'production') {
-            $params = array_filter([
-                'forDate' => (string) $request->request->get('forDate', ''),
-                'category' => (string) $request->request->get('category', ''),
-            ], static fn (string $v): bool => $v !== '');
-
-            return $this->redirectToRoute('production', $params);
-        }
-
         return $this->redirectToRoute('checklist');
     }
 
@@ -191,27 +178,5 @@ final class ChecklistController extends AbstractController
         }
 
         return ['done' => $done, 'total' => $total, 'complete' => $total > 0 && $manquants === 0];
-    }
-
-    /**
-     * Points obligatoires qui manquent AVANT de produire.
-     *
-     * La règle vit dans `ProductionGate` : ici on ne fait que lui présenter
-     * l'état du jour. Un point n'est bloquant que si un administrateur l'a
-     * marqué obligatoire — la sévérité du verrou se règle en administration,
-     * pas dans le code.
-     *
-     * @return list<ChecklistItem> Vide = rien ne s'oppose à la production.
-     */
-    public function blockingItems(string $date, string $workstationId): array
-    {
-        $entries = $this->store->checklistEntries($date, $workstationId);
-
-        $checked = [];
-        foreach ($entries as $id => $entry) {
-            $checked[(string) $id] = $entry->checked;
-        }
-
-        return ProductionGate::blockingItems($this->store->checklistItems(true), $checked);
     }
 }

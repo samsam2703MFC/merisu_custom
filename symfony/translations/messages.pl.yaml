@@ -136,6 +136,8 @@ produce:
     closingStock: 'Stan zamknięcia'
     nothing: 'Nic do wyprodukowania dla tego produktu.'
     empty: 'Brak utrwalonego planu na ten dzień.'
+    needEveningCount: 'Najpierw zrób wieczorną inwentaryzację.'
+    needEveningCountHint: 'Plan wylicza się przy zatwierdzeniu stanu zamknięcia. Bez stanu z %date% nie ma czego pokazać.'
     frozenAt: 'Plan utrwalony %datetime%'
     missingThreshold: 'Brak progu na ten dzień — popraw w administracji.'
     computedFrom: 'Obliczone na podstawie stanu zamknięcia z %date%'
@@ -143,6 +145,7 @@ produce:
     shortcutTomorrow: Jutro
     tileTitle: 'Lista produkcji'
     todayTitle: 'Plan na dziś'
+    openToday: 'Zobacz plan na dziś'
     category: Kategoria
     allCategories: 'Wszystkie kategorie'
     printLabels: 'Drukuj etykiety'
@@ -152,9 +155,6 @@ produce:
     printedBy: 'Wydrukował(a): %name%'
     backToList: 'Powrót do listy'
     labelFor: 'Na dzień %date%'
-    checklistGate: 'Uzupełnij listę kontrolną przed produkcją'
-    checklistGateHint: 'Te obowiązkowe punkty trzeba odhaczyć, zanim otworzy się plan produkcji.'
-    openChecklist: 'Otwórz listę kontrolną'
 
 admin:
     title: Administracja

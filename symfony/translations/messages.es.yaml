@@ -136,6 +136,8 @@ produce:
     closingStock: 'Stock de cierre'
     nothing: 'Nada que producir para este producto.'
     empty: 'No hay plan congelado para esta fecha.'
+    needEveningCount: 'Haga primero su inventario de la tarde.'
+    needEveningCountHint: 'El plan se calcula al validar la existencia de cierre. Sin la del %date% no hay nada que mostrar.'
     frozenAt: 'Plan congelado el %datetime%'
     missingThreshold: 'Sin umbral definido para este día — corrígelo en administración.'
     computedFrom: 'Calculado a partir del stock de cierre del %date%'
@@ -143,6 +145,7 @@ produce:
     shortcutTomorrow: Mañana
     tileTitle: 'Lista de producción'
     todayTitle: 'Plan de hoy'
+    openToday: 'Ver el plan de hoy'
     category: Categoría
     allCategories: 'Todas las categorías'
     emptyCategory: 'Ningún producto por preparar en la categoría « %category% » para esta fecha.'
@@ -152,9 +155,6 @@ produce:
     printedBy: 'Impreso por %name%'
     backToList: 'Volver a la lista'
     labelFor: 'Para el %date%'
-    checklistGate: 'Check-list por completar antes de producir'
-    checklistGateHint: 'Estos puntos obligatorios deben marcarse antes de abrir el plan de producción.'
-    openChecklist: 'Abrir la check-list'
 
 admin:
     title: Administración

@@ -25,17 +25,20 @@
   </div>
 
   {#
-    Le plan du jour ouvre l'écran, en jaune.
+    Le plan du jour ouvre l'écran, et la note de marque se déplie dessous.
 
-    Il était en dernier, en pointillés, au bas d'une liste qu'on ne fait pas
-    défiler quand on sait déjà ce qu'on vient faire. C'est pourtant la seule
-    chose à savoir avant de commencer : ce qu'il faut sortir aujourd'hui, et
-    ce que la marque attend au comptoir. Le jaune Merisù le distingue des
-    tâches sans lui voler la framboise, réservée à l'action.
+    Un seul bloc et non deux : la note n'est pas une information à part, c'est
+    ce qu'il faut avoir en tête AVANT de suivre le plan. Bâti sur <details>,
+    donc il s'ouvre et se ferme sans une ligne de JavaScript, et le chevron
+    tourne avec.
+
+    Ouvert par défaut : une consigne qu'il faut aller chercher n'est pas lue.
+    Le repli sert à qui la connaît déjà, pas à qui la découvre.
   #}
-  <a class="daynote" href="{{ path('production', { forDate: date }) }}">
-    <span class="daynote__head">
+  <details class="daynote" open>
+    <summary class="daynote__summary">
       <span class="daynote__icon">{{ ui.icon('tray') }}</span>
+
       <span class="daynote__titles">
         <span class="daynote__title">{{ 'produce.todayTitle'|trans }}</span>
         <span class="daynote__meta">
@@ -46,37 +49,40 @@
           {% endif %}
         </span>
       </span>
-    </span>
-  </a>
 
-  {#
-    Note du jour — les consignes de marque, rappelées là où on les lit.
+      <span class="daynote__chevron" aria-hidden="true"></span>
+    </summary>
 
-    Affichées et non repliées : une consigne qu'il faut ouvrir pour lire n'est
-    jamais lue. Le texte vit dans les traductions, comme tout le reste : la
-    marque le fait évoluer sans redéploiement, dans les quatre langues.
-  #}
-  <section class="daynote-card">
-    <h2 class="daynote-card__title">{{ 'daynote.title'|trans }}</h2>
+    <div class="daynote__panel">
+      <h2 class="daynote-card__title">{{ 'daynote.title'|trans }}</h2>
 
-    <div class="daynote-card__item">
-      <h3 class="daynote-card__heading">{{ 'daynote.tiramishow.title'|trans }}</h3>
-      <p class="daynote-card__text">{{ 'daynote.tiramishow.body'|trans }}</p>
-      <p class="daynote-card__text muted">{{ 'daynote.tiramishow.website'|trans }}</p>
+      <div class="daynote-card__item">
+        <h3 class="daynote-card__heading">{{ 'daynote.tiramishow.title'|trans }}</h3>
+        <p class="daynote-card__text">{{ 'daynote.tiramishow.body'|trans }}</p>
+        <p class="daynote-card__text muted">{{ 'daynote.tiramishow.website'|trans }}</p>
+      </div>
+
+      <div class="daynote-card__item">
+        <h3 class="daynote-card__heading">{{ 'daynote.greeting.title'|trans }}</h3>
+        <p class="daynote-card__text">
+          <span class="daynote-card__word">{{ 'daynote.greeting.hello'|trans }}</span>
+          {{ 'daynote.greeting.helloWhen'|trans }}
+        </p>
+        <p class="daynote-card__text">
+          <span class="daynote-card__word">{{ 'daynote.greeting.thanks'|trans }}</span>
+          {{ 'daynote.greeting.thanksWhen'|trans }}
+        </p>
+      </div>
+
+      {# Le plan lui-même reste à un clic : le résumé sert au dépli, il ne peut
+         donc pas être aussi un lien. #}
+      <div class="form-actions">
+        <a class="button button--secondary" href="{{ path('production', { forDate: date }) }}">
+          {{ 'produce.openToday'|trans }}
+        </a>
+      </div>
     </div>
-
-    <div class="daynote-card__item">
-      <h3 class="daynote-card__heading">{{ 'daynote.greeting.title'|trans }}</h3>
-      <p class="daynote-card__text">
-        <span class="daynote-card__word">{{ 'daynote.greeting.hello'|trans }}</span>
-        {{ 'daynote.greeting.helloWhen'|trans }}
-      </p>
-      <p class="daynote-card__text">
-        <span class="daynote-card__word">{{ 'daynote.greeting.thanks'|trans }}</span>
-        {{ 'daynote.greeting.thanksWhen'|trans }}
-      </p>
-    </div>
-  </section>
+  </details>
 
   <div class="task-list">
     {% for task in tasks %}

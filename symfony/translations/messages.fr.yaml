@@ -139,6 +139,8 @@ produce:
     closingStock: 'Stock de clôture'
     nothing: 'Rien à produire pour ce produit.'
     empty: 'Aucun plan figé pour cette date.'
+    needEveningCount: "Faites d'abord votre inventaire du soir."
+    needEveningCountHint: 'Le plan se calcule à la validation du stock de clôture. Sans celui du %date%, il n''y a rien à produire à afficher.'
     frozenAt: 'Plan figé le %datetime%'
     missingThreshold: "Aucun seuil défini pour ce jour — à corriger dans l'administration."
     computedFrom: 'Calculé à partir du stock de clôture du %date%'
@@ -146,6 +148,7 @@ produce:
     shortcutTomorrow: Demain
     tileTitle: 'Liste de production'
     todayTitle: "Plan d'aujourd'hui"
+    openToday: "Voir le plan d'aujourd'hui"
     category: Catégorie
     allCategories: 'Toutes les catégories'
     emptyCategory: 'Aucun produit à préparer dans la catégorie « %category% » pour cette date.'
@@ -155,9 +158,6 @@ produce:
     printedBy: 'Édité par %name%'
     backToList: 'Retour à la liste'
     labelFor: 'Pour le %date%'
-    checklistGate: 'Check-list à terminer avant de produire'
-    checklistGateHint: "Ces points obligatoires doivent être cochés avant d'ouvrir le plan de production."
-    openChecklist: 'Ouvrir la check-list'
 
 admin:
     title: Administration
