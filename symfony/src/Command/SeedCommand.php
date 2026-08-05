@@ -6,6 +6,7 @@ namespace Merisu\Inventory\Command;
 
 use Merisu\Inventory\Domain\ChecklistItem;
 use Merisu\Inventory\Domain\ChecklistSection;
+use Merisu\Inventory\Domain\DayNote;
 use Merisu\Inventory\Domain\DayOfWeek;
 use Merisu\Inventory\Domain\Product;
 use Merisu\Inventory\Domain\RoundingMode;
@@ -50,6 +51,49 @@ final class SeedCommand extends Command
         ChecklistSection::Opening->value => ['Point d\'ouverture 1', 'Point d\'ouverture 2'],
         ChecklistSection::Closing->value => ['Point de fermeture 1', 'Point de fermeture 2'],
         ChecklistSection::Quality->value => ['Contrôle qualité 1', 'Contrôle qualité 2'],
+    ];
+
+    /**
+     * Consignes de marque de premier démarrage.
+     *
+     * Le Tiramishow et le Ciao / Grazie sont ceux de Merisù aujourd'hui ; ils
+     * sont posés ici pour que l'écran ne soit pas vide à la première ouverture,
+     * PAS pour être définitifs. Ils se réécrivent dans Admin ▸ Note du jour,
+     * dans les quatre langues, sans redéploiement.
+     *
+     * @var list<array{id: string, heading: array<string,string>, body: array<string,string>}>
+     */
+    private const PLACEHOLDER_DAY_NOTES = [
+        [
+            'id' => 'note-tiramishow',
+            'heading' => [
+                'fr' => 'Le Tiramishow',
+                'pl' => 'Tiramishow',
+                'it' => 'Il Tiramishow',
+                'es' => 'El Tiramishow',
+            ],
+            'body' => [
+                'fr' => "Le tiramisu se monte DEVANT le client, jamais en coulisse. Le geste fait partie du produit : on annonce ce qu'on pose, couche après couche, et on prend le temps de la dernière pluie de cacao.\nLe détail du geste est sur le site de la marque.",
+                'pl' => "Tiramisu składamy PRZY kliencie, nigdy na zapleczu. Ten gest jest częścią produktu: mówimy, co kładziemy, warstwa po warstwie, i nie spieszymy się z ostatnią posypką kakao.\nSzczegóły gestu znajdziesz na stronie marki.",
+                'it' => "Il tiramisù si monta DAVANTI al cliente, mai dietro le quinte. Il gesto fa parte del prodotto: si annuncia ciò che si posa, strato dopo strato, e ci si prende il tempo per l'ultima pioggia di cacao.\nIl dettaglio del gesto è sul sito del marchio.",
+                'es' => "El tiramisú se monta DELANTE del cliente, nunca entre bastidores. El gesto forma parte del producto: se anuncia lo que se pone, capa a capa, y se dedica tiempo a la última lluvia de cacao.\nEl detalle del gesto está en la web de la marca.",
+            ],
+        ],
+        [
+            'id' => 'note-ciao-grazie',
+            'heading' => [
+                'fr' => 'Ciao et Grazie',
+                'pl' => 'Ciao i Grazie',
+                'it' => 'Ciao e Grazie',
+                'es' => 'Ciao y Grazie',
+            ],
+            'body' => [
+                'fr' => "Ciao à chaque client qui entre, dès qu'il franchit la porte — même les mains prises.\nGrazie à chaque client qui repart, en le regardant.",
+                'pl' => "Ciao do każdego klienta wchodzącego do sklepu, od progu — nawet z zajętymi rękami.\nGrazie do każdego wychodzącego klienta, patrząc mu w oczy.",
+                'it' => "Ciao a ogni cliente che entra, appena varca la porta — anche con le mani occupate.\nGrazie a ogni cliente che esce, guardandolo negli occhi.",
+                'es' => "Ciao a cada cliente que entra, en cuanto cruza la puerta — incluso con las manos ocupadas.\nGrazie a cada cliente que se va, mirándole a los ojos.",
+            ],
+        ],
     ];
 
     /** Matrice fictive : même seuil en semaine, renforcé le week-end. */
@@ -136,6 +180,21 @@ final class SeedCommand extends Command
                 }
             }
             $io->writeln("+ $points points de check-list créés");
+        }
+
+        if ($this->store->dayNotes() !== []) {
+            $io->writeln('· note du jour déjà rédigée, inchangée');
+        } else {
+            foreach (self::PLACEHOLDER_DAY_NOTES as $rang => $note) {
+                $this->store->saveDayNote(new DayNote(
+                    $note['id'],
+                    $note['heading'],
+                    $note['body'],
+                    $rang + 1,
+                    true,
+                ));
+            }
+            $io->writeln('+ ' . \count(self::PLACEHOLDER_DAY_NOTES) . ' consignes de note du jour créées');
         }
 
         $io->newLine();

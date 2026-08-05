@@ -95,6 +95,7 @@ adminLogin:
 
 nav:
     checklist: 'Lista kontrolna'
+    dayNote: 'Notatka dnia'
     morning: Rano
     evening: Wieczór
     toProduce: 'Do wyprodukowania'
@@ -362,13 +363,14 @@ countries:
 
 daynote:
     title: 'Notatka dnia'
-    tiramishow:
-        title: Tiramishow
-        body: 'Tiramisu składamy PRZY kliencie, nigdy na zapleczu. Ten gest jest częścią produktu: mówimy, co kładziemy, warstwa po warstwie, i nie spieszymy się z ostatnią posypką kakao.'
-        website: 'Szczegóły gestu znajdziesz na stronie marki.'
-    greeting:
-        title: 'Ciao i Grazie'
-        hello: Ciao
-        helloWhen: 'do każdego klienta wchodzącego do sklepu, od progu — nawet z zajętymi rękami.'
-        thanks: Grazie
-        thanksWhen: 'do każdego wychodzącego klienta, patrząc mu w oczy.'
+    empty: 'Nie napisano jeszcze żadnej wskazówki. Administrator wpisuje je w Admin ▸ Notatka dnia.'
+    admin:
+        title: 'Notatka dnia'
+        intro: 'Wskazówki marki wyświetlane na górze listy zadań. Wyczyszczenie wszystkich pól wskazówki usuwa ją.'
+        heading: 'Śródtytuł (%locale%)'
+        body: 'Treść (%locale%)'
+        lineBreaks: 'Podziały wierszy są zachowywane na ekranie.'
+        order: Kolejność
+        active: Wyświetlana
+        add: 'Dodaj wskazówkę'
+        deleteHint: 'Wyczyszczenie wszystkich pól tej wskazówki usuwa ją.'

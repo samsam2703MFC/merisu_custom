@@ -10,6 +10,7 @@ use Merisu\Inventory\Adapter\Material;
 use Merisu\Inventory\Adapter\ShopRankingServiceInterface;
 use Merisu\Inventory\Adapter\Workstation;
 use Merisu\Inventory\Domain\ChecklistItem;
+use Merisu\Inventory\Domain\DayNote;
 use Merisu\Inventory\Domain\ContainerQuantity;
 use Merisu\Inventory\Domain\Locale;
 use Merisu\Inventory\Domain\Product;
@@ -46,6 +47,8 @@ final class AppExtension extends AbstractExtension
             new TwigFunction('product_label', $this->productLabel(...)),
             new TwigFunction('material_label', $this->materialLabel(...)),
             new TwigFunction('checklist_text', $this->checklistText(...)),
+            new TwigFunction('day_note_heading', $this->dayNoteHeading(...)),
+            new TwigFunction('day_note_body', $this->dayNoteBody(...)),
             new TwigFunction('current_user', fn () => $this->currentUser),
             new TwigFunction('app_settings', fn () => $this->store->settings()),
             new TwigFunction('supported_locales', static fn (): array => Locale::all()),
@@ -122,6 +125,18 @@ final class AppExtension extends AbstractExtension
     public function checklistText(ChecklistItem $item): string
     {
         return $item->text($this->locale(), $this->store->settings()->defaultLocale);
+    }
+
+    /** Intertitre d'une consigne, dans la langue du poste. */
+    public function dayNoteHeading(DayNote $note): string
+    {
+        return $note->headingText($this->locale(), $this->store->settings()->defaultLocale);
+    }
+
+    /** Texte d'une consigne, dans la langue du poste. */
+    public function dayNoteBody(DayNote $note): string
+    {
+        return $note->bodyText($this->locale(), $this->store->settings()->defaultLocale);
     }
 
     public function materialLabel(?Material $material, string $fallback = ''): string

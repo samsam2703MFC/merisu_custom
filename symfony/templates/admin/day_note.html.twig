@@ -1,0 +1,108 @@
+{#
+  Administration de la note du jour.
+
+  Les consignes de marque sont des DONNÉES, comme les produits et les points de
+  check-list : elles se rédigent, se réordonnent et se retirent ici. Elles
+  vivaient dans les fichiers de traduction, ce qui imposait un déploiement pour
+  changer une phrase — autant dire qu'elles n'auraient jamais changé.
+#}
+{% extends 'admin/_layout.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'daynote.admin.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block admin_content %}
+
+  {{ ui.page_header('daynote.admin.title'|trans, 'daynote.admin.intro'|trans) }}
+
+  <form method="post" action="{{ path('admin_day_note_save') }}">
+
+    {#
+      Une fiche repliée par consigne : quatre intertitres et quatre textes font
+      huit champs chacune, et trois consignes dépliées demandaient déjà de
+      faire défiler pour atteindre le bouton d'enregistrement.
+    #}
+    {% for note in notes %}
+      <details class="card admin-item">
+        <summary class="admin-item__summary">
+          <span class="admin-item__head">
+            {{ ui.badge('neutral', note.sortOrder ~ '') }}
+            <span class="admin-item__name">{{ day_note_heading(note) }}</span>
+          </span>
+          {% if not note.active %}{{ ui.badge('warn', 'admin.products.inactive'|trans) }}{% endif %}
+        </summary>
+
+        {{ _self.champs(note.id, note, locales) }}
+      </details>
+    {% endfor %}
+
+    {# Ligne d'ajout, toujours dépliée : c'est le geste qu'on vient faire quand
+       la page ne contient encore rien. #}
+    <details class="card admin-item" {{ notes is empty ? 'open' : '' }}>
+      <summary class="admin-item__summary">
+        <span class="admin-item__head">
+          <span class="admin-item__name">{{ 'daynote.admin.add'|trans }}</span>
+        </span>
+      </summary>
+
+      {{ _self.champs(newId, null, locales) }}
+    </details>
+
+    <div class="form-actions">
+      <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
+    </div>
+  </form>
+
+{% endblock %}
+
+{# Les champs d'une consigne. Mêmes noms pour une existante et pour la ligne
+   d'ajout : le contrôleur n'a qu'un seul chemin à traiter. #}
+{% macro champs(id, note, locales) %}
+  <div class="form">
+    <div class="field-grid">
+      {% for locale in locales %}
+        <div class="field">
+          <label class="field__label" for="heading-{{ id }}-{{ locale.value }}">
+            {{ 'daynote.admin.heading'|trans({ '%locale%': ('locales.' ~ locale.value)|trans }) }}
+          </label>
+          <input class="field__input" type="text" maxlength="120"
+                 id="heading-{{ id }}-{{ locale.value }}"
+                 name="note[{{ id }}][heading_{{ locale.value }}]"
+                 value="{{ note ? note.heading[locale.value] ?? '' : '' }}">
+        </div>
+      {% endfor %}
+    </div>
+
+    {% for locale in locales %}
+      <div class="field">
+        <label class="field__label" for="body-{{ id }}-{{ locale.value }}">
+          {{ 'daynote.admin.body'|trans({ '%locale%': ('locales.' ~ locale.value)|trans }) }}
+        </label>
+        <textarea class="field__input" rows="3" maxlength="1000"
+                  id="body-{{ id }}-{{ locale.value }}"
+                  name="note[{{ id }}][body_{{ locale.value }}]">{{ note ? note.body[locale.value] ?? '' : '' }}</textarea>
+      </div>
+    {% endfor %}
+
+    <p class="field__hint">{{ 'daynote.admin.lineBreaks'|trans }}</p>
+
+    <div class="field-grid">
+      <div class="field">
+        <label class="field__label" for="order-{{ id }}">{{ 'daynote.admin.order'|trans }}</label>
+        <input class="field__input" type="number" step="1"
+               id="order-{{ id }}" name="note[{{ id }}][sortOrder]"
+               value="{{ note ? note.sortOrder : 0 }}">
+      </div>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="active-{{ id }}" name="note[{{ id }}][active]" value="1"
+               {{ note is null or note.active ? 'checked' : '' }}>
+        <label for="active-{{ id }}">{{ 'daynote.admin.active'|trans }}</label>
+      </div>
+    </div>
+
+    {% if note %}
+      <p class="field__hint">{{ 'daynote.admin.deleteHint'|trans }}</p>
+    {% endif %}
+  </div>
+{% endmacro %}

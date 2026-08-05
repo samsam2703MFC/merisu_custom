@@ -98,6 +98,7 @@ adminLogin:
 
 nav:
     checklist: 'Check-list'
+    dayNote: 'Note du jour'
     morning: Matin
     evening: Soir
     toProduce: 'À produire'
@@ -365,13 +366,14 @@ countries:
 
 daynote:
     title: 'Note du jour'
-    tiramishow:
-        title: 'Le Tiramishow'
-        body: "Le tiramisu se monte DEVANT le client, jamais en coulisse. Le geste fait partie du produit : on annonce ce qu'on pose, couche après couche, et on prend le temps de la dernière pluie de cacao."
-        website: 'Le détail du geste est sur le site de la marque.'
-    greeting:
-        title: 'Ciao et Grazie'
-        hello: Ciao
-        helloWhen: "à chaque client qui entre, dès qu'il franchit la porte — même les mains prises."
-        thanks: Grazie
-        thanksWhen: 'à chaque client qui repart, en le regardant.'
+    empty: "Aucune consigne n'est encore rédigée. Un administrateur les écrit dans Admin ▸ Note du jour."
+    admin:
+        title: 'Note du jour'
+        intro: "Les consignes de marque affichées en tête du menu des tâches. Vider tous les champs d'une consigne la supprime."
+        heading: 'Intertitre (%locale%)'
+        body: 'Texte (%locale%)'
+        lineBreaks: 'Les retours à la ligne sont conservés à l''écran.'
+        order: Ordre
+        active: Affichée
+        add: 'Ajouter une consigne'
+        deleteHint: 'Vider tous les champs de cette consigne la supprime.'

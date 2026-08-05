@@ -13,6 +13,7 @@ use Merisu\Inventory\Domain\CountMode;
 use Merisu\Inventory\Domain\CountMoment;
 use Merisu\Inventory\Domain\CountPhoto;
 use Merisu\Inventory\Domain\DayOfWeek;
+use Merisu\Inventory\Domain\DayNote;
 use Merisu\Inventory\Domain\GeneralSettings;
 use Merisu\Inventory\Domain\InventoryCount;
 use Merisu\Inventory\Domain\Locale;
@@ -536,6 +537,60 @@ final class Store
     }
 
     // ── Arrêt de production ─────────────────────────────────────────────────
+
+    // ── Note du jour ────────────────────────────────────────────────────────
+
+    /** @return list<DayNote> */
+    public function dayNotes(bool $activeOnly = false): array
+    {
+        $sql = 'SELECT * FROM inv_day_note'
+            . ($activeOnly ? ' WHERE active = 1' : '')
+            . ' ORDER BY sort_order, id';
+
+        return array_map($this->hydrateDayNote(...), $this->db->fetchAllAssociative($sql));
+    }
+
+    public function dayNote(string $id): ?DayNote
+    {
+        $row = $this->db->fetchAssociative('SELECT * FROM inv_day_note WHERE id = ?', [$id]);
+
+        return $row === false ? null : $this->hydrateDayNote($row);
+    }
+
+    public function saveDayNote(DayNote $note): void
+    {
+        $data = [
+            'heading' => json_encode($note->heading, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+            'body' => json_encode($note->body, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+            'sort_order' => $note->sortOrder,
+            'active' => $note->active ? 1 : 0,
+        ];
+
+        $exists = (int) $this->db->fetchOne('SELECT COUNT(*) FROM inv_day_note WHERE id = ?', [$note->id]) > 0;
+
+        if ($exists) {
+            $this->db->update('inv_day_note', $data, ['id' => $note->id]);
+        } else {
+            $this->db->insert('inv_day_note', $data + ['id' => $note->id]);
+        }
+    }
+
+    public function deleteDayNote(string $id): void
+    {
+        $this->db->delete('inv_day_note', ['id' => $id]);
+    }
+
+    /** @param array<string,mixed> $row */
+    private function hydrateDayNote(array $row): DayNote
+    {
+        return new DayNote(
+            (string) $row['id'],
+            json_decode((string) $row['heading'], true) ?: [],
+            json_decode((string) $row['body'], true) ?: [],
+            (int) $row['sort_order'],
+            (bool) $row['active'],
+        );
+    }
 
     // ── Audit ───────────────────────────────────────────────────────────────
 

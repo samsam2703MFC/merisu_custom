@@ -169,6 +169,19 @@ final class SchemaInstaller
             $t->addIndex(['business_date', 'workstation_id'], 'inv_checklist_by_date');
         }
 
+        // Note du jour : les consignes de marque affichées au menu des tâches.
+        // Rédigées en administration, dans les quatre langues — une consigne
+        // de marque évolue, et un déploiement par phrase n'aurait rien changé.
+        if (!\in_array('inv_day_note', $existing, true)) {
+            $t = $schema->createTable('inv_day_note');
+            $t->addColumn('id', 'string', ['length' => 64]);
+            $t->addColumn('heading', 'text');          // JSON : { "fr": "…", … }
+            $t->addColumn('body', 'text');             // JSON : { "fr": "…", … }
+            $t->addColumn('sort_order', 'integer', ['default' => 0]);
+            $t->addColumn('active', 'boolean', ['default' => true]);
+            $t->setPrimaryKey(['id']);
+        }
+
         if (!\in_array('inv_audit', $existing, true)) {
             $t = $schema->createTable('inv_audit');
             $t->addColumn('id', 'string', ['length' => 64]);

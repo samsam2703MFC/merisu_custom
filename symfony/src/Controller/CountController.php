@@ -120,6 +120,9 @@ final class CountController extends AbstractController
             // Tuile « À produire (J+1) » : violette, et son icône suit l'état.
             // Un pictogramme figé n'apprend rien ; la cagette chargée dit qu'il
             // y a du travail avant même qu'on ait lu la ligne.
+            // Consignes de marque, rédigées en administration : le module
+            // n'en connaît aucune, il les affiche.
+            'dayNotes' => $this->store->dayNotes(true),
             'produce' => [
                 'forDate' => $tomorrow,
                 'count' => $toProduce,

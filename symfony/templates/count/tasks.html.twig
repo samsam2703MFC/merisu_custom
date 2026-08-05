@@ -62,23 +62,20 @@
       </summary>
 
       <div class="task__panel">
-        <div class="daynote-item">
-          <h2 class="daynote-item__heading">{{ 'daynote.tiramishow.title'|trans }}</h2>
-          <p class="daynote-item__text">{{ 'daynote.tiramishow.body'|trans }}</p>
-          <p class="daynote-item__text muted">{{ 'daynote.tiramishow.website'|trans }}</p>
-        </div>
-
-        <div class="daynote-item">
-          <h2 class="daynote-item__heading">{{ 'daynote.greeting.title'|trans }}</h2>
-          <p class="daynote-item__text">
-            <span class="daynote-item__word">{{ 'daynote.greeting.hello'|trans }}</span>
-            {{ 'daynote.greeting.helloWhen'|trans }}
-          </p>
-          <p class="daynote-item__text">
-            <span class="daynote-item__word">{{ 'daynote.greeting.thanks'|trans }}</span>
-            {{ 'daynote.greeting.thanksWhen'|trans }}
-          </p>
-        </div>
+        {#
+          Les consignes viennent de l'administration : aucune n'est écrite ici.
+          `nl2br` conserve les retours à la ligne saisis — « Ciao à l'entrée »
+          et « Grazie au départ » sont deux gestes, et les écrire l'un sous
+          l'autre se lit mieux qu'un paragraphe.
+        #}
+        {% for note in dayNotes %}
+          <div class="daynote-item">
+            <h2 class="daynote-item__heading">{{ day_note_heading(note) }}</h2>
+            <p class="daynote-item__text">{{ day_note_body(note)|nl2br }}</p>
+          </div>
+        {% else %}
+          <p class="daynote-item__text muted">{{ 'daynote.empty'|trans }}</p>
+        {% endfor %}
 
         {# Le plan reste à un clic : le résumé sert au dépli, il ne peut donc
            pas être aussi un lien. #}

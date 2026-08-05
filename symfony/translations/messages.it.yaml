@@ -95,6 +95,7 @@ adminLogin:
 
 nav:
     checklist: 'Check-list'
+    dayNote: 'Nota del giorno'
     morning: Mattina
     evening: Sera
     toProduce: 'Da produrre'
@@ -362,13 +363,14 @@ countries:
 
 daynote:
     title: 'Nota del giorno'
-    tiramishow:
-        title: 'Il Tiramishow'
-        body: "Il tiramisù si monta DAVANTI al cliente, mai dietro le quinte. Il gesto fa parte del prodotto: si annuncia ciò che si posa, strato dopo strato, e ci si prende il tempo per l'ultima pioggia di cacao."
-        website: 'Il dettaglio del gesto è sul sito del marchio.'
-    greeting:
-        title: 'Ciao e Grazie'
-        hello: Ciao
-        helloWhen: 'a ogni cliente che entra, appena varca la porta — anche con le mani occupate.'
-        thanks: Grazie
-        thanksWhen: 'a ogni cliente che esce, guardandolo negli occhi.'
+    empty: "Nessuna consegna è ancora stata scritta. Un amministratore le redige in Admin ▸ Nota del giorno."
+    admin:
+        title: 'Nota del giorno'
+        intro: "Le consegne del marchio mostrate in cima all'elenco dei compiti. Svuotare tutti i campi di una consegna la elimina."
+        heading: 'Sottotitolo (%locale%)'
+        body: 'Testo (%locale%)'
+        lineBreaks: 'Gli a capo sono conservati sullo schermo.'
+        order: Ordine
+        active: Mostrata
+        add: 'Aggiungi una consegna'
+        deleteHint: 'Svuotare tutti i campi di questa consegna la elimina.'

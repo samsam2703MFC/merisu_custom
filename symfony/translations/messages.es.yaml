@@ -95,6 +95,7 @@ adminLogin:
 
 nav:
     checklist: 'Lista de control'
+    dayNote: 'Nota del día'
     morning: Mañana
     evening: Tarde
     toProduce: 'Por producir'
@@ -362,13 +363,14 @@ countries:
 
 daynote:
     title: 'Nota del día'
-    tiramishow:
-        title: 'El Tiramishow'
-        body: 'El tiramisú se monta DELANTE del cliente, nunca entre bastidores. El gesto forma parte del producto: se anuncia lo que se pone, capa a capa, y se dedica tiempo a la última lluvia de cacao.'
-        website: 'El detalle del gesto está en la web de la marca.'
-    greeting:
-        title: 'Ciao y Grazie'
-        hello: Ciao
-        helloWhen: 'a cada cliente que entra, en cuanto cruza la puerta — incluso con las manos ocupadas.'
-        thanks: Grazie
-        thanksWhen: 'a cada cliente que se va, mirándole a los ojos.'
+    empty: 'Aún no se ha redactado ninguna consigna. Un administrador las escribe en Admin ▸ Nota del día.'
+    admin:
+        title: 'Nota del día'
+        intro: 'Las consignas de marca mostradas al principio de la lista de tareas. Vaciar todos los campos de una consigna la elimina.'
+        heading: 'Subtítulo (%locale%)'
+        body: 'Texto (%locale%)'
+        lineBreaks: 'Los saltos de línea se conservan en pantalla.'
+        order: Orden
+        active: Mostrada
+        add: 'Añadir una consigna'
+        deleteHint: 'Vaciar todos los campos de esta consigna la elimina.'

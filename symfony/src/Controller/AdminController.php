@@ -11,6 +11,7 @@ use Merisu\Inventory\Domain\ChecklistItem;
 use Merisu\Inventory\Domain\ChecklistSection;
 use Merisu\Inventory\Domain\CountMode;
 use Merisu\Inventory\Domain\CountMoment;
+use Merisu\Inventory\Domain\DayNote;
 use Merisu\Inventory\Domain\DayOfWeek;
 use Merisu\Inventory\Domain\GeneralSettings;
 use Merisu\Inventory\Domain\Locale;
@@ -116,6 +117,93 @@ final class AdminController extends AbstractController
         $this->addFlash('success', 'common.saved');
 
         return $this->redirectToRoute('admin_products');
+    }
+
+    // ── Note du jour ────────────────────────────────────────────────────────
+
+    #[Route('/note-du-jour', name: 'admin_day_note', methods: ['GET'])]
+    public function dayNote(): Response
+    {
+        $this->currentUser->requireAdmin();
+
+        return $this->render('admin/day_note.html.twig', [
+            'notes' => $this->store->dayNotes(),
+            // Un identifiant neuf pour la ligne d'ajout : le tirer au sort dans
+            // le gabarit risquerait d'écraser une consigne à chaque affichage.
+            'newId' => 'note-' . Store::uuid(),
+            'locales' => Locale::all(),
+        ]);
+    }
+
+    /**
+     * Enregistre la note du jour entière : intertitres, textes, ordre, activation.
+     *
+     * Un seul envoi pour tout l'écran, comme la check-list : rédiger consigne
+     * par consigne ferait autant d'allers-retours que de consignes.
+     */
+    #[Route('/note-du-jour', name: 'admin_day_note_save', methods: ['POST'])]
+    public function saveDayNote(Request $request): Response
+    {
+        $admin = $this->currentUser->requireAdmin();
+
+        /** @var array<string,array<string,mixed>> $lignes */
+        $lignes = $request->request->all('note');
+        $enregistres = 0;
+        $supprimes = 0;
+
+        foreach ($lignes as $id => $champs) {
+            $id = trim((string) $id);
+            if ($id === '') {
+                continue;
+            }
+
+            $heading = [];
+            $body = [];
+
+            foreach (Locale::all() as $locale) {
+                $titre = trim((string) ($champs['heading_' . $locale->value] ?? ''));
+                if ($titre !== '') {
+                    $heading[$locale->value] = mb_substr($titre, 0, 120);
+                }
+
+                // Les retours à la ligne sont conservés : « Ciao à l'entrée »
+                // et « Grazie au départ » sont deux gestes, et les écrire l'un
+                // sous l'autre les rend plus lisibles qu'un paragraphe.
+                $texte = trim((string) ($champs['body_' . $locale->value] ?? ''));
+                if ($texte !== '') {
+                    $body[$locale->value] = mb_substr($texte, 0, 1000);
+                }
+            }
+
+            // Tout vide = suppression. C'est le geste naturel pour retirer une
+            // consigne, et il évite un bouton « Supprimer » par ligne.
+            if ($heading === [] && $body === []) {
+                if ($this->store->dayNote($id) !== null) {
+                    $this->store->deleteDayNote($id);
+                    ++$supprimes;
+                }
+
+                continue;
+            }
+
+            $this->store->saveDayNote(new DayNote(
+                $id,
+                $heading,
+                $body,
+                (int) ($champs['sortOrder'] ?? 0),
+                (bool) ($champs['active'] ?? false),
+            ));
+            ++$enregistres;
+        }
+
+        $this->store->audit($admin->id, $admin->role->value, 'DAY_NOTE_UPDATE', null, null, [
+            'saved' => $enregistres,
+            'deleted' => $supprimes,
+        ]);
+
+        $this->addFlash('success', 'common.saved');
+
+        return $this->redirectToRoute('admin_day_note');
     }
 
     // ── Check-list ──────────────────────────────────────────────────────────
