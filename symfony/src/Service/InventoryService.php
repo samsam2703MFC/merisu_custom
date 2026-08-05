@@ -99,6 +99,12 @@ final class InventoryService
             'workstationId' => $workstationId,
             'moment' => $moment,
             'products' => $products,
+            // Regroupement par catégorie de production : avec vingt-cinq
+            // produits, une liste à plat oblige à faire défiler en cherchant
+            // du regard. Les groupes suivent l'ordre des produits, pas un
+            // alphabet : l'atelier a rangé ses emplacements dans un ordre qui
+            // lui parle.
+            'productGroups' => self::groupByCategory($products),
             'counts' => $forMoment,
             'validated' => $validatedCount !== null,
             'validatedAt' => $validatedCount?->validatedAt,
@@ -349,5 +355,44 @@ final class InventoryService
         }
 
         return Production::plan($date, $products, $closingStocks, $this->store->parMatrix(), $workstationId);
+    }
+
+    /**
+     * Produits groupés par catégorie, dans l'ordre où les catégories
+     * apparaissent.
+     *
+     * Les produits sans catégorie forment un dernier groupe : les cacher
+     * reviendrait à ne jamais les compter, et les mêler aux autres ferait
+     * mentir les compteurs de chaque groupe.
+     *
+     * @param list<Product> $products
+     *
+     * @return list<array{category: string, products: list<Product>}>
+     */
+    private static function groupByCategory(array $products): array
+    {
+        $groupes = [];
+        $sansCategorie = [];
+
+        foreach ($products as $product) {
+            if ($product->category === '') {
+                $sansCategorie[] = $product;
+                continue;
+            }
+
+            $groupes[$product->category][] = $product;
+        }
+
+        $sortie = [];
+
+        foreach ($groupes as $categorie => $liste) {
+            $sortie[] = ['category' => (string) $categorie, 'products' => $liste];
+        }
+
+        if ($sansCategorie !== []) {
+            $sortie[] = ['category' => '', 'products' => $sansCategorie];
+        }
+
+        return $sortie;
     }
 }

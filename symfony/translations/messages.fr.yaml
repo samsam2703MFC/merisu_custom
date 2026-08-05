@@ -152,6 +152,7 @@ produce:
     openToday: "Voir le plan d'aujourd'hui"
     category: Catégorie
     allCategories: 'Toutes les catégories'
+    uncategorised: 'Sans catégorie'
     emptyCategory: 'Aucun produit à préparer dans la catégorie « %category% » pour cette date.'
     printLabels: 'Imprimer les étiquettes'
     labelsTitle: 'Étiquettes de production'

@@ -133,8 +133,47 @@
     <input type="hidden" name="date" value="{{ date }}">
     <input type="hidden" name="workstationId" value="{{ workstationId }}">
 
+    {#
+      Raccourcis de catégorie, en tête d'écran.
+
+      Vingt-cinq produits font six hauteurs d'écran : sans eux, atteindre les
+      boissons demande de faire défiler en cherchant du regard. Ce sont de
+      simples ancres — aucun script, et le navigateur défile en douceur grâce
+      au `scroll-behavior` de la feuille.
+
+      Ils n'apparaissent qu'à partir de deux groupes : un seul raccourci vers
+      la seule catégorie présente n'aiderait personne.
+    #}
+    {% if productGroups|length > 1 %}
+      <nav class="cat-nav" aria-label="{{ 'produce.category'|trans }}">
+        {% for groupe in productGroups %}
+          {% set saisis = groupe.products|filter(p => counts[p.id] is defined)|length %}
+          <a class="cat-nav__chip {{ saisis == groupe.products|length ? 'is-done' : '' }}"
+             href="#cat-{{ loop.index }}">
+            {{ groupe.category ?: 'produce.uncategorised'|trans }}
+            <span class="cat-nav__count">{{ saisis }}/{{ groupe.products|length }}</span>
+          </a>
+        {% endfor %}
+      </nav>
+    {% endif %}
+
+    {% for groupe in productGroups %}
+      {#
+        L'entête de groupe reste collé sous celui de l'application pendant le
+        défilement : au milieu de vingt-cinq champs, savoir dans quelle
+        catégorie on compte évite de saisir un chiffre sur le mauvais produit.
+      #}
+      {% if productGroups|length > 1 %}
+        {% set saisis = groupe.products|filter(p => counts[p.id] is defined)|length %}
+        <h2 class="cat-head {{ saisis == groupe.products|length ? 'cat-head--done' : '' }}"
+            id="cat-{{ loop.index }}">
+          <span class="cat-head__name">{{ groupe.category ?: 'produce.uncategorised'|trans }}</span>
+          <span class="cat-head__count">{{ saisis }}/{{ groupe.products|length }}</span>
+        </h2>
+      {% endif %}
+
     <div class="count-list">
-      {% for product in products %}
+      {% for product in groupe.products %}
         {% set count = counts[product.id] ?? null %}
         {% set net = nets[product.id] ?? null %}
         {% set issueCode = issuesByProduct[product.id] ?? null %}
@@ -175,6 +214,7 @@
         </article>
       {% endfor %}
     </div>
+    {% endfor %}
 
     {#
       Barre d'action collée au bas de l'écran sur téléphone.

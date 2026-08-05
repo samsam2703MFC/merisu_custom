@@ -3232,3 +3232,99 @@ select:disabled, select.field__input:disabled { background-image: url("data:imag
   padding-right: calc(var(--space-2) * 2 + 18px);
   background-size: 18px 18px;
 }
+
+/* ── Comptage par catégorie ──────────────────────────────────────────────── */
+
+/*
+  Vingt-cinq produits font six hauteurs d'écran sur un téléphone. Une liste à
+  plat oblige alors à chercher du regard en faisant défiler, et rien ne dit où
+  l'on en est. Deux repères suffisent : des raccourcis en tête, et un entête de
+  groupe qui reste sous les yeux.
+*/
+
+.cat-nav {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-4);
+}
+
+.cat-nav__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--touch);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--coffee-800);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: .88rem;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+
+.cat-nav__chip:hover { background: var(--cream-outline); }
+
+.cat-nav__count {
+  font-variant-numeric: tabular-nums;
+  font-size: .78rem;
+  color: var(--latte);
+}
+
+/* Catégorie entièrement saisie : elle s'éteint plutôt que de s'allumer. Le
+   regard doit se poser sur ce qui reste à faire, pas sur ce qui est fait. */
+.cat-nav__chip.is-done { background: var(--ok-bg); border-color: transparent; color: var(--ok); }
+.cat-nav__chip.is-done .cat-nav__count { color: var(--ok); }
+
+/*
+  L'entête de groupe suit le défilement, calé sous celui de l'application.
+  Au milieu de vingt-cinq champs, savoir dans quelle catégorie on compte évite
+  de poser un chiffre sur le mauvais produit.
+
+  `top` vaut la hauteur de l'entête : les deux se superposeraient sinon.
+*/
+.cat-head {
+  position: sticky;
+  /* Sous l'entête de l'application, jamais dessus : celui-ci mesure 60 px
+     quand il porte le retour, et un `top` plus court les faisait se
+     chevaucher de six pixels. */
+  top: 62px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: var(--space-5) 0 var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-pill);
+  /* Opaque : translucide, les chiffres du produit d'en dessous
+     transparaissaient sous le nom de la catégorie. */
+  background: var(--cream-outline);
+  border: 1px solid var(--border);
+  font-family: var(--font);
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--coffee-800);
+  /* Le point d'ancrage des raccourcis doit arriver DÉGAGÉ, pas collé sous
+     l'entête de l'application. */
+  scroll-margin-top: 78px;
+}
+
+.cat-head:first-of-type { margin-top: 0; }
+
+.cat-head__count {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  color: var(--latte);
+}
+
+.cat-head--done { background: var(--ok-bg); border-color: transparent; color: var(--ok); }
+.cat-head--done .cat-head__count { color: var(--ok); }
+
+@media (min-width: 600px) {
+  .cat-head { top: 66px; scroll-margin-top: 84px; }
+}
