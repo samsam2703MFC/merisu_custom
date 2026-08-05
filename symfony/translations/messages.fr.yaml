@@ -180,7 +180,15 @@ admin:
         ingredients: 'Ingrédients (%locale%)'
         allergens: 'Allergènes (%locale%)'
         allergensHint: "Imprimés à part et en gras sur l'étiquette : la réglementation impose qu'ils ressortent."
-        countModeBadge: 'Contenant'
+        containerType: 'Forme du contenant'
+        containerTypeHint: "Repère visuel seulement : la forme ne change aucun calcul. Elle signale, dans la liste et à la saisie, les produits qui acceptent une fraction."
+        containerTypes:
+            TUB: 'Bac'
+            BUCKET: 'Seau'
+            BOTTLE: 'Bouteille'
+            BOX: 'Boîte'
+            BAG: 'Sachet'
+            JAR: 'Pot'
         countModes:
             PIECES: "À l'unité"
             CONTAINER: 'Par contenant'

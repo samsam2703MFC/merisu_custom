@@ -9,6 +9,7 @@ use Merisu\Inventory\Adapter\RecipeServiceInterface;
 use Merisu\Inventory\Domain\BusinessDate;
 use Merisu\Inventory\Domain\ChecklistItem;
 use Merisu\Inventory\Domain\ChecklistSection;
+use Merisu\Inventory\Domain\ContainerType;
 use Merisu\Inventory\Domain\CountMode;
 use Merisu\Inventory\Domain\CountMoment;
 use Merisu\Inventory\Domain\DayNote;
@@ -73,6 +74,7 @@ final class AdminController extends AbstractController
             'categories' => $categories,
             'roundingModes' => RoundingMode::cases(),
             'countModes' => CountMode::all(),
+            'containerTypes' => ContainerType::all(),
         ]);
     }
 
@@ -107,6 +109,10 @@ final class AdminController extends AbstractController
             roundingMode: RoundingMode::tryFrom((string) $request->request->get('roundingMode')) ?? $product->roundingMode,
             recipeRef: trim((string) $request->request->get('recipeRef', '')) ?: null,
             countMode: CountMode::tryFromLoose($request->request->get('countMode')) ?? $product->countMode,
+            // Forme du contenant : purement visuelle, elle ne touche à aucun
+            // calcul. Conservée même quand le produit repasse « à l'unité »,
+            // pour qu'un aller-retour entre les deux modes ne l'efface pas.
+            containerType: ContainerType::tryFromLoose($request->request->get('containerType')) ?? $product->containerType,
             // Catégorie de production, en texte libre : c'est l'atelier qui
             // décide de son vocabulaire (Tiramisu, Boissons, Verrines…), et il
             // peut le changer sans redéploiement (§2). Vide = non classé.

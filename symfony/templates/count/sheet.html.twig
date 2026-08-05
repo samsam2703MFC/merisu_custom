@@ -194,6 +194,20 @@
 
         <article class="count-item {{ issueCode ? 'count-item--invalid' : '' }}">
           <header class="count-item__header">
+            {#
+              La silhouette du contenant, à côté de l'unité.
+
+              Elle annonce au vendeur ce qu'il doit avoir en main avant même
+              qu'il lise l'unité : devant une bouteille, on ne compte pas comme
+              devant une cagette. Elle explique aussi pourquoi ce produit-là
+              propose un pourcentage et le voisin non.
+
+              Muette pour les lecteurs d'écran : l'unité juste à côté dit déjà
+              la même chose en toutes lettres.
+            #}
+            {% if product.countMode.isContainer %}
+              <span class="count-item__vessel">{{ ui.icon(product.containerType.icon) }}</span>
+            {% endif %}
             <span class="count-item__name">{{ product_label(product) }}</span>
             <span class="count-item__unit muted">{{ product.unit }}</span>
           </header>

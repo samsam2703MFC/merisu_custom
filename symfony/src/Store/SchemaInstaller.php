@@ -60,6 +60,7 @@ final class SchemaInstaller
             $t->addColumn('recipe_ref', 'string', ['length' => 128, 'notnull' => false]);
             $t->addColumn('sort_order', 'integer', ['default' => 0]);
             $t->addColumn('count_mode', 'string', ['length' => 16, 'default' => 'PIECES']);
+            $t->addColumn('container_type', 'string', ['length' => 16, 'default' => 'TUB']);
             $t->setPrimaryKey(['id']);
             $t->addUniqueIndex(['code'], 'inv_product_code');
         }
@@ -242,6 +243,10 @@ final class SchemaInstaller
                 'shelf_life_days' => 'INTEGER DEFAULT 0 NOT NULL',
                 'ingredients' => "TEXT DEFAULT '{}' NOT NULL",
                 'allergens' => "TEXT DEFAULT '{}' NOT NULL",
+                // Forme du contenant, ajoutée avec l'icône de la liste des
+                // produits. Le bac par défaut : c'est la forme la plus
+                // courante, et une base déjà en service n'a rien à ressaisir.
+                'container_type' => "VARCHAR(16) DEFAULT 'TUB' NOT NULL",
             ],
         ];
 

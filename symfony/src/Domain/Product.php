@@ -52,6 +52,14 @@ final readonly class Product
          * imprime donc à part, en évidence.
          */
         public array $allergens = [],
+        /**
+         * Forme du contenant, quand le produit se compte par contenant.
+         *
+         * Sans effet sur le calcul, et sans effet du tout en mode « à
+         * l'unité » : le réglage reste stocké pour qu'un aller-retour entre
+         * les deux modes ne perde pas le choix déjà fait.
+         */
+        public ContainerType $containerType = ContainerType::Tub,
     ) {
     }
 
@@ -137,6 +145,7 @@ final readonly class Product
             $changes['shelfLifeDays'] ?? $this->shelfLifeDays,
             $changes['ingredients'] ?? $this->ingredients,
             $changes['allergens'] ?? $this->allergens,
+            $changes['containerType'] ?? $this->containerType,
         );
     }
 }

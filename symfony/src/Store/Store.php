@@ -9,6 +9,7 @@ use Merisu\Inventory\Domain\AuditEntry;
 use Merisu\Inventory\Domain\ChecklistEntry;
 use Merisu\Inventory\Domain\ChecklistItem;
 use Merisu\Inventory\Domain\ChecklistSection;
+use Merisu\Inventory\Domain\ContainerType;
 use Merisu\Inventory\Domain\CountMode;
 use Merisu\Inventory\Domain\CountMoment;
 use Merisu\Inventory\Domain\CountPhoto;
@@ -114,6 +115,7 @@ final class Store
             'shelf_life_days' => $product->shelfLifeDays,
             'ingredients' => json_encode($product->ingredients, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
             'allergens' => json_encode($product->allergens, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+            'container_type' => $product->containerType->value,
         ];
 
         $exists = (int) $this->db->fetchOne('SELECT COUNT(*) FROM inv_product WHERE id = ?', [$product->id]) > 0;
@@ -681,6 +683,10 @@ final class Store
             (int) ($row['shelf_life_days'] ?? 0),
             json_decode((string) ($row['ingredients'] ?? '{}'), true) ?: [],
             json_decode((string) ($row['allergens'] ?? '{}'), true) ?: [],
+            // Repli sur le bac : voir ContainerType::fromLoose. Une valeur
+            // absente ou inconnue vaut mieux dessinée approximativement que
+            // pas dessinée du tout.
+            ContainerType::fromLoose($row['container_type'] ?? null),
         );
     }
 

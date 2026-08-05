@@ -177,7 +177,15 @@ admin:
         ingredients: 'Ingredienti (%locale%)'
         allergens: 'Allergeni (%locale%)'
         allergensHint: "Stampati a parte e in grassetto: la normativa impone che risaltino."
-        countModeBadge: 'Contenitore'
+        containerType: 'Forma del contenitore'
+        containerTypeHint: "Solo un riferimento visivo: la forma non cambia alcun calcolo. Segnala, nella lista e alla rilevazione, i prodotti che accettano una frazione."
+        containerTypes:
+            TUB: 'Vaschetta'
+            BUCKET: 'Secchio'
+            BOTTLE: 'Bottiglia'
+            BOX: 'Scatola'
+            BAG: 'Busta'
+            JAR: 'Barattolo'
         countModes:
             PIECES: 'A unità'
             CONTAINER: 'Per contenitore'

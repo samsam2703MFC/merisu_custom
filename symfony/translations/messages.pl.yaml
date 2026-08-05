@@ -177,7 +177,15 @@ admin:
         ingredients: 'Składniki (%locale%)'
         allergens: 'Alergeny (%locale%)'
         allergensHint: 'Drukowane osobno i pogrubione: przepisy wymagają, aby się wyróżniały.'
-        countModeBadge: 'Pojemnik'
+        containerType: 'Kształt pojemnika'
+        containerTypeHint: "Tylko wskazówka wizualna: kształt nie zmienia żadnych obliczeń. Pokazuje na liście i przy spisie produkty, które przyjmują ułamek."
+        containerTypes:
+            TUB: 'Kuweta'
+            BUCKET: 'Wiadro'
+            BOTTLE: 'Butelka'
+            BOX: 'Karton'
+            BAG: 'Torebka'
+            JAR: 'Słoik'
         countModes:
             PIECES: 'Na sztuki'
             CONTAINER: 'Na pojemniki'

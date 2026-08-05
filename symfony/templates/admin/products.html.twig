@@ -37,17 +37,26 @@
           Mode de comptage annoncé dès la liste repliée.
 
           C'est lui qui décide si le vendeur pourra saisir une fraction de
-          contenant : sans cette pastille, il fallait ouvrir les huit fiches
-          l'une après l'autre pour savoir lesquelles acceptent un
-          pourcentage, et l'absence du curseur à l'écran de comptage passait
-          alors pour une fonction manquante.
+          contenant : sans ce repère, il fallait ouvrir les huit fiches l'une
+          après l'autre pour savoir lesquelles acceptent un pourcentage, et
+          l'absence du curseur à l'écran de comptage passait alors pour une
+          fonction manquante.
 
-          Seul le mode « contenant » se signale : compter à l'unité est le
-          cas ordinaire, et l'annoncer partout ne dirait rien.
+          La silhouette du contenant plutôt que le mot : elle se lit sans se
+          lire, ne s'allonge pas d'une langue à l'autre — « Par contenant »,
+          « Per contenitore », « Na pojemniki » — et dit en plus DE QUOI il
+          s'agit. Le nom reste porté par `aria-label` pour les lecteurs
+          d'écran, à qui une silhouette ne dit rien.
+
+          Seul le mode « contenant » se signale : compter à l'unité est le cas
+          ordinaire, et l'annoncer partout ne dirait rien.
         #}
         <span class="admin-item__tags">
           {% if product.countMode.isContainer %}
-            {{ ui.badge('info', 'admin.products.countModeBadge'|trans) }}
+            {% set forme = ('admin.products.containerTypes.' ~ product.containerType.value)|trans %}
+            <span class="badge badge--info badge--icon" title="{{ forme }}">
+              {{ ui.icon(product.containerType.icon, forme) }}
+            </span>
           {% endif %}
 
           {% if not product.active %}
@@ -92,6 +101,37 @@
             </select>
             <p class="field__hint">{{ 'admin.products.countModeHint'|trans }}</p>
           </div>
+
+          {#
+            Forme du contenant, choisie parmi six silhouettes.
+
+            Des vignettes plutôt qu'une liste déroulante : le choix se fait sur
+            la forme, et une forme se reconnaît plus vite qu'elle ne se lit.
+            Bâti sur des boutons radio — la sélection tient sans script, et le
+            clavier la parcourt comme n'importe quel groupe de radios.
+
+            Le nom accompagne chaque vignette : « seau » et « pot » se
+            ressemblent à cette taille, et le mot tranche.
+          #}
+          <fieldset class="field shapes">
+            <legend class="field__label">{{ 'admin.products.containerType'|trans }}</legend>
+
+            <div class="shapes__grid">
+              {% for forme in containerTypes %}
+                <label class="shape">
+                  <input class="shape__radio" type="radio" name="containerType"
+                         value="{{ forme.value }}"
+                         {{ forme == product.containerType ? 'checked' : '' }}>
+                  <span class="shape__box">
+                    {{ ui.icon(forme.icon) }}
+                    <span class="shape__name">{{ ('admin.products.containerTypes.' ~ forme.value)|trans }}</span>
+                  </span>
+                </label>
+              {% endfor %}
+            </div>
+
+            <p class="field__hint">{{ 'admin.products.containerTypeHint'|trans }}</p>
+          </fieldset>
 
           <div class="field">
             <label class="field__label" for="unit-{{ product.id }}">{{ 'admin.products.unit'|trans }}</label>
