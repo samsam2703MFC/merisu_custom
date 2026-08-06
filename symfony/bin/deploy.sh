@@ -115,9 +115,37 @@ else
     echo "→ Composer absent : vendor/ fourni par l'archive, étape ignorée"
 fi
 
-# ── 3. Droits d'écriture ────────────────────────────────────────────────────
+# ── 3. Dossiers de travail ──────────────────────────────────────────────────
 mkdir -p var/data var/cache var/log public/uploads
 
+# ── 4. Cache ────────────────────────────────────────────────────────────────
+#
+# AVANT toute commande applicative, et non après.
+#
+# Le conteneur compilé qui traîne dans var/cache/prod date du déploiement
+# PRÉCÉDENT : il décrit les services tels qu'ils étaient. Lancer `merisu:seed`
+# avant de le reconstruire revient à instancier le code neuf avec le plan de
+# l'ancien, et le déploiement s'arrête sur un « Too few arguments » dès qu'un
+# constructeur a gagné un argument.
+#
+# Le dossier est supprimé plutôt que simplement vidé : `cache:clear` doit
+# lui-même démarrer le noyau, donc lire ce conteneur périmé. Tant qu'il est là,
+# il peut faire échouer la commande censée s'en débarrasser.
+echo "→ Reconstruction du cache"
+rm -rf var/cache/prod
+"$PHP_BIN" bin/console --env=prod cache:clear
+
+# ── 5. Schéma et données ────────────────────────────────────────────────────
+echo "→ Application du schéma (idempotente, sans écraser les saisies)"
+"$PHP_BIN" bin/console --env=prod merisu:seed
+
+# ── 6. Droits d'écriture ────────────────────────────────────────────────────
+#
+# APRÈS le cache et le schéma : ces deux étapes tournent en root et créent des
+# fichiers qui lui appartiennent — le cache reconstruit, la base à la première
+# installation. Attribuer les droits avant les laissait hors de portée du
+# serveur web.
+#
 # Le compte du serveur web doit pouvoir écrire le cache, la base et les photos.
 WEB_USER="${WEB_USER:-www-data}"
 if id "$WEB_USER" >/dev/null 2>&1 && [ "$(id -u)" = "0" ]; then
@@ -127,14 +155,6 @@ if id "$WEB_USER" >/dev/null 2>&1 && [ "$(id -u)" = "0" ]; then
     chown -R "$WEB_USER" var public/uploads
 fi
 chmod -R u+rwX,g+rwX var public/uploads
-
-# ── 4. Schéma et données ────────────────────────────────────────────────────
-echo "→ Application du schéma (idempotente, sans écraser les saisies)"
-"$PHP_BIN" bin/console --env=prod merisu:seed
-
-# ── 5. Cache ────────────────────────────────────────────────────────────────
-echo "→ Reconstruction du cache"
-"$PHP_BIN" bin/console --env=prod cache:clear
 
 cat <<'EOF'
 
