@@ -1,0 +1,263 @@
+{#
+  Admin ▸ Équipe — comptes des vendeurs et postes de travail.
+
+  Même forme que l'écran Produits : une fiche repliée par personne, dépliée
+  seulement pour être modifiée. Quinze vendeurs dépliés feraient trente écrans
+  de haut sur téléphone.
+
+  ⚠️ Cet écran pilote l'implémentation de REPLI des consultants. Si le module
+  « Consultant / Stanowisko » de l'hôte est branché à sa place, les comptes se
+  gèrent là-bas et cet écran doit sortir de la navigation.
+#}
+{% extends 'admin/_layout.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'admin.team.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block admin_content %}
+
+  {{ ui.page_header('admin.team.title'|trans, 'admin.team.subtitle'|trans) }}
+
+  <div class="banner banner--warn">{{ 'admin.team.adapterWarning'|trans }}</div>
+
+  <datalist id="team-shops">
+    {% for name in shops %}<option value="{{ name }}"></option>{% endfor %}
+  </datalist>
+
+  {#
+    Bloc de champs partagé par la fiche existante et par la fiche vierge : deux
+    copies divergeraient au premier ajout de champ.
+  #}
+  {% macro fields(c, roles, locales, workstations, isNew) %}
+    {% import 'components/_macros.html.twig' as ui %}
+
+    <div class="checkbox-row">
+      <input type="checkbox" id="active-{{ c ? c.id : 'nouveau' }}" name="active" value="1"
+             {{ (c is null or c.active) ? 'checked' : '' }}>
+      <label for="active-{{ c ? c.id : 'nouveau' }}">{{ 'admin.team.active'|trans }}</label>
+    </div>
+    <p class="field__hint">{{ 'admin.team.activeHint'|trans }}</p>
+
+    <div class="field-grid">
+      <div class="field">
+        <label class="field__label" for="firstName-{{ c ? c.id : 'nouveau' }}">{{ 'admin.team.firstName'|trans }}</label>
+        <input class="field__input" type="text" id="firstName-{{ c ? c.id : 'nouveau' }}"
+               name="firstName" value="{{ c ? c.firstName : '' }}" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="lastName-{{ c ? c.id : 'nouveau' }}">{{ 'admin.team.lastName'|trans }}</label>
+        <input class="field__input" type="text" id="lastName-{{ c ? c.id : 'nouveau' }}"
+               name="lastName" value="{{ c ? c.lastName : '' }}" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="email-{{ c ? c.id : 'nouveau' }}">{{ 'admin.team.email'|trans }}</label>
+        <input class="field__input" type="email" id="email-{{ c ? c.id : 'nouveau' }}"
+               name="email" value="{{ c and c.email ? c.email : '' }}" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="role-{{ c ? c.id : 'nouveau' }}">{{ 'admin.team.role'|trans }}</label>
+        <select class="field__input" id="role-{{ c ? c.id : 'nouveau' }}" name="role">
+          {% for role in roles %}
+            <option value="{{ role.value }}" {{ c and role == c.role ? 'selected' : '' }}>
+              {{ ('roles.' ~ role.value)|trans }}
+            </option>
+          {% endfor %}
+        </select>
+        <p class="field__hint">{{ 'admin.team.roleHint'|trans }}</p>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="locale-{{ c ? c.id : 'nouveau' }}">{{ 'admin.team.locale'|trans }}</label>
+        <select class="field__input" id="locale-{{ c ? c.id : 'nouveau' }}" name="locale">
+          <option value="">{{ 'admin.team.localeDefault'|trans }}</option>
+          {% for locale in locales %}
+            <option value="{{ locale.value }}" {{ c and c.locale and locale == c.locale ? 'selected' : '' }}>
+              {{ ('locales.' ~ locale.value)|trans }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="ws-{{ c ? c.id : 'nouveau' }}">{{ 'admin.team.defaultWorkstation'|trans }}</label>
+        <select class="field__input" id="ws-{{ c ? c.id : 'nouveau' }}" name="defaultWorkstationId">
+          <option value="">{{ 'admin.team.noWorkstation'|trans }}</option>
+          {% for poste in workstations %}
+            <option value="{{ poste.id }}" {{ c and c.defaultWorkstationId == poste.id ? 'selected' : '' }}>
+              {{ poste.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    {#
+      Postes autorisés : cases à cocher et non liste à choix multiples. Une
+      liste multiple se manipule au doigt en maintenant un appui, geste que
+      personne ne devine sur un téléphone.
+    #}
+    <fieldset class="field">
+      <legend class="field__label">{{ 'admin.team.workstations'|trans }}</legend>
+      <div class="checkbox-grid">
+        {% for poste in workstations %}
+          <div class="checkbox-row">
+            <input type="checkbox" id="wsx-{{ c ? c.id : 'nouveau' }}-{{ poste.id }}"
+                   name="workstations[]" value="{{ poste.id }}"
+                   {{ c and poste.id in c.workstations ? 'checked' : '' }}>
+            <label for="wsx-{{ c ? c.id : 'nouveau' }}-{{ poste.id }}">{{ poste.name }}</label>
+          </div>
+        {% endfor %}
+      </div>
+    </fieldset>
+
+    <div class="field">
+      <label class="field__label" for="shops-{{ c ? c.id : 'nouveau' }}">{{ 'admin.team.shops'|trans }}</label>
+      <input class="field__input" type="text" id="shops-{{ c ? c.id : 'nouveau' }}"
+             name="shops" list="team-shops" value="{{ c ? c.shops|join(', ') : '' }}">
+      <p class="field__hint">{{ 'admin.team.shopsHint'|trans }}</p>
+    </div>
+
+    {#
+      Code PIN — jamais relu.
+
+      La base n'en garde qu'une empreinte : ni cet écran ni la fiche profil ne
+      peuvent le réafficher. Laisser le champ vide conserve le code en place ;
+      le remplir le remplace. C'est la seule façon honnête de présenter un
+      secret qu'on a choisi de ne pas pouvoir relire.
+    #}
+    <div class="field">
+      <label class="field__label" for="pin-{{ c ? c.id : 'nouveau' }}">
+        {{ (isNew ? 'admin.team.pin' : 'admin.team.pinChange')|trans }}
+      </label>
+      <input class="field__input" type="text" id="pin-{{ c ? c.id : 'nouveau' }}"
+             name="pin" inputmode="numeric" pattern="\d{6}" maxlength="6"
+             autocomplete="off" placeholder="••••••">
+      <p class="field__hint">{{ (isNew ? 'admin.team.pinHint' : 'admin.team.pinChangeHint')|trans }}</p>
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="sort-{{ c ? c.id : 'nouveau' }}">{{ 'common.order'|trans }}</label>
+      <input class="field__input" type="number" id="sort-{{ c ? c.id : 'nouveau' }}"
+             name="sortOrder" min="0" step="1" value="0">
+    </div>
+  {% endmacro %}
+
+  <h2 class="section-title">{{ 'admin.team.peopleTitle'|trans }}</h2>
+
+  {% for c in consultants %}
+    <details class="card admin-item">
+      <summary class="admin-item__summary">
+        <span class="admin-item__head">
+          <span class="avatar avatar--sm" aria-hidden="true">{{ c.initials }}</span>
+          <span class="admin-item__name">{{ c.displayName }}</span>
+        </span>
+        <span class="admin-item__tags">
+          {% if c.role.isAdmin %}{{ ui.badge('info', 'roles.ADMIN'|trans) }}{% endif %}
+          {% if not c.active %}{{ ui.badge('warn', 'admin.team.inactive'|trans) }}{% endif %}
+        </span>
+      </summary>
+
+      <form method="post" action="{{ path('admin_team_save', { id: c.id }) }}" class="form">
+        {{ _self.fields(c, roles, locales, workstations, false) }}
+
+        <div class="form-actions">
+          <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
+
+          {# Suppression dans son propre formulaire : imbriquer deux formulaires
+             est interdit en HTML, et `formaction` enverrait aussi les champs. #}
+          <button type="submit" class="button button--ghost"
+                  form="delete-{{ c.id }}"
+                  data-confirm="{{ 'admin.team.confirmDelete'|trans({ '%name%': c.displayName }) }}">
+            {{ 'common.delete'|trans }}
+          </button>
+        </div>
+      </form>
+
+      <form method="post" id="delete-{{ c.id }}" class="visually-hidden"
+            action="{{ path('admin_team_delete', { id: c.id }) }}"></form>
+    </details>
+  {% endfor %}
+
+  <details class="card admin-item">
+    <summary class="admin-item__summary">
+      <span class="admin-item__head">
+        <span class="admin-item__name">{{ 'admin.team.addPerson'|trans }}</span>
+      </span>
+    </summary>
+
+    <form method="post" action="{{ path('admin_team_save', { id: 'nouveau' }) }}" class="form">
+      {{ _self.fields(null, roles, locales, workstations, true) }}
+
+      <div class="form-actions">
+        <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
+      </div>
+    </form>
+  </details>
+
+  <h2 class="section-title">{{ 'admin.team.workstationsTitle'|trans }}</h2>
+  <p class="muted">{{ 'admin.team.workstationsIntro'|trans }}</p>
+
+  {% for poste in workstations %}
+    <details class="card admin-item">
+      <summary class="admin-item__summary">
+        <span class="admin-item__head">
+          <span class="admin-item__name">{{ poste.name }}</span>
+        </span>
+        <span class="admin-item__tags">
+          {% if not poste.active %}{{ ui.badge('warn', 'admin.team.inactive'|trans) }}{% endif %}
+        </span>
+      </summary>
+
+      <form method="post" action="{{ path('admin_team_workstation_save', { id: poste.id }) }}" class="form">
+        <div class="checkbox-row">
+          <input type="checkbox" id="wsa-{{ poste.id }}" name="active" value="1" {{ poste.active ? 'checked' : '' }}>
+          <label for="wsa-{{ poste.id }}">{{ 'admin.team.active'|trans }}</label>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="wsn-{{ poste.id }}">{{ 'admin.team.workstationName'|trans }}</label>
+          <input class="field__input" type="text" id="wsn-{{ poste.id }}" name="name" value="{{ poste.name }}">
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
+          <button type="submit" class="button button--ghost" form="delete-ws-{{ poste.id }}"
+                  data-confirm="{{ 'admin.team.confirmDeleteWorkstation'|trans({ '%name%': poste.name }) }}">
+            {{ 'common.delete'|trans }}
+          </button>
+        </div>
+      </form>
+
+      <form method="post" id="delete-ws-{{ poste.id }}" class="visually-hidden"
+            action="{{ path('admin_team_workstation_delete', { id: poste.id }) }}"></form>
+    </details>
+  {% endfor %}
+
+  <details class="card admin-item">
+    <summary class="admin-item__summary">
+      <span class="admin-item__head">
+        <span class="admin-item__name">{{ 'admin.team.addWorkstation'|trans }}</span>
+      </span>
+    </summary>
+
+    <form method="post" action="{{ path('admin_team_workstation_save', { id: 'nouveau' }) }}" class="form">
+      <div class="checkbox-row">
+        <input type="checkbox" id="wsa-nouveau" name="active" value="1" checked>
+        <label for="wsa-nouveau">{{ 'admin.team.active'|trans }}</label>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="wsn-nouveau">{{ 'admin.team.workstationName'|trans }}</label>
+        <input class="field__input" type="text" id="wsn-nouveau" name="name">
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
+      </div>
+    </form>
+  </details>
+
+{% endblock %}

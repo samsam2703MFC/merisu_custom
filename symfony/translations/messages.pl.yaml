@@ -11,6 +11,8 @@ common:
     skipToContent: 'Przejdź do treści'
     appName: 'MERISU — Inwentaryzacja i produkcja'
     save: Zapisz
+    delete: 'Usuń'
+    order: 'Kolejność'
     saved: Zapisano
     cancel: Anuluj
     validate: Zatwierdź
@@ -100,6 +102,7 @@ nav:
     evening: Wieczór
     toProduce: 'Do wyprodukowania'
     admin: Administracja
+    team: 'Zespół'
     products: Produkty
     parMatrix: Progi
     settings: Ustawienia
@@ -162,6 +165,63 @@ produce:
     allergens: 'Alergeny'
 
 admin:
+    sales:
+        title: 'Sprzedaż'
+        sectionsTitle: 'Ustawienia'
+        range: 'Od %from% do %to%'
+        revenue: 'Obrót'
+        customers: 'Klienci'
+        tiramisu: 'Sprzedane tiramisu'
+        averageBasket: 'Średni koszyk'
+        shareOfNetwork: '%pct% % sieci'
+        compareTitle: 'Sklepy w sieci'
+        compareCaption: 'Tiramisu sprzedane w każdym sklepie w tym okresie, od największej do najmniejszej liczby.'
+        rank: 'Miejsce'
+        shop: 'Sklep'
+        yours: 'Ty'
+        noShop: 'Kasa nie wskazuje, do którego sklepu należy to stanowisko: nie można wyświetlić danych sklepu.'
+        source: 'Dane pochodzą z kasy, nigdy ze stanów magazynowych: ten moduł nie zna wpłat ani paragonów. Dopóki kasa nie jest podłączona, są to wartości demonstracyjne.'
+    team:
+        title: 'Zespół'
+        subtitle: 'Konta sprzedawców i stanowiska pracy.'
+        adapterWarning: 'Te konta należą do tej aplikacji. Gdy moduł „Konsultant / Stanowisko” zostanie podłączony, będą zarządzane tam, a ten ekran zniknie.'
+        peopleTitle: 'Osoby'
+        addPerson: '+ Dodaj osobę'
+        active: 'Konto aktywne'
+        activeHint: 'Konto nieaktywne nie może się zalogować, ale jego historia zostaje zachowana.'
+        inactive: 'Nieaktywne'
+        firstName: 'Imię'
+        lastName: 'Nazwisko'
+        email: 'E-mail'
+        role: 'Rola'
+        roleHint: 'Administrator ma dostęp do tego ekranu i wszystkich ustawień. Sprzedawca widzi tylko spis.'
+        locale: 'Język'
+        localeDefault: 'Domyślny język aplikacji'
+        defaultWorkstation: 'Zwykłe stanowisko'
+        noWorkstation: 'Brak'
+        workstations: 'Dozwolone stanowiska'
+        shops: 'Sklepy'
+        shopsHint: 'Oddzielone przecinkami.'
+        pin: 'Kod PIN (6 cyfr)'
+        pinHint: 'Sam kod identyfikuje osobę: musi być unikalny i znany tylko jej.'
+        pinChange: 'Nowy kod PIN'
+        pinChangeHint: 'Pozostaw puste, aby zachować obecny kod. Nigdzie nie da się go już odczytać, nawet tutaj — przechowywany jest wyłącznie jego skrót.'
+        confirmDelete: 'Trwale usunąć %name%?'
+        workstationsTitle: 'Stanowiska pracy'
+        workstationsIntro: 'Stanowisko zapisuje się przy każdym spisie. Zbędne stanowisko należy dezaktywować, a nie usuwać.'
+        workstationName: 'Nazwa stanowiska'
+        addWorkstation: '+ Dodaj stanowisko'
+        confirmDeleteWorkstation: 'Usunąć stanowisko %name%?'
+        errorNameRequired: 'Podaj przynajmniej imię lub nazwisko.'
+        errorLastAdmin: 'Niemożliwe: nie zostałby żaden aktywny administrator i nikt nie mógłby ponownie otworzyć tego ekranu.'
+        errorPinFormat: 'Kod PIN musi mieć dokładnie 6 cyfr.'
+        errorPinTaken: 'Ten kod jest już przypisany. Dwie osoby z tym samym kodem miałyby jedną tożsamość, a historia stałaby się fałszywa.'
+        errorSelfDelete: 'Nie możesz usunąć własnego konta.'
+        errorHasHistory: 'Ta osoba ma już zapisane spisy. Dezaktywuj konto: usunięcie karty uczyniłoby jej historię nieczytelną.'
+        errorWorkstationName: 'Podaj nazwę stanowiska.'
+        errorWorkstationUsed: 'To stanowisko ma już zapisane spisy. Dezaktywuj je zamiast usuwać.'
+        noticeNoPin: 'Konto utworzone bez kodu PIN: nie będzie mogło się zalogować, dopóki go nie nadasz.'
+        noticeNoWorkstation: 'Konto bez zwykłego stanowiska: logowanie na stanowisku będzie odrzucane, dopóki nie przypiszesz mu stanowiska.'
     title: Administracja
     products:
         title: 'Ustawienia produktów'

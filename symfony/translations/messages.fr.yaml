@@ -14,6 +14,8 @@ common:
     skipToContent: 'Aller au contenu'
     appName: 'MERISU — Inventaire & Production'
     save: Enregistrer
+    delete: 'Supprimer'
+    order: 'Ordre'
     saved: Enregistré
     cancel: Annuler
     validate: Valider
@@ -103,6 +105,7 @@ nav:
     evening: Soir
     toProduce: 'À produire'
     admin: Administration
+    team: 'Équipe'
     products: Produits
     parMatrix: Seuils
     settings: Paramètres
@@ -165,6 +168,63 @@ produce:
     allergens: 'Allergènes'
 
 admin:
+    sales:
+        title: 'Ventes'
+        sectionsTitle: 'Réglages'
+        range: 'Du %from% au %to%'
+        revenue: 'Chiffre d''affaires'
+        customers: 'Clients'
+        tiramisu: 'Tiramisu vendus'
+        averageBasket: 'Panier moyen'
+        shareOfNetwork: '%pct% % du réseau'
+        compareTitle: 'Les boutiques du réseau'
+        compareCaption: 'Tiramisu vendus par boutique sur la période, de la plus forte à la plus faible.'
+        rank: 'Rang'
+        shop: 'Boutique'
+        yours: 'Vous'
+        noShop: 'La caisse n''indique pas à quelle boutique ce poste est rattaché : les chiffres de la boutique ne peuvent pas être affichés.'
+        source: 'Chiffres issus de la caisse, jamais des stocks : ce module ne connaît ni les encaissements ni les tickets. Tant que la caisse n''est pas branchée, ce sont des valeurs de démonstration.'
+    team:
+        title: 'Équipe'
+        subtitle: 'Comptes des vendeurs et postes de travail.'
+        adapterWarning: 'Ces comptes vivent dans cette application. Le jour où le module « Consultant / Stanowisko » sera branché, ils seront gérés là-bas et cet écran disparaîtra.'
+        peopleTitle: 'Personnes'
+        addPerson: '+ Ajouter une personne'
+        active: 'Compte actif'
+        activeHint: 'Un compte désactivé ne peut plus se connecter, mais son historique est conservé.'
+        inactive: 'Désactivé'
+        firstName: 'Prénom'
+        lastName: 'Nom'
+        email: 'E-mail'
+        role: 'Rôle'
+        roleHint: 'L''administrateur accède à cet écran et à tous les réglages. Le vendeur ne voit que la saisie.'
+        locale: 'Langue'
+        localeDefault: 'Langue par défaut de l''application'
+        defaultWorkstation: 'Poste habituel'
+        noWorkstation: 'Aucun'
+        workstations: 'Postes autorisés'
+        shops: 'Boutiques'
+        shopsHint: 'Séparées par des virgules.'
+        pin: 'Code PIN (6 chiffres)'
+        pinHint: 'Il identifie la personne à lui seul : il doit être unique et n''être connu que d''elle.'
+        pinChange: 'Nouveau code PIN'
+        pinChangeHint: 'Laisser vide pour garder le code actuel. Il n''est plus lisible nulle part, pas même ici — seule son empreinte est conservée.'
+        confirmDelete: 'Supprimer définitivement %name% ?'
+        workstationsTitle: 'Postes de travail'
+        workstationsIntro: 'Le poste est enregistré sur chaque comptage. Un poste devenu inutile se désactive plutôt qu''il ne s''efface.'
+        workstationName: 'Nom du poste'
+        addWorkstation: '+ Ajouter un poste'
+        confirmDeleteWorkstation: 'Supprimer le poste %name% ?'
+        errorNameRequired: 'Indiquez au moins un prénom ou un nom.'
+        errorLastAdmin: 'Impossible : il ne resterait plus aucun administrateur actif, et personne ne pourrait rouvrir cet écran.'
+        errorPinFormat: 'Le code PIN doit comporter exactement 6 chiffres.'
+        errorPinTaken: 'Ce code est déjà attribué. Deux personnes partageant un code partageraient une identité, et l''historique deviendrait faux.'
+        errorSelfDelete: 'Vous ne pouvez pas supprimer votre propre compte.'
+        errorHasHistory: 'Cette personne a déjà des saisies à son nom. Désactivez son compte : effacer la fiche rendrait son historique illisible.'
+        errorWorkstationName: 'Indiquez un nom de poste.'
+        errorWorkstationUsed: 'Ce poste porte déjà des comptages. Désactivez-le plutôt que de l''effacer.'
+        noticeNoPin: 'Compte créé sans code PIN : il ne pourra pas se connecter tant que vous ne lui en aurez pas donné un.'
+        noticeNoWorkstation: 'Compte sans poste habituel : la connexion au poste lui sera refusée tant que vous ne lui en aurez pas attribué un.'
     title: Administration
     products:
         title: 'Paramètres produits'

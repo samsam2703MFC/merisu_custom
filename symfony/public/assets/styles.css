@@ -363,6 +363,19 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 
 .field-grid { display: grid; gap: var(--space-3); grid-template-columns: 1fr; }
 
+/* Cases à cocher en colonnes dès qu'il y a la place : quinze postes en une
+   seule colonne feraient défiler pour rien sur une tablette. */
+.checkbox-grid { display: grid; gap: 0 var(--space-4); grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+
+/* Intertitre d'un écran qui traite deux sujets — l'équipe, puis les postes. */
+.section-title {
+  margin: var(--space-6) 0 var(--space-2);
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.25rem;
+  color: var(--coffee);
+}
+
 .form-actions { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; margin-top: var(--space-4); }
 .form-actions .button--large { margin-left: auto; }
 
@@ -789,6 +802,11 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 }
 
 .avatar:hover { background: var(--brand-dark); }
+
+/* Version décorative, dans une liste : elle identifie une ligne, on ne clique
+   pas dessus. D'où l'absence d'effet au survol, réservé à ce qui agit. */
+.avatar--sm { width: 30px; height: 30px; font-size: .7rem; }
+.avatar--sm:hover { background: var(--brand); }
 
 .avatar--md { width: 46px; height: 46px; font-size: 1rem; }
 .avatar--lg { width: 72px; height: 72px; font-size: 1.5rem; }
@@ -2619,4 +2637,143 @@ select:disabled, select.field__input:disabled { background-image: url("data:imag
   margin-top: var(--space-4);
   padding-top: var(--space-3);
   border-top: 1px solid var(--border-soft);
+}
+
+/* ── Tableau de bord des ventes ──────────────────────────────────────────── */
+
+/*
+  Les chiffres viennent de la CAISSE, jamais des stocks. Le style le rappelle
+  discrètement : la mention de source ferme la section.
+*/
+.dash {
+  margin-bottom: var(--space-5);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+}
+
+.dash__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.dash__period { display: flex; align-items: flex-end; gap: var(--space-2); flex-wrap: wrap; }
+.dash__period .field__input { width: auto; min-width: 10rem; }
+.dash__range { margin: var(--space-1) 0 var(--space-4); }
+.dash__subtitle { margin: var(--space-5) 0 var(--space-2); font-size: 1.05rem; color: var(--coffee-800); }
+
+/* ── Tuiles de chiffres ──────────────────────────────────────────────────── */
+
+.stats {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.stat {
+  padding: var(--space-3);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+
+.stat__label { margin: 0 0 var(--space-1); font-size: .8rem; color: var(--text-muted); }
+
+/*
+  Chiffres PROPORTIONNELS, pas tabulaires.
+
+  `tabular-nums` donne à chaque chiffre la largeur d'un zéro : utile dans une
+  colonne qui doit s'aligner, néfaste ici, où « 121 » paraîtrait anormalement
+  espacé à cette taille.
+
+  Sans-serif et non la police d'affichage : la serif Merisù habille les titres,
+  et sur un nombre elle passerait pour une décoration.
+*/
+.stat__value {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 1.65rem;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--coffee);
+}
+
+.stat__unit { margin-left: .25rem; font-size: .8rem; font-weight: 600; color: var(--text-muted); }
+.stat__note { margin: var(--space-1) 0 0; font-size: .75rem; color: var(--text-muted); }
+
+/* ── Barres de comparaison ───────────────────────────────────────────────── */
+
+.bars { width: 100%; }
+.bars__rank { width: 1%; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--text-muted); }
+
+/*
+  Le tableau générique aligne tout à droite et n'excepte que sa première
+  colonne, ici occupée par le rang. Sans cette règle, le nom de la boutique se
+  collait à la barre en laissant un vide de plusieurs centimètres après le rang.
+
+  `width: 1%` sur le nom, `width: 100%` sur les barres : la colonne des noms se
+  réduit à son contenu et celle des barres absorbe le reste, quelle que soit la
+  largeur de l'écran.
+*/
+.bars__name { width: 1%; text-align: left; font-weight: 500; white-space: nowrap; }
+.bars__row--current .bars__name { font-weight: 700; color: var(--coffee); }
+
+.bars__cell { display: flex; width: 100%; align-items: center; gap: var(--space-2); min-width: 12rem; }
+
+/* Piste : un cran au-dessus de la surface, jamais un trait. Un contour autour
+   d'une barre ajoute de l'encre qui n'est pas de la donnée. */
+.bars__track {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 14px;
+  border-radius: 0 4px 4px 0;
+  background: var(--border-soft);
+  overflow: hidden;
+}
+
+/*
+  Le remplissage part d'une ligne de base commune — le bord gauche — et son
+  extrémité de données est arrondie à 4 px, l'attache restant carrée.
+
+  Teinte claire par défaut, à 3,3:1 sur le blanc : visible sans écraser la
+  page. La boutique du poste passe à la framboise pleine, MAIS la couleur ne
+  porte pas seule l'information — le nom est en gras et une pastille « vous »
+  l'accompagne. Un écart de teinte suffisant pour un œil normal ne l'est pas
+  toujours pour une deutéranopie.
+*/
+.bars__fill {
+  display: block;
+  width: var(--w, 0%);
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  background: #D8699A;
+}
+
+.bars__row--current .bars__fill { background: var(--brand); }
+
+.bars__value {
+  flex: none;
+  min-width: 4.5rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+/* Sous 600 px la barre n'a plus la place d'être lue à côté du nom : le tableau
+   défile déjà horizontalement, on retire seulement la largeur minimale qui le
+   forcerait à défiler dès la première colonne. */
+@media (max-width: 600px) {
+  .bars__cell { min-width: 9rem; }
+  .bars__value { min-width: 3.5rem; }
+}
+
+/* Impression et contrastes forcés : la teinte disparaît, la longueur reste.
+   Un contour prend alors le relais, faute de fond. */
+@media print, (forced-colors: active) {
+  .bars__fill { background: CanvasText; }
+  .bars__track { border: 1px solid CanvasText; }
 }

@@ -11,6 +11,8 @@ common:
     skipToContent: 'Ir al contenido'
     appName: 'MERISU — Inventario y producción'
     save: Guardar
+    delete: 'Eliminar'
+    order: 'Orden'
     saved: Guardado
     cancel: Cancelar
     validate: Validar
@@ -100,6 +102,7 @@ nav:
     evening: Tarde
     toProduce: 'Por producir'
     admin: Administración
+    team: 'Equipo'
     products: Productos
     parMatrix: Umbrales
     settings: Ajustes
@@ -162,6 +165,63 @@ produce:
     allergens: 'Alérgenos'
 
 admin:
+    sales:
+        title: 'Ventas'
+        sectionsTitle: 'Ajustes'
+        range: 'Del %from% al %to%'
+        revenue: 'Facturación'
+        customers: 'Clientes'
+        tiramisu: 'Tiramisús vendidos'
+        averageBasket: 'Ticket medio'
+        shareOfNetwork: '%pct% % de la red'
+        compareTitle: 'Las tiendas de la red'
+        compareCaption: 'Tiramisús vendidos por tienda en el periodo, de mayor a menor.'
+        rank: 'Puesto'
+        shop: 'Tienda'
+        yours: 'Tú'
+        noShop: 'La caja no indica a qué tienda pertenece este puesto: no se pueden mostrar las cifras de la tienda.'
+        source: 'Cifras procedentes de la caja, nunca de las existencias: este módulo no conoce ni los cobros ni los tickets. Mientras la caja no esté conectada, son valores de demostración.'
+    team:
+        title: 'Equipo'
+        subtitle: 'Cuentas de los vendedores y puestos de trabajo.'
+        adapterWarning: 'Estas cuentas viven en esta aplicación. Cuando se conecte el módulo « Consultor / Stanowisko », se gestionarán allí y esta pantalla desaparecerá.'
+        peopleTitle: 'Personas'
+        addPerson: '+ Añadir una persona'
+        active: 'Cuenta activa'
+        activeHint: 'Una cuenta desactivada ya no puede conectarse, pero su historial se conserva.'
+        inactive: 'Desactivada'
+        firstName: 'Nombre'
+        lastName: 'Apellidos'
+        email: 'Correo electrónico'
+        role: 'Rol'
+        roleHint: 'El administrador accede a esta pantalla y a todos los ajustes. El vendedor solo ve el recuento.'
+        locale: 'Idioma'
+        localeDefault: 'Idioma predeterminado de la aplicación'
+        defaultWorkstation: 'Puesto habitual'
+        noWorkstation: 'Ninguno'
+        workstations: 'Puestos autorizados'
+        shops: 'Tiendas'
+        shopsHint: 'Separadas por comas.'
+        pin: 'Código PIN (6 cifras)'
+        pinHint: 'Por sí solo identifica a la persona: debe ser único y conocido solo por ella.'
+        pinChange: 'Nuevo código PIN'
+        pinChangeHint: 'Dejar vacío para mantener el código actual. Ya no se puede leer en ninguna parte, ni siquiera aquí — solo se conserva su huella.'
+        confirmDelete: '¿Eliminar definitivamente a %name%?'
+        workstationsTitle: 'Puestos de trabajo'
+        workstationsIntro: 'El puesto se registra en cada recuento. Un puesto inútil se desactiva, no se borra.'
+        workstationName: 'Nombre del puesto'
+        addWorkstation: '+ Añadir un puesto'
+        confirmDeleteWorkstation: '¿Eliminar el puesto %name%?'
+        errorNameRequired: 'Indique al menos un nombre o unos apellidos.'
+        errorLastAdmin: 'Imposible: no quedaría ningún administrador activo y nadie podría volver a abrir esta pantalla.'
+        errorPinFormat: 'El código PIN debe tener exactamente 6 cifras.'
+        errorPinTaken: 'Este código ya está asignado. Dos personas con el mismo código compartirían una identidad y el historial sería falso.'
+        errorSelfDelete: 'No puede eliminar su propia cuenta.'
+        errorHasHistory: 'Esta persona ya tiene recuentos a su nombre. Desactive la cuenta: borrar la ficha haría ilegible su historial.'
+        errorWorkstationName: 'Indique un nombre de puesto.'
+        errorWorkstationUsed: 'Este puesto ya tiene recuentos. Desactívelo en lugar de borrarlo.'
+        noticeNoPin: 'Cuenta creada sin código PIN: no podrá conectarse hasta que le asigne uno.'
+        noticeNoWorkstation: 'Cuenta sin puesto habitual: se le denegará la conexión al puesto hasta que le asigne uno.'
     title: Administración
     products:
         title: 'Ajustes de productos'

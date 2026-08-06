@@ -36,17 +36,33 @@ services:
     #   Merisu\Inventory\Adapter\ConsultantServiceInterface: '@App\Stanowisko\VotreService'
     #   Merisu\Inventory\Adapter\RecipeServiceInterface: '@App\Recipe\VotreService'
     # ═══════════════════════════════════════════════════════════════════════
+    # Repli administrable : l'équipe se gère dans Admin ▸ Équipe et vit en base.
+    # `LocalConsultantService` (trois fiches en dur) reste disponible pour une
+    # démonstration sans base, mais n'est plus branché par défaut.
     Merisu\Inventory\Adapter\ConsultantServiceInterface:
-        alias: Merisu\Inventory\Adapter\LocalConsultantService
+        alias: Merisu\Inventory\Adapter\DbConsultantService
 
-    # Codes PIN de l'implémentation de repli, surchargeables dans .env.local :
-    # ils ne doivent PAS rester à leur valeur par défaut une fois l'application
-    # joignable, celles-ci étant publiées dans le dépôt.
+    # Codes PIN de DÉPART, écrits en base au premier `merisu:seed` et jamais
+    # relus ensuite : passé l'installation, les codes se changent dans
+    # Admin ▸ Équipe. Ils ne doivent PAS rester à leur valeur par défaut, celle-ci
+    # étant publiée dans le dépôt.
+    Merisu\Inventory\Command\SeedCommand:
+        arguments:
+            $adminPin: '%env(MERISU_ADMIN_PIN)%'
+            $consultant1Pin: '%env(MERISU_CONSULTANT1_PIN)%'
+            $consultant2Pin: '%env(MERISU_CONSULTANT2_PIN)%'
+
     Merisu\Inventory\Adapter\LocalConsultantService:
         arguments:
             $adminPin: '%env(MERISU_ADMIN_PIN)%'
             $consultant1Pin: '%env(MERISU_CONSULTANT1_PIN)%'
             $consultant2Pin: '%env(MERISU_CONSULTANT2_PIN)%'
+
+    # Clé de l'empreinte des codes PIN : hors de la base, pour qu'une base
+    # dérobée seule ne livre aucun code. Voir PinHasher.
+    Merisu\Inventory\Service\PinHasher:
+        arguments:
+            $appSecret: '%env(APP_SECRET)%'
 
     Merisu\Inventory\Adapter\RecipeServiceInterface:
         alias: Merisu\Inventory\Adapter\LocalRecipeService

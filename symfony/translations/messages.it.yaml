@@ -11,6 +11,8 @@ common:
     skipToContent: 'Vai al contenuto'
     appName: 'MERISU — Inventario e produzione'
     save: Salva
+    delete: 'Elimina'
+    order: 'Ordine'
     saved: Salvato
     cancel: Annulla
     validate: Convalida
@@ -100,6 +102,7 @@ nav:
     evening: Sera
     toProduce: 'Da produrre'
     admin: Amministrazione
+    team: 'Squadra'
     products: Prodotti
     parMatrix: Soglie
     settings: Impostazioni
@@ -162,6 +165,63 @@ produce:
     allergens: 'Allergeni'
 
 admin:
+    sales:
+        title: 'Vendite'
+        sectionsTitle: 'Impostazioni'
+        range: 'Dal %from% al %to%'
+        revenue: 'Fatturato'
+        customers: 'Clienti'
+        tiramisu: 'Tiramisù venduti'
+        averageBasket: 'Scontrino medio'
+        shareOfNetwork: '%pct% % della rete'
+        compareTitle: 'I negozi della rete'
+        compareCaption: 'Tiramisù venduti per negozio nel periodo, dal più alto al più basso.'
+        rank: 'Posizione'
+        shop: 'Negozio'
+        yours: 'Tu'
+        noShop: 'La cassa non indica a quale negozio appartiene questa postazione: i dati del negozio non possono essere mostrati.'
+        source: 'Dati provenienti dalla cassa, mai dalle giacenze: questo modulo non conosce né gli incassi né gli scontrini. Finché la cassa non è collegata, sono valori dimostrativi.'
+    team:
+        title: 'Squadra'
+        subtitle: 'Account dei venditori e postazioni di lavoro.'
+        adapterWarning: 'Questi account vivono in questa applicazione. Quando il modulo « Consulente / Stanowisko » sarà collegato, saranno gestiti lì e questa schermata sparirà.'
+        peopleTitle: 'Persone'
+        addPerson: '+ Aggiungi una persona'
+        active: 'Account attivo'
+        activeHint: 'Un account disattivato non può più accedere, ma la sua cronologia resta.'
+        inactive: 'Disattivato'
+        firstName: 'Nome'
+        lastName: 'Cognome'
+        email: 'E-mail'
+        role: 'Ruolo'
+        roleHint: 'L''amministratore accede a questa schermata e a tutte le impostazioni. Il venditore vede solo la rilevazione.'
+        locale: 'Lingua'
+        localeDefault: 'Lingua predefinita dell''applicazione'
+        defaultWorkstation: 'Postazione abituale'
+        noWorkstation: 'Nessuna'
+        workstations: 'Postazioni autorizzate'
+        shops: 'Negozi'
+        shopsHint: 'Separati da virgole.'
+        pin: 'Codice PIN (6 cifre)'
+        pinHint: 'Da solo identifica la persona: deve essere unico e noto solo a lei.'
+        pinChange: 'Nuovo codice PIN'
+        pinChangeHint: 'Lasciare vuoto per mantenere il codice attuale. Non è più leggibile da nessuna parte, nemmeno qui — se ne conserva solo l''impronta.'
+        confirmDelete: 'Eliminare definitivamente %name%?'
+        workstationsTitle: 'Postazioni di lavoro'
+        workstationsIntro: 'La postazione viene registrata a ogni rilevazione. Una postazione inutile si disattiva, non si cancella.'
+        workstationName: 'Nome della postazione'
+        addWorkstation: '+ Aggiungi una postazione'
+        confirmDeleteWorkstation: 'Eliminare la postazione %name%?'
+        errorNameRequired: 'Indicare almeno un nome o un cognome.'
+        errorLastAdmin: 'Impossibile: non resterebbe nessun amministratore attivo e nessuno potrebbe riaprire questa schermata.'
+        errorPinFormat: 'Il codice PIN deve avere esattamente 6 cifre.'
+        errorPinTaken: 'Questo codice è già assegnato. Due persone con lo stesso codice condividerebbero un''identità e la cronologia diventerebbe falsa.'
+        errorSelfDelete: 'Non puoi eliminare il tuo stesso account.'
+        errorHasHistory: 'Questa persona ha già rilevazioni a suo nome. Disattiva l''account: cancellare la scheda renderebbe illeggibile la sua cronologia.'
+        errorWorkstationName: 'Indicare un nome di postazione.'
+        errorWorkstationUsed: 'Questa postazione ha già delle rilevazioni. Disattivala invece di cancellarla.'
+        noticeNoPin: 'Account creato senza codice PIN: non potrà accedere finché non gliene assegnerai uno.'
+        noticeNoWorkstation: 'Account senza postazione abituale: l''accesso alla postazione gli sarà rifiutato finché non gliene assegni una.'
     title: Amministrazione
     products:
         title: 'Impostazioni prodotti'

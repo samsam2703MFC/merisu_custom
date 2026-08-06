@@ -65,6 +65,47 @@ final class SchemaInstaller
             $t->addUniqueIndex(['code'], 'inv_product_code');
         }
 
+        /*
+          Postes de travail (Stanowisko) et consultants.
+
+          Ces deux tables n'existent QUE tant que le module « Consultant /
+          Stanowisko » de l'hôte n'est pas branché. Elles alimentent
+          `DbConsultantService`, qui se substitue en un alias à la vraie
+          implémentation le jour où celle-ci arrive — voir services.yaml.
+
+          Le code PIN n'est stocké que sous forme d'empreinte, et l'index
+          d'unicité fait respecter la contrainte annoncée par
+          `ConsultantServiceInterface` : deux vendeurs partageant un code
+          partageraient une identité, et l'audit deviendrait faux.
+        */
+        if (!\in_array('inv_workstation', $existing, true)) {
+            $t = $schema->createTable('inv_workstation');
+            $t->addColumn('id', 'string', ['length' => 64]);
+            $t->addColumn('name', 'string', ['length' => 128]);
+            $t->addColumn('active', 'boolean', ['default' => true]);
+            $t->addColumn('sort_order', 'integer', ['default' => 0]);
+            $t->setPrimaryKey(['id']);
+        }
+
+        if (!\in_array('inv_consultant', $existing, true)) {
+            $t = $schema->createTable('inv_consultant');
+            $t->addColumn('id', 'string', ['length' => 64]);
+            $t->addColumn('first_name', 'string', ['length' => 64, 'default' => '']);
+            $t->addColumn('last_name', 'string', ['length' => 64, 'default' => '']);
+            $t->addColumn('email', 'string', ['length' => 190, 'notnull' => false]);
+            $t->addColumn('role', 'string', ['length' => 16, 'default' => 'CONSULTANT']);
+            // Empreinte HMAC, jamais le code lui-même. Voir PinHasher.
+            $t->addColumn('pin_hash', 'string', ['length' => 64, 'notnull' => false]);
+            $t->addColumn('default_workstation_id', 'string', ['length' => 64, 'notnull' => false]);
+            $t->addColumn('active', 'boolean', ['default' => true]);
+            $t->addColumn('locale', 'string', ['length' => 5, 'notnull' => false]);
+            $t->addColumn('shops', 'text', ['default' => '[]']);           // JSON
+            $t->addColumn('workstations', 'text', ['default' => '[]']);    // JSON
+            $t->addColumn('sort_order', 'integer', ['default' => 0]);
+            $t->setPrimaryKey(['id']);
+            $t->addUniqueIndex(['pin_hash'], 'inv_consultant_pin');
+        }
+
         if (!\in_array('inv_par_matrix', $existing, true)) {
             $t = $schema->createTable('inv_par_matrix');
             $t->addColumn('id', 'string', ['length' => 64]);

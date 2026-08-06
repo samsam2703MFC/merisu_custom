@@ -6,6 +6,7 @@ namespace Merisu\Inventory\Controller;
 
 use Merisu\Inventory\Adapter\ConsultantServiceInterface;
 use Merisu\Inventory\Adapter\RecipeServiceInterface;
+use Merisu\Inventory\Adapter\ShopRankingServiceInterface;
 use Merisu\Inventory\Domain\BusinessDate;
 use Merisu\Inventory\Domain\ChecklistItem;
 use Merisu\Inventory\Domain\ChecklistSection;
@@ -16,7 +17,10 @@ use Merisu\Inventory\Domain\DayNote;
 use Merisu\Inventory\Domain\DayOfWeek;
 use Merisu\Inventory\Domain\GeneralSettings;
 use Merisu\Inventory\Domain\Locale;
+use Merisu\Inventory\Domain\RankingMetric;
 use Merisu\Inventory\Domain\RoundingMode;
+use Merisu\Inventory\Domain\SalesSummary;
+use Merisu\Inventory\Domain\ShopRanking;
 use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Service\InventoryService;
 use Merisu\Inventory\Service\ReportService;
@@ -37,15 +41,41 @@ final class AdminController extends AbstractController
         private readonly InventoryService $inventory,
         private readonly RecipeServiceInterface $recipes,
         private readonly ConsultantServiceInterface $consultants,
+        private readonly ShopRankingServiceInterface $ranking,
     ) {
     }
 
+    /**
+     * Sommaire de l'administration, avec le tableau de bord des ventes.
+     *
+     * ⚠️ Les chiffres viennent de la CAISSE et non des stocks : ce module ne
+     * connaît ni les encaissements ni les tickets. Tant que la caisse n'est pas
+     * branchée, ce sont les chiffres de démonstration de
+     * `LocalShopRankingService` — l'écran le dit, faute de quoi on prendrait
+     * des nombres inventés pour des mesures.
+     */
     #[Route('', name: 'admin_home', methods: ['GET'])]
-    public function home(): Response
+    public function home(Request $request): Response
     {
         $this->currentUser->requireAdmin();
 
-        return $this->render('admin/home.html.twig');
+        // Trente jours par défaut : une journée de ventes ne dit rien d'une
+        // tendance, et un mois est la période sur laquelle porte l'objectif.
+        $to = $this->inventory->today();
+        $from = (string) ($request->query->get('from') ?: BusinessDate::addDays($to, -29));
+        $from = BusinessDate::isValid($from) ? $from : BusinessDate::addDays($to, -29);
+
+        $performances = $this->ranking->performances($from, $to);
+        $boutiqueCourante = $this->ranking->currentShopId();
+
+        $classement = ShopRanking::build($performances, RankingMetric::TiramisuSold, $boutiqueCourante);
+
+        return $this->render('admin/home.html.twig', [
+            'from' => $from,
+            'to' => $to,
+            'sales' => SalesSummary::of($performances, $boutiqueCourante),
+            'bars' => SalesSummary::bars($classement),
+        ]);
     }
 
     // ── §7.6 Produits ───────────────────────────────────────────────────────

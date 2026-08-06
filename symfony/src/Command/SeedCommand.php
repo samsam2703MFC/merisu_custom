@@ -4,14 +4,20 @@ declare(strict_types=1);
 
 namespace Merisu\Inventory\Command;
 
+use Merisu\Inventory\Adapter\Consultant;
+use Merisu\Inventory\Adapter\Workstation;
 use Merisu\Inventory\Domain\ChecklistItem;
 use Merisu\Inventory\Domain\ChecklistSection;
 use Merisu\Inventory\Domain\DayNote;
 use Merisu\Inventory\Domain\DayOfWeek;
+use Merisu\Inventory\Domain\Locale;
 use Merisu\Inventory\Domain\Product;
+use Merisu\Inventory\Domain\Role;
 use Merisu\Inventory\Domain\RoundingMode;
+use Merisu\Inventory\Store\ConsultantStore;
 use Merisu\Inventory\Store\SchemaInstaller;
 use Merisu\Inventory\Store\Store;
+use Merisu\Inventory\Service\PinHasher;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -103,6 +109,11 @@ final class SeedCommand extends Command
     public function __construct(
         private readonly Store $store,
         private readonly SchemaInstaller $schema,
+        private readonly ConsultantStore $consultants,
+        private readonly PinHasher $hasher,
+        private readonly string $adminPin,
+        private readonly string $consultant1Pin,
+        private readonly string $consultant2Pin,
     ) {
         parent::__construct();
     }
@@ -197,6 +208,8 @@ final class SeedCommand extends Command
             $io->writeln('+ ' . \count(self::PLACEHOLDER_DAY_NOTES) . ' consignes de note du jour créées');
         }
 
+        $this->amorcerEquipe($io);
+
         $io->newLine();
         $io->warning('Données PLACEHOLDER : à remplacer via Admin ▸ Produits, Seuils et Check-list.');
         // La connexion se fait au seul code PIN à 6 chiffres.
@@ -204,5 +217,58 @@ final class SeedCommand extends Command
         $io->writeln('⚠️  À retirer avant toute ouverture aux utilisateurs (voir DEPLOIEMENT.md).');
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * Crée les postes et l'équipe de départ, une seule fois.
+     *
+     * Le compte administrateur est le seul indispensable : sans lui, personne
+     * ne peut ouvrir l'administration pour créer les autres, et l'application
+     * serait installée mais inaccessible.
+     *
+     * Les codes de départ sont ceux de la configuration — les mêmes que
+     * l'implémentation de repli — et se changent ensuite dans Admin ▸ Équipe.
+     * Ils ne sont écrits qu'en empreinte : la base ne contient aucun code
+     * lisible, y compris ceux-ci.
+     */
+    private function amorcerEquipe(SymfonyStyle $io): void
+    {
+        if (!$this->consultants->isEmpty()) {
+            $io->writeln('· équipe déjà créée, inchangée');
+
+            return;
+        }
+
+        foreach ([['ws-1', 'Stanowisko 1'], ['ws-2', 'Stanowisko 2']] as $rang => [$id, $nom]) {
+            $this->consultants->saveWorkstation(new Workstation($id, $nom, true), $rang + 1);
+        }
+
+        $fiches = [
+            ['admin', 'Anna', 'Kowalska', Role::Admin, 'ws-1', Locale::Pl, $this->adminPin],
+            ['consultant1', 'Marco', 'Bianchi', Role::Consultant, 'ws-1', Locale::It, $this->consultant1Pin],
+            ['consultant2', 'Claire', 'Dubois', Role::Consultant, 'ws-2', Locale::Fr, $this->consultant2Pin],
+        ];
+
+        foreach ($fiches as $rang => [$id, $prenom, $nom, $role, $poste, $langue, $pin]) {
+            $this->consultants->saveConsultant(
+                new Consultant(
+                    $id,
+                    $prenom,
+                    $nom,
+                    $role,
+                    $poste,
+                    true,
+                    strtolower("$prenom.$nom") . '@merisu.example',
+                    null,
+                    ['Merisù Centrum'],
+                    [$poste],
+                    $langue,
+                ),
+                $this->hasher->hash($pin),
+                $rang + 1,
+            );
+        }
+
+        $io->writeln('+ 2 postes et 3 comptes créés (Admin ▸ Équipe)');
     }
 }

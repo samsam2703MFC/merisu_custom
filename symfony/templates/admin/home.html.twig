@@ -1,13 +1,141 @@
-{# Sommaire de l'administration (§7.5 à §7.9). #}
+{# Sommaire de l'administration (§7.5 à §7.9), avec le tableau de bord des ventes. #}
 {% extends 'admin/_layout.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
 
 {% block title %}{{ 'admin.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
 
 {% block admin_content %}
   <h1 class="page-header__title">{{ 'admin.title'|trans }}</h1>
 
+  {#
+    ── Tableau de bord des ventes ────────────────────────────────────────────
+
+    ⚠️ Ces chiffres viennent de la CAISSE, jamais des stocks. Ce module compte
+    ce qu'il y a dans les bacs ; il ne sait rien des encaissements. Déduire des
+    ventes à partir d'un stock qui baisse compterait la casse et les offerts
+    comme des ventes.
+  #}
+  <section class="dash" aria-labelledby="dash-title">
+    <header class="dash__head">
+      <h2 class="card__title" id="dash-title">{{ 'admin.sales.title'|trans }}</h2>
+
+      {# Période : le formulaire n'a qu'un champ, la fin étant toujours
+         aujourd'hui — un stock se compte au présent. #}
+      <form class="dash__period" method="get" action="{{ path('admin_home') }}">
+        <label class="field__label" for="dash-from">{{ 'common.from'|trans }}</label>
+        <input class="field__input" type="date" id="dash-from" name="from" value="{{ from }}" max="{{ to }}">
+        <button type="submit" class="button button--secondary">{{ 'common.apply'|trans }}</button>
+      </form>
+    </header>
+
+    <p class="muted dash__range">
+      {{ 'admin.sales.range'|trans({ '%from%': from|long_date, '%to%': to|long_date }) }}
+    </p>
+
+    {% if sales.shop is null %}
+      <p class="banner banner--warn">{{ 'admin.sales.noShop'|trans }}</p>
+    {% else %}
+      {#
+        Quatre tuiles : le chiffre est la « figure », il n'a pas besoin d'un
+        graphique. Une barre unique pour une valeur unique n'apprendrait rien.
+
+        Chiffres proportionnels et non tabulaires : à cette taille, les
+        chiffres à largeur fixe font paraître « 121 » anormalement espacé.
+      #}
+      <div class="stats">
+        <div class="stat">
+          <p class="stat__label">{{ 'admin.sales.revenue'|trans }}</p>
+          <p class="stat__value">{{ sales.shop.revenue|number_format(0, ',', ' ') }}<span class="stat__unit">{{ sales.shop.currency }}</span></p>
+        </div>
+
+        <div class="stat">
+          <p class="stat__label">{{ 'admin.sales.customers'|trans }}</p>
+          <p class="stat__value">{{ sales.shop.customers|number_format(0, ',', ' ') }}</p>
+        </div>
+
+        <div class="stat">
+          <p class="stat__label">{{ 'admin.sales.tiramisu'|trans }}</p>
+          <p class="stat__value">{{ sales.shop.tiramisuSold|number_format(0, ',', ' ') }}</p>
+          {% if sales.shareOfNetwork is not null %}
+            <p class="stat__note">{{ 'admin.sales.shareOfNetwork'|trans({ '%pct%': sales.shareOfNetwork|number_format(1, ',', ' ') }) }}</p>
+          {% endif %}
+        </div>
+
+        <div class="stat">
+          <p class="stat__label">{{ 'admin.sales.averageBasket'|trans }}</p>
+          {% set panier = sales.shop.averageBasket %}
+          <p class="stat__value">
+            {{ panier is null ? '—' : panier|number_format(2, ',', ' ') }}{% if panier is not null %}<span class="stat__unit">{{ sales.shop.currency }}</span>{% endif %}
+          </p>
+        </div>
+      </div>
+    {% endif %}
+
+    {#
+      ── Comparaison entre boutiques ─────────────────────────────────────────
+
+      Sur les TIRAMISU VENDUS, et non sur le chiffre d'affaires : les boutiques
+      facturent en zlotys et en euros, et sans taux de change fiable, mettre
+      1 000 PLN et 1 000 EUR sur la même échelle fabriquerait un classement
+      faux que personne ne verrait. Un tiramisu, lui, vaut un tiramisu partout.
+
+      Une seule série, donc aucune légende : le titre dit déjà ce qui est
+      mesuré. La boutique du poste ressort par TROIS canaux — teinte plus
+      soutenue, nom en gras, mention « vous » — parce que la seule teinte ne
+      suffirait pas à qui distingue mal le rose du brun.
+
+      Table réelle et non une pile de div : les valeurs sont lisibles au
+      lecteur d'écran ligne par ligne, sans dépendre des barres.
+    #}
+    {% if bars is not empty %}
+      <h3 class="dash__subtitle">{{ 'admin.sales.compareTitle'|trans }}</h3>
+
+      <div class="table-scroll">
+        <table class="table bars">
+          <caption class="visually-hidden">{{ 'admin.sales.compareCaption'|trans }}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{{ 'admin.sales.rank'|trans }}</th>
+              <th scope="col">{{ 'admin.sales.shop'|trans }}</th>
+              <th scope="col">{{ 'admin.sales.tiramisu'|trans }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for bar in bars %}
+              <tr class="{{ bar.isCurrent ? 'bars__row--current' : '' }}">
+                <td class="bars__rank">{{ bar.rank }}</td>
+
+                <th scope="row" class="bars__name">
+                  {{ bar.shop.name }}
+                  {% if bar.isCurrent %}
+                    <span class="badge badge--info">{{ 'admin.sales.yours'|trans }}</span>
+                  {% endif %}
+                </th>
+
+                <td class="bars__cell">
+                  {# La largeur est une donnée calculée par le serveur : elle
+                     passe donc par une propriété personnalisée, seul cas où ce
+                     projet accepte du style en ligne. #}
+                  <span class="bars__track">
+                    <span class="bars__fill" style="--w: {{ bar.percent|round(1) }}%"></span>
+                  </span>
+                  <span class="bars__value">{{ bar.value|number_format(0, ',', ' ') }}</span>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+
+    <p class="field__hint">{{ 'admin.sales.source'|trans }}</p>
+  </section>
+
+  <h2 class="section-title">{{ 'admin.sales.sectionsTitle'|trans }}</h2>
+
   <div class="card-grid">
     {% for section in [
+      { route: 'admin_team',       label: 'nav.team',      desc: 'admin.team.subtitle' },
       { route: 'admin_products',   label: 'nav.products',  desc: 'admin.products.subtitle' },
       { route: 'admin_par_matrix', label: 'nav.parMatrix', desc: 'admin.parMatrix.subtitle' },
       { route: 'admin_settings',   label: 'nav.settings',  desc: 'admin.settings.subtitle' },
