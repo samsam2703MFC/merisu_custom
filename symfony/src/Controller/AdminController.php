@@ -13,11 +13,14 @@ use Merisu\Inventory\Domain\ChecklistSection;
 use Merisu\Inventory\Domain\ContainerType;
 use Merisu\Inventory\Domain\CountMode;
 use Merisu\Inventory\Domain\CountMoment;
+use Merisu\Inventory\Domain\CountSchedule;
 use Merisu\Inventory\Domain\DayNote;
 use Merisu\Inventory\Domain\DayOfWeek;
 use Merisu\Inventory\Domain\GeneralSettings;
 use Merisu\Inventory\Domain\Locale;
+use Merisu\Inventory\Domain\Product;
 use Merisu\Inventory\Domain\ProductCategory;
+use Merisu\Inventory\Domain\ProductNature;
 use Merisu\Inventory\Domain\RankingMetric;
 use Merisu\Inventory\Domain\RoundingMode;
 use Merisu\Inventory\Domain\SalesSummary;
@@ -82,7 +85,7 @@ final class AdminController extends AbstractController
     // ── §7.6 Produits ───────────────────────────────────────────────────────
 
     #[Route('/produits', name: 'admin_products', methods: ['GET'])]
-    public function products(): Response
+    public function products(Request $request): Response
     {
         $this->currentUser->requireAdmin();
 
@@ -96,7 +99,81 @@ final class AdminController extends AbstractController
             'roundingModes' => RoundingMode::cases(),
             'countModes' => CountMode::all(),
             'containerTypes' => ContainerType::all(),
+            'natures' => ProductNature::all(),
+            'frequencies' => CountSchedule::FREQUENCIES,
+            // Fiche à déplier au chargement : celle qu'on vient de créer.
+            'open' => (string) $request->query->get('ouvrir', ''),
         ]);
+    }
+
+    /**
+     * Crée un produit.
+     *
+     * L'application partait de huit emplacements fixes, hérités de la
+     * maquette : une boutique qui ouvre un neuvième produit n'avait alors
+     * d'autre choix que de renommer un emplacement occupé, en perdant ce qu'il
+     * portait. Le nombre de produits n'est plus borné.
+     *
+     * Quatre champs seulement à la création — nom, rayon, nature, unité. Le
+     * reste (perte, arrondi, étiquette, mentions par langue) se règle sur la
+     * fiche, qui s'ouvre juste après : demander onze champs avant d'avoir
+     * seulement nommé le produit ferait renoncer.
+     *
+     * Déclarée AVANT `admin_product_save` : `/produits/{id}` capterait sinon
+     * « nouveau » comme un identifiant, et le formulaire répondrait 404.
+     */
+    #[Route('/produits/nouveau', name: 'admin_product_create', methods: ['POST'])]
+    public function createProduct(Request $request): Response
+    {
+        $admin = $this->currentUser->requireAdmin();
+
+        $nom = trim((string) $request->request->get('name', ''));
+
+        if ($nom === '') {
+            $this->addFlash('error', 'admin.products.createEmpty');
+
+            return $this->redirectToRoute('admin_products');
+        }
+
+        $slot = $this->store->nextProductSlot();
+
+        /*
+          Un seul libellé demandé, dans la langue de l'écran.
+
+          Les trois autres restent vides et `product_label` se replie dessus :
+          un produit lisible tout de suite dans une langue vaut mieux qu'un
+          formulaire de quatre champs qu'on remplit en recopiant le même mot.
+          Les traductions se posent ensuite sur la fiche.
+        */
+        $langue = $request->getLocale();
+
+        $this->store->saveProduct(new Product(
+            $slot['id'],
+            $slot['code'],
+            [$langue => mb_substr($nom, 0, 120)],
+            mb_substr(trim((string) $request->request->get('unit', 'pcs')), 0, 16) ?: 'pcs',
+            true,
+            0.0,
+            1.0,
+            RoundingMode::Ceil,
+            null,
+            $slot['sortOrder'],
+            category: ProductCategory::clean((string) $request->request->get('category', '')),
+            nature: ProductNature::fromLoose($request->request->get('nature')),
+        ));
+
+        $this->store->audit($admin->id, $admin->role->value, 'PRODUCT_CREATED', null, null, [
+            'id' => $slot['id'],
+            'code' => $slot['code'],
+            'name' => $nom,
+        ]);
+
+        $this->addFlash('success', 'common.saved');
+
+        // La fiche s'ouvre sur la page : sans cela, le produit rejoindrait le
+        // bas d'une liste de trente fiches repliées et il faudrait le chercher
+        // pour finir de le régler.
+        return $this->redirectToRoute('admin_products', ['ouvrir' => $slot['id']]);
     }
 
     #[Route('/produits/{id}', name: 'admin_product_save', methods: ['POST'])]
@@ -134,6 +211,20 @@ final class AdminController extends AbstractController
             // calcul. Conservée même quand le produit repasse « à l'unité »,
             // pour qu'un aller-retour entre les deux modes ne l'efface pas.
             containerType: ContainerType::tryFromLoose($request->request->get('containerType')) ?? $product->containerType,
+            // Matière première ou composition. C'est elle qui décide de
+            // l'entrée au plan de production, d'où le repli sur la valeur déjà
+            // enregistrée plutôt que sur « composition » : un champ absent
+            // d'une requête tronquée ne doit pas remettre le mascarpone en
+            // fabrication.
+            nature: ProductNature::fromLoose($request->request->get('nature') ?? $product->nature->value),
+            // Rythme de comptage. `CountSchedule::of` rattrape le cas des deux
+            // moments décochés : une ligne comptée à aucun moment aurait
+            // disparu de tous les écrans sans que rien ne le dise.
+            schedule: CountSchedule::of(
+                $request->request->getBoolean('countMorning'),
+                $request->request->getBoolean('countEvening'),
+                $request->request->get('countFrequency'),
+            ),
             // Catégorie de production, choisie dans la liste d'Admin ▸
             // Catégories : c'est l'atelier qui décide de son vocabulaire
             // (Tiramisu, Boissons, Verrines…) et peut le changer sans

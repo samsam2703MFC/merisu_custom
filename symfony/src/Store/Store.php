@@ -14,6 +14,7 @@ use Merisu\Inventory\Domain\ContainerType;
 use Merisu\Inventory\Domain\CountMode;
 use Merisu\Inventory\Domain\CountMoment;
 use Merisu\Inventory\Domain\CountPhoto;
+use Merisu\Inventory\Domain\CountSchedule;
 use Merisu\Inventory\Domain\DayOfWeek;
 use Merisu\Inventory\Domain\DayNote;
 use Merisu\Inventory\Domain\GeneralSettings;
@@ -23,6 +24,7 @@ use Merisu\Inventory\Domain\MaterialMovement;
 use Merisu\Inventory\Domain\ParMatrixEntry;
 use Merisu\Inventory\Domain\Product;
 use Merisu\Inventory\Domain\ProductCategory;
+use Merisu\Inventory\Domain\ProductNature;
 use Merisu\Inventory\Domain\ProductionPlanRow;
 use Merisu\Inventory\Domain\ProductionPlanStatus;
 use Merisu\Inventory\Domain\RoundingMode;
@@ -100,6 +102,41 @@ final class Store
         return $row === false ? null : $this->hydrateProduct($row);
     }
 
+    /**
+     * Réserve un emplacement libre pour un nouveau produit.
+     *
+     * L'identifiant et le code ne sont jamais montrés au vendeur — le code
+     * n'est qu'une clé stable, et le nom du produit vit dans `name`, par
+     * langue. On les fabrique donc plutôt que de les demander : un
+     * administrateur pressé aurait saisi deux fois le même.
+     *
+     * La boucle plutôt qu'un `MAX(...) + 1` : les huit emplacements d'origine
+     * portent des codes de forme PRODUIT_1 à PRODUIT_8, et une base de
+     * démonstration en a d'autres. On avance jusqu'au premier rang dont NI
+     * l'identifiant NI le code ne sont pris.
+     *
+     * @return array{id: string, code: string, sortOrder: int}
+     */
+    public function nextProductSlot(): array
+    {
+        $pris = [];
+        foreach ($this->db->fetchAllAssociative('SELECT id, code FROM inv_product') as $r) {
+            $pris[(string) $r['id']] = true;
+            $pris[(string) $r['code']] = true;
+        }
+
+        $rang = 1;
+        while (isset($pris['product-' . $rang]) || isset($pris['PRODUIT_' . $rang])) {
+            ++$rang;
+        }
+
+        // Le nouveau ferme la marche : il se range où on vient de le poser, et
+        // non au milieu d'une liste que l'atelier a ordonnée.
+        $dernier = (int) $this->db->fetchOne('SELECT MAX(sort_order) FROM inv_product');
+
+        return ['id' => 'product-' . $rang, 'code' => 'PRODUIT_' . $rang, 'sortOrder' => $dernier + 1];
+    }
+
     public function saveProduct(Product $product): void
     {
         $data = [
@@ -118,6 +155,10 @@ final class Store
             'ingredients' => json_encode($product->ingredients, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
             'allergens' => json_encode($product->allergens, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
             'container_type' => $product->containerType->value,
+            'nature' => $product->nature->value,
+            'count_morning' => $product->schedule->morning ? 1 : 0,
+            'count_evening' => $product->schedule->evening ? 1 : 0,
+            'count_frequency' => $product->schedule->frequency,
         ];
 
         $exists = (int) $this->db->fetchOne('SELECT COUNT(*) FROM inv_product WHERE id = ?', [$product->id]) > 0;
@@ -150,22 +191,35 @@ final class Store
         }
 
         $connues = [];
-        foreach ($this->db->fetchAllAssociative('SELECT name, sort_order FROM inv_category') as $r) {
-            $connues[(string) $r['name']] = (int) $r['sort_order'];
+        foreach ($this->db->fetchAllAssociative('SELECT name, sort_order, nature FROM inv_category') as $r) {
+            $connues[(string) $r['name']] = [(int) $r['sort_order'], ProductNature::fromLoose($r['nature'] ?? null)];
         }
 
         // Adoption des nouvelles venues, à la suite des existantes.
-        $rang = $connues === [] ? 0 : max($connues);
+        $rang = $connues === [] ? 0 : max(array_column($connues, 0));
         foreach (array_keys($comptes) as $nom) {
             if (!isset($connues[$nom])) {
-                $connues[$nom] = ++$rang;
-                $this->db->insert('inv_category', ['name' => $nom, 'sort_order' => $rang]);
+                // La nature vient des produits qui la portent déjà : un rayon
+                // adopté depuis des fiches toutes en matière première est un
+                // rayon de matière première, et le déclarer « composition »
+                // l'aurait fait entrer au plan de production sans raison.
+                $nature = ProductNature::fromLoose($this->db->fetchOne(
+                    'SELECT nature FROM inv_product WHERE active = 1 AND category = ? GROUP BY nature ORDER BY COUNT(*) DESC',
+                    [$nom],
+                ) ?: null);
+
+                $connues[$nom] = [++$rang, $nature];
+                $this->db->insert('inv_category', [
+                    'name' => $nom,
+                    'sort_order' => $rang,
+                    'nature' => $nature->value,
+                ]);
             }
         }
 
         $sortie = [];
-        foreach ($connues as $nom => $ordre) {
-            $sortie[] = new ProductCategory((string) $nom, $ordre, $comptes[$nom] ?? 0);
+        foreach ($connues as $nom => [$ordre, $nature]) {
+            $sortie[] = new ProductCategory((string) $nom, $ordre, $comptes[$nom] ?? 0, $nature);
         }
 
         usort(
@@ -190,7 +244,7 @@ final class Store
      * lève pas d'erreur — le résultat voulu est là — mais renvoie false, pour
      * que l'écran dise « existe déjà » plutôt que « créée ».
      */
-    public function addCategory(string $name): bool
+    public function addCategory(string $name, ProductNature $nature = ProductNature::Composed): bool
     {
         if ($name === '' || $this->db->fetchOne('SELECT name FROM inv_category WHERE name = ?', [$name]) !== false) {
             return false;
@@ -198,9 +252,19 @@ final class Store
 
         $dernier = $this->db->fetchOne('SELECT MAX(sort_order) FROM inv_category');
 
-        $this->db->insert('inv_category', ['name' => $name, 'sort_order' => ((int) $dernier) + 1]);
+        $this->db->insert('inv_category', [
+            'name' => $name,
+            'sort_order' => ((int) $dernier) + 1,
+            'nature' => $nature->value,
+        ]);
 
         return true;
+    }
+
+    /** Bascule matière première / composition d'un rayon entier. */
+    public function saveCategoryNature(string $name, ProductNature $nature): void
+    {
+        $this->db->update('inv_category', ['nature' => $nature->value], ['name' => $name]);
     }
 
     public function saveCategoryOrder(string $name, int $sortOrder): void
@@ -837,6 +901,19 @@ final class Store
             // absente ou inconnue vaut mieux dessinée approximativement que
             // pas dessinée du tout.
             ContainerType::fromLoose($row['container_type'] ?? null),
+            // Repli sur la composition : voir ProductNature::fromLoose. Une
+            // base installée avant la distinction ne contient que des
+            // produits fabriqués, et les retirer du plan les ferait
+            // manquer en rayon dès le lendemain.
+            ProductNature::fromLoose($row['nature'] ?? null),
+            // Colonnes ajoutées avec le rythme de comptage : absentes d'une
+            // base installée avant, où tout se comptait matin et soir tous
+            // les jours — ce que dit précisément ce repli.
+            CountSchedule::of(
+                (bool) ($row['count_morning'] ?? true),
+                (bool) ($row['count_evening'] ?? true),
+                $row['count_frequency'] ?? 7,
+            ),
         );
     }
 

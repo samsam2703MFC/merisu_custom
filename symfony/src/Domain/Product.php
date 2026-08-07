@@ -60,7 +60,32 @@ final readonly class Product
          * les deux modes ne perde pas le choix déjà fait.
          */
         public ContainerType $containerType = ContainerType::Tub,
+        /**
+         * Matière première ou composition.
+         *
+         * Seules les compositions entrent au plan de production : demander une
+         * quantité de mascarpone « à produire » n'a aucun sens, et le plan en
+         * réclamait pourtant.
+         */
+        public ProductNature $nature = ProductNature::Composed,
+        /**
+         * Quand cette ligne se compte : à quels moments, et à quel rythme.
+         *
+         * Tout ne se compte pas matin et soir tous les jours. Les gobelets se
+         * comptent le lundi ; les faire figurer aux quatorze écrans de la
+         * semaine n'allonge qu'une liste parcourue debout, à 08:00.
+         *
+         * Matin et soir, tous les jours, par défaut : c'est le réglage qui ne
+         * retire rien à personne.
+         */
+        public CountSchedule $schedule = new CountSchedule(),
     ) {
+    }
+
+    /** Se fabrique-t-il ? Raccourci de lecture pour les gabarits. */
+    public function isProduced(): bool
+    {
+        return $this->nature->isComposed();
     }
 
     /** Ingrédients dans la langue demandée, avec le même repli que le libellé. */
@@ -146,6 +171,8 @@ final readonly class Product
             $changes['ingredients'] ?? $this->ingredients,
             $changes['allergens'] ?? $this->allergens,
             $changes['containerType'] ?? $this->containerType,
+            $changes['nature'] ?? $this->nature,
+            $changes['schedule'] ?? $this->schedule,
         );
     }
 }

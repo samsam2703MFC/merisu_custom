@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Merisu\Inventory\Controller;
 
 use Merisu\Inventory\Domain\ProductCategory;
+use Merisu\Inventory\Domain\ProductNature;
 use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Store\Store;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -41,12 +42,37 @@ final class AdminCategoryController extends AbstractController
     {
         $this->currentUser->requireAdmin();
 
+        $categories = $this->store->categories();
+        $produits = $this->store->products(true);
+
+        /*
+          Produits dont la nature contredit celle de leur rayon.
+
+          Ce n'est pas une faute : un produit fini rangé au frais parmi les
+          matières est une situation réelle, et forcer l'un sur l'autre
+          retirerait ou ajouterait des lignes au plan de production dans le dos
+          de l'administrateur. On le SIGNALE donc, et lui tranche.
+        */
+        $natures = [];
+        foreach ($categories as $categorie) {
+            $natures[$categorie->name] = $categorie->nature;
+        }
+
+        $desaccords = [];
+        foreach ($produits as $produit) {
+            if (isset($natures[$produit->category]) && $natures[$produit->category] !== $produit->nature) {
+                $desaccords[$produit->category] = ($desaccords[$produit->category] ?? 0) + 1;
+            }
+        }
+
         return $this->render('admin/categories.html.twig', [
-            'categories' => $this->store->categories(),
+            'categories' => $categories,
+            'natures' => ProductNature::all(),
+            'mismatches' => $desaccords,
             // Produits actifs sans catégorie : ils forment le fourre-tout de
             // l'écran de comptage, et il vaut mieux le savoir que le découvrir.
             'unclassified' => \count(array_filter(
-                $this->store->products(true),
+                $produits,
                 static fn ($p): bool => $p->category === '',
             )),
         ]);
@@ -68,19 +94,28 @@ final class AdminCategoryController extends AbstractController
         $noms = $request->request->all('name');
         /** @var array<string,mixed> $ordres */
         $ordres = $request->request->all('order');
+        /** @var array<string,mixed> $natures */
+        $natures = $request->request->all('nature');
 
         $renommees = 0;
         $reordonnees = 0;
+        $bascules = 0;
 
         foreach ($this->store->categories() as $categorie) {
             $ancien = $categorie->name;
 
-            // L'ordre d'abord : un renommage change la clé, et la ligne visée
-            // ne serait plus la même ensuite.
+            // L'ordre et la nature d'abord : un renommage change la clé, et la
+            // ligne visée ne serait plus la même ensuite.
             $ordre = (int) ($ordres[$ancien] ?? $categorie->sortOrder);
             if ($ordre !== $categorie->sortOrder) {
                 $this->store->saveCategoryOrder($ancien, $ordre);
                 ++$reordonnees;
+            }
+
+            $nature = ProductNature::fromLoose($natures[$ancien] ?? $categorie->nature->value);
+            if ($nature !== $categorie->nature) {
+                $this->store->saveCategoryNature($ancien, $nature);
+                ++$bascules;
             }
 
             $nouveau = ProductCategory::clean((string) ($noms[$ancien] ?? $ancien));
@@ -93,10 +128,11 @@ final class AdminCategoryController extends AbstractController
             ++$renommees;
         }
 
-        if ($renommees > 0 || $reordonnees > 0) {
+        if ($renommees > 0 || $reordonnees > 0 || $bascules > 0) {
             $this->store->audit($admin->id, $admin->role->value, 'CATEGORIES_UPDATE', null, null, [
                 'renamed' => $renommees,
                 'reordered' => $reordonnees,
+                'natureChanged' => $bascules,
             ]);
         }
 
@@ -126,13 +162,18 @@ final class AdminCategoryController extends AbstractController
             return $this->redirectToRoute('admin_categories');
         }
 
-        if (!$this->store->addCategory($nom)) {
+        $nature = ProductNature::fromLoose($request->request->get('nature'));
+
+        if (!$this->store->addCategory($nom, $nature)) {
             $this->addFlash('error', 'admin.categories.addDuplicate');
 
             return $this->redirectToRoute('admin_categories');
         }
 
-        $this->store->audit($admin->id, $admin->role->value, 'CATEGORY_CREATED', null, null, ['name' => $nom]);
+        $this->store->audit($admin->id, $admin->role->value, 'CATEGORY_CREATED', null, null, [
+            'name' => $nom,
+            'nature' => $nature->value,
+        ]);
         $this->addFlash('success', 'common.saved');
 
         return $this->redirectToRoute('admin_categories');

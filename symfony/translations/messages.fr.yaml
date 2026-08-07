@@ -186,6 +186,8 @@ admin:
         addHint: 'Elle arrive vide et se range en fin de liste : on lui affecte ensuite des produits depuis leur fiche.'
         addEmpty: 'Nom de catégorie vide : rien n''a été créé.'
         addDuplicate: 'Cette catégorie existe déjà : elle n''a pas été ajoutée en double.'
+        natureOf: 'Nature de « %name% »'
+        natureMismatch: '%count% produit(s) d’une autre nature'
     sales:
         title: 'Ventes'
         sectionsTitle: 'Réglages'
@@ -246,7 +248,7 @@ admin:
     title: Administration
     products:
         title: 'Paramètres produits'
-        subtitle: '8 emplacements : renommez, activez et réglez les paramètres de calcul.'
+        subtitle: 'Renommez, activez et réglez les paramètres de calcul. Le nombre de produits est libre.'
         namePerLocale: 'Libellé (%locale%)'
         countMode: 'Mode de comptage'
         countModeHint: "Contenant : le vendeur compte des bacs pleins et la fraction du dernier entamé, plutôt qu'un nombre à virgule."
@@ -254,6 +256,23 @@ admin:
         categoryHint: 'Sert à grouper les produits sur l''écran de comptage. Pour en créer, renommer ou réordonner une :'
         categoryManage: 'Gérer les catégories'
         categoryNone: 'Non classé'
+        nature: 'Nature'
+        natureHint: 'Seules les compositions entrent au plan de production : une matière première s''achète, elle ne se fabrique pas. Elle reste comptée matin et soir.'
+        schedule: 'Rythme de comptage'
+        countMorning: 'À l''ouverture'
+        countEvening: 'À la clôture'
+        frequency: 'Fois par semaine'
+        frequencyHint: 'Les jours en découlent :'
+        everyDay: 'Tous les jours'
+        perWeek: '%count%×/semaine'
+        create: 'Ajouter un produit'
+        createName: 'Nom du produit'
+        createNameHint: 'Dans la langue de cet écran. Les autres langues se renseignent ensuite sur la fiche : sans traduction, c''est ce nom qui s''affiche partout.'
+        createPlaceholder: 'Tiramisu pistache'
+        createEmpty: 'Nom de produit vide : rien n''a été créé.'
+        natures:
+            COMPOSED: 'Composition'
+            RAW: 'Matière première'
         labelSection: "Mentions de l'étiquette"
         shelfLifeDays: 'Durée de vie (jours)'
         shelfLifeDaysHint: "À partir du jour de production. 0 = non renseignée : aucune DLC n'est imprimée."

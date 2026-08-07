@@ -21,8 +21,78 @@
     Bâti sur <details> : aucun script, donc le repli fonctionne aussi quand
     le réseau du poste n'a pas laissé passer app.js.
   #}
+  {#
+    Créer un produit.
+
+    En tête et non en pied : la liste compte maintenant autant de fiches que la
+    boutique a de lignes, et un bouton posé après trente fiches repliées se
+    cherche. C'est aussi le seul geste de la page qui ne modifie rien
+    d'existant.
+
+    Quatre champs, pas onze : nommer le produit et le ranger suffit à le faire
+    exister. Perte, arrondi, étiquette et mentions par langue se règlent sur la
+    fiche, qui s'ouvre juste après l'enregistrement.
+  #}
+  <details class="card admin-new">
+    <summary class="admin-new__summary">
+      {{ ui.icon('plus') }}
+      <span>{{ 'admin.products.create'|trans }}</span>
+    </summary>
+
+    <form method="post" action="{{ path('admin_product_create') }}" class="form">
+      <div class="field">
+        <label class="field__label" for="new-product">{{ 'admin.products.createName'|trans }}</label>
+        <input class="field__input" type="text" id="new-product" name="name"
+               maxlength="120" required
+               placeholder="{{ 'admin.products.createPlaceholder'|trans }}">
+        <p class="field__hint">{{ 'admin.products.createNameHint'|trans }}</p>
+      </div>
+
+      <div class="field-grid">
+        <div class="field">
+          <label class="field__label" for="new-category-product">{{ 'admin.products.category'|trans }}</label>
+          <select class="field__input" id="new-category-product" name="category">
+            <option value="">{{ 'admin.products.categoryNone'|trans }}</option>
+            {% for nom in categories %}
+              <option value="{{ nom }}">{{ nom }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="new-unit">{{ 'admin.products.unit'|trans }}</label>
+          <input class="field__input" type="text" id="new-unit" name="unit"
+                 maxlength="16" value="pcs">
+        </div>
+      </div>
+
+      <fieldset class="field seg">
+        <legend class="field__label">{{ 'admin.products.nature'|trans }}</legend>
+
+        <div class="seg__grid">
+          {% for nature in natures %}
+            <label class="seg__item">
+              <input class="seg__radio" type="radio" name="nature" value="{{ nature.value }}"
+                     {{ nature.isComposed ? 'checked' : '' }}>
+              <span class="seg__box">
+                {{ ui.icon(nature.icon) }}
+                <span class="seg__name">{{ ('admin.products.natures.' ~ nature.value)|trans }}</span>
+              </span>
+            </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+
+      <div class="form-actions">
+        <button type="submit" class="button button--primary">{{ 'common.add'|trans }}</button>
+      </div>
+    </form>
+  </details>
+
   {% for product in products %}
-    <details class="card admin-item">
+    {# Fiche dépliée d'emblée : celle qu'on vient de créer, pour finir de la
+       régler sans la chercher au bas de la liste. #}
+    <details class="card admin-item" {{ product.id == open ? 'open' : '' }}>
       <summary class="admin-item__summary">
         <span class="admin-item__head">
           {{ ui.badge('neutral', product.code) }}
@@ -47,11 +117,39 @@
           ordinaire, et l'annoncer partout ne dirait rien.
         #}
         <span class="admin-item__tags">
+          {#
+            Seule la matière première se signale : la composition est le cas
+            ordinaire, et l'annoncer sur les huit fiches ne dirait rien. Ce
+            qu'il faut voir de loin, c'est la ligne qui N'ENTRE PAS au plan.
+          #}
+          {% if product.nature.isRaw %}
+            {% set nature = 'admin.products.natures.RAW'|trans %}
+            <span class="badge badge--info badge--icon" title="{{ nature }}">
+              {{ ui.icon(product.nature.icon, nature) }}
+            </span>
+          {% endif %}
+
           {% if product.countMode.isContainer %}
             {% set forme = ('admin.products.containerTypes.' ~ product.containerType.value)|trans %}
             <span class="badge badge--info badge--icon" title="{{ forme }}">
               {{ ui.icon(product.containerType.icon, forme) }}
             </span>
+          {% endif %}
+
+          {#
+            Rythme annoncé dès la liste repliée, mais SEULEMENT s'il retire
+            quelque chose : « matin et soir, tous les jours » est le cas
+            ordinaire, et l'afficher huit fois ne dirait rien. Ce qu'il faut
+            voir de loin, c'est la ligne qui n'apparaîtra pas ce matin.
+          #}
+          {% if product.schedule.frequency < 7 %}
+            {{ ui.badge('neutral', 'admin.products.perWeek'|trans({ '%count%': product.schedule.frequency })) }}
+          {% endif %}
+
+          {% if not (product.schedule.morning and product.schedule.evening) %}
+            {{ ui.badge('neutral', (product.schedule.morning
+              ? 'admin.products.countMorning'
+              : 'admin.products.countEvening')|trans) }}
           {% endif %}
 
           {% if not product.active %}
@@ -83,6 +181,93 @@
             </div>
           {% endfor %}
         </div>
+
+        {#
+          Nature de la ligne : ce qu'on FABRIQUE, ou ce qu'on COMMANDE.
+
+          Hors de la grille et en tête des réglages : c'est le seul champ de la
+          fiche qui décide si le produit entre au plan de production, et le
+          reste des réglages — perte, arrondi, seuils — n'a de sens que pour
+          une composition.
+
+          Deux boutons radio côte à côte plutôt qu'une case à cocher : « ceci
+          OU cela » se lit d'un regard, là qu'une case « matière première ? »
+          oblige à deviner ce que veut dire son absence de coche.
+        #}
+        <fieldset class="field seg">
+          <legend class="field__label">{{ 'admin.products.nature'|trans }}</legend>
+
+          <div class="seg__grid">
+            {% for nature in natures %}
+              <label class="seg__item">
+                <input class="seg__radio" type="radio" name="nature" value="{{ nature.value }}"
+                       {{ nature == product.nature ? 'checked' : '' }}>
+                <span class="seg__box">
+                  {{ ui.icon(nature.icon) }}
+                  <span class="seg__name">{{ ('admin.products.natures.' ~ nature.value)|trans }}</span>
+                </span>
+              </label>
+            {% endfor %}
+          </div>
+
+          <p class="field__hint">{{ 'admin.products.natureHint'|trans }}</p>
+        </fieldset>
+
+        {#
+          Rythme de comptage : à quels moments, et combien de fois par semaine.
+
+          Tout ne se compte pas matin et soir tous les jours. Les gobelets se
+          comptent le lundi ; les faire figurer aux quatorze écrans de la
+          semaine n'allonge qu'une liste que le vendeur parcourt debout, à
+          08:00, avant l'ouverture.
+
+          Les jours ne se choisissent pas un par un : l'administrateur a « deux
+          fois par semaine » en tête, pas « lundi et jeudi ». Le rappel dit
+          quels jours en découlent, faute de quoi le réglage serait muet sur ce
+          qu'il fait vraiment.
+        #}
+        <fieldset class="field sched">
+          <legend class="field__label">{{ 'admin.products.schedule'|trans }}</legend>
+
+          <div class="sched__moments">
+            <div class="checkbox-row">
+              <input type="checkbox" id="morning-{{ product.id }}" name="countMorning" value="1"
+                     {{ product.schedule.morning ? 'checked' : '' }}>
+              <label for="morning-{{ product.id }}">{{ 'admin.products.countMorning'|trans }}</label>
+            </div>
+
+            <div class="checkbox-row">
+              <input type="checkbox" id="evening-{{ product.id }}" name="countEvening" value="1"
+                     {{ product.schedule.evening ? 'checked' : '' }}>
+              <label for="evening-{{ product.id }}">{{ 'admin.products.countEvening'|trans }}</label>
+            </div>
+          </div>
+
+          <p class="field__label field__label--sub">{{ 'admin.products.frequency'|trans }}</p>
+
+          <div class="freq">
+            {% for n in frequencies %}
+              <label class="freq__item">
+                <input class="freq__radio" type="radio" name="countFrequency" value="{{ n }}"
+                       {{ n == product.schedule.frequency ? 'checked' : '' }}>
+                <span class="freq__box">{{ n }}</span>
+              </label>
+            {% endfor %}
+          </div>
+
+          {# Sept jours nommés un à un tiennent sur trois lignes pour ne rien
+             apprendre : c'est le cas où le rappel sert le moins. #}
+          <p class="field__hint">
+            {{ 'admin.products.frequencyHint'|trans }}
+            <strong>
+              {% if product.schedule.frequency >= 7 %}
+                {{ 'admin.products.everyDay'|trans }}
+              {% else %}
+                {{ product.schedule.days|map(d => ('days.' ~ d.value)|trans)|join(', ') }}
+              {% endif %}
+            </strong>
+          </p>
+        </fieldset>
 
         <div class="field-grid">
           <div class="field">

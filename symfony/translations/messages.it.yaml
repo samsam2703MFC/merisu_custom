@@ -183,6 +183,8 @@ admin:
         addHint: 'Nasce vuota e si colloca in fondo all''elenco: i prodotti le si assegnano poi dalla loro scheda.'
         addEmpty: 'Nome di categoria vuoto: non è stato creato nulla.'
         addDuplicate: 'Questa categoria esiste già: non è stata aggiunta in doppio.'
+        natureOf: 'Natura di « %name% »'
+        natureMismatch: '%count% prodotto/i di altra natura'
     sales:
         title: 'Vendite'
         sectionsTitle: 'Impostazioni'
@@ -243,7 +245,7 @@ admin:
     title: Amministrazione
     products:
         title: 'Impostazioni prodotti'
-        subtitle: '8 posizioni: rinomina, attiva e regola i parametri di calcolo.'
+        subtitle: 'Rinomina, attiva e regola i parametri di calcolo. Il numero di prodotti è libero.'
         namePerLocale: 'Denominazione (%locale%)'
         countMode: 'Modo di conteggio'
         countModeHint: "Contenitore: l'addetto conta i contenitori pieni e la frazione dell'ultimo aperto, invece di un numero con la virgola."
@@ -251,6 +253,23 @@ admin:
         categoryHint: 'Serve a raggruppare i prodotti sulla schermata di rilevazione. Per crearne, rinominarne o riordinarne una:'
         categoryManage: 'Gestisci le categorie'
         categoryNone: 'Non classificato'
+        nature: 'Natura'
+        natureHint: 'Solo le composizioni entrano nel piano di produzione: una materia prima si acquista, non si fabbrica. Resta contata mattina e sera.'
+        schedule: 'Ritmo di rilevazione'
+        countMorning: 'All''apertura'
+        countEvening: 'Alla chiusura'
+        frequency: 'Volte a settimana'
+        frequencyHint: 'I giorni ne derivano:'
+        everyDay: 'Tutti i giorni'
+        perWeek: '%count%×/settimana'
+        create: 'Aggiungi un prodotto'
+        createName: 'Nome del prodotto'
+        createNameHint: 'Nella lingua di questa schermata. Le altre lingue si compilano poi sulla scheda: senza traduzione è questo nome a comparire ovunque.'
+        createPlaceholder: 'Tiramisù al pistacchio'
+        createEmpty: 'Nome di prodotto vuoto: non è stato creato nulla.'
+        natures:
+            COMPOSED: 'Composizione'
+            RAW: 'Materia prima'
         labelSection: "Diciture dell'etichetta"
         shelfLifeDays: 'Durata di conservazione (giorni)'
         shelfLifeDaysHint: 'A partire dal giorno di produzione. 0 = non indicata: nessuna data viene stampata.'

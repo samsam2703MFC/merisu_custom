@@ -8,6 +8,7 @@ use Merisu\Inventory\Domain\DayOfWeek;
 use Merisu\Inventory\Domain\ParMatrixEntry;
 use Merisu\Inventory\Domain\Product;
 use Merisu\Inventory\Domain\Production;
+use Merisu\Inventory\Domain\ProductNature;
 use Merisu\Inventory\Domain\RoundingMode;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -27,6 +28,80 @@ final class ProductionTest extends TestCase
     private function par(string $productId, DayOfWeek $day, float $qty, ?string $workstationId = null): ParMatrixEntry
     {
         return new ParMatrixEntry(uniqid(), $productId, $day, $qty, $workstationId);
+    }
+
+    /** Une matière première : elle s'achète, elle ne se fabrique pas. */
+    private function matiere(string $id): Product
+    {
+        return $this->product($id)->with(nature: ProductNature::Raw);
+    }
+
+    #[Test]
+    public function une_matiere_premiere_n_entre_pas_au_plan(): void
+    {
+        $plan = Production::plan(
+            '2026-07-31',
+            [$this->product('p1'), $this->matiere('mascarpone')],
+            ['p1' => 10.0, 'mascarpone' => 2.0],
+            [$this->par('p1', DayOfWeek::Sat, 25), $this->par('mascarpone', DayOfWeek::Sat, 40)],
+            'ws1',
+        );
+
+        self::assertCount(1, $plan->lines);
+        self::assertSame('p1', $plan->lines[0]->productId);
+    }
+
+    /**
+     * Aucune matière n'a de seuil dans la matrice. Sans le filtre, chacune en
+     * ajoutait un « seuil manquant » qui noyait les avertissements réels.
+     */
+    #[Test]
+    public function une_matiere_premiere_n_avertit_pas_d_un_seuil_manquant(): void
+    {
+        $plan = Production::plan(
+            '2026-07-31',
+            [$this->product('p1'), $this->matiere('cacao')],
+            ['p1' => 0.0],
+            [$this->par('p1', DayOfWeek::Sat, 5)],
+            'ws1',
+        );
+
+        self::assertSame([], $plan->warningsMissingThreshold);
+    }
+
+    /** Un plan de matières seules est vide, non erroné : il n'y a rien à faire. */
+    #[Test]
+    public function un_plan_de_matieres_seules_est_vide(): void
+    {
+        $plan = Production::plan(
+            '2026-07-31',
+            [$this->matiere('m1'), $this->matiere('m2')],
+            [],
+            [],
+            'ws1',
+        );
+
+        self::assertSame([], $plan->lines);
+        self::assertSame('2026-08-01', $plan->forDate);
+    }
+
+    /**
+     * Une fiche muette sur sa nature — base installée avant la distinction —
+     * reste fabriquée. La retirer du plan la ferait manquer en rayon.
+     */
+    #[Test]
+    public function un_produit_sans_nature_declaree_reste_au_plan(): void
+    {
+        $plan = Production::plan(
+            '2026-07-31',
+            [$this->product('p1')],
+            ['p1' => 0.0],
+            [$this->par('p1', DayOfWeek::Sat, 6)],
+            'ws1',
+        );
+
+        self::assertCount(1, $plan->lines);
+        self::assertSame(6.0, $plan->lines[0]->qtyToProduce);
     }
 
     #[Test]

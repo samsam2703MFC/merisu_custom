@@ -38,6 +38,27 @@ final class InventoryService
     }
 
     /**
+     * Les lignes à compter ce jour-là, à ce moment-là.
+     *
+     * Tout ne se compte pas au même rythme : les gobelets se comptent le lundi,
+     * le tiramisu matin et soir. Un seul point de vérité pour l'écran de
+     * saisie, la validation et le plan — trois listes calculées séparément
+     * auraient fini par diverger, et une validation qui réclame un produit que
+     * l'écran n'a pas affiché est un verrou qu'aucun geste ne peut ouvrir.
+     *
+     * @return list<Product>
+     */
+    public function dueProducts(string $date, CountMoment $moment): array
+    {
+        $jour = BusinessDate::dayOfWeek($date);
+
+        return array_values(array_filter(
+            $this->store->products(activeOnly: true),
+            static fn (Product $p): bool => $p->schedule->isDue($jour, $moment),
+        ));
+    }
+
+    /**
      * Moment à proposer par défaut : avant l'heure de clôture on compte
      * l'ouverture, après on compte la clôture.
      */
@@ -63,7 +84,7 @@ final class InventoryService
      */
     public function daySheet(string $date, string $workstationId, CountMoment $moment): array
     {
-        $products = $this->store->products(activeOnly: true);
+        $products = $this->dueProducts($date, $moment);
         $allCounts = $this->store->counts(['date' => $date, 'workstationId' => $workstationId]);
 
         $byMoment = [];
@@ -238,7 +259,9 @@ final class InventoryService
         Role $actorRole,
     ): array {
         $settings = $this->store->settings();
-        $products = $this->store->products(activeOnly: true);
+        // La MÊME liste que l'écran de saisie : réclamer un produit que
+        // l'écran n'a pas affiché bloquerait la validation sans recours.
+        $products = $this->dueProducts($date, $moment);
         $counts = $this->store->counts(['date' => $date, 'workstationId' => $workstationId, 'moment' => $moment]);
 
         $quantities = [];
@@ -346,7 +369,16 @@ final class InventoryService
      */
     public function previewPlan(string $date, string $workstationId): ProductionPlanResult
     {
-        $products = $this->store->products(activeOnly: true);
+        // Les lignes comptées ce soir-là, et elles seules.
+        //
+        // Un produit compté deux fois par semaine n'a pas de stock de clôture
+        // les cinq autres soirs. Le planifier quand même le traiterait comme
+        // un stock nul, et l'atelier fabriquerait chaque soir la totalité du
+        // requis d'un produit dont les bacs sont pleins.
+        //
+        // Les matières premières, elles, sont écartées par `Production::plan` :
+        // c'est une règle de production, pas une règle de service.
+        $products = $this->dueProducts($date, CountMoment::Close2200);
         $closingCounts = $this->store->counts([
             'date' => $date,
             'workstationId' => $workstationId,

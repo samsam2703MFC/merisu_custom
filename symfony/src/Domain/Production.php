@@ -73,6 +73,21 @@ final class Production
         $warnings = [];
 
         foreach ($products as $product) {
+            /*
+              Les matières premières n'entrent pas au plan.
+
+              Le mascarpone se commande, il ne se fabrique pas : lui demander
+              une quantité « à produire » n'a aucun sens. Et comme aucune
+              matière n'a de seuil dans la matrice, chacune ajoutait en plus un
+              avertissement « seuil manquant » qui noyait les vrais.
+
+              Le filtre est ici et non dans le service : c'est une règle de
+              production, et c'est ici qu'elle se lit avec la formule.
+            */
+            if ($product->nature->isRaw()) {
+                continue;
+            }
+
             $required = self::resolveRequiredPieces($parMatrix, $product->id, $forDayOfWeek, $workstationId);
             $line = self::line($product, $closingStocks[$product->id] ?? null, $required);
 

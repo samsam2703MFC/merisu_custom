@@ -28,6 +28,20 @@ final readonly class ProductCategory
         public int $sortOrder = 0,
         /** Produits actifs qui la portent. Calculé, jamais stocké. */
         public int $productCount = 0,
+        /**
+         * Matière première ou composition — ce que le rayon contient.
+         *
+         * Portée aussi par la catégorie, et pas seulement par le produit :
+         * c'est elle qui range l'écran de comptage en « ce qu'on fabrique » et
+         * « ce qu'on commande », et l'on ne veut pas rouvrir douze fiches pour
+         * déclarer qu'un rayon entier est de la matière.
+         *
+         * Elle ne COMMANDE pas celle des produits : chaque fiche garde la
+         * sienne. Un désaccord entre les deux est signalé en administration
+         * plutôt que corrigé d'office — un produit fini rangé au frais parmi
+         * les matières est une situation réelle, pas une faute de saisie.
+         */
+        public ProductNature $nature = ProductNature::Composed,
     ) {
     }
 

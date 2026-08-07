@@ -25,6 +25,7 @@
             <tr>
               <th scope="col">{{ 'admin.categories.name'|trans }}</th>
               <th scope="col">{{ 'common.order'|trans }}</th>
+              <th scope="col">{{ 'admin.products.nature'|trans }}</th>
               <th scope="col">{{ 'admin.categories.products'|trans }}</th>
               <th scope="col"><span class="visually-hidden">{{ 'common.delete'|trans }}</span></th>
             </tr>
@@ -43,6 +44,44 @@
                   <input class="field__input" type="number" id="ord-{{ loop.index }}"
                          name="order[{{ categorie.name }}]" value="{{ categorie.sortOrder }}"
                          min="0" step="1" inputmode="numeric">
+                </td>
+
+                {#
+                  Nature du rayon. Le nom du groupe de radios porte le nom de
+                  la catégorie, comme les deux champs voisins : c'est lui qui
+                  relie la ligne du formulaire à la ligne en base, et un
+                  renommage simultané resterait sinon sans repère.
+                #}
+                <td class="cats__nature">
+                  <fieldset class="seg seg--tight">
+                    <legend class="visually-hidden">
+                      {{ 'admin.categories.natureOf'|trans({ '%name%': categorie.name }) }}
+                    </legend>
+
+                    <div class="seg__grid">
+                      {% for nature in natures %}
+                        <label class="seg__item">
+                          <input class="seg__radio" type="radio"
+                                 name="nature[{{ categorie.name }}]" value="{{ nature.value }}"
+                                 {{ nature == categorie.nature ? 'checked' : '' }}>
+                          <span class="seg__box">
+                            {{ ui.icon(nature.icon) }}
+                            <span class="seg__name">{{ ('admin.products.natures.' ~ nature.value)|trans }}</span>
+                          </span>
+                        </label>
+                      {% endfor %}
+                    </div>
+                  </fieldset>
+
+                  {#
+                    Un produit du rayon qui ne suit pas la nature du rayon : ce
+                    n'est pas une faute, mais c'est la seule façon qu'une ligne
+                    entre au plan de production — ou n'y entre pas — sans que
+                    personne l'ait voulu.
+                  #}
+                  {% if mismatches[categorie.name] is defined %}
+                    {{ ui.badge('warn', 'admin.categories.natureMismatch'|trans({ '%count%': mismatches[categorie.name] })) }}
+                  {% endif %}
                 </td>
 
                 <td class="cats__count">
@@ -109,6 +148,26 @@
 
       <p class="field__hint">{{ 'admin.categories.addHint'|trans }}</p>
     </div>
+
+    {# La nature se choisit à la création : c'est elle qui dit si le rayon
+       se fabrique ou se commande, et l'oublier ferait entrer un rayon de
+       matières au plan de production dès le premier produit qu'on y range. #}
+    <fieldset class="field seg">
+      <legend class="field__label">{{ 'admin.products.nature'|trans }}</legend>
+
+      <div class="seg__grid">
+        {% for nature in natures %}
+          <label class="seg__item">
+            <input class="seg__radio" type="radio" name="nature" value="{{ nature.value }}"
+                   {{ nature.isComposed ? 'checked' : '' }}>
+            <span class="seg__box">
+              {{ ui.icon(nature.icon) }}
+              <span class="seg__name">{{ ('admin.products.natures.' ~ nature.value)|trans }}</span>
+            </span>
+          </label>
+        {% endfor %}
+      </div>
+    </fieldset>
   </form>
 
   {% if unclassified > 0 %}

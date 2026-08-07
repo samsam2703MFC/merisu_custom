@@ -61,6 +61,10 @@ final class SchemaInstaller
             $t->addColumn('sort_order', 'integer', ['default' => 0]);
             $t->addColumn('count_mode', 'string', ['length' => 16, 'default' => 'PIECES']);
             $t->addColumn('container_type', 'string', ['length' => 16, 'default' => 'TUB']);
+            $t->addColumn('nature', 'string', ['length' => 16, 'default' => 'COMPOSED']);
+            $t->addColumn('count_morning', 'boolean', ['default' => true]);
+            $t->addColumn('count_evening', 'boolean', ['default' => true]);
+            $t->addColumn('count_frequency', 'integer', ['default' => 7]);
             $t->setPrimaryKey(['id']);
             $t->addUniqueIndex(['code'], 'inv_product_code');
         }
@@ -122,6 +126,7 @@ final class SchemaInstaller
             $t = $schema->createTable('inv_category');
             $t->addColumn('name', 'string', ['length' => 64]);
             $t->addColumn('sort_order', 'integer', ['default' => 0]);
+            $t->addColumn('nature', 'string', ['length' => 16, 'default' => 'COMPOSED']);
             $t->setPrimaryKey(['name']);
         }
 
@@ -309,6 +314,22 @@ final class SchemaInstaller
                 // produits. Le bac par défaut : c'est la forme la plus
                 // courante, et une base déjà en service n'a rien à ressaisir.
                 'container_type' => "VARCHAR(16) DEFAULT 'TUB' NOT NULL",
+                // Matière première ou composition. La composition par
+                // défaut : les bases déjà en service ne contiennent que des
+                // tiramisus, et basculer d'office les aurait TOUS retirés
+                // du plan de production au premier déploiement.
+                'nature' => "VARCHAR(16) DEFAULT 'COMPOSED' NOT NULL",
+                // Rythme de comptage. Matin et soir tous les jours par
+                // défaut : le réglage qui ne retire rien, et celui sous
+                // lequel toutes les bases déjà en service tournaient.
+                'count_morning' => 'BOOLEAN DEFAULT 1 NOT NULL',
+                'count_evening' => 'BOOLEAN DEFAULT 1 NOT NULL',
+                'count_frequency' => 'INTEGER DEFAULT 7 NOT NULL',
+            ],
+            'inv_category' => [
+                // Ajoutée en même temps que celle des produits : une base
+                // installée avant n'a que des rayons de composition.
+                'nature' => "VARCHAR(16) DEFAULT 'COMPOSED' NOT NULL",
             ],
             'inv_checklist_item' => [
                 // Exigence de photo, réglée point par point en administration.
