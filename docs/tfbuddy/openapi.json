@@ -1,0 +1,11 @@
+{
+  "x-merisu-placeholder": true,
+  "x-merisu-instructions": "REMPLACEZ INTÉGRALEMENT CE FICHIER par la spécification OpenAPI de TF Buddy. Mode d'emploi : docs/tfbuddy/README.md. Tant que la clé x-merisu-placeholder est présente, ce fichier ne décrit rien.",
+  "openapi": "3.0.0",
+  "info": {
+    "title": "TF Buddy — emplacement réservé",
+    "version": "0.0.0",
+    "description": "Fichier vide en attente de la vraie spécification, servie par https://test.tfbuddy.com/docs/ — hors d'atteinte depuis l'environnement de développement, dont la passerelle réseau refuse le domaine."
+  },
+  "paths": {}
+}
