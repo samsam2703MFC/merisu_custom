@@ -1,0 +1,111 @@
+# Réapplique l'équipe de départ sur le serveur, à la demande.
+#
+# L'installation ne crée l'équipe qu'une fois, quand la table est vide — c'est
+# ce qui empêche un déploiement d'écraser les vendeurs et les codes réglés
+# depuis. Cette action est donc le seul moyen de remettre un site déjà en
+# service sur l'équipe décrite en configuration.
+#
+# Elle n'efface RIEN : chaque fiche est écrite par identifiant, et les
+# personnes absentes de la liste sont désactivées. Les comptages et
+# l'historique portent ces identifiants, et une fiche effacée rendrait
+# illisibles les saisies qui la citent.
+#
+# Sans confirmation, elle se contente d'AFFICHER l'équipe en place.
+#
+# Elle utilise les mêmes secrets que le déploiement.
+
+name: Équipe
+
+on:
+  workflow_dispatch:
+    inputs:
+      reappliquer:
+        description: "Taper OUI pour réappliquer l'équipe. Vide = afficher seulement."
+        required: false
+        default: ''
+        type: string
+
+# Elle écrit dans la même base que le déploiement : les deux ne doivent pas se
+# croiser pendant un cache:clear.
+concurrency:
+  group: deploiement-production
+  cancel-in-progress: false
+
+jobs:
+  equipe:
+    name: Équipe du serveur
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Préparer la connexion SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${SSH_KEY:-}" ] || [ -z "${KNOWN_HOSTS:-}" ]; then
+            echo "::error::Secrets manquants — les mêmes que le déploiement."
+            exit 1
+          fi
+
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploiement
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_deploiement ~/.ssh/known_hosts
+
+          # Même réparation d'enveloppe que le déploiement : une clé collée
+          # sans ses lignes BEGIN/END ne se signale autrement que par un
+          # « error in libcrypto » qui n'explique rien.
+          if ! ssh-keygen -y -f ~/.ssh/id_deploiement > /dev/null 2>&1 \
+             && head -1 ~/.ssh/id_deploiement | grep -q '^b3BlbnNzaC1rZXktdjE'; then
+            {
+              echo "-----BEGIN OPENSSH PRIVATE KEY-----"
+              grep -v '^-----' ~/.ssh/id_deploiement
+              echo "-----END OPENSSH PRIVATE KEY-----"
+            } > ~/.ssh/id_deploiement.reparee
+            mv ~/.ssh/id_deploiement.reparee ~/.ssh/id_deploiement
+            chmod 600 ~/.ssh/id_deploiement
+          fi
+
+          if ! ssh-keygen -y -f ~/.ssh/id_deploiement > /dev/null 2>&1; then
+            echo "::error::DEPLOY_SSH_KEY n'est pas une clé privée exploitable."
+            exit 1
+          fi
+
+      - name: Appliquer
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          APP_PATH: ${{ secrets.DEPLOY_PATH }}
+          PORT: ${{ vars.DEPLOY_PORT || '22' }}
+          PHP_BIN: ${{ vars.DEPLOY_PHP_BIN || 'php' }}
+          # « NON » plutôt que le vide : `ssh` assemble les arguments en une
+          # seule ligne de commande, et une chaîne vide y disparaîtrait.
+          CONFIRMER: ${{ inputs.reappliquer || 'NON' }}
+        run: |
+          set -euo pipefail
+
+          APP_PATH="${APP_PATH//$'\r'/}"
+          APP_PATH="${APP_PATH#"${APP_PATH%%[![:space:]]*}"}"
+          APP_PATH="${APP_PATH%"${APP_PATH##*[![:space:]]}"}"
+
+          ssh -i ~/.ssh/id_deploiement -p "$PORT" -o BatchMode=yes \
+              "$USER@$HOST" bash -euo pipefail -s -- \
+              "$APP_PATH" "$PHP_BIN" "$CONFIRMER" <<'DISTANT'
+          APP_PATH="$1"; PHP_BIN="$2"; CONFIRMER="${3:-NON}"
+
+          cd "$APP_PATH/symfony"
+
+          if [ "$CONFIRMER" = "OUI" ]; then
+            "$PHP_BIN" bin/console --env=prod merisu:equipe --reappliquer
+          else
+            "$PHP_BIN" bin/console --env=prod merisu:equipe
+          fi
+          DISTANT
+
+      - name: Effacer la clé privée
+        if: always()
+        run: rm -f ~/.ssh/id_deploiement

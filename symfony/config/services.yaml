@@ -46,7 +46,7 @@ services:
     # relus ensuite : passé l'installation, les codes se changent dans
     # Admin ▸ Équipe. Ils ne doivent PAS rester à leur valeur par défaut, celle-ci
     # étant publiée dans le dépôt.
-    Merisu\Inventory\Command\SeedCommand:
+    Merisu\Inventory\Service\TeamInstaller:
         arguments:
             $adminPin: '%env(MERISU_ADMIN_PIN)%'
             $consultant1Pin: '%env(MERISU_CONSULTANT1_PIN)%'

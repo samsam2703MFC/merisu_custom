@@ -4,20 +4,15 @@ declare(strict_types=1);
 
 namespace Merisu\Inventory\Command;
 
-use Merisu\Inventory\Adapter\Consultant;
-use Merisu\Inventory\Adapter\Workstation;
 use Merisu\Inventory\Domain\ChecklistItem;
 use Merisu\Inventory\Domain\ChecklistSection;
 use Merisu\Inventory\Domain\DayNote;
 use Merisu\Inventory\Domain\DayOfWeek;
-use Merisu\Inventory\Domain\Locale;
 use Merisu\Inventory\Domain\Product;
-use Merisu\Inventory\Domain\Role;
 use Merisu\Inventory\Domain\RoundingMode;
-use Merisu\Inventory\Store\ConsultantStore;
 use Merisu\Inventory\Store\SchemaInstaller;
+use Merisu\Inventory\Service\TeamInstaller;
 use Merisu\Inventory\Store\Store;
-use Merisu\Inventory\Service\PinHasher;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -109,10 +104,7 @@ final class SeedCommand extends Command
     public function __construct(
         private readonly Store $store,
         private readonly SchemaInstaller $schema,
-        private readonly ConsultantStore $consultants,
-        private readonly PinHasher $hasher,
-        private readonly string $adminPin,
-        private readonly string $consultant1Pin,
+        private readonly TeamInstaller $equipe,
     ) {
         parent::__construct();
     }
@@ -215,11 +207,7 @@ final class SeedCommand extends Command
         // Les codes réellement écrits, et non des valeurs recopiées à la main :
         // une note qui annonce « 000000 » alors que la configuration dit
         // autre chose envoie l'installateur dans le mur.
-        $io->writeln(\sprintf(
-            'Codes PIN de départ : Anna Kowalska %s · Gian Marco %s',
-            $this->adminPin,
-            $this->consultant1Pin,
-        ));
+        $io->writeln('Codes PIN de départ : ' . $this->equipe->pinSummary());
         $io->writeln('⚠️  À changer dans Admin ▸ Équipe avant toute ouverture aux utilisateurs.');
 
         return Command::SUCCESS;
@@ -237,47 +225,25 @@ final class SeedCommand extends Command
      * Ils ne sont écrits qu'en empreinte : la base ne contient aucun code
      * lisible, y compris ceux-ci.
      */
+    /**
+     * L'équipe de départ, déléguée à `TeamInstaller`.
+     *
+     * La liste vivait ici ; une seconde commande a eu besoin de la même pour
+     * la réappliquer à un site déjà installé, et deux copies d'une même vérité
+     * finissent toujours par diverger.
+     */
     private function amorcerEquipe(SymfonyStyle $io): void
     {
-        if (!$this->consultants->isEmpty()) {
+        $journal = $this->equipe->installIfMissing();
+
+        if ($journal === []) {
             $io->writeln('· équipe déjà créée, inchangée');
 
             return;
         }
 
-        foreach ([['ws-1', 'Stanowisko 1'], ['ws-2', 'Stanowisko 2']] as $rang => [$id, $nom]) {
-            $this->consultants->saveWorkstation(new Workstation($id, $nom, true), $rang + 1);
+        foreach ($journal as $ligne) {
+            $io->writeln($ligne);
         }
-
-        // L'équipe d'UNE boutique : cette application sert un point de vente,
-        // pas un réseau. Deux personnes suffisent à la faire tourner — une qui
-        // administre, une qui vend — et les suivantes s'ajoutent dans
-        // Admin ▸ Équipe, sans redéploiement.
-        $fiches = [
-            ['admin', 'Anna', 'Kowalska', Role::Admin, 'ws-1', Locale::Pl, $this->adminPin],
-            ['consultant1', 'Gian', 'Marco', Role::Consultant, 'ws-1', Locale::It, $this->consultant1Pin],
-        ];
-
-        foreach ($fiches as $rang => [$id, $prenom, $nom, $role, $poste, $langue, $pin]) {
-            $this->consultants->saveConsultant(
-                new Consultant(
-                    $id,
-                    $prenom,
-                    $nom,
-                    $role,
-                    $poste,
-                    true,
-                    strtolower("$prenom.$nom") . '@merisu.example',
-                    null,
-                    ['Merisù Centrum'],
-                    [$poste],
-                    $langue,
-                ),
-                $this->hasher->hash($pin),
-                $rang + 1,
-            );
-        }
-
-        $io->writeln('+ ' . \count($fiches) . ' comptes et 2 postes créés (Admin ▸ Équipe)');
     }
 }
