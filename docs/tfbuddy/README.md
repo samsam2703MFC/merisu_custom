@@ -1,133 +1,150 @@
-# Spécification TF Buddy
+# Spécification TF Buddy — ce qu'elle donne
 
-Ce dossier attend **un seul fichier** : `openapi.json`, la spécification de
-l'API TF Buddy servie par <https://test.tfbuddy.com/docs/>.
+`openapi.json` contient désormais la vraie spécification, récupérée depuis
+<https://test.tfbuddy.com/docs/> : **OpenAPI 3.0, 924 chemins, 1 229 opérations,
+238 schémas**, un seul serveur déclaré (`https://test.tfbuddy.com`,
+« Środowisko testowe »).
 
-Il est aujourd'hui occupé par un **emplacement réservé** — un document OpenAPI
-vide, marqué `"x-merisu-placeholder": true`. Tant que cette clé y figure, le
-fichier ne décrit rien et personne ne doit s'y fier.
+Relue avant d'être versionnée dans ce dépôt public : aucun jeton JWT, aucune
+clé Stripe ou AWS, aucun mot de passe d'exemple, aucun hôte interne. La seule
+adresse qui y figure est `billing@example.invalid`.
 
-## Pourquoi ce détour
+## La particularité à connaître avant tout
 
-L'environnement de développement de l'agent sort par une passerelle réseau à
-liste blanche. Elle refuse `test.tfbuddy.com` **avant** d'atteindre le serveur :
+**Seules 329 des 1 229 opérations décrivent un contrat.** Les 900 autres sont
+des routes relevées automatiquement dans le code, et le disent elles-mêmes :
 
+> *Runtime route registered from a static route source. Request, authorization
+> and response contracts are not inferred by coverage generation.*
+
+Elles donnent le **verbe, le chemin et les paramètres d'URL** — pas la forme
+des données. Elles prouvent que l'endpoint existe ; elles ne disent pas ce
+qu'il renvoie.
+
+La couverture est très inégale selon ce qui nous intéresse :
+
+| Famille | Contrats décrits | Routes sans contrat |
+|---|--:|--:|
+| **Identités et postes** | 18 | 2 |
+| **Ventes** | 4 | 1 |
+| Check-lists | 3 | 0 |
+| Catalogue produits | 1 | 35 |
+| Recettes | 0 | 14 |
+| Inventaire et stock | 0 | 11 |
+
+Autrement dit : la famille la moins pressée est la mieux décrite, et les trois
+qui nous manquaient le plus sont celles dont on ne connaît que l'existence.
+
+## Ce qui est exploitable immédiatement
+
+### Authentification — `bearerAuth`, JWT
+
+`POST /api/v1/employees/authenticate` est **entièrement décrit**. Il accepte
+l'un ou l'autre de deux couples :
+
+```json
+{ "login": "…", "password": "…" }
+{ "email": "…", "pin":      "…" }
 ```
-CONNECT test.tfbuddy.com:443 → 403
-```
 
-Ce n'est ni une question d'authentification ni de certificat, et aucun réglage
-côté application n'y change quoi que ce soit. Le fichier committé ici est le
-chemin le plus court : il traverse la seule route ouverte, GitHub.
+> *At least one non-empty credential pair is required. When both are supplied,
+> runtime authenticates with login/password.*
 
-## Récupérer le fichier
+Réponse : `{ token, refresh_token, success, user { id, name, email, role_name,
+positions[], permissions[] } }`.
 
-L'écran `/docs/` est une interface Swagger UI : elle n'est pas la
-spécification, elle la **charge**. C'est le document JSON sous-jacent qu'il
-nous faut.
+⚠️ **Le PIN seul n'authentifie pas.** TF Buddy exige `email + pin`. La PWA
+boutique, elle, identifie les personnes par leur code à six chiffres et rien
+d'autre — c'est tout son intérêt sur un appareil partagé au comptoir. Voir
+« Décisions en attente ».
 
-1. Ouvrez <https://test.tfbuddy.com/docs/> dans votre navigateur, connecté.
-2. Ouvrez les outils de développement (F12), onglet **Réseau**, puis rechargez.
-3. Repérez la requête qui renvoie du JSON — son nom est presque toujours l'un
-   de ceux-ci :
+Existent aussi, sans contrat : `POST /api/v1/devices/authenticate` et
+`/api/v1/device/authenticate` — une authentification par APPAREIL, qui serait
+la bonne maille pour un terminal de boutique.
 
-   | Chemin habituel | Cadriciel |
-   |---|---|
-   | `/openapi.json` | FastAPI, NestJS |
-   | `/docs/swagger.json` | Swagger UI monté sous `/docs` |
-   | `/swagger/v1/swagger.json` | ASP.NET Core |
-   | `/api-docs` · `/v3/api-docs` | Spring, express-swagger |
+### Personnel — `GET /api/v1/employees`
 
-4. Ouvrez cette URL dans un onglet, enregistrez la page.
-5. Remplacez **intégralement** `docs/tfbuddy/openapi.json` par ce contenu, et
-   poussez.
+Décrit, et directement exploitable par `ConsultantServiceInterface` :
 
-Le format YAML convient aussi : nommez alors le fichier `openapi.yaml` et
-supprimez le `.json`. Une capture d'écran, en revanche, ne convient pas — les
-noms de champs doivent être lisibles par une machine.
-
-> **Avant de pousser, relisez le fichier.** Une spécification embarque parfois
-> des serveurs internes, des exemples tirés de données réelles ou des jetons
-> collés dans un `example`. **Ce dépôt est public.** Retirez ce qui n'a rien à
-> y faire — la structure suffit, les valeurs d'exemple ne servent à rien ici.
-
-## Ce que la spécification doit couvrir
-
-Quatre familles, dans l'ordre où elles débloquent quelque chose. Chacune se
-branche derrière une interface d'adaptateur qui existe déjà : le jour où la
-spécification arrive, il n'y a qu'une classe à écrire et un alias à changer
-dans `symfony/config/services.yaml`. **Aucun écran ne bouge.**
-
-### 1. Catalogue produits — le plus urgent
-
-Rien n'existe encore côté MERISU : la boutique saisit ses produits à la main
-dans Admin ▸ Produits. S'ils sont déjà décrits dans TF Buddy, il faut les
-importer plutôt que les ressaisir.
-
-Ce que porte une fiche ici, et qu'il s'agit de faire correspondre :
-
-| Champ MERISU | Ce que c'est |
+| Champ TF Buddy | Correspondance MERISU |
 |---|---|
-| `code` | clé stable, jamais montrée au vendeur |
-| `name` | libellé **par langue** (fr, pl, it, es) |
-| `unit` | unité de comptage (pcs, g, ml…) |
-| `category` | rayon de production |
-| `nature` | matière première, ou composition |
-| `shelfLifeDays` | durée de vie, pour la DLC de l'étiquette |
-| `ingredients`, `allergens` | mentions de l'étiquette, par langue |
+| `id`, `id_shop` | `Consultant::id`, boutique |
+| `name`, `surname`, `display_name` | `firstName`, `lastName`, `displayName()` |
+| `email`, `phone`, `login` | `email` |
+| `lang_code` | `Consultant::locale` |
+| `id_role`, `franchise_role` | `Role` (CONSULTANT / ADMIN) |
+| `workstations[]` | `Workstation[]` |
+| `competencies[]`, `positions[]` | — sans usage ici |
 
-Les libellés par langue sont le point à vérifier en premier : sans eux,
-l'exigence i18n du cahier des charges tombe sur le catalogue.
+`PUT /api/v1/employees/{employeeId}/workstations` remplace les rattachements
+(`{"workstation_ids": [1, 2]}`). `GET /api/v1/shops/workstations` existe mais
+n'est pas décrit.
 
-### 2. Ventes — `ShopRankingServiceInterface`
+### Ventes — décrites, mais opaques
 
-Le tableau de bord et l'écran Réseau affichent aujourd'hui des chiffres de
-**démonstration**, et le disent à l'écran. Ils viennent de la caisse, pas des
-stocks : ce module ne connaît ni encaissements ni tickets.
+`GET /api/v1/consultant/shops/sales-kpis`, `/monthly-sales` et
+`/category-sales` acceptent `date_from` / `date_to`, gèrent l'ETag et le 304 —
+et déclarent leur réponse comme `object, additionalProperties: true`. Le
+contrat existe donc pour l'appel, pas pour la lecture du résultat.
 
-```php
-performances(string $from, string $to): list<ShopPerformance>
-currentShopId(): ?string
+Il suffira d'**une réponse réelle** de chacun pour écrire l'adaptateur : les
+noms de champs se lisent alors directement.
+
+## Ce dont on ne connaît que l'existence
+
+Les chemins ci-dessous répondent, mais leur charge utile n'est pas décrite.
+
+**Catalogue** — `GET /api/v1/products`, `/products/{id}`,
+`/api/v1/product-categories`, `/product-category/{id}/products`. Deux points à
+vérifier en priorité :
+
+* `GET /api/v1/products/aliases` et `PATCH /api/v1/products/{id}/aliases` —
+  les « aliases » sont très probablement le mécanisme de traduction. S'ils
+  portent bien les libellés par langue, l'exigence i18n est couverte côté
+  catalogue ; sinon, elle reste à notre charge.
+* `GET /api/v1/products/{id}/technical-sheet` — fiche technique, sans doute la
+  source des ingrédients et allergènes de l'étiquette.
+
+**Recettes** — `GET /api/v1/recipes`, `/recipes/flatten`, `/recipes/{id}/cost`,
+`GET /api/v1/shops/{id}/recipes`. `recipes/flatten` est celui qui nous
+intéresse : le delta technique a besoin de `[produit][matière] => quantité`.
+
+**Inventaire** — et c'est le plus important pour la suite du projet :
+
+```
+GET   /api/v1/shops/{id}/material-inventory
+PATCH /api/v1/shops/{id}/material-inventory/{materialId}
+PATCH /api/v1/shops/{id}/products/{productId}/inventory
+POST  /api/v1/shops/{id}/materials/stocktakings
+GET   /api/v1/shops/{id}/products/waste
+GET   /api/v1/shops/{id}/reports/sales/production-planning/products/pdf
 ```
 
-`ShopPerformance` : `id`, `name`, `country`, `revenue`, `customers`,
-`tiramisuSold`, `currency`.
+TF Buddy sait déjà tenir un inventaire de boutique, enregistrer un
+stocktaking, suivre la casse et sortir un plan de production. **Ce module
+recouvre donc en partie un existant** — question à trancher avec le client,
+pas à décider ici.
 
-### 3. Recettes et matières — `RecipeServiceInterface`
+De même, `GET /api/v1/consultant/shops/{shopId}/checklists` et
+`/checklists/progress` recouvrent le menu des tâches.
 
-**Lecture seule.** Le champ `recipeRef` de chaque fiche produit est une clé de
-pont, prévue pour l'identifiant du produit côté TF Buddy ; elle ne pointe
-encore sur rien.
+## Décisions en attente
 
-```php
-recipes(array $productIds): array   // [productId][materialId] => qtyPerUnit
-materials(): list<Material>          // id, name (par langue), unit
-```
+1. **Comment la PWA identifie ses vendeurs.** PIN local (situation actuelle),
+   `email + pin` contre TF Buddy, ou authentification par appareil plus PIN
+   local pour désigner la personne.
+2. **Ce que devient le comptage.** Module autonome, ou source qui pousse ses
+   comptages vers l'inventaire TF Buddy existant.
 
-Point à vérifier : les quantités doivent être exprimées dans l'unité de la
-matière (g, ml, pièce). Le delta technique en dépend.
+## Comment avancer sans attendre
 
-### 4. Identités et postes — `ConsultantServiceInterface`
-
-Fonctionne aujourd'hui en local (`DbConsultantService`, Admin ▸ Équipe). C'est
-donc la moins pressée — mais l'adaptateur est prêt à basculer.
-
-```php
-authenticateByPin(string $pin): ?Consultant
-consultants(): list<Consultant>
-workstations(): list<Workstation>
-assignedWorkstation(string $consultantId): ?Workstation
-```
-
-⚠️ Les codes PIN sont stockés **hachés** (HMAC-SHA256, voir `PinHasher`).
-L'authentification par PIN seul doit retrouver la personne sans savoir qui se
-présente ; si TF Buddy expose un mécanisme d'authentification différent, c'est
-lui qui fera foi et le hachage local disparaîtra.
-
-## Et si l'API n'expose pas tout ça
-
-Ce n'est pas bloquant. Chaque adaptateur a une implémentation locale qui
-continue de tourner (`LocalRecipeService`, `LocalShopRankingService`,
-`DbConsultantService`). On branche famille par famille, dans l'ordre ci-dessus,
-et ce qui manque reste local — l'écran indique alors que les chiffres sont de
+Rien n'est bloqué. Chaque adaptateur a une implémentation locale qui continue
+de tourner (`LocalRecipeService`, `LocalShopRankingService`,
+`DbConsultantService`), et l'écran indique quand les chiffres sont de
 démonstration plutôt que de laisser croire à une mesure.
+
+Pour les familles sans contrat, **une réponse JSON réelle vaut mieux que la
+spécification** : un `curl` authentifié sur `/api/v1/products` et
+`/api/v1/recipes/flatten`, collé dans `docs/tfbuddy/reponses/`, suffit à écrire
+l'adaptateur correspondant. Anonymisez au besoin — seuls les noms de champs
+comptent.
