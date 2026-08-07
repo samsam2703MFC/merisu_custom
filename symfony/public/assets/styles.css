@@ -1290,13 +1290,20 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
      remplace, et deux marques superposées se liraient mal. */
   color: transparent;
   caret-color: var(--plum);
-  background: var(--surface);
+  /* Fond crème du départ à l'arrivée : c'est l'ÉTOILE qui dit qu'un chiffre
+     est posé, pas un changement de fond. Une coupe qui change aussi de
+     couleur dirait deux fois la même chose, et plus faiblement. */
+  background: var(--cream-outline);
+  /* Contour prune atténué : sur fond crème, le liseré crème habituel
+     disparaissait et l'on ne voyait plus qu'il restait des coupes à remplir. */
+  border-color: rgba(107, 63, 160, .3);
   box-shadow: none;
 }
 
 .sign__pin .pin__cup:not(:placeholder-shown) {
+  /* Seul le contour passe au prune : il souligne l'étoile sans la concurrencer. */
   border-color: var(--plum);
-  background: var(--plum-light);
+  background: var(--cream-outline);
   box-shadow: none;
 }
 
@@ -1312,7 +1319,11 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
   place-items: center;
   pointer-events: none;
   color: var(--plum);
-  font-size: 1.6rem;
+  /* Étoile GRASSE : c'est la seule marque de l'écran qui dise « ce chiffre
+     est posé ». Un trait fin sur fond crème se serait effacé au premier
+     reflet, sur une tablette posée près d'une vitrine. */
+  font-weight: 800;
+  font-size: 1.7rem;
   line-height: 1;
   opacity: 0;
   transition: opacity var(--dur) var(--ease);
