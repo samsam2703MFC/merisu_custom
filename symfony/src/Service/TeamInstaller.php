@@ -71,13 +71,13 @@ final readonly class TeamInstaller
      *
      * @return list<string>
      */
-    public function reapply(): array
+    public function reapply(?string $adminPin = null, ?string $consultantPin = null): array
     {
-        return $this->apply(deactivateOthers: true);
+        return $this->apply(deactivateOthers: true, adminPin: $adminPin, consultantPin: $consultantPin);
     }
 
     /** @return list<string> */
-    private function apply(bool $deactivateOthers): array
+    private function apply(bool $deactivateOthers, ?string $adminPin = null, ?string $consultantPin = null): array
     {
         $journal = [];
 
@@ -93,7 +93,7 @@ final readonly class TeamInstaller
 
         $gardes = [];
 
-        foreach ($this->fiches() as $rang => [$id, $prenom, $nom, $role, $poste, $langue, $pin]) {
+        foreach ($this->fiches($adminPin, $consultantPin) as $rang => [$id, $prenom, $nom, $role, $poste, $langue, $pin]) {
             $gardes[] = $id;
             $nouveau = $this->team->consultant($id) === null;
 
@@ -150,18 +150,20 @@ final readonly class TeamInstaller
         return $journal;
     }
 
-    /** @return list<array{0:string,1:string,2:string,3:Role,4:string,5:Locale,6:string}> */
-    private function fiches(): array
+    /**
+     * Les fiches, avec leurs codes.
+     *
+     * Les codes passés en argument l'emportent sur la configuration : sur un
+     * serveur, `.env.local` impose ses propres valeurs, et c'était le seul
+     * moyen de poser un code choisi sans aller éditer ce fichier à la main.
+     *
+     * @return list<array{0:string,1:string,2:string,3:Role,4:string,5:Locale,6:string}>
+     */
+    private function fiches(?string $adminPin, ?string $consultantPin): array
     {
         return [
-            ['admin', 'Anna', 'Kowalska', Role::Admin, 'ws-1', Locale::Pl, $this->adminPin],
-            ['consultant1', 'Gian', 'Marco', Role::Consultant, 'ws-1', Locale::It, $this->consultant1Pin],
+            ['admin', 'Anna', 'Kowalska', Role::Admin, 'ws-1', Locale::Pl, $adminPin ?? $this->adminPin],
+            ['consultant1', 'Gian', 'Marco', Role::Consultant, 'ws-1', Locale::It, $consultantPin ?? $this->consultant1Pin],
         ];
-    }
-
-    /** Les codes réellement écrits, pour que le journal ne mente pas. */
-    public function pinSummary(): string
-    {
-        return \sprintf('Anna Kowalska %s · Gian Marco %s', $this->adminPin, $this->consultant1Pin);
     }
 }

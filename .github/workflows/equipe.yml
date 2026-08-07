@@ -24,6 +24,16 @@ on:
         required: false
         default: ''
         type: string
+      pin_admin:
+        description: 'Code à 6 chiffres pour Anna Kowalska. Vide = celui du serveur.'
+        required: false
+        default: ''
+        type: string
+      pin_vendeur:
+        description: 'Code à 6 chiffres pour Gian Marco. Vide = celui du serveur.'
+        required: false
+        default: ''
+        type: string
 
 # Elle écrit dans la même base que le déploiement : les deux ne doivent pas se
 # croiser pendant un cache:clear.
@@ -85,6 +95,11 @@ jobs:
           # « NON » plutôt que le vide : `ssh` assemble les arguments en une
           # seule ligne de commande, et une chaîne vide y disparaîtrait.
           CONFIRMER: ${{ inputs.reappliquer || 'NON' }}
+          # « - » plutôt que le vide, pour la même raison que la confirmation :
+          # `ssh` assemble les arguments en une ligne, et une chaîne vide y
+          # disparaîtrait en décalant les suivants.
+          PIN_ADMIN: ${{ inputs.pin_admin || '-' }}
+          PIN_VENDEUR: ${{ inputs.pin_vendeur || '-' }}
         run: |
           set -euo pipefail
 
@@ -94,16 +109,25 @@ jobs:
 
           ssh -i ~/.ssh/id_deploiement -p "$PORT" -o BatchMode=yes \
               "$USER@$HOST" bash -euo pipefail -s -- \
-              "$APP_PATH" "$PHP_BIN" "$CONFIRMER" <<'DISTANT'
+              "$APP_PATH" "$PHP_BIN" "$CONFIRMER" "$PIN_ADMIN" "$PIN_VENDEUR" <<'DISTANT'
           APP_PATH="$1"; PHP_BIN="$2"; CONFIRMER="${3:-NON}"
+          PIN_ADMIN="${4:--}"; PIN_VENDEUR="${5:--}"
 
           cd "$APP_PATH/symfony"
 
-          if [ "$CONFIRMER" = "OUI" ]; then
-            "$PHP_BIN" bin/console --env=prod merisu:equipe --reappliquer
-          else
+          if [ "$CONFIRMER" != "OUI" ]; then
             "$PHP_BIN" bin/console --env=prod merisu:equipe
+            exit 0
           fi
+
+          # `if` et non `[ … ] && …` : sous `set -e`, un test faux renvoie
+          # non-zéro en dernière instruction et ferait sortir le script — le
+          # code ne serait pas posé, et rien ne le dirait.
+          OPTIONS=(--reappliquer)
+          if [ "$PIN_ADMIN" != "-" ]; then OPTIONS+=("--pin-admin=$PIN_ADMIN"); fi
+          if [ "$PIN_VENDEUR" != "-" ]; then OPTIONS+=("--pin-vendeur=$PIN_VENDEUR"); fi
+
+          "$PHP_BIN" bin/console --env=prod merisu:equipe "${OPTIONS[@]}"
           DISTANT
 
       - name: Effacer la clé privée

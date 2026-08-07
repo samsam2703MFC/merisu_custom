@@ -207,7 +207,10 @@ final class SeedCommand extends Command
         // Les codes réellement écrits, et non des valeurs recopiées à la main :
         // une note qui annonce « 000000 » alors que la configuration dit
         // autre chose envoie l'installateur dans le mur.
-        $io->writeln('Codes PIN de départ : ' . $this->equipe->pinSummary());
+        // Les codes ne sont PAS affichés : cette commande tourne à chaque
+        // déploiement, dont le journal est public. Ils se lisent dans la
+        // configuration, et se changent dans Admin ▸ Équipe.
+        $io->writeln('Codes PIN de départ : voir MERISU_ADMIN_PIN et MERISU_CONSULTANT1_PIN.');
         $io->writeln('⚠️  À changer dans Admin ▸ Équipe avant toute ouverture aux utilisateurs.');
 
         return Command::SUCCESS;

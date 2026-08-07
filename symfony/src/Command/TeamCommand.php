@@ -41,12 +41,25 @@ final class TeamCommand extends Command
 
     protected function configure(): void
     {
-        $this->addOption(
-            'reappliquer',
-            null,
-            InputOption::VALUE_NONE,
-            "Réécrit l'équipe de la configuration et désactive les autres comptes.",
-        );
+        $this
+            ->addOption(
+                'reappliquer',
+                null,
+                InputOption::VALUE_NONE,
+                "Réécrit l'équipe de la configuration et désactive les autres comptes.",
+            )
+            ->addOption(
+                'pin-admin',
+                null,
+                InputOption::VALUE_REQUIRED,
+                "Code de l'administratrice. À défaut, celui de la configuration.",
+            )
+            ->addOption(
+                'pin-vendeur',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'Code du vendeur. À défaut, celui de la configuration.',
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -54,11 +67,18 @@ final class TeamCommand extends Command
         $io = new SymfonyStyle($input, $output);
 
         if ($input->getOption('reappliquer')) {
-            foreach ($this->installer->reapply() as $ligne) {
+            $journal = $this->installer->reapply(
+                self::code($input, 'pin-admin'),
+                self::code($input, 'pin-vendeur'),
+            );
+
+            foreach ($journal as $ligne) {
                 $io->writeln($ligne);
             }
 
-            $io->writeln('Codes appliqués : ' . $this->installer->pinSummary());
+            // Les codes ne sont PAS affichés. Cette commande se lance depuis
+            // une action dont le journal est public, et une ligne
+            // « codes appliqués : … » les y écrivait en clair.
             $io->newLine();
         }
 
@@ -80,5 +100,13 @@ final class TeamCommand extends Command
         );
 
         return Command::SUCCESS;
+    }
+
+    /** Un code vide vaut « non fourni » : la configuration reprend la main. */
+    private static function code(InputInterface $input, string $option): ?string
+    {
+        $valeur = trim((string) $input->getOption($option));
+
+        return $valeur === '' ? null : $valeur;
     }
 }
