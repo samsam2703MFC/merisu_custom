@@ -13,6 +13,7 @@ common:
     save: Guardar
     delete: 'Eliminar'
     order: 'Orden'
+    add: 'Añadir'
     saved: Guardado
     cancel: Cancelar
     validate: Validar
@@ -173,10 +174,15 @@ admin:
         name: 'Nombre'
         products: 'Productos'
         unused: 'Sin productos'
-        empty: 'Ninguna categoría por ahora: aparecen aquí en cuanto un producto lleva una.'
+        empty: 'Ninguna categoría por ahora: añada una más abajo.'
         renameHint: 'Renombrar una categoría la cambia en todos sus productos de una vez. Darle el nombre de otra FUSIONA las dos: así se corrige un duplicado.'
         confirmDelete: '¿Eliminar «%name%»? Sus %count% productos pasarán a «sin clasificar». No se eliminará ningún producto.'
         unclassified: '%count% productos activos sin categoría: forman un grupo «sin clasificar» al final de la pantalla de recuento.'
+        add: 'Nueva categoría'
+        addPlaceholder: 'Vasitos'
+        addHint: 'Nace vacía y se coloca al final de la lista: los productos se le asignan después, desde su ficha.'
+        addEmpty: 'Nombre de categoría vacío: no se ha creado nada.'
+        addDuplicate: 'Esta categoría ya existe: no se ha añadido por duplicado.'
     sales:
         title: 'Ventas'
         sectionsTitle: 'Ajustes'
@@ -242,7 +248,9 @@ admin:
         countMode: 'Modo de recuento'
         countModeHint: 'Recipiente: el vendedor cuenta recipientes llenos y la fracción del último empezado, en vez de un número con coma.'
         category: 'Categoría de producción'
-        categoryHint: 'Sirve para filtrar la pantalla « Por producir ». Texto libre: Tiramisú, Bebidas, Vasitos…'
+        categoryHint: 'Sirve para agrupar los productos en la pantalla de recuento. Para crear, renombrar o reordenar una:'
+        categoryManage: 'Gestionar las categorías'
+        categoryNone: 'Sin clasificar'
         labelSection: 'Menciones de la etiqueta'
         shelfLifeDays: 'Vida útil (días)'
         shelfLifeDaysHint: 'A partir del día de producción. 0 = sin indicar: no se imprime ninguna fecha.'
@@ -444,6 +452,7 @@ checklist:
         active: Activo
         required: Obligatorio
         requiredHint: 'Un punto obligatorio debe marcarse para que la sección esté completa.'
+        requiresPhoto: 'Exige una foto'
         add: 'Añadir un punto'
         newLabel: 'Nuevo punto'
 

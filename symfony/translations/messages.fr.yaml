@@ -16,6 +16,7 @@ common:
     save: Enregistrer
     delete: 'Supprimer'
     order: 'Ordre'
+    add: 'Ajouter'
     saved: Enregistré
     cancel: Annuler
     validate: Valider
@@ -176,10 +177,15 @@ admin:
         name: 'Nom'
         products: 'Produits'
         unused: 'Aucun produit'
-        empty: 'Aucune catégorie pour l''instant : elles apparaissent ici dès qu''un produit en porte une.'
+        empty: 'Aucune catégorie pour l''instant : ajoutez-en une ci-dessous.'
         renameHint: 'Renommer une catégorie la change sur tous ses produits d''un coup. La renommer avec le nom d''une autre FUSIONNE les deux — c''est ainsi qu''on rattrape un doublon.'
         confirmDelete: 'Supprimer « %name% » ? Ses %count% produits deviendront « non classé ». Aucun produit ne sera supprimé.'
         unclassified: '%count% produit(s) actif(s) sans catégorie : ils forment un groupe « non classé » en fin d''écran de comptage.'
+        add: 'Nouvelle catégorie'
+        addPlaceholder: 'Verrines'
+        addHint: 'Elle arrive vide et se range en fin de liste : on lui affecte ensuite des produits depuis leur fiche.'
+        addEmpty: 'Nom de catégorie vide : rien n''a été créé.'
+        addDuplicate: 'Cette catégorie existe déjà : elle n''a pas été ajoutée en double.'
     sales:
         title: 'Ventes'
         sectionsTitle: 'Réglages'
@@ -245,7 +251,9 @@ admin:
         countMode: 'Mode de comptage'
         countModeHint: "Contenant : le vendeur compte des bacs pleins et la fraction du dernier entamé, plutôt qu'un nombre à virgule."
         category: 'Catégorie de production'
-        categoryHint: "Sert à filtrer l'écran « À produire ». Texte libre : Tiramisu, Boissons, Verrines…"
+        categoryHint: 'Sert à grouper les produits sur l''écran de comptage. Pour en créer, renommer ou réordonner une :'
+        categoryManage: 'Gérer les catégories'
+        categoryNone: 'Non classé'
         labelSection: "Mentions de l'étiquette"
         shelfLifeDays: 'Durée de vie (jours)'
         shelfLifeDaysHint: "À partir du jour de production. 0 = non renseignée : aucune DLC n'est imprimée."
@@ -447,6 +455,7 @@ checklist:
         active: Actif
         required: Obligatoire
         requiredHint: "Un point obligatoire doit être coché pour que le volet soit complet."
+        requiresPhoto: 'Exige une photo'
         add: 'Ajouter un point'
         newLabel: 'Nouveau point'
 

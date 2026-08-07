@@ -13,6 +13,7 @@ common:
     save: Salva
     delete: 'Elimina'
     order: 'Ordine'
+    add: 'Aggiungi'
     saved: Salvato
     cancel: Annulla
     validate: Convalida
@@ -173,10 +174,15 @@ admin:
         name: 'Nome'
         products: 'Prodotti'
         unused: 'Nessun prodotto'
-        empty: 'Nessuna categoria per ora: compaiono qui non appena un prodotto ne porta una.'
+        empty: 'Nessuna categoria per ora: aggiungine una qui sotto.'
         renameHint: 'Rinominare una categoria la cambia su tutti i suoi prodotti in una volta. Darle il nome di un''altra UNISCE le due — è così che si recupera un doppione.'
         confirmDelete: 'Eliminare « %name% »? I suoi %count% prodotti diventeranno « non classificati ». Nessun prodotto sarà eliminato.'
         unclassified: '%count% prodotti attivi senza categoria: formano un gruppo « non classificati » in fondo alla schermata di rilevazione.'
+        add: 'Nuova categoria'
+        addPlaceholder: 'Bicchierini'
+        addHint: 'Nasce vuota e si colloca in fondo all''elenco: i prodotti le si assegnano poi dalla loro scheda.'
+        addEmpty: 'Nome di categoria vuoto: non è stato creato nulla.'
+        addDuplicate: 'Questa categoria esiste già: non è stata aggiunta in doppio.'
     sales:
         title: 'Vendite'
         sectionsTitle: 'Impostazioni'
@@ -242,7 +248,9 @@ admin:
         countMode: 'Modo di conteggio'
         countModeHint: "Contenitore: l'addetto conta i contenitori pieni e la frazione dell'ultimo aperto, invece di un numero con la virgola."
         category: 'Categoria di produzione'
-        categoryHint: "Serve a filtrare la schermata « Da produrre ». Testo libero: Tiramisù, Bevande, Bicchierini…"
+        categoryHint: 'Serve a raggruppare i prodotti sulla schermata di rilevazione. Per crearne, rinominarne o riordinarne una:'
+        categoryManage: 'Gestisci le categorie'
+        categoryNone: 'Non classificato'
         labelSection: "Diciture dell'etichetta"
         shelfLifeDays: 'Durata di conservazione (giorni)'
         shelfLifeDaysHint: 'A partire dal giorno di produzione. 0 = non indicata: nessuna data viene stampata.'
@@ -444,6 +452,7 @@ checklist:
         active: Attivo
         required: Obbligatorio
         requiredHint: 'Un punto obbligatorio deve essere spuntato perché la sezione sia completa.'
+        requiresPhoto: 'Richiede una foto'
         add: 'Aggiungi un punto'
         newLabel: 'Nuovo punto'
 

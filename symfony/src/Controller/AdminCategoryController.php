@@ -106,6 +106,39 @@ final class AdminCategoryController extends AbstractController
     }
 
     /**
+     * Crée une catégorie vide.
+     *
+     * Depuis que la fiche produit CHOISIT sa catégorie dans une liste, c'est ici
+     * — et nulle part ailleurs — qu'on en ajoute une. Sans ce geste, la liste ne
+     * pourrait plus s'enrichir que par accident, et la première boutique à
+     * ouvrir un rayon nouveau se retrouverait bloquée.
+     */
+    #[Route('/ajouter', name: 'admin_categories_add', methods: ['POST'])]
+    public function add(Request $request): Response
+    {
+        $admin = $this->currentUser->requireAdmin();
+
+        $nom = ProductCategory::clean((string) $request->request->get('name', ''));
+
+        if ($nom === '') {
+            $this->addFlash('error', 'admin.categories.addEmpty');
+
+            return $this->redirectToRoute('admin_categories');
+        }
+
+        if (!$this->store->addCategory($nom)) {
+            $this->addFlash('error', 'admin.categories.addDuplicate');
+
+            return $this->redirectToRoute('admin_categories');
+        }
+
+        $this->store->audit($admin->id, $admin->role->value, 'CATEGORY_CREATED', null, null, ['name' => $nom]);
+        $this->addFlash('success', 'common.saved');
+
+        return $this->redirectToRoute('admin_categories');
+    }
+
+    /**
      * Supprime une catégorie : ses produits deviennent « non classé ».
      *
      * Aucun produit n'est supprimé avec elle — une catégorie est une étiquette,

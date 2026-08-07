@@ -13,6 +13,7 @@ common:
     save: Zapisz
     delete: 'Usuń'
     order: 'Kolejność'
+    add: 'Dodaj'
     saved: Zapisano
     cancel: Anuluj
     validate: Zatwierdź
@@ -173,10 +174,15 @@ admin:
         name: 'Nazwa'
         products: 'Produkty'
         unused: 'Brak produktów'
-        empty: 'Na razie brak kategorii: pojawią się tutaj, gdy tylko produkt ją otrzyma.'
+        empty: 'Na razie brak kategorii: dodaj jedną poniżej.'
         renameHint: 'Zmiana nazwy kategorii zmienia ją od razu we wszystkich jej produktach. Nadanie nazwy innej kategorii ŁĄCZY obie — tak naprawia się duplikat.'
         confirmDelete: 'Usunąć „%name%”? Jej %count% produktów stanie się „bez kategorii”. Żaden produkt nie zostanie usunięty.'
         unclassified: '%count% aktywnych produktów bez kategorii: tworzą grupę „bez kategorii” na końcu ekranu spisu.'
+        add: 'Nowa kategoria'
+        addPlaceholder: 'Deserki'
+        addHint: 'Powstaje pusta i trafia na koniec listy: produkty przypisuje się do niej później, z ich karty.'
+        addEmpty: 'Pusta nazwa kategorii: nic nie zostało utworzone.'
+        addDuplicate: 'Ta kategoria już istnieje: nie została dodana po raz drugi.'
     sales:
         title: 'Sprzedaż'
         sectionsTitle: 'Ustawienia'
@@ -242,7 +248,9 @@ admin:
         countMode: 'Sposób liczenia'
         countModeHint: 'Pojemnik: sprzedawca liczy pełne pojemniki i ułamek napoczętego, zamiast liczby z przecinkiem.'
         category: 'Kategoria produkcji'
-        categoryHint: 'Służy do filtrowania ekranu „Do przygotowania”. Dowolny tekst: Tiramisu, Napoje, Deserki…'
+        categoryHint: 'Służy do grupowania produktów na ekranie spisu. Aby utworzyć, zmienić nazwę lub przestawić kategorię:'
+        categoryManage: 'Zarządzaj kategoriami'
+        categoryNone: 'Bez kategorii'
         labelSection: 'Informacje na etykiecie'
         shelfLifeDays: 'Termin przydatności (dni)'
         shelfLifeDaysHint: 'Liczony od dnia produkcji. 0 = nie podano: data nie jest drukowana.'
@@ -444,6 +452,7 @@ checklist:
         active: Aktywny
         required: Obowiązkowy
         requiredHint: 'Punkt obowiązkowy musi być odhaczony, aby część była kompletna.'
+        requiresPhoto: 'Wymaga zdjęcia'
         add: 'Dodaj punkt'
         newLabel: 'Nowy punkt'
 

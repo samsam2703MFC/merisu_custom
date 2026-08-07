@@ -17,6 +17,7 @@ use Merisu\Inventory\Domain\DayNote;
 use Merisu\Inventory\Domain\DayOfWeek;
 use Merisu\Inventory\Domain\GeneralSettings;
 use Merisu\Inventory\Domain\Locale;
+use Merisu\Inventory\Domain\ProductCategory;
 use Merisu\Inventory\Domain\RankingMetric;
 use Merisu\Inventory\Domain\RoundingMode;
 use Merisu\Inventory\Domain\SalesSummary;
@@ -85,23 +86,13 @@ final class AdminController extends AbstractController
     {
         $this->currentUser->requireAdmin();
 
-        $products = $this->store->products();
-
-        // Catégories déjà employées, proposées en autocomplétion : sans elles,
-        // « Tiramisu » et « tiramisus » finiraient par cohabiter et le filtre
-        // de production les traiterait comme deux catégories distinctes.
-        $categories = [];
-        foreach ($products as $product) {
-            if ($product->category !== '') {
-                $categories[$product->category] = true;
-            }
-        }
-        $categories = array_keys($categories);
-        sort($categories, \SORT_NATURAL | \SORT_FLAG_CASE);
-
         return $this->render('admin/products.html.twig', [
-            'products' => $products,
-            'categories' => $categories,
+            'products' => $this->store->products(),
+            // La liste tenue en Admin ▸ Catégories, dans SON ordre — celui du
+            // parcours de la boutique. La fiche produit y choisit, elle n'en
+            // invente plus : en saisie libre, « Tiramisu » et « tiramisus »
+            // cohabitaient et l'écran de comptage en faisait deux rayons.
+            'categories' => $this->store->categoryOrder(),
             'roundingModes' => RoundingMode::cases(),
             'countModes' => CountMode::all(),
             'containerTypes' => ContainerType::all(),
@@ -143,10 +134,15 @@ final class AdminController extends AbstractController
             // calcul. Conservée même quand le produit repasse « à l'unité »,
             // pour qu'un aller-retour entre les deux modes ne l'efface pas.
             containerType: ContainerType::tryFromLoose($request->request->get('containerType')) ?? $product->containerType,
-            // Catégorie de production, en texte libre : c'est l'atelier qui
-            // décide de son vocabulaire (Tiramisu, Boissons, Verrines…), et il
-            // peut le changer sans redéploiement (§2). Vide = non classé.
-            category: mb_substr(trim((string) $request->request->get('category', '')), 0, 64),
+            // Catégorie de production, choisie dans la liste d'Admin ▸
+            // Catégories : c'est l'atelier qui décide de son vocabulaire
+            // (Tiramisu, Boissons, Verrines…) et peut le changer sans
+            // redéploiement (§2). Vide = non classé.
+            //
+            // Nettoyée quand même, bien qu'elle vienne d'une liste déroulante :
+            // une requête forgée peut poser ce qu'elle veut dans le champ, et
+            // une catégorie à l'orthographe voisine passerait inaperçue.
+            category: ProductCategory::clean((string) $request->request->get('category', '')),
             // Mentions de l'étiquette. La durée de vie à 0 signifie « non
             // renseignée » : l'étiquette n'imprime alors aucune DLC, plutôt
             // qu'une date fausse qui engagerait la boutique.

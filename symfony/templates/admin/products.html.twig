@@ -10,11 +10,6 @@
 
   <div class="banner banner--warn">{{ 'admin.products.placeholderWarning'|trans }}</div>
 
-  {# Partagée par tous les formulaires de la page : une seule liste suffit. #}
-  <datalist id="product-categories">
-    {% for name in categories %}<option value="{{ name }}"></option>{% endfor %}
-  </datalist>
-
   {#
     Une fiche par produit, repliée par défaut.
 
@@ -139,17 +134,42 @@
                    name="unit" value="{{ product.unit }}">
           </div>
 
-          {# Catégorie de production, en texte libre : elle sert à filtrer
-             l'écran « À produire ». La liste proposée est celle déjà utilisée
-             ailleurs, pour éviter deux orthographes d'une même catégorie. #}
+          {#
+            Catégorie de production : un CHOIX, plus une saisie libre.
+
+            En texte libre, chaque fiche pouvait inventer une orthographe, et
+            « Tiramisu » cohabitait avec « Tiramisù » sans que rien ne le
+            signale — deux groupes séparés à l'écran de comptage pour un seul
+            rayon. La liste est celle d'Admin ▸ Catégories, et c'est là qu'on
+            en crée, renomme ou fusionne une.
+          #}
           <div class="field">
             <label class="field__label" for="category-{{ product.id }}">
               {{ 'admin.products.category'|trans }}
             </label>
-            <input class="field__input" type="text" id="category-{{ product.id }}"
-                   name="category" value="{{ product.category }}" maxlength="64"
-                   list="product-categories">
-            <p class="field__hint">{{ 'admin.products.categoryHint'|trans }}</p>
+
+            <select class="field__input" id="category-{{ product.id }}" name="category">
+              <option value="">{{ 'admin.products.categoryNone'|trans }}</option>
+
+              {% for nom in categories %}
+                <option value="{{ nom }}" {{ nom == product.category ? 'selected' : '' }}>{{ nom }}</option>
+              {% endfor %}
+
+              {#
+                Filet : une catégorie portée par ce produit mais absente de la
+                liste resterait sélectionnable. Sans elle, enregistrer la fiche
+                effacerait en silence une catégorie que personne n'a voulu
+                retirer.
+              #}
+              {% if product.category and product.category not in categories %}
+                <option value="{{ product.category }}" selected>{{ product.category }}</option>
+              {% endif %}
+            </select>
+
+            <p class="field__hint">
+              {{ 'admin.products.categoryHint'|trans }}
+              <a href="{{ path('admin_categories') }}">{{ 'admin.products.categoryManage'|trans }}</a>
+            </p>
           </div>
 
           <div class="field">

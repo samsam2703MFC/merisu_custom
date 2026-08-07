@@ -182,6 +182,27 @@ final class Store
         return array_map(static fn (ProductCategory $c): string => $c->name, $this->categories());
     }
 
+    /**
+     * Déclare une catégorie vide, placée en fin de liste.
+     *
+     * Rien ne la porte encore : c'est justement l'intérêt, puisqu'une fiche
+     * produit ne peut plus qu'en CHOISIR une. Redemander un nom déjà pris ne
+     * lève pas d'erreur — le résultat voulu est là — mais renvoie false, pour
+     * que l'écran dise « existe déjà » plutôt que « créée ».
+     */
+    public function addCategory(string $name): bool
+    {
+        if ($name === '' || $this->db->fetchOne('SELECT name FROM inv_category WHERE name = ?', [$name]) !== false) {
+            return false;
+        }
+
+        $dernier = $this->db->fetchOne('SELECT MAX(sort_order) FROM inv_category');
+
+        $this->db->insert('inv_category', ['name' => $name, 'sort_order' => ((int) $dernier) + 1]);
+
+        return true;
+    }
+
     public function saveCategoryOrder(string $name, int $sortOrder): void
     {
         if ($this->db->update('inv_category', ['sort_order' => $sortOrder], ['name' => $name]) === 0) {

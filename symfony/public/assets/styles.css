@@ -3007,3 +3007,11 @@ select:disabled, select.field__input:disabled { background-image: url("data:imag
 .cats__order .field__input { width: 6rem; text-align: center; font-variant-numeric: tabular-nums; }
 .cats__count { width: 1%; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .cats__action { width: 1%; white-space: nowrap; }
+
+/* Créer une catégorie : le champ prend la place, le bouton juste la sienne.
+   `min-width: 0` sur le champ — sans lui, la base `auto` d'un élément flex
+   refuse de descendre sous la largeur du texte saisi, et la ligne déborde
+   l'écran dès qu'on tape un nom long sur téléphone. */
+.cats-add__row { display: flex; gap: var(--space-2); align-items: flex-start; }
+.cats-add__row .field__input { flex: 1 1 auto; min-width: 0; }
+.cats-add__row .button { flex: 0 0 auto; }

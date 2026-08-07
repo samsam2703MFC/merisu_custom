@@ -88,6 +88,29 @@
     {% endfor %}
   {% endif %}
 
+  {#
+    Créer une catégorie.
+
+    Hors du tableau, et hors du formulaire d'enregistrement : depuis que la
+    fiche produit ne fait plus que CHOISIR dans la liste, c'est le seul endroit
+    d'où une catégorie peut naître. Une nouveauté arrive donc vide, se range en
+    fin de liste, et l'on va ensuite lui affecter des produits.
+  #}
+  <form method="post" action="{{ path('admin_categories_add') }}" class="card form cats-add">
+    <div class="field">
+      <label class="field__label" for="new-category">{{ 'admin.categories.add'|trans }}</label>
+
+      <div class="cats-add__row">
+        <input class="field__input" type="text" id="new-category" name="name"
+               maxlength="64" required
+               placeholder="{{ 'admin.categories.addPlaceholder'|trans }}">
+        <button type="submit" class="button button--primary">{{ 'common.add'|trans }}</button>
+      </div>
+
+      <p class="field__hint">{{ 'admin.categories.addHint'|trans }}</p>
+    </div>
+  </form>
+
   {% if unclassified > 0 %}
     <p class="banner banner--warn">
       {{ 'admin.categories.unclassified'|trans({ '%count%': unclassified }) }}
