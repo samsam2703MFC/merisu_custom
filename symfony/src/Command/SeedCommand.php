@@ -113,7 +113,6 @@ final class SeedCommand extends Command
         private readonly PinHasher $hasher,
         private readonly string $adminPin,
         private readonly string $consultant1Pin,
-        private readonly string $consultant2Pin,
     ) {
         parent::__construct();
     }
@@ -213,8 +212,15 @@ final class SeedCommand extends Command
         $io->newLine();
         $io->warning('Données PLACEHOLDER : à remplacer via Admin ▸ Produits, Seuils et Check-list.');
         // La connexion se fait au seul code PIN à 6 chiffres.
-        $io->writeln('Codes PIN de démonstration : admin 000000 · consultant1 111111 · consultant2 222222');
-        $io->writeln('⚠️  À retirer avant toute ouverture aux utilisateurs (voir DEPLOIEMENT.md).');
+        // Les codes réellement écrits, et non des valeurs recopiées à la main :
+        // une note qui annonce « 000000 » alors que la configuration dit
+        // autre chose envoie l'installateur dans le mur.
+        $io->writeln(\sprintf(
+            'Codes PIN de départ : Anna Kowalska %s · Gian Marco %s',
+            $this->adminPin,
+            $this->consultant1Pin,
+        ));
+        $io->writeln('⚠️  À changer dans Admin ▸ Équipe avant toute ouverture aux utilisateurs.');
 
         return Command::SUCCESS;
     }
@@ -243,10 +249,13 @@ final class SeedCommand extends Command
             $this->consultants->saveWorkstation(new Workstation($id, $nom, true), $rang + 1);
         }
 
+        // L'équipe d'UNE boutique : cette application sert un point de vente,
+        // pas un réseau. Deux personnes suffisent à la faire tourner — une qui
+        // administre, une qui vend — et les suivantes s'ajoutent dans
+        // Admin ▸ Équipe, sans redéploiement.
         $fiches = [
             ['admin', 'Anna', 'Kowalska', Role::Admin, 'ws-1', Locale::Pl, $this->adminPin],
-            ['consultant1', 'Marco', 'Bianchi', Role::Consultant, 'ws-1', Locale::It, $this->consultant1Pin],
-            ['consultant2', 'Claire', 'Dubois', Role::Consultant, 'ws-2', Locale::Fr, $this->consultant2Pin],
+            ['consultant1', 'Gian', 'Marco', Role::Consultant, 'ws-1', Locale::It, $this->consultant1Pin],
         ];
 
         foreach ($fiches as $rang => [$id, $prenom, $nom, $role, $poste, $langue, $pin]) {
@@ -269,6 +278,6 @@ final class SeedCommand extends Command
             );
         }
 
-        $io->writeln('+ 2 postes et 3 comptes créés (Admin ▸ Équipe)');
+        $io->writeln('+ ' . \count($fiches) . ' comptes et 2 postes créés (Admin ▸ Équipe)');
     }
 }

@@ -50,7 +50,6 @@ services:
         arguments:
             $adminPin: '%env(MERISU_ADMIN_PIN)%'
             $consultant1Pin: '%env(MERISU_CONSULTANT1_PIN)%'
-            $consultant2Pin: '%env(MERISU_CONSULTANT2_PIN)%'
 
     Merisu\Inventory\Adapter\LocalConsultantService:
         arguments:
