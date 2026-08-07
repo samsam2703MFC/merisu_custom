@@ -264,6 +264,35 @@ final class SchemaInstaller
             $t->addIndex(['business_date'], 'inv_audit_by_date');
         }
 
+        /*
+          File d'envoi vers le système hôte — patron « boîte d'envoi ».
+
+          En base, et non en mémoire : la validation d'un comptage y écrit dans
+          la même transaction que le comptage lui-même. Ou les deux tiennent,
+          ou aucun — une file en mémoire aurait perdu la remontée au premier
+          redémarrage, sans que rien ne le signale.
+
+          Rien n'y est jamais effacé. Une ligne envoyée reste horodatée : c'est
+          la preuve qu'un comptage réel a été transmis (§5). Une ligne
+          abandonnée garde sa charge utile et sa dernière erreur.
+        */
+        if (!\in_array('inv_sync_outbox', $existing, true)) {
+            $t = $schema->createTable('inv_sync_outbox');
+            $t->addColumn('id', 'integer', ['autoincrement' => true]);
+            $t->addColumn('kind', 'string', ['length' => 32]);
+            $t->addColumn('payload', 'text');
+            $t->addColumn('status', 'string', ['length' => 16, 'default' => 'PENDING']);
+            $t->addColumn('attempts', 'integer', ['default' => 0]);
+            $t->addColumn('last_error', 'text', ['notnull' => false]);
+            $t->addColumn('created_at', 'string', ['length' => 32]);
+            $t->addColumn('sent_at', 'string', ['length' => 32, 'notnull' => false]);
+            $t->addColumn('next_attempt_at', 'string', ['length' => 32, 'notnull' => false]);
+            $t->setPrimaryKey(['id']);
+            // Le vidage de file ne lit que les lignes en attente et dues :
+            // sans index, il parcourrait tout l'historique des envois.
+            $t->addIndex(['status', 'next_attempt_at'], 'inv_sync_outbox_due');
+        }
+
         foreach ($schema->toSql($this->connection->getDatabasePlatform()) as $sql) {
             $this->connection->executeStatement($sql);
         }

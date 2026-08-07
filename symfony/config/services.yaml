@@ -66,6 +66,16 @@ services:
     Merisu\Inventory\Adapter\RecipeServiceInterface:
         alias: Merisu\Inventory\Adapter\LocalRecipeService
 
+    # Remontée des comptages vers TF Buddy — le SEUL adaptateur qui écrit chez
+    # l'hôte. En attente du contrat de ses deux endpoints, non décrits dans la
+    # spécification (voir docs/tfbuddy/README.md).
+    #
+    # `NullInventorySync` n'envoie rien et le DIT : la file d'envoi n'est jamais
+    # vidée contre elle, aucune tentative n'est consommée, et les comptages
+    # s'accumulent intacts jusqu'au branchement de la vraie implémentation.
+    Merisu\Inventory\Adapter\InventorySyncInterface:
+        alias: Merisu\Inventory\Adapter\NullInventorySync
+
     Merisu\Inventory\Service\PhotoStorage:
         arguments:
             $uploadDir: '%merisu.upload_dir%'

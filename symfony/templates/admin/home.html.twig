@@ -8,6 +8,25 @@
   <h1 class="page-header__title">{{ 'admin.title'|trans }}</h1>
 
   {#
+    État de la remontée vers le système hôte.
+
+    Ici, en tête de l'administration, et nulle part ailleurs : une file d'envoi
+    que personne ne regarde est le pire des deux mondes — les comptages
+    s'accumulent, tout paraît normal, et l'écart se découvre à l'inventaire
+    suivant. La ligne ne s'affiche QUE s'il y a quelque chose à dire.
+  #}
+  {% if sync.PENDING > 0 or sync.FAILED > 0 %}
+    <p class="banner banner--{{ sync.FAILED > 0 ? 'danger' : 'warn' }}">
+      {% if sync.FAILED > 0 %}
+        {{ 'admin.sync.failed'|trans({ '%count%': sync.FAILED }) }}
+      {% else %}
+        {{ 'admin.sync.pending'|trans({ '%count%': sync.PENDING }) }}
+      {% endif %}
+      {{ 'admin.sync.hint'|trans }}
+    </p>
+  {% endif %}
+
+  {#
     ── Tableau de bord des ventes ────────────────────────────────────────────
 
     ⚠️ Ces chiffres viennent de la CAISSE, jamais des stocks. Ce module compte

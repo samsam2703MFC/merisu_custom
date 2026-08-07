@@ -79,6 +79,10 @@ final class AdminController extends AbstractController
             'to' => $to,
             'sales' => SalesSummary::of($performances, $boutiqueCourante),
             'bars' => SalesSummary::bars($classement),
+            // File de remontée vers l'hôte : signalée seulement si elle a
+            // quelque chose à dire. Une file que personne ne regarde laisse les
+            // comptages s'accumuler sans que rien ne paraisse anormal.
+            'sync' => $this->store->syncCounts(),
         ]);
     }
 

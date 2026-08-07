@@ -15,12 +15,13 @@ use Merisu\Inventory\Domain\CountMode;
 use Merisu\Inventory\Domain\CountMoment;
 use Merisu\Inventory\Domain\CountPhoto;
 use Merisu\Inventory\Domain\CountSchedule;
-use Merisu\Inventory\Domain\DayOfWeek;
 use Merisu\Inventory\Domain\DayNote;
+use Merisu\Inventory\Domain\DayOfWeek;
 use Merisu\Inventory\Domain\GeneralSettings;
 use Merisu\Inventory\Domain\InventoryCount;
 use Merisu\Inventory\Domain\Locale;
 use Merisu\Inventory\Domain\MaterialMovement;
+use Merisu\Inventory\Domain\OutboxEntry;
 use Merisu\Inventory\Domain\ParMatrixEntry;
 use Merisu\Inventory\Domain\Product;
 use Merisu\Inventory\Domain\ProductCategory;
@@ -28,6 +29,8 @@ use Merisu\Inventory\Domain\ProductNature;
 use Merisu\Inventory\Domain\ProductionPlanRow;
 use Merisu\Inventory\Domain\ProductionPlanStatus;
 use Merisu\Inventory\Domain\RoundingMode;
+use Merisu\Inventory\Domain\SyncKind;
+use Merisu\Inventory\Domain\SyncStatus;
 
 /**
  * Accès aux données du module.
@@ -989,6 +992,120 @@ final class Store
         }
 
         return $byCount;
+    }
+
+    // ── File d'envoi vers le système hôte ───────────────────────────────────
+
+    /**
+     * Met une remontée en file.
+     *
+     * Appelée depuis la transaction de validation : ou le comptage et sa
+     * remontée tiennent ensemble, ou ni l'un ni l'autre.
+     *
+     * @param array<string,mixed> $payload
+     */
+    public function enqueueSync(SyncKind $kind, array $payload): void
+    {
+        $this->db->insert('inv_sync_outbox', [
+            'kind' => $kind->value,
+            'payload' => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+            'status' => SyncStatus::Pending->value,
+            'attempts' => 0,
+            'created_at' => self::now(),
+            // Tout de suite : la première tentative n'a pas à attendre.
+            'next_attempt_at' => null,
+        ]);
+    }
+
+    /**
+     * Les remontées à tenter maintenant, les plus anciennes d'abord.
+     *
+     * @return list<OutboxEntry>
+     */
+    public function dueSync(int $limit = 50): array
+    {
+        return array_map($this->hydrateOutbox(...), $this->db->fetchAllAssociative(
+            'SELECT * FROM inv_sync_outbox
+              WHERE status = ? AND (next_attempt_at IS NULL OR next_attempt_at <= ?)
+           ORDER BY id
+              LIMIT ' . max(1, $limit),
+            [SyncStatus::Pending->value, self::now()],
+        ));
+    }
+
+    /** Compte les lignes par état — pour l'écran d'administration. */
+    public function syncCounts(): array
+    {
+        $sortie = [SyncStatus::Pending->value => 0, SyncStatus::Sent->value => 0, SyncStatus::Failed->value => 0];
+
+        foreach ($this->db->fetchAllAssociative('SELECT status, COUNT(*) AS n FROM inv_sync_outbox GROUP BY status') as $r) {
+            $sortie[(string) $r['status']] = (int) $r['n'];
+        }
+
+        return $sortie;
+    }
+
+    public function markSyncSent(int $id): void
+    {
+        $this->db->update('inv_sync_outbox', [
+            'status' => SyncStatus::Sent->value,
+            'sent_at' => self::now(),
+            'last_error' => null,
+        ], ['id' => $id]);
+    }
+
+    /**
+     * Note un échec, et fixe la prochaine tentative.
+     *
+     * `$giveUp` distingue le refus définitif — corps invalide, produit inconnu
+     * chez l'hôte — de la panne passagère. Réessayer huit fois une requête que
+     * l'hôte a raison de refuser ne fait que retarder le moment où quelqu'un
+     * la regarde.
+     */
+    public function markSyncFailed(int $id, string $error, int $attempts, bool $giveUp): void
+    {
+        $abandonne = $giveUp || $attempts >= OutboxEntry::MAX_ATTEMPTS;
+
+        $this->db->update('inv_sync_outbox', [
+            'status' => $abandonne ? SyncStatus::Failed->value : SyncStatus::Pending->value,
+            'attempts' => $attempts,
+            'last_error' => mb_substr($error, 0, 500),
+            'next_attempt_at' => $abandonne ? null : (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))
+                ->modify('+' . OutboxEntry::backoffSeconds($attempts) . ' seconds')
+                ->format('c'),
+        ], ['id' => $id]);
+    }
+
+    /**
+     * Remet en file tout ce qui a été abandonné.
+     *
+     * Le geste de l'administrateur après avoir corrigé ce qui bloquait — une
+     * référence produit manquante, un jeton périmé. Les tentatives repartent
+     * de zéro : ce n'est plus la même situation.
+     */
+    public function retrySyncFailed(): int
+    {
+        return (int) $this->db->update('inv_sync_outbox', [
+            'status' => SyncStatus::Pending->value,
+            'attempts' => 0,
+            'next_attempt_at' => null,
+        ], ['status' => SyncStatus::Failed->value]);
+    }
+
+    /** @param array<string,mixed> $row */
+    private function hydrateOutbox(array $row): OutboxEntry
+    {
+        return new OutboxEntry(
+            (int) $row['id'],
+            SyncKind::fromLoose($row['kind']) ?? SyncKind::ProductInventory,
+            json_decode((string) $row['payload'], true) ?: [],
+            SyncStatus::tryFrom((string) $row['status']) ?? SyncStatus::Pending,
+            (int) $row['attempts'],
+            $row['last_error'] === null ? null : (string) $row['last_error'],
+            $row['created_at'] === null ? null : (string) $row['created_at'],
+            $row['sent_at'] === null ? null : (string) $row['sent_at'],
+            $row['next_attempt_at'] === null ? null : (string) $row['next_attempt_at'],
+        );
     }
 
     public static function uuid(): string

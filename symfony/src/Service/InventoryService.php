@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Merisu\Inventory\Service;
 
+use Merisu\Inventory\Adapter\ShopRankingServiceInterface;
 use Merisu\Inventory\Domain\BusinessDate;
 use Merisu\Inventory\Domain\CountMoment;
 use Merisu\Inventory\Domain\DailyNet;
@@ -16,6 +17,7 @@ use Merisu\Inventory\Domain\Production;
 use Merisu\Inventory\Domain\ProductionPlanResult;
 use Merisu\Inventory\Domain\ProductionPlanRow;
 use Merisu\Inventory\Domain\Role;
+use Merisu\Inventory\Domain\SyncPayload;
 use Merisu\Inventory\Domain\ValidationResult;
 use Merisu\Inventory\Store\Store;
 
@@ -27,8 +29,12 @@ use Merisu\Inventory\Store\Store;
  */
 final class InventoryService
 {
-    public function __construct(private readonly Store $store)
-    {
+    public function __construct(
+        private readonly Store $store,
+        // Pour l'identifiant de boutique côté hôte, que la remontée doit
+        // porter : ce module raisonne en POSTES, l'hôte en boutiques.
+        private readonly ShopRankingServiceInterface $ranking,
+    ) {
     }
 
     /** Date métier courante, dans le fuseau configuré en administration. */
@@ -307,11 +313,69 @@ final class InventoryService
             ['products' => \count($counts)],
         );
 
+        $this->enqueueForHost($products, $quantities, $date, $workstationId, $moment, $actorId, $actorRole);
+
         $plan = $moment->isEvening()
             ? $this->freezePlan($date, $workstationId, $actorId, $actorRole)
             : [];
 
         return ['result' => $result, 'plan' => $plan];
+    }
+
+    /**
+     * Met le comptage validé en file vers le système hôte.
+     *
+     * En file, et non envoyé : le comptage se valide au comptoir, sur un
+     * appareil dont le réseau tombe. Faire dépendre la clôture d'une journée
+     * de la disponibilité de TF Buddy reviendrait à bloquer le vendeur à
+     * chaque panne chez l'hôte.
+     *
+     * Une mise en file qui échoue ne fait PAS échouer la validation : le
+     * comptage est déjà enregistré et tracé, et le perdre pour un défaut de
+     * remontée serait le pire des deux mondes. L'incident part à l'audit, où
+     * l'administrateur le verra.
+     *
+     * @param list<Product>        $products
+     * @param array<string, float> $quantities
+     */
+    private function enqueueForHost(
+        array $products,
+        array $quantities,
+        string $date,
+        string $workstationId,
+        CountMoment $moment,
+        string $actorId,
+        Role $actorRole,
+    ): void {
+        try {
+            $lignes = SyncPayload::forCounts(
+                $products,
+                $quantities,
+                $date,
+                $workstationId,
+                $moment,
+                $actorId,
+                $this->ranking->currentShopId(),
+            );
+
+            foreach (SyncPayload::group($lignes['ready']) as $envoi) {
+                $this->store->enqueueSync($envoi['kind'], $envoi['payload']);
+            }
+
+            // Les produits sans référence hôte ne partent pas — ils seraient
+            // refusés. Signalés ici, à l'audit, parce que c'est en
+            // administration que la case se remplit.
+            if ($lignes['missingRef'] !== []) {
+                $this->store->audit($actorId, $actorRole->value, 'SYNC_MISSING_REF', $workstationId, $date, [
+                    'products' => $lignes['missingRef'],
+                ]);
+            }
+        } catch (\Throwable $e) {
+            $this->store->audit($actorId, $actorRole->value, 'SYNC_ENQUEUE_FAILED', $workstationId, $date, [
+                'moment' => $moment->value,
+                'error' => mb_substr($e->getMessage(), 0, 300),
+            ]);
+        }
     }
 
     /** Déverrouillage d'un comptage validé — ADMIN uniquement, tracé (§5.3). */

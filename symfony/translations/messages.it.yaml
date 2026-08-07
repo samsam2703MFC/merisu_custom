@@ -168,6 +168,10 @@ produce:
     allergens: 'Allergeni'
 
 admin:
+    sync:
+        pending: '%count% rilevazioni in attesa di invio a TF Buddy.'
+        failed: '%count% invii a TF Buddy abbandonati — le rilevazioni sono conservate.'
+        hint: 'Nulla è perduto: la coda si svuota con « merisu:synchroniser ».'
     categories:
         title: 'Categorie'
         subtitle: 'Elenco e ordine delle categorie di produzione.'

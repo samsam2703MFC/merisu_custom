@@ -171,6 +171,10 @@ produce:
     allergens: 'Allergènes'
 
 admin:
+    sync:
+        pending: '%count% comptage(s) en attente de remontée vers TF Buddy.'
+        failed: '%count% remontée(s) abandonnée(s) vers TF Buddy — les comptages sont conservés.'
+        hint: 'Rien n''est perdu : la file se vide avec « merisu:synchroniser ».'
     categories:
         title: 'Catégories'
         subtitle: 'Liste et ordre des catégories de production.'

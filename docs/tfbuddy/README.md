@@ -128,13 +128,66 @@ pas à décider ici.
 De même, `GET /api/v1/consultant/shops/{shopId}/checklists` et
 `/checklists/progress` recouvrent le menu des tâches.
 
-## Décisions en attente
+## Décisions prises
 
-1. **Comment la PWA identifie ses vendeurs.** PIN local (situation actuelle),
-   `email + pin` contre TF Buddy, ou authentification par appareil plus PIN
-   local pour désigner la personne.
-2. **Ce que devient le comptage.** Module autonome, ou source qui pousse ses
-   comptages vers l'inventaire TF Buddy existant.
+1. **Les vendeurs restent identifiés par leur PIN, en local.** La PWA
+   n'appelle pas l'authentification TF Buddy : six chiffres et rien d'autre,
+   sur un appareil partagé au comptoir. Rien à faire de ce côté.
+2. **Les comptages validés remontent vers l'inventaire TF Buddy.** Un seul
+   inventaire fera foi.
+
+## Où en est la remontée
+
+Tout le chemin est en place **sauf le dernier mètre** — l'appel HTTP, dont le
+corps n'est pas décrit.
+
+```
+validation d'un comptage
+   └─ SyncPayload          construit les lignes, écarte celles sans référence hôte
+   └─ inv_sync_outbox      file en base, écrite dans la transaction du comptage
+        └─ merisu:synchroniser
+             └─ InventorySyncInterface   ← ICI, il manque le contrat
+```
+
+**Pourquoi une file et non un appel direct.** Le comptage se valide au
+comptoir, sur un appareil dont le réseau tombe — c'est toute la raison d'être
+du mode hors-ligne. Appeler TF Buddy pendant la requête de validation ferait
+dépendre la clôture d'une journée de la disponibilité d'un service distant :
+une panne chez l'hôte, et le vendeur ne peut plus fermer.
+
+L'implémentation branchée aujourd'hui, `NullInventorySync`, n'envoie rien et le
+**dit** : `isConfigured()` renvoie false, la file n'est jamais vidée contre
+elle, aucune tentative n'est consommée. Les comptages s'accumulent intacts et
+partiront tous au premier passage une fois la vraie implémentation en place.
+C'est le choix inverse d'un adaptateur qui accepterait tout en silence — celui
+-là aurait marqué les lignes « envoyées » sans que rien ne parte.
+
+L'administration signale la file dès qu'elle a quelque chose à dire, en tête
+d'Admin : une file que personne ne regarde laisse les comptages s'accumuler
+sans que rien ne paraisse anormal.
+
+### Ce qu'il manque pour finir
+
+1. **Le corps attendu** par `PATCH /shops/{id}/products/{id}/inventory` et
+   `POST /shops/{id}/materials/stocktakings`. Une requête réelle suffit, ou
+   une réponse 422 qui nomme les champs manquants.
+2. **L'identifiant de boutique** côté TF Buddy — `currentShopId()` existe déjà,
+   reste à confirmer que c'est le même.
+3. **Un compte de service et son jeton** — JWT `bearerAuth`, obtenu par
+   `POST /api/v1/employees/authenticate`.
+
+### Côté exploitation
+
+Le pont sur les identifiants produit passe par **`Product::recipeRef`**, qui
+porte l'identifiant du produit côté hôte et se saisit dans Admin ▸ Produits.
+Une fiche sans cette référence n'est **pas** mise en file : elle partirait vers
+un produit inconnu, serait refusée, et huit tentatives plus tard un comptage
+réel finirait « en échec » pour une case laissée vide. Le fait est tracé
+(`SYNC_MISSING_REF`), et c'est en administration que ça se corrige.
+
+Quand l'intégration sera branchée, il faudra déclencher `merisu:synchroniser`
+toutes les cinq minutes environ (tâche planifiée sur le serveur). Aucune
+urgence tant que rien n'est branché : la commande ne fait alors rien.
 
 ## Comment avancer sans attendre
 

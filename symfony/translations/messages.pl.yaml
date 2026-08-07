@@ -168,6 +168,10 @@ produce:
     allergens: 'Alergeny'
 
 admin:
+    sync:
+        pending: '%count% spisów czeka na przesłanie do TF Buddy.'
+        failed: '%count% przesłań do TF Buddy porzuconych — spisy są zachowane.'
+        hint: 'Nic nie ginie: kolejkę opróżnia „merisu:synchroniser”.'
     categories:
         title: 'Kategorie'
         subtitle: 'Lista i kolejność kategorii produkcji.'
