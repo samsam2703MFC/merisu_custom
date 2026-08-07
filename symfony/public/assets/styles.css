@@ -1270,6 +1270,57 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
   .pin__cup:focus { transform: none; }
 }
 
+/*
+  Coupes de l'écran de SIGNATURE : une astérisque prune, pas de tiramisu.
+
+  Les couches du tiramisu font la fête de l'écran de connexion — une par jour,
+  au moment d'ouvrir sa session. Ici le geste se répète à chaque point de
+  check-list, et cette même fête devient du bruit : ce qu'on veut lire d'un
+  coup d'œil, c'est combien de chiffres sont posés.
+
+  L'astérisque le dit sans rien décorer, et le prune la rattache à la
+  production — la couleur que cette interface emploie déjà pour tout ce qui
+  engage le travail de l'atelier.
+
+  Le remplissage reste piloté par `:not(:placeholder-shown)`, donc toujours
+  sans JavaScript.
+*/
+.sign__pin .pin__cup {
+  /* Le chiffre lui-même reste invisible : c'est l'astérisque qui le
+     remplace, et deux marques superposées se liraient mal. */
+  color: transparent;
+  caret-color: var(--plum);
+  background: var(--surface);
+  box-shadow: none;
+}
+
+.sign__pin .pin__cup:not(:placeholder-shown) {
+  border-color: var(--plum);
+  background: var(--plum-light);
+  box-shadow: none;
+}
+
+/* L'astérisque est posée par la coupe elle-même, en surimpression : la valeur
+   saisie n'a donc jamais à être lue ni recopiée par un script. */
+.sign__pin .pin__cup-wrap { position: relative; display: flex; flex: 1 1 0; min-width: 0; }
+.sign__pin .pin__cup-wrap .pin__cup { width: 100%; }
+
+.sign__pin .pin__star {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  color: var(--plum);
+  font-size: 1.6rem;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease);
+}
+
+.sign__pin .pin__cup:not(:placeholder-shown) ~ .pin__star { opacity: 1; }
+.sign__pin .pin__cup:focus { border-color: var(--plum); box-shadow: none; transform: none; }
+
 /* ── Réseau : classement des boutiques ───────────────────────────────────── */
 
 /* Choix du critère : trois onglets en pilules, comme la barre d'administration. */
@@ -2776,4 +2827,161 @@ select:disabled, select.field__input:disabled { background-image: url("data:imag
 @media print, (forced-colors: active) {
   .bars__fill { background: CanvasText; }
   .bars__track { border: 1px solid CanvasText; }
+}
+
+/* ── Check-list : volets, points, signature ──────────────────────────────── */
+
+.ck-grid { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+
+.ck-card { display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-start; }
+.ck-card__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); width: 100%; }
+.ck-card__time { font-size: .85rem; white-space: nowrap; }
+.ck-card__meta { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); width: 100%; font-size: .9rem; }
+
+/* La couleur double le chiffre, elle ne le remplace pas : « 67 % » se lit
+   même quand la teinte ne se distingue pas. */
+.ck-card__pct { font-weight: 700; font-variant-numeric: tabular-nums; }
+.ck-card__pct--full { color: var(--ok); }
+.ck-card__pct--part { color: var(--warn); }
+.ck-card__pct--none { color: var(--text-muted); }
+
+.ck-bar { display: block; width: 100%; height: 8px; border-radius: var(--radius-pill); background: var(--border-soft); overflow: hidden; }
+.ck-bar--lg { height: 10px; margin-top: var(--space-3); }
+.ck-bar__fill { display: block; width: var(--w, 0%); height: 100%; border-radius: var(--radius-pill); }
+.ck-bar__fill--full { background: var(--ok); }
+.ck-bar__fill--part { background: var(--gold); }
+.ck-bar__fill--none { background: var(--border); }
+
+.stats--compact { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.stat__value--ok { color: var(--ok); }
+.stat__value--todo { color: var(--brand); }
+
+/* ── Les points d'un volet ───────────────────────────────────────────────── */
+
+.ck-list { list-style: none; margin: var(--space-4) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+
+/* Le liseré de gauche porte le statut : il tient sur 3 px, se voit du coin de
+   l'œil en parcourant la liste, et ne colore pas le texte. */
+.ck-item {
+  display: flex; align-items: center; gap: var(--space-3);
+  min-height: 64px; padding: var(--space-3) var(--space-4);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); border-left: 3px solid var(--border);
+}
+.ck-item--done { border-left-color: var(--ok); }
+.ck-item--skipped { border-left-color: var(--warn); }
+.ck-item--failed { border-left-color: var(--danger); background: var(--danger-bg); }
+
+.ck-item__main { flex: 1 1 auto; min-width: 0; display: block; text-decoration: none; color: inherit; }
+.ck-item__main:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; border-radius: var(--radius); }
+.ck-item__name { display: block; font-weight: 600; color: var(--coffee-800); }
+.ck-item__meta { display: block; margin-top: .15rem; font-size: .82rem; }
+.ck-item__flag { color: var(--gold); font-size: .8rem; }
+.ck-item__cam { color: var(--plum); }
+.ck-item__cam .icon { width: 15px; height: 15px; vertical-align: -2px; }
+.ck-item__badge, .ck-item__do { flex: none; }
+.ck-item__do { min-height: var(--touch); display: inline-flex; align-items: center; }
+
+/* ── Signature d'un point ────────────────────────────────────────────────── */
+
+.sign {
+  /* Colonne bornée et centrée : des champs étirés sur toute la largeur d'une
+     tablette obligent l'œil à traverser l'écran entre l'étiquette et la valeur. */
+  max-width: 30rem;
+  margin: 0 auto;
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.sign__head { text-align: center; display: flex; flex-direction: column; gap: var(--space-2); }
+.sign__eyebrow { margin: 0; font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); }
+.sign__title { margin: 0; font-family: var(--font-display); font-weight: 500; font-size: 1.5rem; line-height: 1.2; color: var(--coffee); text-wrap: balance; }
+.sign__flags { margin: 0; display: flex; justify-content: center; flex-wrap: wrap; gap: var(--space-2); }
+.sign__flag {
+  padding: .2rem .6rem; border-radius: var(--radius-pill);
+  background: var(--cream-outline); color: var(--coffee-800);
+  font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+}
+.sign__flag--photo { background: var(--plum-light); color: var(--plum-dark); }
+
+.sign__body { display: flex; flex-direction: column; gap: var(--space-3); }
+.field__optional { font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--text-muted); }
+
+/* Les coupes s'alignent à gauche comme les autres champs : ici elles vivent
+   au milieu d'un formulaire, pas seules sur un écran de connexion. */
+.sign__pin { margin-bottom: 0; }
+.sign__pin .field__label { text-align: left; }
+.sign__pin .pin__cups { justify-content: space-between; margin-top: var(--space-2); }
+.sign__pin .pin__cup { width: auto; flex: 1 1 0; min-width: 0; max-width: 52px; }
+
+/* Le nom reconnu. La hauteur est réservée d'avance : sans elle, l'apparition
+   du nom pousserait tout le formulaire d'une ligne sous le doigt. */
+.sign__who { margin: var(--space-2) 0 0; min-height: 1.5rem; font-size: .9rem; }
+.sign__who-name { font-weight: 600; }
+.sign__who.is-known .sign__who-name { color: var(--ok); }
+.sign__who.is-unknown .sign__who-name { color: var(--danger); }
+
+/* Le cadre EST le bouton : une seule cible pour un seul travail. */
+.sign__drop {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 96px;
+  margin-top: var(--space-2);
+  padding: 0;
+  overflow: hidden;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--latte);
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.sign__drop .icon { width: 30px; height: 30px; }
+.sign__drop:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-light); }
+.sign__drop:focus-within { outline: 2px solid var(--brand); outline-offset: 2px; }
+.sign__preview { display: block; width: 100%; max-height: 220px; object-fit: cover; }
+
+.field__input--invalid { border-color: var(--danger); background: var(--danger-bg); }
+
+/* Une action pleine, deux exceptions discrètes — mais cliquables comme le
+   reste : 44 px de haut, quelle que soit la discrétion du trait. */
+.sign__actions { display: flex; flex-direction: column; gap: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--border-soft); }
+.sign__go { width: 100%; }
+.sign__alt { margin: 0; display: flex; align-items: center; justify-content: center; gap: var(--space-2); flex-wrap: wrap; }
+.sign__sep { color: var(--border); }
+
+.sign__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch);
+  border: 0;
+  background: none;
+  padding: .35rem .5rem;
+  font: inherit;
+  font-size: .88rem;
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--border);
+  cursor: pointer;
+}
+.sign__link:hover { color: var(--coffee); text-decoration-color: var(--latte); }
+.sign__link--fail:hover { color: var(--danger); text-decoration-color: var(--danger); }
+.sign__link:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 4px; }
+
+.form-actions--centered { justify-content: center; }
+
+/* Sous 400 px, les six coupes ne tiennent plus à 44 px avec le rembourrage de
+   la carte. On reprend la place sur la carte, pas sur les coupes : un chiffre
+   de 40 px se rate au doigt, une marge de 8 px ne manque à personne. */
+@media (max-width: 400px) {
+  .sign { padding: var(--space-4) var(--space-2); }
+  .sign__pin .pin__cups { gap: .25rem; }
+  .sign__pin .pin__cup { min-width: 44px; }
 }

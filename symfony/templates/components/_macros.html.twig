@@ -343,6 +343,11 @@
       bouteille, rabats de la boîte — pour rester lisibles côte à côte dans la
       liste des produits.
     #}
+    {% elseif name == 'camera' %}
+      {# Photo exigée sur un point de check-list. #}
+      <path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/>
+      <circle cx="12" cy="13.5" r="3.2"/>
+
     {% elseif name == 'container-tub' %}
       {# Bac : parois droites, légèrement évasées, et un rebord. #}
       <path d="M4.5 7.5h15l-1.4 11.1a1.5 1.5 0 0 1-1.5 1.4H7.4a1.5 1.5 0 0 1-1.5-1.4Z"/>

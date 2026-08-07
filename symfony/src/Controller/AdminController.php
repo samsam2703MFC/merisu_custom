@@ -350,6 +350,7 @@ final class AdminController extends AbstractController
                 (int) ($champs['sortOrder'] ?? 0),
                 (bool) ($champs['active'] ?? false),
                 (bool) ($champs['required'] ?? false),
+                (bool) ($champs['requiresPhoto'] ?? false),
             ));
             ++$enregistres;
         }

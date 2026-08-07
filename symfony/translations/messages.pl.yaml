@@ -137,6 +137,7 @@ produce:
     subtitle: 'Na dzień %date%'
     qtyToProduce: 'Do wyprodukowania'
     required: Wymagane
+    requiresPhoto: 'Wymaga zdjęcia'
     closingStock: 'Stan zamknięcia'
     nothing: 'Nic do wyprodukowania dla tego produktu.'
     empty: 'Brak utrwalonego planu na ten dzień.'
@@ -383,6 +384,34 @@ errors:
     UPLOAD_DIR_UNAVAILABLE: 'Katalog zdjęć niedostępny.'
 
 checklist:
+    signWithCode: 'Podpisz swoim kodem'
+    do: 'Wykonaj'
+    confirm: 'Zatwierdź'
+    skip: 'Pomiń'
+    reportFailure: 'Zgłoś niepowodzenie'
+    mandatory: 'Obowiązkowe'
+    photoRequired: 'Wymagane zdjęcie'
+    photo: 'Zdjęcie'
+    photoAttached: 'zdjęcie dołączone'
+    photoAlready: 'Zdjęcie jest już dołączone. Wybranie innego zastąpi je.'
+    optionalNote: 'opcjonalna'
+    reasonRequired: 'Niepowodzenie bez powodu nikomu nazajutrz nie pomoże: napisz jednym słowem, co nie zadziałało.'
+    notYet: 'Jeszcze nieobsłużone'
+    statTotal: 'Zadania'
+    statDone: 'Wykonane'
+    statLeft: 'Pozostałe'
+    failedCount: '%count% nieudanych'
+    backToLists: 'Wszystkie checklisty'
+    signed: 'Zadanie podpisane.'
+    statuses:
+        PENDING: 'Do zrobienia'
+        DONE: 'Wykonane'
+        SKIPPED: 'Pominięte'
+        FAILED: 'Niepowodzenie'
+        DONEAt: 'Wykonane o %time% przez %name%'
+        SKIPPEDAt: 'Pominięte o %time% przez %name%'
+        FAILEDAt: 'Niepowodzenie o %time% zgłoszone przez %name%'
+        PENDINGAt: 'Jeszcze nieobsłużone'
     title: 'Lista kontrolna'
     progress: '%done% / %total% punktów'
     complete: Kompletne
@@ -453,3 +482,11 @@ daynote:
         active: Wyświetlana
         add: 'Dodaj wskazówkę'
         deleteHint: 'Wyczyszczenie wszystkich pól tej wskazówki usuwa ją.'
+
+signature:
+    unknownPin: 'Ten kod nie odpowiada żadnemu aktywnemu kontu.'
+    statusRequired: 'Wybierz, co dzieje się z tym zadaniem.'
+    reasonRequired: 'Niepowodzenie musi być uzasadnione: napisz jednym słowem, co nie zadziałało.'
+    photoRequired: 'To zadanie wymaga zdjęcia.'
+    photoRejected: 'Nie udało się zapisać tego obrazu. Spróbuj ponownie ze zdjęciem zrobionym aparatem.'
+    throttled: 'Zbyt wiele prób. Odczekaj kilka minut.'

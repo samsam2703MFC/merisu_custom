@@ -202,6 +202,8 @@ final class SchemaInstaller
             $t->addColumn('workstation_id', 'string', ['length' => 64]);
             $t->addColumn('item_id', 'string', ['length' => 64]);
             $t->addColumn('checked', 'boolean', ['default' => false]);
+            $t->addColumn('status', 'string', ['length' => 16, 'default' => 'PENDING']);
+            $t->addColumn('photo_path', 'string', ['length' => 255, 'notnull' => false]);
             $t->addColumn('consultant_id', 'string', ['length' => 64]);
             $t->addColumn('checked_at', 'string', ['length' => 32]);
             $t->addColumn('note', 'text', ['notnull' => false]);
@@ -288,6 +290,17 @@ final class SchemaInstaller
                 // produits. Le bac par défaut : c'est la forme la plus
                 // courante, et une base déjà en service n'a rien à ressaisir.
                 'container_type' => "VARCHAR(16) DEFAULT 'TUB' NOT NULL",
+            ],
+            'inv_checklist_item' => [
+                // Exigence de photo, réglée point par point en administration.
+                'requires_photo' => 'BOOLEAN DEFAULT 0 NOT NULL',
+            ],
+            'inv_checklist_entry' => [
+                // Le statut remplace le booléen « coché ». Les lignes déjà en
+                // base gardent leur booléen : la lecture s'en sert pour
+                // déduire DONE ou PENDING, sans migration de données.
+                'status' => "VARCHAR(16) DEFAULT '' NOT NULL",
+                'photo_path' => 'VARCHAR(255) DEFAULT NULL',
             ],
         ];
 

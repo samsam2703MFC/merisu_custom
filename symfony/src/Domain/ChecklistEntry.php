@@ -18,11 +18,25 @@ final readonly class ChecklistEntry
         public string $businessDate,
         public string $workstationId,
         public string $itemId,
-        public bool $checked,
+        public ChecklistStatus $status,
         public string $consultantId,
         public string $checkedAt,
         /** Précision libre : température relevée, anomalie constatée… */
         public ?string $note = null,
+        /** Chemin public de la photo jointe, quand le point l'exigeait. */
+        public ?string $photoPath = null,
     ) {
+    }
+
+    /**
+     * Compatibilité de lecture avec l'ancien booléen.
+     *
+     * Conservée parce que « fait » reste la question posée par les compteurs
+     * d'avancement — mais elle ne dit plus rien de « passé » ni d'« échec »,
+     * qu'il faut interroger par le statut.
+     */
+    public function isDone(): bool
+    {
+        return $this->status === ChecklistStatus::Done;
     }
 }

@@ -1,0 +1,113 @@
+{#
+  Les points d'un volet.
+
+  Une ligne par point, avec son statut, son heure et le nom de qui l'a signé.
+  Une ligne empilée plutôt qu'un tableau : sur un téléphone tenu debout, huit
+  colonnes défilent latéralement et se lisent mal, alors que l'information est
+  la même.
+#}
+{% extends 'base.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ section.labelKey|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block content %}
+
+  <div class="identity-bar">
+    <span class="muted">{{ current_user().consultant.displayName }}</span>
+  </div>
+
+  <div class="page-header page-header--with-icon">
+    <span class="page-header__icon">{{ ui.icon('checklist') }}</span>
+    <div class="page-header__text">
+      <h1 class="page-header__title">{{ section.labelKey|trans }}</h1>
+      <p class="page-header__subtitle">
+        {% if time %}{{ time }} · {% endif %}{{ date|long_date }}
+      </p>
+    </div>
+  </div>
+
+  {# Synthèse : les mêmes tuiles que le tableau de bord, pour que « un chiffre
+     qui compte » se présente partout de la même façon. #}
+  <section class="card">
+    <div class="stats stats--compact">
+      <div class="stat">
+        <p class="stat__label">{{ 'checklist.statTotal'|trans }}</p>
+        <p class="stat__value">{{ total }}</p>
+      </div>
+      <div class="stat">
+        <p class="stat__label">{{ 'checklist.statDone'|trans }}</p>
+        <p class="stat__value stat__value--ok">{{ done }}</p>
+      </div>
+      <div class="stat">
+        <p class="stat__label">{{ 'checklist.statLeft'|trans }}</p>
+        <p class="stat__value stat__value--todo">{{ total - done }}</p>
+      </div>
+    </div>
+
+    <span class="ck-bar ck-bar--lg">
+      <span class="ck-bar__fill ck-bar__fill--{{ percent == 100 ? 'full' : (percent > 0 ? 'part' : 'none') }}"
+            style="--w: {{ percent }}%"></span>
+    </span>
+  </section>
+
+  {% if rows is empty %}
+    {{ ui.banner('info', 'checklist.emptySection'|trans) }}
+  {% else %}
+    <ul class="ck-list">
+      {% for ligne in rows %}
+        {% set item = ligne.item %}
+        {% set statut = ligne.status %}
+
+        <li class="ck-item ck-item--{{ statut.value|lower }}">
+          <a class="ck-item__main" href="{{ path('checklist_point', { itemId: item.id }) }}">
+            <span class="ck-item__name">
+              {{ checklist_text(item) }}
+              {% if item.required %}
+                <span class="ck-item__flag" title="{{ 'checklist.mandatory'|trans }}" aria-label="{{ 'checklist.mandatory'|trans }}">★</span>
+              {% endif %}
+              {% if item.requiresPhoto %}
+                <span class="ck-item__cam" title="{{ 'checklist.photoRequired'|trans }}" aria-label="{{ 'checklist.photoRequired'|trans }}">
+                  {{ ui.icon('camera') }}
+                </span>
+              {% endif %}
+            </span>
+
+            <span class="ck-item__meta muted">
+              {% if statut.isSettled %}
+                {{ ('checklist.statuses.' ~ statut.value ~ 'At')|trans({ '%time%': ligne.at|time_short, '%name%': ligne.by ?? '—' }) }}
+                {%- if ligne.note %} — « {{ ligne.note }} »{% endif %}
+                {%- if ligne.photoPath %} · {{ 'checklist.photoAttached'|trans }}{% endif %}
+              {% else %}
+                {{ 'checklist.notYet'|trans }}
+              {% endif %}
+            </span>
+          </a>
+
+          {#
+            Statut à droite : pastille quand le point est traité, bouton quand
+            il reste à faire. Les deux ne se confondent pas — l'un se lit,
+            l'autre s'appuie.
+          #}
+          {% if statut.isSettled %}
+            <span class="badge badge--{{ statut.badge }} ck-item__badge">
+              {{ ('checklist.statuses.' ~ statut.value)|trans }}
+            </span>
+          {% else %}
+            <a class="button button--primary ck-item__do" href="{{ path('checklist_point', { itemId: item.id }) }}">
+              {{ 'checklist.do'|trans }}
+            </a>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  <div class="form-actions">
+    <a class="button button--secondary" href="{{ path('checklist') }}">
+      <span class="button__icon">{{ ui.icon('arrow-left') }}</span>
+      {{ 'checklist.backToLists'|trans }}
+    </a>
+  </div>
+
+{% endblock %}

@@ -137,6 +137,7 @@ produce:
     subtitle: 'Para el %date%'
     qtyToProduce: 'Por producir'
     required: Requerido
+    requiresPhoto: 'Exige una foto'
     closingStock: 'Stock de cierre'
     nothing: 'Nada que producir para este producto.'
     empty: 'No hay plan congelado para esta fecha.'
@@ -383,6 +384,34 @@ errors:
     UPLOAD_DIR_UNAVAILABLE: 'Carpeta de fotos no accesible.'
 
 checklist:
+    signWithCode: 'Firme con su código'
+    do: 'Hacer'
+    confirm: 'Validar'
+    skip: 'Omitir'
+    reportFailure: 'Notificar un fallo'
+    mandatory: 'Obligatorio'
+    photoRequired: 'Foto exigida'
+    photo: 'Foto'
+    photoAttached: 'foto adjunta'
+    photoAlready: 'Ya hay una foto adjunta. Elegir otra la sustituirá.'
+    optionalNote: 'opcional'
+    reasonRequired: 'Un fallo sin motivo no sirve a nadie al día siguiente: diga en una palabra qué no funcionó.'
+    notYet: 'Aún sin tratar'
+    statTotal: 'Puntos'
+    statDone: 'Hechos'
+    statLeft: 'Restantes'
+    failedCount: '%count% fallidos'
+    backToLists: 'Todas las listas'
+    signed: 'Punto firmado.'
+    statuses:
+        PENDING: 'Por hacer'
+        DONE: 'Hecho'
+        SKIPPED: 'Omitido'
+        FAILED: 'Fallo'
+        DONEAt: 'Hecho a las %time% por %name%'
+        SKIPPEDAt: 'Omitido a las %time% por %name%'
+        FAILEDAt: 'Fallo a las %time% notificado por %name%'
+        PENDINGAt: 'Aún sin tratar'
     title: 'Lista de control'
     progress: '%done% / %total% puntos'
     complete: Completo
@@ -453,3 +482,11 @@ daynote:
         active: Mostrada
         add: 'Añadir una consigna'
         deleteHint: 'Vaciar todos los campos de esta consigna la elimina.'
+
+signature:
+    unknownPin: 'Este código no corresponde a ninguna cuenta activa.'
+    statusRequired: 'Elija qué ocurre con este punto.'
+    reasonRequired: 'Un fallo debe motivarse: diga en una palabra qué no funcionó.'
+    photoRequired: 'Este punto exige una foto.'
+    photoRejected: 'No se ha podido guardar esta imagen. Inténtelo con una foto tomada con la cámara.'
+    throttled: 'Demasiados intentos. Espere unos minutos antes de reintentar.'

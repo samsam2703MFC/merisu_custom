@@ -1,9 +1,9 @@
 {#
-  Check-list du poste : ouverture, fermeture, contrôle qualité.
+  Check-list du poste — vue d'entrée.
 
-  Un seul formulaire pour les trois volets : le vendeur coche au fil de la
-  journée et enregistre une fois. Découper en trois formulaires l'obligerait à
-  enregistrer trois fois, et perdrait ce qu'il vient de cocher ailleurs.
+  Un volet par carte, avec son avancement. Les points ne sont pas dépliés
+  ici : le vendeur choisit d'abord ce qu'il vient traiter, et n'a pas à
+  parcourir vingt lignes pour trouver les deux qui le concernent.
 #}
 {% extends 'base.html.twig' %}
 {% import 'components/_macros.html.twig' as ui %}
@@ -29,73 +29,40 @@
   {% if aucunPoint %}
     {{ ui.banner('info', 'checklist.empty'|trans) }}
   {% else %}
-    <form method="post" action="{{ path('checklist_save') }}">
-
+    <div class="ck-grid">
       {% for bloc in sections %}
-        <section class="card checklist{{ bloc.complete ? ' checklist--complete' : '' }}">
-          <header class="checklist__header">
-            <span class="checklist__icon">{{ ui.icon(bloc.section.icon) }}</span>
+        <a class="card card--link ck-card" href="{{ path('checklist_section', { section: bloc.section.value }) }}">
+          <div class="ck-card__head">
+            <h2 class="card__title">{{ bloc.section.labelKey|trans }}</h2>
+            {% if bloc.time %}<span class="ck-card__time muted">{{ bloc.time }}</span>{% endif %}
+          </div>
 
-            <div class="checklist__heading">
-              <h2 class="card__title">{{ bloc.section.labelKey|trans }}</h2>
-              <p class="muted">{{ 'checklist.progress'|trans({ '%done%': bloc.done, '%total%': bloc.total }) }}</p>
-            </div>
+          <div class="ck-card__meta">
+            <span class="muted">{{ 'checklist.progress'|trans({ '%done%': bloc.done, '%total%': bloc.total }) }}</span>
 
-            {% if bloc.complete %}
-              {{ ui.badge('ok', 'checklist.complete'|trans) }}
-            {% endif %}
-          </header>
+            {#
+              Le pourcentage porte une couleur, mais jamais seule : le chiffre
+              lui-même dit la même chose, et la barre en dessous aussi.
+            #}
+            <span class="ck-card__pct ck-card__pct--{{ bloc.percent == 100 ? 'full' : (bloc.percent > 0 ? 'part' : 'none') }}">
+              {{ bloc.percent }} %
+            </span>
+          </div>
 
-          {% if bloc.rows is empty %}
-            <p class="muted">{{ 'checklist.emptySection'|trans }}</p>
-          {% else %}
-            <ul class="checklist__list">
-              {% for ligne in bloc.rows %}
-                {% set item = ligne.item %}
-                <li class="checklist__row{{ ligne.checked ? ' is-checked' : '' }}">
-                  {#
-                    Toute la ligne est cliquable : au poste, on coche debout,
-                    parfois avec des gants. Viser une case de 24 px serait
-                    pénible — le <label> étend la cible à la ligne entière.
-                  #}
-                  <label class="checklist__point" for="point-{{ item.id }}">
-                    <input type="checkbox"
-                           id="point-{{ item.id }}"
-                           name="checked[{{ item.id }}]"
-                           value="1"
-                           {{ ligne.checked ? 'checked' : '' }}>
+          <span class="ck-bar">
+            <span class="ck-bar__fill ck-bar__fill--{{ bloc.percent == 100 ? 'full' : (bloc.percent > 0 ? 'part' : 'none') }}"
+                  style="--w: {{ bloc.percent }}%"></span>
+          </span>
 
-                    <span class="checklist__text">
-                      {{ checklist_text(item) }}
-                      {% if not item.required %}
-                        <span class="checklist__optional">{{ 'checklist.optional'|trans }}</span>
-                      {% endif %}
-                    </span>
-                  </label>
-
-                  {% if ligne.at %}
-                    <span class="checklist__stamp muted">{{ ligne.at|time_short }}</span>
-                  {% endif %}
-
-                  <input class="checklist__note"
-                         type="text"
-                         name="note[{{ item.id }}]"
-                         value="{{ ligne.note }}"
-                         placeholder="{{ 'checklist.notePlaceholder'|trans }}"
-                         aria-label="{{ 'checklist.note'|trans }}">
-                </li>
-              {% endfor %}
-            </ul>
+          {# Un échec ne se noie pas dans un pourcentage : il se dit. #}
+          {% if bloc.failed > 0 %}
+            <span class="badge badge--danger">
+              {{ 'checklist.failedCount'|trans({ '%count%': bloc.failed }) }}
+            </span>
           {% endif %}
-        </section>
+        </a>
       {% endfor %}
-
-      <div class="form-actions">
-        <button type="submit" class="button button--primary button--large">
-          {{ 'common.save'|trans }}
-        </button>
-      </div>
-    </form>
+    </div>
   {% endif %}
 
 {% endblock %}

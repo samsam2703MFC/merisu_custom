@@ -137,6 +137,7 @@ produce:
     subtitle: 'Per il %date%'
     qtyToProduce: 'Da produrre'
     required: Richiesto
+    requiresPhoto: 'Richiede una foto'
     closingStock: 'Scorta di chiusura'
     nothing: 'Nulla da produrre per questo prodotto.'
     empty: 'Nessun piano congelato per questa data.'
@@ -383,6 +384,34 @@ errors:
     UPLOAD_DIR_UNAVAILABLE: 'Cartella delle foto non accessibile.'
 
 checklist:
+    signWithCode: 'Firma con il tuo codice'
+    do: 'Esegui'
+    confirm: 'Conferma'
+    skip: 'Salta'
+    reportFailure: 'Segnala un problema'
+    mandatory: 'Obbligatorio'
+    photoRequired: 'Foto richiesta'
+    photo: 'Foto'
+    photoAttached: 'foto allegata'
+    photoAlready: 'Una foto è già allegata. Sceglierne un''altra la sostituirà.'
+    optionalNote: 'facoltativa'
+    reasonRequired: 'Un problema senza motivo non serve a nessuno l''indomani: di'' in una parola cosa non ha funzionato.'
+    notYet: 'Non ancora trattato'
+    statTotal: 'Punti'
+    statDone: 'Fatti'
+    statLeft: 'Rimasti'
+    failedCount: '%count% falliti'
+    backToLists: 'Tutte le checklist'
+    signed: 'Punto firmato.'
+    statuses:
+        PENDING: 'Da fare'
+        DONE: 'Fatto'
+        SKIPPED: 'Saltato'
+        FAILED: 'Fallito'
+        DONEAt: 'Fatto alle %time% da %name%'
+        SKIPPEDAt: 'Saltato alle %time% da %name%'
+        FAILEDAt: 'Fallito alle %time% segnalato da %name%'
+        PENDINGAt: 'Non ancora trattato'
     title: 'Check-list'
     progress: '%done% / %total% punti'
     complete: Completo
@@ -453,3 +482,11 @@ daynote:
         active: Mostrata
         add: 'Aggiungi una consegna'
         deleteHint: 'Svuotare tutti i campi di questa consegna la elimina.'
+
+signature:
+    unknownPin: 'Questo codice non corrisponde a nessun account attivo.'
+    statusRequired: 'Scegli cosa ne è di questo punto.'
+    reasonRequired: 'Un fallimento va motivato: di'' in una parola cosa non ha funzionato.'
+    photoRequired: 'Questo punto richiede una foto.'
+    photoRejected: 'Non è stato possibile salvare questa immagine. Riprova con una foto scattata dalla fotocamera.'
+    throttled: 'Troppi tentativi. Attendi qualche minuto prima di riprovare.'

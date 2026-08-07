@@ -86,6 +86,15 @@
                {{ item is null or item.required ? 'checked' : '' }}>
         <label for="r-{{ id }}">{{ 'checklist.admin.required'|trans }}</label>
       </div>
+
+      {# Exigence de photo, point par point : photographier une vitrine a du
+         sens, photographier « caisse ouverte » n'en a aucun, et l'exiger
+         partout la ferait bâcler partout. #}
+      <div class="checkbox-row">
+        <input type="checkbox" id="p-{{ id }}" name="item[{{ id }}][requiresPhoto]" value="1"
+               {{ item is not null and item.requiresPhoto ? 'checked' : '' }}>
+        <label for="p-{{ id }}">{{ 'checklist.admin.requiresPhoto'|trans }}</label>
+      </div>
     </div>
   </div>
 {% endmacro %}

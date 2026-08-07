@@ -140,6 +140,7 @@ produce:
     subtitle: 'Pour le %date%'
     qtyToProduce: 'À produire'
     required: Requis
+    requiresPhoto: 'Exige une photo'
     closingStock: 'Stock de clôture'
     nothing: 'Rien à produire pour ce produit.'
     empty: 'Aucun plan figé pour cette date.'
@@ -386,6 +387,34 @@ errors:
     UPLOAD_DIR_UNAVAILABLE: "Dossier de stockage des photos inaccessible."
 
 checklist:
+    signWithCode: 'Signez avec votre code'
+    do: 'Faire'
+    confirm: 'Valider'
+    skip: 'Passer'
+    reportFailure: 'Signaler un échec'
+    mandatory: 'Obligatoire'
+    photoRequired: 'Photo exigée'
+    photo: 'Photo'
+    photoAttached: 'photo jointe'
+    photoAlready: 'Une photo est déjà jointe. En choisir une autre la remplacera.'
+    optionalNote: 'facultative'
+    reasonRequired: 'Un échec sans motif ne sert à personne le lendemain : dites en un mot ce qui n''a pas marché.'
+    notYet: 'Pas encore traité'
+    statTotal: 'Points'
+    statDone: 'Faits'
+    statLeft: 'Restants'
+    failedCount: '%count% en échec'
+    backToLists: 'Toutes les check-lists'
+    signed: 'Point signé.'
+    statuses:
+        PENDING: 'À faire'
+        DONE: 'Fait'
+        SKIPPED: 'Passé'
+        FAILED: 'Échec'
+        DONEAt: 'Fait à %time% par %name%'
+        SKIPPEDAt: 'Passé à %time% par %name%'
+        FAILEDAt: 'Échec à %time% signalé par %name%'
+        PENDINGAt: 'Pas encore traité'
     title: 'Check-list'
     progress: '%done% / %total% points'
     complete: Complet
@@ -456,3 +485,11 @@ daynote:
         active: Affichée
         add: 'Ajouter une consigne'
         deleteHint: 'Vider tous les champs de cette consigne la supprime.'
+
+signature:
+    unknownPin: 'Ce code ne correspond à aucun compte actif.'
+    statusRequired: 'Choisissez ce qu''il en est de ce point.'
+    reasonRequired: 'Un échec doit être motivé : dites en un mot ce qui n''a pas marché.'
+    photoRequired: 'Ce point exige une photo.'
+    photoRejected: 'Cette image n''a pas pu être enregistrée. Réessayez avec une photo prise depuis l''appareil.'
+    throttled: 'Trop de tentatives. Patientez quelques minutes avant de réessayer.'

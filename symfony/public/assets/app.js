@@ -327,6 +327,103 @@
       : toggle.getAttribute('data-label-hide');
   });
 
+  // ── 3 sexies. Signature d'un point de check-list ──────────────────────────
+
+  // Trois services, et l'écran reste utilisable sans aucun d'eux : le serveur
+  // revérifie le code, exige le motif d'un échec et réclame la photo. Le
+  // script ne fait que dire ces règles PLUS TÔT.
+  var signForm = document.querySelector('[data-sign-form]');
+
+  if (signForm) {
+    var signCups = Array.prototype.slice.call(signForm.querySelectorAll('.pin__cup'));
+    var signWho = signForm.querySelector('[data-sign-who]');
+    var signName = signForm.querySelector('[data-sign-name]');
+    var signNote = signForm.querySelector('[data-sign-note]');
+    var signHint = signForm.querySelector('[data-sign-reason-hint]');
+    var signOptional = signForm.querySelector('[data-sign-note-optional]');
+    var signPhoto = signForm.querySelector('[data-sign-photo]');
+    var signPreview = signForm.querySelector('[data-sign-preview]');
+    var signPlaceholder = signForm.querySelector('[data-sign-placeholder]');
+    var identifyUrl = signForm.getAttribute('data-identify-url');
+    var dernierCode = '';
+
+    // Le nom, dès le sixième chiffre.
+    var reconnaitre = function () {
+      var code = signCups.map(function (c) { return c.value; }).join('');
+
+      if (code.length < signCups.length) {
+        dernierCode = '';
+        signWho.classList.remove('is-known', 'is-unknown');
+        signName.textContent = '';
+        return;
+      }
+
+      // Un même code ne se demande pas deux fois : sans ce garde-fou, chaque
+      // frappe dans la dernière coupe consommerait un jeton du limiteur.
+      if (code === dernierCode) return;
+      dernierCode = code;
+
+      var corps = new FormData();
+      code.split('').forEach(function (c) { corps.append('secret[]', c); });
+
+      fetch(identifyUrl, { method: 'POST', body: corps, headers: { 'X-Requested-With': 'fetch' } })
+        .then(function (r) { return r.ok ? r.json() : { name: null }; })
+        .then(function (data) {
+          // La réponse d'un code déjà remplacé ne doit pas écraser l'écran.
+          if (code !== dernierCode) return;
+
+          signName.textContent = data.name || signWho.getAttribute('data-unknown') || '';
+          signWho.classList.toggle('is-known', !!data.name);
+          signWho.classList.toggle('is-unknown', !data.name);
+        })
+        .catch(function () {
+          // Réseau absent : on n'affiche rien plutôt qu'un nom faux. Le
+          // serveur tranchera à l'envoi.
+        });
+    };
+
+    signCups.forEach(function (coupe) {
+      coupe.addEventListener('input', reconnaitre);
+      coupe.addEventListener('paste', function () { window.setTimeout(reconnaitre, 0); });
+    });
+
+    // « Signaler un échec » rend le motif obligatoire, et le dit avant l'envoi.
+    var echec = signForm.querySelector('[data-sign-fail]');
+
+    if (echec && signNote) {
+      echec.addEventListener('click', function (event) {
+        if (signNote.value.trim() !== '') return;
+
+        event.preventDefault();
+
+        if (signHint) signHint.hidden = false;
+        if (signOptional) signOptional.hidden = true;
+        signNote.required = true;
+        signNote.classList.add('field__input--invalid');
+        signNote.focus();
+      });
+
+      signNote.addEventListener('input', function () {
+        if (signNote.value.trim() !== '') signNote.classList.remove('field__input--invalid');
+      });
+    }
+
+    // Aperçu de la photo : le cadre montre ce qui a été pris, et non une
+    // icône inchangée qui laisserait douter que le cliché soit bien joint.
+    if (signPhoto && signPreview) {
+      signPhoto.addEventListener('change', function () {
+        var fichier = signPhoto.files && signPhoto.files[0];
+        if (!fichier) return;
+
+        var url = URL.createObjectURL(fichier);
+        signPreview.src = url;
+        signPreview.hidden = false;
+        if (signPlaceholder) signPlaceholder.hidden = true;
+        signPreview.addEventListener('load', function () { URL.revokeObjectURL(url); }, { once: true });
+      });
+    }
+  }
+
   // ── 4. File d'attente hors-ligne ──────────────────────────────────────────
 
   var DB_NAME = 'merisu-offline';

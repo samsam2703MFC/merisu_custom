@@ -29,6 +29,14 @@ final readonly class ChecklistItem
          * volet soit considérée comme faite. Les autres restent indicatifs.
          */
         public bool $required = true,
+        /**
+         * Le point exige-t-il une photo ?
+         *
+         * Réglé en administration, point par point : photographier une vitrine
+         * a du sens, photographier « caisse ouverte » n'en a aucun, et exiger
+         * la photo partout la ferait bâcler partout.
+         */
+        public bool $requiresPhoto = false,
     ) {
     }
 
@@ -66,6 +74,7 @@ final readonly class ChecklistItem
             $changes['sortOrder'] ?? $this->sortOrder,
             $changes['active'] ?? $this->active,
             $changes['required'] ?? $this->required,
+            $changes['requiresPhoto'] ?? $this->requiresPhoto,
         );
     }
 }

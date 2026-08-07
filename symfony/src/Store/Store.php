@@ -9,6 +9,7 @@ use Merisu\Inventory\Domain\AuditEntry;
 use Merisu\Inventory\Domain\ChecklistEntry;
 use Merisu\Inventory\Domain\ChecklistItem;
 use Merisu\Inventory\Domain\ChecklistSection;
+use Merisu\Inventory\Domain\ChecklistStatus;
 use Merisu\Inventory\Domain\ContainerType;
 use Merisu\Inventory\Domain\CountMode;
 use Merisu\Inventory\Domain\CountMoment;
@@ -456,6 +457,7 @@ final class Store
             'sort_order' => $item->sortOrder,
             'active' => $item->active ? 1 : 0,
             'required' => $item->required ? 1 : 0,
+            'requires_photo' => $item->requiresPhoto ? 1 : 0,
         ];
 
         $exists = (int) $this->db->fetchOne('SELECT COUNT(*) FROM inv_checklist_item WHERE id = ?', [$item->id]) > 0;
@@ -490,10 +492,15 @@ final class Store
                 (string) $row['business_date'],
                 (string) $row['workstation_id'],
                 (string) $row['item_id'],
-                (bool) $row['checked'],
+                // Repli sur l'ancien booléen : les lignes écrites avant les
+                // quatre statuts n'ont pas de colonne `status` renseignée, et
+                // « coché » y voulait dire « fait ».
+                ChecklistStatus::tryFromLoose($row['status'] ?? null)
+                    ?? ((bool) $row['checked'] ? ChecklistStatus::Done : ChecklistStatus::Pending),
                 (string) $row['consultant_id'],
                 (string) $row['checked_at'],
                 $row['note'] === null || $row['note'] === '' ? null : (string) $row['note'],
+                ($row['photo_path'] ?? '') === '' ? null : (string) $row['photo_path'],
             );
         }
 
@@ -511,9 +518,10 @@ final class Store
         string $businessDate,
         string $workstationId,
         string $itemId,
-        bool $checked,
+        ChecklistStatus $status,
         string $consultantId,
         ?string $note = null,
+        ?string $photoPath = null,
     ): void {
         $existing = $this->db->fetchOne(
             'SELECT id FROM inv_checklist_entry WHERE business_date = ? AND workstation_id = ? AND item_id = ?',
@@ -521,7 +529,12 @@ final class Store
         );
 
         $data = [
-            'checked' => $checked ? 1 : 0,
+            // La colonne booléenne est tenue à jour en parallèle du statut :
+            // elle sert encore aux bases installées avant, et à tout rapport
+            // qui interrogerait la table en SQL direct.
+            'checked' => $status === ChecklistStatus::Done ? 1 : 0,
+            'status' => $status->value,
+            'photo_path' => $photoPath,
             'consultant_id' => $consultantId,
             'checked_at' => self::now(),
             'note' => $note,
@@ -657,6 +670,9 @@ final class Store
             (int) $row['sort_order'],
             (bool) $row['active'],
             (bool) $row['required'],
+            // Colonne ajoutée avec la photo par point : absente d'une base
+            // installée avant, et « pas d'exigence » y est la bonne réponse.
+            (bool) ($row['requires_photo'] ?? false),
         );
     }
 

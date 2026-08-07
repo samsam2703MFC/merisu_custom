@@ -1,0 +1,174 @@
+{#
+  Signature d'un point.
+
+  Une seule question par écran : ce point, qu'en est-il ? Le code PIN suffit à
+  désigner qui signe — il est unique par personne, comme à la connexion — donc
+  aucun sélecteur de nom, et aucun moyen de signer d'un nom qui ne serait pas
+  le sien.
+
+  Le nom apparaît dès le sixième chiffre, avant que la signature ne soit
+  engagée : une faute de frappe se voit alors tout de suite, au lieu de se
+  découvrir sur un point signé au nom d'un collègue.
+#}
+{% extends 'base.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% set statut = entry ? entry.status : null %}
+{% set exigePhoto = item.requiresPhoto %}
+
+{% block title %}{{ checklist_text(item) }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block content %}
+
+  <div class="identity-bar">
+    <span class="muted">{{ current_user().consultant.displayName }}</span>
+  </div>
+
+  <form class="sign"
+        method="post"
+        enctype="multipart/form-data"
+        action="{{ path('checklist_point_save', { itemId: item.id }) }}"
+        data-sign-form
+        data-identify-url="{{ path('checklist_identify') }}">
+
+    <header class="sign__head">
+      <p class="sign__eyebrow">
+        {{ item.section.labelKey|trans }}
+      </p>
+      <h1 class="sign__title">{{ checklist_text(item) }}</h1>
+
+      {% if item.required or exigePhoto %}
+        <p class="sign__flags">
+          {% if item.required %}<span class="sign__flag">{{ 'checklist.mandatory'|trans }}</span>{% endif %}
+          {% if exigePhoto %}<span class="sign__flag sign__flag--photo">{{ 'checklist.photoRequired'|trans }}</span>{% endif %}
+        </p>
+      {% endif %}
+    </header>
+
+    {# Un point déjà traité se reprend : on rappelle son état plutôt que de le
+       laisser croire vierge. #}
+    {% if statut and statut.isSettled %}
+      <p class="banner banner--{{ statut.badge == 'danger' ? 'danger' : (statut.badge == 'warn' ? 'warn' : 'ok') }}" role="status">
+        {{ ('checklist.statuses.' ~ statut.value ~ 'At')|trans({ '%time%': entry.checkedAt|time_short, '%name%': signedBy ?? '—' }) }}
+      </p>
+    {% endif %}
+
+    <div class="sign__body">
+
+      {# Les coupes de l'écran de connexion, à l'identique. #}
+      <div class="pin sign__pin">
+        <span class="field__label" id="pin-label">{{ 'checklist.signWithCode'|trans }}</span>
+
+        <div class="pin__cups" role="group" aria-labelledby="pin-label">
+          {% for rang in 1..6 %}
+            {#
+              L'astérisque est un frère du champ, et non son contenu : elle
+              s'allume par `:not(:placeholder-shown) ~`, sans qu'aucun script
+              n'ait à lire le chiffre saisi.
+            #}
+            <span class="pin__cup-wrap">
+              <input class="pin__cup"
+                     type="password"
+                     id="{{ rang == 1 ? 'secret' : 'secret-' ~ rang }}"
+                     name="secret[]"
+                     inputmode="numeric"
+                     pattern="[0-9]"
+                     maxlength="1"
+                     placeholder=" "
+                     autocomplete="off"
+                     aria-label="{{ 'checklist.signWithCode'|trans }} — {{ rang }}/6"
+                     {{ rang == 1 ? 'autofocus' : '' }}
+                     required>
+              <span class="pin__star" aria-hidden="true">✳</span>
+            </span>
+          {% endfor %}
+        </div>
+
+        {#
+          Le nom reconnu. Vide au départ, rempli par le script au sixième
+          chiffre — et `aria-live` le fait annoncer aux lecteurs d'écran, pour
+          qui la confirmation compte autant qu'à l'œil.
+
+          Sans script, la zone reste vide et la signature fonctionne quand
+          même : le code est de toute façon revérifié au serveur.
+        #}
+        <p class="sign__who" data-sign-who aria-live="polite">
+          <span class="sign__who-name" data-sign-name></span>
+        </p>
+      </div>
+
+      {% if exigePhoto %}
+        <div class="field">
+          <span class="field__label">{{ 'checklist.photo'|trans }}</span>
+
+          {#
+            UNE seule cible : le cadre EST le bouton. `accept="image/*"` laisse
+            déjà le téléphone proposer l'appareil ou la galerie — deux boutons
+            « appareil » et « fichier » feraient double emploi avec lui.
+          #}
+          <label class="sign__drop" for="photo">
+            <input class="visually-hidden" type="file" id="photo" name="photo" accept="image/*" capture="environment" data-sign-photo>
+            <img class="sign__preview" data-sign-preview alt="" hidden>
+            <span class="sign__drop-icon" data-sign-placeholder>{{ ui.icon('camera') }}</span>
+          </label>
+
+          {% if entry and entry.photoPath %}
+            <p class="field__hint">{{ 'checklist.photoAlready'|trans }}</p>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      <div class="field">
+        <label class="field__label" for="note">
+          {{ 'checklist.note'|trans }}
+          <span class="field__optional" data-sign-note-optional>{{ 'checklist.optionalNote'|trans }}</span>
+        </label>
+        <input class="field__input"
+               type="text"
+               id="note"
+               name="note"
+               maxlength="255"
+               value="{{ entry ? entry.note : '' }}"
+               placeholder="{{ 'checklist.notePlaceholder'|trans }}"
+               data-sign-note>
+        <p class="field__hint" data-sign-reason-hint hidden>{{ 'checklist.reasonRequired'|trans }}</p>
+      </div>
+
+    </div>
+
+    {#
+      Une action, deux issues.
+
+      « Passer » et « Échec » restent possibles — ce sont deux situations
+      différentes, et les confondre ferait perdre l'information — mais ce sont
+      des exceptions : leur donner la même surface que « Valider » faisait
+      hésiter devant trois pavés de même poids.
+    #}
+    <div class="sign__actions">
+      <button type="submit" class="button button--primary button--large sign__go"
+              name="status" value="{{ constant('Merisu\\Inventory\\Domain\\ChecklistStatus::Done').value }}">
+        {{ 'checklist.confirm'|trans }}
+      </button>
+
+      <p class="sign__alt">
+        <button type="submit" class="sign__link"
+                name="status" value="{{ constant('Merisu\\Inventory\\Domain\\ChecklistStatus::Skipped').value }}">
+          {{ 'checklist.skip'|trans }}
+        </button>
+        <span class="sign__sep" aria-hidden="true">·</span>
+        <button type="submit" class="sign__link sign__link--fail"
+                name="status" value="{{ constant('Merisu\\Inventory\\Domain\\ChecklistStatus::Failed').value }}"
+                data-sign-fail>
+          {{ 'checklist.reportFailure'|trans }}
+        </button>
+      </p>
+    </div>
+  </form>
+
+  <div class="form-actions form-actions--centered">
+    <a class="button button--ghost" href="{{ path('checklist_section', { section: item.section.value }) }}">
+      {{ 'common.cancel'|trans }}
+    </a>
+  </div>
+
+{% endblock %}
