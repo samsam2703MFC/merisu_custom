@@ -11,6 +11,7 @@ use Merisu\Inventory\Domain\EveningValidation;
 use Merisu\Inventory\Domain\InventoryCount;
 use Merisu\Inventory\Domain\NetVariance;
 use Merisu\Inventory\Domain\Product;
+use Merisu\Inventory\Domain\ProductCategory;
 use Merisu\Inventory\Domain\Production;
 use Merisu\Inventory\Domain\ProductionPlanResult;
 use Merisu\Inventory\Domain\ProductionPlanRow;
@@ -104,7 +105,13 @@ final class InventoryService
             // du regard. Les groupes suivent l'ordre des produits, pas un
             // alphabet : l'atelier a rangé ses emplacements dans un ordre qui
             // lui parle.
-            'productGroups' => self::groupByCategory($products),
+            // L'ordre vient d'Admin ▸ Catégories : sans lui, les groupes se
+            // présentaient dans l'ordre de création des produits, qui n'a
+            // aucun rapport avec l'ordre où l'on parcourt une boutique.
+            'productGroups' => ProductCategory::sortGroups(
+                self::groupByCategory($products),
+                $this->store->categoryOrder(),
+            ),
             'counts' => $forMoment,
             'validated' => $validatedCount !== null,
             'validatedAt' => $validatedCount?->validatedAt,

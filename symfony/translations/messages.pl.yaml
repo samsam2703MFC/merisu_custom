@@ -104,6 +104,7 @@ nav:
     admin: Administracja
     team: 'Zespół'
     products: Produkty
+    categories: 'Kategorie'
     parMatrix: Progi
     settings: Ustawienia
     delta: 'Delta techniczna'
@@ -166,6 +167,16 @@ produce:
     allergens: 'Alergeny'
 
 admin:
+    categories:
+        title: 'Kategorie'
+        subtitle: 'Lista i kolejność kategorii produkcji.'
+        name: 'Nazwa'
+        products: 'Produkty'
+        unused: 'Brak produktów'
+        empty: 'Na razie brak kategorii: pojawią się tutaj, gdy tylko produkt ją otrzyma.'
+        renameHint: 'Zmiana nazwy kategorii zmienia ją od razu we wszystkich jej produktach. Nadanie nazwy innej kategorii ŁĄCZY obie — tak naprawia się duplikat.'
+        confirmDelete: 'Usunąć „%name%”? Jej %count% produktów stanie się „bez kategorii”. Żaden produkt nie zostanie usunięty.'
+        unclassified: '%count% aktywnych produktów bez kategorii: tworzą grupę „bez kategorii” na końcu ekranu spisu.'
     sales:
         title: 'Sprzedaż'
         sectionsTitle: 'Ustawienia'

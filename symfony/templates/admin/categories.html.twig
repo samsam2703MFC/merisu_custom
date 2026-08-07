@@ -1,0 +1,97 @@
+{#
+  Admin ▸ Catégories.
+
+  Un tableau plutôt que des fiches repliées, contrairement aux produits : une
+  catégorie n'a que deux champs, et les voir tous en même temps est justement
+  ce qui permet de repérer un doublon — « Tiramisu » et « Tiramisù » sautent
+  aux yeux côte à côte, jamais dans deux fiches fermées.
+#}
+{% extends 'admin/_layout.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'admin.categories.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block admin_content %}
+
+  {{ ui.page_header('admin.categories.title'|trans, 'admin.categories.subtitle'|trans) }}
+
+  {% if categories is empty %}
+    {{ ui.banner('info', 'admin.categories.empty'|trans) }}
+  {% else %}
+    <form method="post" action="{{ path('admin_categories_save') }}" class="form">
+      <div class="table-scroll">
+        <table class="table cats">
+          <thead>
+            <tr>
+              <th scope="col">{{ 'admin.categories.name'|trans }}</th>
+              <th scope="col">{{ 'common.order'|trans }}</th>
+              <th scope="col">{{ 'admin.categories.products'|trans }}</th>
+              <th scope="col"><span class="visually-hidden">{{ 'common.delete'|trans }}</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for categorie in categories %}
+              <tr>
+                <th scope="row" class="cats__name">
+                  <label class="visually-hidden" for="cat-{{ loop.index }}">{{ 'admin.categories.name'|trans }}</label>
+                  <input class="field__input" type="text" id="cat-{{ loop.index }}"
+                         name="name[{{ categorie.name }}]" value="{{ categorie.name }}" maxlength="64">
+                </th>
+
+                <td class="cats__order">
+                  <label class="visually-hidden" for="ord-{{ loop.index }}">{{ 'common.order'|trans }}</label>
+                  <input class="field__input" type="number" id="ord-{{ loop.index }}"
+                         name="order[{{ categorie.name }}]" value="{{ categorie.sortOrder }}"
+                         min="0" step="1" inputmode="numeric">
+                </td>
+
+                <td class="cats__count">
+                  {#
+                    Une catégorie que plus aucun produit ne porte n'est pas une
+                    erreur — elle a pu être vidée à dessein — mais elle mérite
+                    d'être signalée, sans quoi la liste se remplit d'entrées
+                    mortes que personne n'ose toucher.
+                  #}
+                  {% if categorie.productCount > 0 %}
+                    {{ categorie.productCount }}
+                  {% else %}
+                    {{ ui.badge('warn', 'admin.categories.unused'|trans) }}
+                  {% endif %}
+                </td>
+
+                <td class="cats__action">
+                  <button type="submit" class="button button--ghost"
+                          form="del-{{ loop.index }}"
+                          data-confirm="{{ 'admin.categories.confirmDelete'|trans({ '%name%': categorie.name, '%count%': categorie.productCount }) }}">
+                    {{ 'common.delete'|trans }}
+                  </button>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <p class="field__hint">{{ 'admin.categories.renameHint'|trans }}</p>
+
+      <div class="form-actions">
+        <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
+      </div>
+    </form>
+
+    {# Les formulaires de suppression VIVENT HORS du formulaire principal :
+       imbriquer deux formulaires est interdit en HTML, et le navigateur en
+       ignorerait un des deux sans rien dire. #}
+    {% for categorie in categories %}
+      <form method="post" id="del-{{ loop.index }}" class="visually-hidden"
+            action="{{ path('admin_categories_delete', { name: categorie.name }) }}"></form>
+    {% endfor %}
+  {% endif %}
+
+  {% if unclassified > 0 %}
+    <p class="banner banner--warn">
+      {{ 'admin.categories.unclassified'|trans({ '%count%': unclassified }) }}
+    </p>
+  {% endif %}
+
+{% endblock %}

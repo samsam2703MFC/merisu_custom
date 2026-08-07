@@ -22,6 +22,7 @@ use Merisu\Inventory\Domain\Locale;
 use Merisu\Inventory\Domain\MaterialMovement;
 use Merisu\Inventory\Domain\ParMatrixEntry;
 use Merisu\Inventory\Domain\Product;
+use Merisu\Inventory\Domain\ProductCategory;
 use Merisu\Inventory\Domain\ProductionPlanRow;
 use Merisu\Inventory\Domain\ProductionPlanStatus;
 use Merisu\Inventory\Domain\RoundingMode;
@@ -128,7 +129,119 @@ final class Store
         }
     }
 
+    // ── Catégories de production ────────────────────────────────────────────
+
+    /**
+     * Les catégories, dans leur ordre, avec le nombre de produits actifs.
+     *
+     * Celles portées par un produit mais absentes de la table y sont ajoutées
+     * au passage : une catégorie saisie sur une fiche doit apparaître ici sans
+     * qu'on ait à l'y déclarer, sinon elle semblerait ingérable.
+     *
+     * @return list<ProductCategory>
+     */
+    public function categories(): array
+    {
+        $comptes = [];
+        foreach ($this->db->fetchAllAssociative(
+            "SELECT category, COUNT(*) AS n FROM inv_product WHERE active = 1 AND category <> '' GROUP BY category",
+        ) as $r) {
+            $comptes[(string) $r['category']] = (int) $r['n'];
+        }
+
+        $connues = [];
+        foreach ($this->db->fetchAllAssociative('SELECT name, sort_order FROM inv_category') as $r) {
+            $connues[(string) $r['name']] = (int) $r['sort_order'];
+        }
+
+        // Adoption des nouvelles venues, à la suite des existantes.
+        $rang = $connues === [] ? 0 : max($connues);
+        foreach (array_keys($comptes) as $nom) {
+            if (!isset($connues[$nom])) {
+                $connues[$nom] = ++$rang;
+                $this->db->insert('inv_category', ['name' => $nom, 'sort_order' => $rang]);
+            }
+        }
+
+        $sortie = [];
+        foreach ($connues as $nom => $ordre) {
+            $sortie[] = new ProductCategory((string) $nom, $ordre, $comptes[$nom] ?? 0);
+        }
+
+        usort(
+            $sortie,
+            static fn (ProductCategory $a, ProductCategory $b): int => [$a->sortOrder, $a->name] <=> [$b->sortOrder, $b->name],
+        );
+
+        return $sortie;
+    }
+
+    /** Les noms seuls, dans l'ordre — pour trier les groupes de comptage. */
+    public function categoryOrder(): array
+    {
+        return array_map(static fn (ProductCategory $c): string => $c->name, $this->categories());
+    }
+
+    public function saveCategoryOrder(string $name, int $sortOrder): void
+    {
+        if ($this->db->update('inv_category', ['sort_order' => $sortOrder], ['name' => $name]) === 0) {
+            $this->db->insert('inv_category', ['name' => $name, 'sort_order' => $sortOrder]);
+        }
+    }
+
+    /**
+     * Renomme une catégorie partout à la fois.
+     *
+     * Renommer vers un nom DÉJÀ pris est une FUSION, et non une erreur : c'est
+     * précisément le geste qui rattrape « Tiramisu » et « Tiramisù » saisis en
+     * double. Les produits rejoignent alors la catégorie cible, et la ligne
+     * d'origine disparaît — sans quoi la clé primaire serait violée.
+     *
+     * Le tout dans une transaction : des produits déplacés vers une catégorie
+     * dont la ligne n'aurait pas suivi laisseraient l'écran incohérent.
+     */
+    public function renameCategory(string $from, string $to): void
+    {
+        if ($from === $to || $from === '') {
+            return;
+        }
+
+        $this->db->transactional(function () use ($from, $to): void {
+            $this->db->update('inv_product', ['category' => $to], ['category' => $from]);
+
+            $cible = $this->db->fetchOne('SELECT name FROM inv_category WHERE name = ?', [$to]);
+
+            if ($cible !== false) {
+                // Fusion : la cible existe déjà, l'origine n'a plus lieu d'être.
+                $this->db->delete('inv_category', ['name' => $from]);
+
+                return;
+            }
+
+            $this->db->update('inv_category', ['name' => $to], ['name' => $from]);
+        });
+    }
+
+    /**
+     * Supprime une catégorie : ses produits deviennent « non classé ».
+     *
+     * Les produits ne sont JAMAIS supprimés avec elle — une catégorie est une
+     * étiquette, pas un contenant.
+     */
+    public function deleteCategory(string $name): void
+    {
+        if ($name === '') {
+            return;
+        }
+
+        $this->db->transactional(function () use ($name): void {
+            $this->db->update('inv_product', ['category' => ''], ['category' => $name]);
+            $this->db->delete('inv_category', ['name' => $name]);
+        });
+    }
+
     // ── Matrice des seuils ──────────────────────────────────────────────────
+
 
     /** @return list<ParMatrixEntry> */
     public function parMatrix(): array

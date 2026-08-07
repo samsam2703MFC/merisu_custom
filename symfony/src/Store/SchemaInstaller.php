@@ -106,6 +106,25 @@ final class SchemaInstaller
             $t->addUniqueIndex(['pin_hash'], 'inv_consultant_pin');
         }
 
+        /*
+          Liste et ORDRE des catégories de production.
+
+          La catégorie reste portée par le produit, sous forme de texte : c'est
+          ce champ qui fait foi. Cette table ne tient que la liste et son
+          ordre — passer par des identifiants aurait obligé à migrer les fiches
+          existantes pour un gain nul, une catégorie n'ayant rien d'autre
+          qu'un nom.
+
+          Le nom EST la clé : c'est lui qui relie la catégorie aux produits, et
+          deux lignes de même nom n'auraient aucun sens.
+        */
+        if (!\in_array('inv_category', $existing, true)) {
+            $t = $schema->createTable('inv_category');
+            $t->addColumn('name', 'string', ['length' => 64]);
+            $t->addColumn('sort_order', 'integer', ['default' => 0]);
+            $t->setPrimaryKey(['name']);
+        }
+
         if (!\in_array('inv_par_matrix', $existing, true)) {
             $t = $schema->createTable('inv_par_matrix');
             $t->addColumn('id', 'string', ['length' => 64]);

@@ -104,6 +104,7 @@ nav:
     admin: Administración
     team: 'Equipo'
     products: Productos
+    categories: 'Categorías'
     parMatrix: Umbrales
     settings: Ajustes
     delta: 'Delta técnico'
@@ -166,6 +167,16 @@ produce:
     allergens: 'Alérgenos'
 
 admin:
+    categories:
+        title: 'Categorías'
+        subtitle: 'Lista y orden de las categorías de producción.'
+        name: 'Nombre'
+        products: 'Productos'
+        unused: 'Sin productos'
+        empty: 'Ninguna categoría por ahora: aparecen aquí en cuanto un producto lleva una.'
+        renameHint: 'Renombrar una categoría la cambia en todos sus productos de una vez. Darle el nombre de otra FUSIONA las dos: así se corrige un duplicado.'
+        confirmDelete: '¿Eliminar «%name%»? Sus %count% productos pasarán a «sin clasificar». No se eliminará ningún producto.'
+        unclassified: '%count% productos activos sin categoría: forman un grupo «sin clasificar» al final de la pantalla de recuento.'
     sales:
         title: 'Ventas'
         sectionsTitle: 'Ajustes'

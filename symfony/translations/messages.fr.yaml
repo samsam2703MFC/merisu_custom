@@ -107,6 +107,7 @@ nav:
     admin: Administration
     team: 'Équipe'
     products: Produits
+    categories: 'Catégories'
     parMatrix: Seuils
     settings: Paramètres
     delta: 'Delta technique'
@@ -169,6 +170,16 @@ produce:
     allergens: 'Allergènes'
 
 admin:
+    categories:
+        title: 'Catégories'
+        subtitle: 'Liste et ordre des catégories de production.'
+        name: 'Nom'
+        products: 'Produits'
+        unused: 'Aucun produit'
+        empty: 'Aucune catégorie pour l''instant : elles apparaissent ici dès qu''un produit en porte une.'
+        renameHint: 'Renommer une catégorie la change sur tous ses produits d''un coup. La renommer avec le nom d''une autre FUSIONNE les deux — c''est ainsi qu''on rattrape un doublon.'
+        confirmDelete: 'Supprimer « %name% » ? Ses %count% produits deviendront « non classé ». Aucun produit ne sera supprimé.'
+        unclassified: '%count% produit(s) actif(s) sans catégorie : ils forment un groupe « non classé » en fin d''écran de comptage.'
     sales:
         title: 'Ventes'
         sectionsTitle: 'Réglages'

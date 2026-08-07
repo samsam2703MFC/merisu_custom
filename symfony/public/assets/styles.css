@@ -2996,3 +2996,14 @@ select:disabled, select.field__input:disabled { background-image: url("data:imag
   .sign__pin .pin__cups { gap: .25rem; }
   .sign__pin .pin__cup { min-width: 44px; }
 }
+
+/* ── Catégories de production ────────────────────────────────────────────── */
+
+/* Le tableau générique aligne tout à droite : ici les deux colonnes de saisie
+   se lisent à gauche, comme partout ailleurs dans un formulaire. */
+.cats__name { text-align: left; min-width: 12rem; }
+.cats__name .field__input { width: 100%; }
+.cats__order { width: 1%; }
+.cats__order .field__input { width: 6rem; text-align: center; font-variant-numeric: tabular-nums; }
+.cats__count { width: 1%; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.cats__action { width: 1%; white-space: nowrap; }
