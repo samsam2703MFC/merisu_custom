@@ -265,6 +265,12 @@ admin:
         noticeNoWorkstation: 'Account senza postazione abituale: l''accesso alla postazione gli sarà rifiutato finché non gliene assegni una.'
     title: Amministrazione
     products:
+        tabs:
+            identity: 'Identità'
+            count: 'Rilevazione'
+            produce: 'Produzione'
+            label: 'Etichetta'
+            supply: 'Approvvigionamento'
         title: 'Impostazioni prodotti'
         subtitle: 'Rinomina, attiva e regola i parametri di calcolo. Il numero di prodotti è libero.'
         namePerLocale: 'Denominazione (%locale%)'

@@ -265,6 +265,12 @@ admin:
         noticeNoWorkstation: 'Konto bez zwykłego stanowiska: logowanie na stanowisku będzie odrzucane, dopóki nie przypiszesz mu stanowiska.'
     title: Administracja
     products:
+        tabs:
+            identity: 'Tożsamość'
+            count: 'Spis'
+            produce: 'Produkcja'
+            label: 'Etykieta'
+            supply: 'Zaopatrzenie'
         title: 'Ustawienia produktów'
         subtitle: 'Zmieniaj nazwy, aktywuj i ustawiaj parametry obliczeń. Liczba produktów jest dowolna.'
         namePerLocale: 'Nazwa (%locale%)'

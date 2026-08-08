@@ -265,6 +265,12 @@ admin:
         noticeNoWorkstation: 'Cuenta sin puesto habitual: se le denegará la conexión al puesto hasta que le asigne uno.'
     title: Administración
     products:
+        tabs:
+            identity: 'Identidad'
+            count: 'Recuento'
+            produce: 'Producción'
+            label: 'Etiqueta'
+            supply: 'Aprovisionamiento'
         title: 'Ajustes de productos'
         subtitle: 'Renombre, active y ajuste los parámetros de cálculo. El número de productos es libre.'
         namePerLocale: 'Denominación (%locale%)'

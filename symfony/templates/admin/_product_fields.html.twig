@@ -1,366 +1,411 @@
 {#
   Les champs d'une fiche produit — partagés par la CRÉATION et l'ÉDITION.
 
-  Un seul gabarit pour les deux : le formulaire de création n'en demandait que
-  quatre, et l'on rouvrait la fiche aussitôt pour régler les onze autres. Deux
-  gabarits séparés auraient fini par diverger — un champ ajouté d'un côté,
-  oublié de l'autre, et un produit créé sans son rythme de comptage.
+  Un seul gabarit pour les deux : deux gabarits séparés auraient fini par
+  diverger — un champ ajouté d'un côté, oublié de l'autre, et un produit créé
+  sans son rythme de comptage.
+
+  ── Cinq onglets, et pas de script
+
+  Vingt-neuf champs à la file faisaient huit écrans de haut sur téléphone :
+  on y perdait l'approvisionnement, tout en bas, et l'on refermait la fiche
+  sans avoir vu qu'il existait. Les onglets rangent ces champs par question —
+  QUI est ce produit, COMMENT on le compte, COMMENT on le fabrique, ce qu'on
+  IMPRIME, où on l'ACHÈTE.
+
+  Bâtis sur des boutons radio et `:checked ~` : la bascule tient sans
+  JavaScript, le clavier parcourt le groupe comme n'importe quelles radios, et
+  les onglets fonctionnent quand le réseau du poste n'a pas laissé passer
+  app.js — comme le reste de cette application.
+
+  ⚠️ Les champs masqués RESTENT dans le formulaire et s'envoient normalement :
+  un onglet cache, il ne retire pas. C'est ce qui permet d'enregistrer depuis
+  n'importe lequel sans perdre les quatre autres.
 
   Les identifiants d'éléments se fondent sur `product.id`. À la création, c'est
-  l'emplacement déjà réservé par `nextProductSlot`, donc unique lui aussi :
-  rien n'entre en collision avec les fiches de la liste.
+  l'emplacement déjà réservé par `nextProductSlot`, donc unique lui aussi.
 
   Attend : product, creating, categories, countModes, containerTypes, natures,
-  roundingModes, frequencies.
+  supplySources, roundingModes, frequencies.
 #}
 {% import 'components/_macros.html.twig' as ui %}
 
+<div class="tabs">
+  {#
+    Les radios AVANT la barre et les panneaux : `:checked ~` ne regarde que ce
+    qui SUIT, et les mettre après aurait rendu la bascule impossible sans
+    script.
 
-<div class="checkbox-row">
-  <input type="checkbox" id="active-{{ product.id }}" name="active" value="1"
-         {{ product.active ? 'checked' : '' }}>
-  <label for="active-{{ product.id }}">{{ 'admin.products.active'|trans }}</label>
-</div>
+    Le nom du groupe porte l'identifiant du produit : deux fiches ouvertes en
+    même temps partageraient sinon leurs onglets, et cliquer sur « Étiquette »
+    dans l'une ferait basculer l'autre.
+  #}
 
-{# Un libellé par langue : ce sont des DONNÉES saisies ici, pas des
-   chaînes d'interface (celles-ci vivent dans translations/). #}
-<div class="field-grid">
-  {% for locale in supported_locales() %}
+  <input class="tabs__radio" type="radio" name="tab-{{ product.id }}"
+         id="tab-{{ product.id }}-identity"
+         checked>
+  <input class="tabs__radio" type="radio" name="tab-{{ product.id }}"
+         id="tab-{{ product.id }}-count">
+  <input class="tabs__radio" type="radio" name="tab-{{ product.id }}"
+         id="tab-{{ product.id }}-produce">
+  <input class="tabs__radio" type="radio" name="tab-{{ product.id }}"
+         id="tab-{{ product.id }}-label">
+  <input class="tabs__radio" type="radio" name="tab-{{ product.id }}"
+         id="tab-{{ product.id }}-supply">
+
+  <div class="tabs__bar">
+    <label class="tabs__tab" for="tab-{{ product.id }}-identity">{{ 'admin.products.tabs.identity'|trans }}</label>
+    <label class="tabs__tab" for="tab-{{ product.id }}-count">{{ 'admin.products.tabs.count'|trans }}</label>
+    <label class="tabs__tab" for="tab-{{ product.id }}-produce">{{ 'admin.products.tabs.produce'|trans }}</label>
+    <label class="tabs__tab" for="tab-{{ product.id }}-label">{{ 'admin.products.tabs.label'|trans }}</label>
+    <label class="tabs__tab" for="tab-{{ product.id }}-supply">{{ 'admin.products.tabs.supply'|trans }}</label>
+  </div>
+
+  <section class="tabs__panel">
+    <div class="checkbox-row">
+      <input type="checkbox" id="active-{{ product.id }}" name="active" value="1"
+             {{ product.active ? 'checked' : '' }}>
+      <label for="active-{{ product.id }}">{{ 'admin.products.active'|trans }}</label>
+    </div>
+    {# Un libellé par langue : ce sont des DONNÉES saisies ici, pas des
+       chaînes d'interface (celles-ci vivent dans translations/). #}
+    <div class="field-grid">
+      {% for locale in supported_locales() %}
+        <div class="field">
+          <label class="field__label" for="name-{{ product.id }}-{{ locale.value }}">
+            {{ 'admin.products.namePerLocale'|trans({ '%locale%': ('locales.' ~ locale.value)|trans }) }}
+          </label>
+          <input class="field__input" type="text"
+                 id="name-{{ product.id }}-{{ locale.value }}"
+                 name="name_{{ locale.value }}"
+                 value="{{ product.name[locale.value] ?? '' }}"
+                 {#
+                   PAS de `required` ici, bien qu'un libellé au moins soit
+                   exigé : masqué par un onglet, un champ obligatoire bloque
+                   l'envoi SANS RIEN DIRE — le navigateur veut y placer le
+                   curseur et ne le peut pas. C'est le serveur qui refuse, et
+                   qui explique.
+                 #}>
+        </div>
+      {% endfor %}
+    </div>
+    <div class="field-grid">
+      <div class="field">
+        <label class="field__label" for="unit-{{ product.id }}">{{ 'admin.products.unit'|trans }}</label>
+      <input class="field__input" type="text" id="unit-{{ product.id }}"
+             name="unit" value="{{ product.unit }}">
+    </div>
+    {#
+      Catégorie de production : un CHOIX, plus une saisie libre.
+
+      En texte libre, chaque fiche pouvait inventer une orthographe, et
+      « Tiramisu » cohabitait avec « Tiramisù » sans que rien ne le
+      signale — deux groupes séparés à l'écran de comptage pour un seul
+      rayon. La liste est celle d'Admin ▸ Catégories, et c'est là qu'on
+      en crée, renomme ou fusionne une.
+    #}
     <div class="field">
-      <label class="field__label" for="name-{{ product.id }}-{{ locale.value }}">
-        {{ 'admin.products.namePerLocale'|trans({ '%locale%': ('locales.' ~ locale.value)|trans }) }}
+      <label class="field__label" for="category-{{ product.id }}">
+        {{ 'admin.products.category'|trans }}
       </label>
-      <input class="field__input" type="text"
-             id="name-{{ product.id }}-{{ locale.value }}"
-             name="name_{{ locale.value }}"
-             value="{{ product.name[locale.value] ?? '' }}"
-             {# À la création, au moins un libellé : sans aucun nom, le produit
-                ne serait lisible sur aucun écran. C'est la langue de l'écran
-                qu'on exige — les autres se posent ensuite, `product_label` s'y
-                repliant en attendant. #}
-             {{ creating and locale.value == app.request.locale ? 'required' : '' }}>
+
+      <select class="field__input" id="category-{{ product.id }}" name="category">
+        <option value="">{{ 'admin.products.categoryNone'|trans }}</option>
+
+        {% for nom in categories %}
+          <option value="{{ nom }}" {{ nom == product.category ? 'selected' : '' }}>{{ nom }}</option>
+        {% endfor %}
+
+        {#
+          Filet : une catégorie portée par ce produit mais absente de la
+          liste resterait sélectionnable. Sans elle, enregistrer la fiche
+          effacerait en silence une catégorie que personne n'a voulu
+          retirer.
+        #}
+        {% if product.category and product.category not in categories %}
+          <option value="{{ product.category }}" selected>{{ product.category }}</option>
+        {% endif %}
+      </select>
+
+      <p class="field__hint">
+        {{ 'admin.products.categoryHint'|trans }}
+        <a href="{{ path('admin_categories') }}">{{ 'admin.products.categoryManage'|trans }}</a>
+      </p>
     </div>
-  {% endfor %}
-</div>
+    </div>
+  </section>
 
-{#
-  Nature de la ligne : ce qu'on FABRIQUE, ou ce qu'on COMMANDE.
+  <section class="tabs__panel">
+    {#
+      Nature de la ligne : ce qu'on FABRIQUE, ou ce qu'on COMMANDE.
 
-  Hors de la grille et en tête des réglages : c'est le seul champ de la
-  fiche qui décide si le produit entre au plan de production, et le
-  reste des réglages — perte, arrondi, seuils — n'a de sens que pour
-  une composition.
+      Hors de la grille et en tête des réglages : c'est le seul champ de la
+      fiche qui décide si le produit entre au plan de production, et le
+      reste des réglages — perte, arrondi, seuils — n'a de sens que pour
+      une composition.
 
-  Deux boutons radio côte à côte plutôt qu'une case à cocher : « ceci
-  OU cela » se lit d'un regard, là qu'une case « matière première ? »
-  oblige à deviner ce que veut dire son absence de coche.
-#}
-<fieldset class="field seg">
-  <legend class="field__label">{{ 'admin.products.nature'|trans }}</legend>
+      Deux boutons radio côte à côte plutôt qu'une case à cocher : « ceci
+      OU cela » se lit d'un regard, là qu'une case « matière première ? »
+      oblige à deviner ce que veut dire son absence de coche.
+    #}
+    <fieldset class="field seg">
+      <legend class="field__label">{{ 'admin.products.nature'|trans }}</legend>
 
-  <div class="seg__grid">
-    {% for nature in natures %}
-      <label class="seg__item">
-        <input class="seg__radio" type="radio" name="nature" value="{{ nature.value }}"
-               {{ nature == product.nature ? 'checked' : '' }}>
-        <span class="seg__box">
-          {{ ui.icon(nature.icon) }}
-          <span class="seg__name">{{ ('admin.products.natures.' ~ nature.value)|trans }}</span>
-        </span>
+      <div class="seg__grid">
+        {% for nature in natures %}
+          <label class="seg__item">
+            <input class="seg__radio" type="radio" name="nature" value="{{ nature.value }}"
+                   {{ nature == product.nature ? 'checked' : '' }}>
+            <span class="seg__box">
+              {{ ui.icon(nature.icon) }}
+              <span class="seg__name">{{ ('admin.products.natures.' ~ nature.value)|trans }}</span>
+            </span>
+          </label>
+        {% endfor %}
+      </div>
+
+      <p class="field__hint">{{ 'admin.products.natureHint'|trans }}</p>
+    </fieldset>
+    {#
+      Rythme de comptage : à quels moments, et combien de fois par semaine.
+
+      Tout ne se compte pas matin et soir tous les jours. Les gobelets se
+      comptent le lundi ; les faire figurer aux quatorze écrans de la
+      semaine n'allonge qu'une liste que le vendeur parcourt debout, à
+      08:00, avant l'ouverture.
+
+      Les jours ne se choisissent pas un par un : l'administrateur a « deux
+      fois par semaine » en tête, pas « lundi et jeudi ». Le rappel dit
+      quels jours en découlent, faute de quoi le réglage serait muet sur ce
+      qu'il fait vraiment.
+    #}
+    <fieldset class="field sched">
+      <legend class="field__label">{{ 'admin.products.schedule'|trans }}</legend>
+
+      <div class="sched__moments">
+        <div class="checkbox-row">
+          <input type="checkbox" id="morning-{{ product.id }}" name="countMorning" value="1"
+                 {{ product.schedule.morning ? 'checked' : '' }}>
+          <label for="morning-{{ product.id }}">{{ 'admin.products.countMorning'|trans }}</label>
+        </div>
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="evening-{{ product.id }}" name="countEvening" value="1"
+                 {{ product.schedule.evening ? 'checked' : '' }}>
+          <label for="evening-{{ product.id }}">{{ 'admin.products.countEvening'|trans }}</label>
+        </div>
+      </div>
+
+      <p class="field__label field__label--sub">{{ 'admin.products.frequency'|trans }}</p>
+
+      <div class="freq">
+        {% for n in frequencies %}
+          <label class="freq__item">
+            <input class="freq__radio" type="radio" name="countFrequency" value="{{ n }}"
+                   {{ n == product.schedule.frequency ? 'checked' : '' }}>
+            <span class="freq__box">{{ n }}</span>
+          </label>
+        {% endfor %}
+      </div>
+
+      {# Sept jours nommés un à un tiennent sur trois lignes pour ne rien
+         apprendre : c'est le cas où le rappel sert le moins. #}
+      <p class="field__hint">
+        {{ 'admin.products.frequencyHint'|trans }}
+        <strong>
+          {% if product.schedule.frequency >= 7 %}
+            {{ 'admin.products.everyDay'|trans }}
+          {% else %}
+            {{ product.schedule.days|map(d => ('days.' ~ d.value)|trans)|join(', ') }}
+          {% endif %}
+        </strong>
+      </p>
+    </fieldset>
+    <div class="field-grid">
+    <div class="field">
+      <label class="field__label" for="countMode-{{ product.id }}">{{ 'admin.products.countMode'|trans }}</label>
+      <select class="field__input" id="countMode-{{ product.id }}" name="countMode">
+        {% for mode in countModes %}
+          <option value="{{ mode.value }}" {{ mode == product.countMode ? 'selected' : '' }}>
+            {{ ('admin.products.countModes.' ~ mode.value)|trans }}
+          </option>
+        {% endfor %}
+      </select>
+      <p class="field__hint">{{ 'admin.products.countModeHint'|trans }}</p>
+    </div>
+    {#
+      Forme du contenant, choisie parmi six silhouettes.
+
+      Des vignettes plutôt qu'une liste déroulante : le choix se fait sur
+      la forme, et une forme se reconnaît plus vite qu'elle ne se lit.
+      Bâti sur des boutons radio — la sélection tient sans script, et le
+      clavier la parcourt comme n'importe quel groupe de radios.
+
+      Le nom accompagne chaque vignette : « seau » et « pot » se
+      ressemblent à cette taille, et le mot tranche.
+    #}
+    <fieldset class="field shapes">
+      <legend class="field__label">{{ 'admin.products.containerType'|trans }}</legend>
+
+      <div class="shapes__grid">
+        {% for forme in containerTypes %}
+          <label class="shape">
+            <input class="shape__radio" type="radio" name="containerType"
+                   value="{{ forme.value }}"
+                   {{ forme == product.containerType ? 'checked' : '' }}>
+            <span class="shape__box">
+              {{ ui.icon(forme.icon) }}
+              <span class="shape__name">{{ ('admin.products.containerTypes.' ~ forme.value)|trans }}</span>
+            </span>
+          </label>
+        {% endfor %}
+      </div>
+
+      <p class="field__hint">{{ 'admin.products.containerTypeHint'|trans }}</p>
+    </fieldset>
+    </div>
+  </section>
+
+  <section class="tabs__panel">
+    <div class="field-grid">
+    <div class="field">
+      <label class="field__label" for="waste-{{ product.id }}">
+        {{ 'admin.products.wasteFactor'|trans }}
       </label>
-    {% endfor %}
-  </div>
-
-  <p class="field__hint">{{ 'admin.products.natureHint'|trans }}</p>
-</fieldset>
-
-{#
-  Rythme de comptage : à quels moments, et combien de fois par semaine.
-
-  Tout ne se compte pas matin et soir tous les jours. Les gobelets se
-  comptent le lundi ; les faire figurer aux quatorze écrans de la
-  semaine n'allonge qu'une liste que le vendeur parcourt debout, à
-  08:00, avant l'ouverture.
-
-  Les jours ne se choisissent pas un par un : l'administrateur a « deux
-  fois par semaine » en tête, pas « lundi et jeudi ». Le rappel dit
-  quels jours en découlent, faute de quoi le réglage serait muet sur ce
-  qu'il fait vraiment.
-#}
-<fieldset class="field sched">
-  <legend class="field__label">{{ 'admin.products.schedule'|trans }}</legend>
-
-  <div class="sched__moments">
-    <div class="checkbox-row">
-      <input type="checkbox" id="morning-{{ product.id }}" name="countMorning" value="1"
-             {{ product.schedule.morning ? 'checked' : '' }}>
-      <label for="morning-{{ product.id }}">{{ 'admin.products.countMorning'|trans }}</label>
+      <input class="field__input" type="number" min="0" step="0.01"
+             id="waste-{{ product.id }}" name="wasteFactor" value="{{ product.wasteFactor }}">
+      <p class="field__hint">{{ 'admin.products.wasteFactorHint'|trans }}</p>
     </div>
-
-    <div class="checkbox-row">
-      <input type="checkbox" id="evening-{{ product.id }}" name="countEvening" value="1"
-             {{ product.schedule.evening ? 'checked' : '' }}>
-      <label for="evening-{{ product.id }}">{{ 'admin.products.countEvening'|trans }}</label>
-    </div>
-  </div>
-
-  <p class="field__label field__label--sub">{{ 'admin.products.frequency'|trans }}</p>
-
-  <div class="freq">
-    {% for n in frequencies %}
-      <label class="freq__item">
-        <input class="freq__radio" type="radio" name="countFrequency" value="{{ n }}"
-               {{ n == product.schedule.frequency ? 'checked' : '' }}>
-        <span class="freq__box">{{ n }}</span>
+    <div class="field">
+      <label class="field__label" for="step-{{ product.id }}">
+        {{ 'admin.products.roundingStep'|trans }}
       </label>
-    {% endfor %}
-  </div>
+      <input class="field__input" type="number" min="0.001" step="0.001"
+             id="step-{{ product.id }}" name="roundingStep" value="{{ product.roundingStep }}">
+      <p class="field__hint">{{ 'admin.products.roundingStepHint'|trans }}</p>
+    </div>
+    <div class="field">
+      <label class="field__label" for="mode-{{ product.id }}">
+        {{ 'admin.products.roundingMode'|trans }}
+      </label>
+      <select class="field__input" id="mode-{{ product.id }}" name="roundingMode">
+        {% for mode in roundingModes %}
+          <option value="{{ mode.value }}" {{ mode == product.roundingMode ? 'selected' : '' }}>
+            {{ ('admin.roundingMode.' ~ mode.value)|trans }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    {# Clé de pont vers le module « Recette technique » existant. #}
+    <div class="field">
+      <label class="field__label" for="recipe-{{ product.id }}">
+        {{ 'admin.products.recipeRef'|trans }}
+      </label>
+      <input class="field__input" type="text" id="recipe-{{ product.id }}"
+             name="recipeRef" value="{{ product.recipeRef ?? '' }}">
+      <p class="field__hint">{{ 'admin.products.recipeRefHint'|trans }}</p>
+    </div>
+  </section>
 
-  {# Sept jours nommés un à un tiennent sur trois lignes pour ne rien
-     apprendre : c'est le cas où le rappel sert le moins. #}
-  <p class="field__hint">
-    {{ 'admin.products.frequencyHint'|trans }}
-    <strong>
-      {% if product.schedule.frequency >= 7 %}
-        {{ 'admin.products.everyDay'|trans }}
-      {% else %}
-        {{ product.schedule.days|map(d => ('days.' ~ d.value)|trans)|join(', ') }}
-      {% endif %}
-    </strong>
-  </p>
-</fieldset>
+  <section class="tabs__panel">
+    {#
+      Mentions de l'étiquette de production. Regroupées à part : elles ne
+      servent ni au comptage ni au calcul, elles ne sortent que sur le
+      papier collé sur la barquette.
+    #}
+    <div class="field">
+      <label class="field__label" for="shelf-{{ product.id }}">
+        {{ 'admin.products.shelfLifeDays'|trans }}
+      </label>
+      <input class="field__input" type="number" min="0" step="1"
+             id="shelf-{{ product.id }}" name="shelfLifeDays"
+             value="{{ product.shelfLifeDays }}">
+      <p class="field__hint">{{ 'admin.products.shelfLifeDaysHint'|trans }}</p>
+    </div>
 
-<div class="field-grid">
-  <div class="field">
-    <label class="field__label" for="countMode-{{ product.id }}">{{ 'admin.products.countMode'|trans }}</label>
-    <select class="field__input" id="countMode-{{ product.id }}" name="countMode">
-      {% for mode in countModes %}
-        <option value="{{ mode.value }}" {{ mode == product.countMode ? 'selected' : '' }}>
-          {{ ('admin.products.countModes.' ~ mode.value)|trans }}
-        </option>
-      {% endfor %}
-    </select>
-    <p class="field__hint">{{ 'admin.products.countModeHint'|trans }}</p>
-  </div>
-
-  {#
-    Forme du contenant, choisie parmi six silhouettes.
-
-    Des vignettes plutôt qu'une liste déroulante : le choix se fait sur
-    la forme, et une forme se reconnaît plus vite qu'elle ne se lit.
-    Bâti sur des boutons radio — la sélection tient sans script, et le
-    clavier la parcourt comme n'importe quel groupe de radios.
-
-    Le nom accompagne chaque vignette : « seau » et « pot » se
-    ressemblent à cette taille, et le mot tranche.
-  #}
-  <fieldset class="field shapes">
-    <legend class="field__label">{{ 'admin.products.containerType'|trans }}</legend>
-
-    <div class="shapes__grid">
-      {% for forme in containerTypes %}
-        <label class="shape">
-          <input class="shape__radio" type="radio" name="containerType"
-                 value="{{ forme.value }}"
-                 {{ forme == product.containerType ? 'checked' : '' }}>
-          <span class="shape__box">
-            {{ ui.icon(forme.icon) }}
-            <span class="shape__name">{{ ('admin.products.containerTypes.' ~ forme.value)|trans }}</span>
-          </span>
+    {% for locale in supported_locales() %}
+      <div class="field">
+        <label class="field__label" for="ing-{{ product.id }}-{{ locale.value }}">
+          {{ 'admin.products.ingredients'|trans({ '%locale%': ('locales.' ~ locale.value)|trans }) }}
         </label>
-      {% endfor %}
-    </div>
+        <textarea class="field__input" rows="2" maxlength="600"
+                  id="ing-{{ product.id }}-{{ locale.value }}"
+                  name="ingredients_{{ locale.value }}">{{ product.ingredients[locale.value] ?? '' }}</textarea>
+      </div>
+    {% endfor %}
 
-    <p class="field__hint">{{ 'admin.products.containerTypeHint'|trans }}</p>
-  </fieldset>
+    {% for locale in supported_locales() %}
+      <div class="field">
+        <label class="field__label" for="all-{{ product.id }}-{{ locale.value }}">
+          {{ 'admin.products.allergens'|trans({ '%locale%': ('locales.' ~ locale.value)|trans }) }}
+        </label>
+        <textarea class="field__input" rows="2" maxlength="600"
+                  id="all-{{ product.id }}-{{ locale.value }}"
+                  name="allergens_{{ locale.value }}">{{ product.allergens[locale.value] ?? '' }}</textarea>
+      </div>
+    {% endfor %}
 
-  <div class="field">
-    <label class="field__label" for="unit-{{ product.id }}">{{ 'admin.products.unit'|trans }}</label>
-    <input class="field__input" type="text" id="unit-{{ product.id }}"
-           name="unit" value="{{ product.unit }}">
-  </div>
+    <p class="field__hint">{{ 'admin.products.allergensHint'|trans }}</p>
+  </section>
 
-  {#
-    Catégorie de production : un CHOIX, plus une saisie libre.
+  <section class="tabs__panel">
+    {#
+      ── Approvisionnement ───────────────────────────────────────────────────────
 
-    En texte libre, chaque fiche pouvait inventer une orthographe, et
-    « Tiramisu » cohabitait avec « Tiramisù » sans que rien ne le
-    signale — deux groupes séparés à l'écran de comptage pour un seul
-    rayon. La liste est celle d'Admin ▸ Catégories, et c'est là qu'on
-    en crée, renomme ou fusionne une.
-  #}
-  <div class="field">
-    <label class="field__label" for="category-{{ product.id }}">
-      {{ 'admin.products.category'|trans }}
-    </label>
+      D'où la ligne vient, et sous quelle référence on la recommande. Regroupé à
+      part : ces trois champs ne servent ni au comptage ni au calcul, ils servent
+      à PASSER COMMANDE quand le stock descend.
 
-    <select class="field__input" id="category-{{ product.id }}" name="category">
-      <option value="">{{ 'admin.products.categoryNone'|trans }}</option>
+      La référence fournisseur est distincte de la référence hôte plus haut :
+      l'une sert à commander, l'autre à remonter un comptage. Les confondre aurait
+      marché tant que les deux coïncident, et cassé le jour où une boutique change
+      de fournisseur.
+    #}
+    <fieldset class="field seg">
+      <legend class="field__label">{{ 'admin.products.supplySource'|trans }}</legend>
 
-      {% for nom in categories %}
-        <option value="{{ nom }}" {{ nom == product.category ? 'selected' : '' }}>{{ nom }}</option>
-      {% endfor %}
+      <div class="seg__grid">
+        {% for source in supplySources %}
+          <label class="seg__item">
+            <input class="seg__radio" type="radio" name="supplierSource" value="{{ source.value }}"
+                   {{ source == product.supplierSource ? 'checked' : '' }}>
+            <span class="seg__box">
+              {{ ui.icon(source.icon) }}
+              <span class="seg__name">{{ ('admin.products.supplySources.' ~ source.value)|trans }}</span>
+            </span>
+          </label>
+        {% endfor %}
+      </div>
+
+      <p class="field__hint">{{ 'admin.products.supplySourceHint'|trans }}</p>
+    </fieldset>
+
+    <div class="field-grid">
+      <div class="field">
+        <label class="field__label" for="supref-{{ product.id }}">
+          {{ 'admin.products.supplierRef'|trans }}
+        </label>
+        <input class="field__input" type="text" id="supref-{{ product.id }}"
+               name="supplierRef" maxlength="64" value="{{ product.supplierRef }}">
+        <p class="field__hint">{{ 'admin.products.supplierRefHint'|trans }}</p>
+      </div>
 
       {#
-        Filet : une catégorie portée par ce produit mais absente de la
-        liste resterait sélectionnable. Sans elle, enregistrer la fiche
-        effacerait en silence une catégorie que personne n'a voulu
-        retirer.
+        Le nom du fournisseur n'a de sens qu'en approvisionnement libre — en
+        centrale, c'est le réseau, et le champ n'apprendrait rien. Il reste
+        néanmoins toujours affiché : le masquer demanderait du script, et une
+        boutique qui repasse en libre retrouverait un champ vide alors que la
+        valeur, elle, n'a jamais été effacée.
       #}
-      {% if product.category and product.category not in categories %}
-        <option value="{{ product.category }}" selected>{{ product.category }}</option>
-      {% endif %}
-    </select>
+      <div class="field">
+        <label class="field__label" for="supname-{{ product.id }}">
+          {{ 'admin.products.supplierName'|trans }}
+        </label>
+        <input class="field__input" type="text" id="supname-{{ product.id }}"
+               name="supplierName" maxlength="120" value="{{ product.supplierName }}">
+        <p class="field__hint">{{ 'admin.products.supplierNameHint'|trans }}</p>
+      </div>
+    </div>
+  </section>
 
-    <p class="field__hint">
-      {{ 'admin.products.categoryHint'|trans }}
-      <a href="{{ path('admin_categories') }}">{{ 'admin.products.categoryManage'|trans }}</a>
-    </p>
-  </div>
-
-  <div class="field">
-    <label class="field__label" for="waste-{{ product.id }}">
-      {{ 'admin.products.wasteFactor'|trans }}
-    </label>
-    <input class="field__input" type="number" min="0" step="0.01"
-           id="waste-{{ product.id }}" name="wasteFactor" value="{{ product.wasteFactor }}">
-    <p class="field__hint">{{ 'admin.products.wasteFactorHint'|trans }}</p>
-  </div>
-
-  <div class="field">
-    <label class="field__label" for="step-{{ product.id }}">
-      {{ 'admin.products.roundingStep'|trans }}
-    </label>
-    <input class="field__input" type="number" min="0.001" step="0.001"
-           id="step-{{ product.id }}" name="roundingStep" value="{{ product.roundingStep }}">
-    <p class="field__hint">{{ 'admin.products.roundingStepHint'|trans }}</p>
-  </div>
-
-  <div class="field">
-    <label class="field__label" for="mode-{{ product.id }}">
-      {{ 'admin.products.roundingMode'|trans }}
-    </label>
-    <select class="field__input" id="mode-{{ product.id }}" name="roundingMode">
-      {% for mode in roundingModes %}
-        <option value="{{ mode.value }}" {{ mode == product.roundingMode ? 'selected' : '' }}>
-          {{ ('admin.roundingMode.' ~ mode.value)|trans }}
-        </option>
-      {% endfor %}
-    </select>
-  </div>
-
-  {# Clé de pont vers le module « Recette technique » existant. #}
-  <div class="field">
-    <label class="field__label" for="recipe-{{ product.id }}">
-      {{ 'admin.products.recipeRef'|trans }}
-    </label>
-    <input class="field__input" type="text" id="recipe-{{ product.id }}"
-           name="recipeRef" value="{{ product.recipeRef ?? '' }}">
-    <p class="field__hint">{{ 'admin.products.recipeRefHint'|trans }}</p>
-  </div>
-</div>
-
-{#
-  ── Approvisionnement ───────────────────────────────────────────────────────
-
-  D'où la ligne vient, et sous quelle référence on la recommande. Regroupé à
-  part : ces trois champs ne servent ni au comptage ni au calcul, ils servent
-  à PASSER COMMANDE quand le stock descend.
-
-  La référence fournisseur est distincte de la référence hôte plus haut :
-  l'une sert à commander, l'autre à remonter un comptage. Les confondre aurait
-  marché tant que les deux coïncident, et cassé le jour où une boutique change
-  de fournisseur.
-#}
-<h3 class="card__title">{{ 'admin.products.supplySection'|trans }}</h3>
-
-<fieldset class="field seg">
-  <legend class="field__label">{{ 'admin.products.supplySource'|trans }}</legend>
-
-  <div class="seg__grid">
-    {% for source in supplySources %}
-      <label class="seg__item">
-        <input class="seg__radio" type="radio" name="supplierSource" value="{{ source.value }}"
-               {{ source == product.supplierSource ? 'checked' : '' }}>
-        <span class="seg__box">
-          {{ ui.icon(source.icon) }}
-          <span class="seg__name">{{ ('admin.products.supplySources.' ~ source.value)|trans }}</span>
-        </span>
-      </label>
-    {% endfor %}
-  </div>
-
-  <p class="field__hint">{{ 'admin.products.supplySourceHint'|trans }}</p>
-</fieldset>
-
-<div class="field-grid">
-  <div class="field">
-    <label class="field__label" for="supref-{{ product.id }}">
-      {{ 'admin.products.supplierRef'|trans }}
-    </label>
-    <input class="field__input" type="text" id="supref-{{ product.id }}"
-           name="supplierRef" maxlength="64" value="{{ product.supplierRef }}">
-    <p class="field__hint">{{ 'admin.products.supplierRefHint'|trans }}</p>
-  </div>
-
-  {#
-    Le nom du fournisseur n'a de sens qu'en approvisionnement libre — en
-    centrale, c'est le réseau, et le champ n'apprendrait rien. Il reste
-    néanmoins toujours affiché : le masquer demanderait du script, et une
-    boutique qui repasse en libre retrouverait un champ vide alors que la
-    valeur, elle, n'a jamais été effacée.
-  #}
-  <div class="field">
-    <label class="field__label" for="supname-{{ product.id }}">
-      {{ 'admin.products.supplierName'|trans }}
-    </label>
-    <input class="field__input" type="text" id="supname-{{ product.id }}"
-           name="supplierName" maxlength="120" value="{{ product.supplierName }}">
-    <p class="field__hint">{{ 'admin.products.supplierNameHint'|trans }}</p>
-  </div>
-</div>
-
-{#
-  Mentions de l'étiquette de production. Regroupées à part : elles ne
-  servent ni au comptage ni au calcul, elles ne sortent que sur le
-  papier collé sur la barquette.
-#}
-<h3 class="card__title">{{ 'admin.products.labelSection'|trans }}</h3>
-
-<div class="field">
-  <label class="field__label" for="shelf-{{ product.id }}">
-    {{ 'admin.products.shelfLifeDays'|trans }}
-  </label>
-  <input class="field__input" type="number" min="0" step="1"
-         id="shelf-{{ product.id }}" name="shelfLifeDays"
-         value="{{ product.shelfLifeDays }}">
-  <p class="field__hint">{{ 'admin.products.shelfLifeDaysHint'|trans }}</p>
-</div>
-
-{% for locale in supported_locales() %}
-  <div class="field">
-    <label class="field__label" for="ing-{{ product.id }}-{{ locale.value }}">
-      {{ 'admin.products.ingredients'|trans({ '%locale%': ('locales.' ~ locale.value)|trans }) }}
-    </label>
-    <textarea class="field__input" rows="2" maxlength="600"
-              id="ing-{{ product.id }}-{{ locale.value }}"
-              name="ingredients_{{ locale.value }}">{{ product.ingredients[locale.value] ?? '' }}</textarea>
-  </div>
-{% endfor %}
-
-{% for locale in supported_locales() %}
-  <div class="field">
-    <label class="field__label" for="all-{{ product.id }}-{{ locale.value }}">
-      {{ 'admin.products.allergens'|trans({ '%locale%': ('locales.' ~ locale.value)|trans }) }}
-    </label>
-    <textarea class="field__input" rows="2" maxlength="600"
-              id="all-{{ product.id }}-{{ locale.value }}"
-              name="allergens_{{ locale.value }}">{{ product.allergens[locale.value] ?? '' }}</textarea>
-  </div>
-{% endfor %}
-
-<p class="field__hint">{{ 'admin.products.allergensHint'|trans }}</p>
-
-<div class="form-actions">
-  <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
 </div>

@@ -2055,6 +2055,91 @@ body { overflow-x: hidden; }
 .cats__nature .seg { min-width: 8rem; }
 .cats__nature .seg__name { white-space: normal; }
 
+/* ── Onglets d'une fiche produit ─────────────────────────────────────────── */
+
+/* Bascule sans script : des boutons radio invisibles, et `:checked ~` qui
+   désigne l'onglet et le panneau de même rang. Le clavier parcourt le groupe
+   comme n'importe quelles radios.
+
+   Les panneaux masqués gardent leurs champs DANS le formulaire — `display:
+   none` cache, il ne retire pas — et l'enregistrement depuis n'importe quel
+   onglet emporte donc les cinq. */
+.tabs { display: block; }
+
+.tabs__radio {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* La barre défile plutôt que de se replier sur trois lignes : cinq onglets
+   empilés mangeraient à 320 px la moitié de l'écran qu'ils servent à libérer.
+   `scrollbar-width: none` — la barre reste attrapable au doigt, et sur un
+   écran tactile la glissière n'apporte rien. */
+.tabs__bar {
+  display: flex;
+  gap: var(--space-1);
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-soft);
+}
+.tabs__bar::-webkit-scrollbar { display: none; }
+
+.tabs__tab {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  min-height: var(--touch);
+  padding: 0 var(--space-3);
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-size: .8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+
+.tabs__panel { display: none; }
+
+/* Cinq rangs, écrits un par un : `nth-of-type` ne sait pas compter en
+   parallèle deux familles de frères. Cinq paires de règles valent mieux qu'un
+   script pour une bascule qui doit tenir sans réseau. */
+.tabs__radio:nth-of-type(1):checked ~ .tabs__bar .tabs__tab:nth-child(1),
+.tabs__radio:nth-of-type(2):checked ~ .tabs__bar .tabs__tab:nth-child(2),
+.tabs__radio:nth-of-type(3):checked ~ .tabs__bar .tabs__tab:nth-child(3),
+.tabs__radio:nth-of-type(4):checked ~ .tabs__bar .tabs__tab:nth-child(4),
+.tabs__radio:nth-of-type(5):checked ~ .tabs__bar .tabs__tab:nth-child(5) {
+  color: var(--brand);
+  border-bottom-color: var(--brand);
+}
+
+.tabs__radio:nth-of-type(1):checked ~ .tabs__panel:nth-of-type(1),
+.tabs__radio:nth-of-type(2):checked ~ .tabs__panel:nth-of-type(2),
+.tabs__radio:nth-of-type(3):checked ~ .tabs__panel:nth-of-type(3),
+.tabs__radio:nth-of-type(4):checked ~ .tabs__panel:nth-of-type(4),
+.tabs__radio:nth-of-type(5):checked ~ .tabs__panel:nth-of-type(5) {
+  display: block;
+}
+
+/* Le focus se voit sur l'onglet, le radio lui-même étant invisible. */
+.tabs__radio:focus-visible ~ .tabs__bar .tabs__tab { outline: 1px dotted var(--border); }
+.tabs__radio:nth-of-type(1):focus-visible ~ .tabs__bar .tabs__tab:nth-child(1),
+.tabs__radio:nth-of-type(2):focus-visible ~ .tabs__bar .tabs__tab:nth-child(2),
+.tabs__radio:nth-of-type(3):focus-visible ~ .tabs__bar .tabs__tab:nth-child(3),
+.tabs__radio:nth-of-type(4):focus-visible ~ .tabs__bar .tabs__tab:nth-child(4),
+.tabs__radio:nth-of-type(5):focus-visible ~ .tabs__bar .tabs__tab:nth-child(5) {
+  outline: 2px solid var(--brand);
+  outline-offset: -2px;
+}
+
+@media (hover: hover) {
+  .tabs__tab:hover { color: var(--coffee); }
+}
+
 /* ── Stock minimum : météo et suggestions ────────────────────────────────── */
 
 /* Quatre vignettes plutôt que deux : l'interrupteur segmenté se déplie en une

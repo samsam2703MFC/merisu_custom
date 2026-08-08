@@ -268,6 +268,12 @@ admin:
         noticeNoWorkstation: 'Compte sans poste habituel : la connexion au poste lui sera refusée tant que vous ne lui en aurez pas attribué un.'
     title: Administration
     products:
+        tabs:
+            identity: 'Identité'
+            count: 'Comptage'
+            produce: 'Production'
+            label: 'Étiquette'
+            supply: 'Approvisionnement'
         title: 'Paramètres produits'
         subtitle: 'Renommez, activez et réglez les paramètres de calcul. Le nombre de produits est libre.'
         namePerLocale: 'Libellé (%locale%)'
