@@ -328,6 +328,9 @@ admin:
         errorNameEmpty: 'Serve un nome.'
         errorLevelMismatch: 'Questo livello non appartiene a questo ruolo.'
     pos:
+        tokenRefused: 'La cassa ha rifiutato la richiesta del token. Verifica Client ID, Client secret e Organization ID — e se sono corretti, leggi la riga qui sotto: è la cassa che parla.'
+        accessRefused: 'Token ottenuto, ma l’accesso a questa organizzazione è rifiutato. Le credenziali sono quindi corrette; resta da rivedere l’Organization ID, o il diritto che vi è associato.'
+        hostSaid: 'Risposta della cassa: %detail%'
         credentials: 'Credenziali della cassa'
         clientId: 'Client ID'
         clientSecret: 'Client secret'

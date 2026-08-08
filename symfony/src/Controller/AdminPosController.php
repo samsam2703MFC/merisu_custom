@@ -59,6 +59,9 @@ final class AdminPosController extends AbstractController
             'categories' => [],
             'items' => [],
             'error' => null,
+            // Ce que la caisse a RÉPONDU. Sans lui, « refusé » n'apprend rien :
+            // on ne sait ni à quelle étape, ni pourquoi.
+            'errorDetail' => '',
             // On ne va chercher QUE si on le demande : ouvrir l'onglet ne doit
             // pas déclencher deux cents appels chez la caisse.
             'probed' => $request->query->getBoolean('tester'),
@@ -71,6 +74,7 @@ final class AdminPosController extends AbstractController
                 $vue['items'] = $this->pos->items();
             } catch (PosUnavailable $e) {
                 $vue['error'] = $e->getMessage();
+                $vue['errorDetail'] = $e->detail;
             }
         }
 
@@ -185,7 +189,11 @@ final class AdminPosController extends AbstractController
         try {
             $distantes = $this->pos->categories();
         } catch (PosUnavailable $e) {
-            $this->addFlash('error', $e->getMessage());
+            $this->addFlash('error', ['key' => $e->getMessage(), 'params' => []]);
+
+            if ($e->detail !== '') {
+                $this->addFlash('error', ['key' => 'admin.pos.hostSaid', 'params' => ['%detail%' => $e->detail]]);
+            }
 
             return $this->redirectToRoute('admin_cash');
         }
@@ -236,7 +244,11 @@ final class AdminPosController extends AbstractController
         try {
             $articles = $this->pos->items();
         } catch (PosUnavailable $e) {
-            $this->addFlash('error', $e->getMessage());
+            $this->addFlash('error', ['key' => $e->getMessage(), 'params' => []]);
+
+            if ($e->detail !== '') {
+                $this->addFlash('error', ['key' => 'admin.pos.hostSaid', 'params' => ['%detail%' => $e->detail]]);
+            }
 
             return $this->redirectToRoute('admin_cash');
         }

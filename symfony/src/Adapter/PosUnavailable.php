@@ -5,16 +5,29 @@ declare(strict_types=1);
 namespace Merisu\Inventory\Adapter;
 
 /**
- * La caisse n'a pas répondu, ou n'est pas configurée.
+ * La caisse n'a pas répondu, ou a refusé.
  *
- * Un seul type pour les quatre causes — identifiants absents, jeton refusé,
- * caisse injoignable, réponse illisible — parce que la conduite à tenir est la
- * même : ne RIEN importer, et le dire. Un import à moitié fait est pire qu'un
- * import qui n'a pas eu lieu : personne ne sait plus ce qui est à jour.
+ * ── Le message ne suffit pas, le DÉTAIL compte
  *
- * Le message porte une clé de traduction (`admin.pos.*`) : il est montré à
- * l'écran, dans la langue de l'écran.
+ * « La caisse a refusé les identifiants » est vrai et inutilisable : on ne sait
+ * ni à quelle étape — la demande de jeton ou l'appel de données — ni ce que la
+ * caisse a répondu. Or `/oauth/token` n'est PAS décrit dans la spécification
+ * GoPOS : elle en parle en prose, et « params » y désigne aussi bien un corps
+ * de formulaire qu'une chaîne de requête. Sans le mot de la caisse, on ne peut
+ * pas distinguer un identifiant erroné d'une requête mal formée.
+ *
+ * `detail` porte donc ce que la caisse a dit — son code HTTP, son `error` et
+ * son `error_description`. Jamais le secret : il n'apparaît nulle part dans ce
+ * qui remonte à l'écran.
  */
 final class PosUnavailable extends \RuntimeException
 {
+    public function __construct(
+        string $messageKey,
+        /** Ce que la caisse a répondu, en clair. Vide si elle n'a rien dit. */
+        public readonly string $detail = '',
+        ?\Throwable $previous = null,
+    ) {
+        parent::__construct($messageKey, 0, $previous);
+    }
 }

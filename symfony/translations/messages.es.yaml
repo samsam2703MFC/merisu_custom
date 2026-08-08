@@ -328,6 +328,9 @@ admin:
         errorNameEmpty: 'Hace falta un nombre.'
         errorLevelMismatch: 'Este nivel no pertenece a este puesto.'
     pos:
+        tokenRefused: 'La caja ha rechazado la petición del token. Comprueba el Client ID, el Client secret y el Organization ID — y si son correctos, lee la línea de abajo: es la caja quien habla.'
+        accessRefused: 'Token obtenido, pero se deniega el acceso a esta organización. Las credenciales son, pues, correctas; queda por revisar el Organization ID, o el permiso asociado.'
+        hostSaid: 'Respuesta de la caja: %detail%'
         credentials: 'Credenciales de la caja'
         clientId: 'Client ID'
         clientSecret: 'Client secret'

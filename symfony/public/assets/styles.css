@@ -3721,3 +3721,15 @@ select:disabled, select.field__input:disabled { background-image: url("data:imag
 /* Le nom d'organisation est un texte, pas un nombre : la taille des tuiles
    chiffrées l'aurait fait déborder dès qu'il dépasse dix caractères. */
 .stat__value--sm { font-size: 1.1rem; overflow-wrap: anywhere; }
+
+/* Le mot de la caisse, sous le message d'erreur. En retrait et en chasse fixe :
+   c'est une réponse machine, pas une phrase de l'application, et la présenter
+   comme telle évite de la lire comme un jugement de l'écran. */
+.pos__said {
+  display: block;
+  margin-top: var(--space-1);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .8rem;
+  overflow-wrap: anywhere;
+  opacity: .85;
+}

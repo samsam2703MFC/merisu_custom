@@ -193,23 +193,38 @@ final class GoPosService implements PosServiceInterface
             ]);
 
             $statut = $reponse->getStatusCode();
-
-            if ($statut === 401 || $statut === 403) {
-                throw new PosUnavailable('admin.pos.badCredentials');
-            }
+            $corps = $reponse->getContent(false);
 
             if ($statut >= 400) {
-                throw new PosUnavailable('admin.pos.hostRefused');
+                // Le jeton a été accepté puisqu'on en a obtenu un : un refus
+                // ici parle de l'ORGANISATION ou du droit d'accès, pas des
+                // identifiants. Les confondre envoyait l'administrateur
+                // revérifier un secret qui était bon.
+                throw new PosUnavailable(
+                    $statut === 401 || $statut === 403 ? 'admin.pos.accessRefused' : 'admin.pos.hostRefused',
+                    self::detail($statut, $corps),
+                );
             }
 
-            return $this->decode($reponse->getContent(false));
+            return $this->decode($corps);
         } catch (TransportException | HttpExceptionInterface $e) {
-            throw new PosUnavailable('admin.pos.unreachable', previous: $e);
+            throw new PosUnavailable('admin.pos.unreachable', $e->getMessage(), $e);
         }
     }
 
     /**
      * Le jeton, demandé une fois par requête.
+     *
+     * ── Deux formes d'envoi, parce que la spécification n'en fixe aucune
+     *
+     * `/oauth/token` n'est PAS décrit dans le swagger GoPOS : la seule
+     * consigne est une phrase de prose — « Request should include params as
+     * grant_type, client_id, client_secret, organization_id » — et « params »
+     * désigne aussi bien un corps de formulaire qu'une chaîne de requête.
+     *
+     * On tente donc le corps de formulaire, qui est la forme normale d'OAuth,
+     * puis la chaîne de requête si la caisse a refusé. Deviner une fois coûte
+     * un aller-retour ; se tromper définitivement aurait coûté une intégration.
      *
      * @throws PosUnavailable
      */
@@ -219,38 +234,84 @@ final class GoPosService implements PosServiceInterface
             return $this->token;
         }
 
-        try {
-            $identifiants = $this->credentials();
+        $identifiants = $this->credentials();
+        $url = rtrim($identifiants->baseUrl, '/') . '/oauth/token';
 
-            $reponse = $this->client()->request('POST', rtrim($identifiants->baseUrl, '/') . '/oauth/token', [
-                'headers' => ['Accept' => 'application/json'],
-                // Le contrat GoPOS : « grant_type = organization », et les
-                // trois valeurs de l'administrateur. Rien d'autre.
-                'body' => [
-                    'grant_type' => 'organization',
-                    'client_id' => $identifiants->clientId,
-                    'client_secret' => $identifiants->clientSecret,
-                    'organization_id' => $identifiants->organizationId,
-                ],
-                'timeout' => self::TIMEOUT,
-            ]);
+        $params = [
+            'grant_type' => 'organization',
+            'client_id' => $identifiants->clientId,
+            'client_secret' => $identifiants->clientSecret,
+            'organization_id' => $identifiants->organizationId,
+        ];
 
-            if ($reponse->getStatusCode() >= 400) {
-                throw new PosUnavailable('admin.pos.badCredentials');
+        $dernierDetail = '';
+
+        foreach ([['body' => $params], ['query' => $params]] as $forme) {
+            try {
+                $reponse = $this->client()->request('POST', $url, $forme + [
+                    'headers' => ['Accept' => 'application/json'],
+                    'timeout' => self::TIMEOUT,
+                ]);
+
+                $statut = $reponse->getStatusCode();
+                $corpsBrut = $reponse->getContent(false);
+            } catch (TransportException | HttpExceptionInterface $e) {
+                throw new PosUnavailable('admin.pos.unreachable', $e->getMessage(), $e);
             }
 
-            $corps = $this->decode($reponse->getContent(false));
-        } catch (TransportException | HttpExceptionInterface $e) {
-            throw new PosUnavailable('admin.pos.unreachable', previous: $e);
+            if ($statut >= 400) {
+                // On retient ce que la caisse a dit, et on essaie l'autre
+                // forme. Si les deux échouent, c'est ce message-là qui
+                // remontera à l'écran — le seul indice exploitable.
+                $dernierDetail = self::detail($statut, $corpsBrut);
+
+                continue;
+            }
+
+            $corps = $this->decode($corpsBrut);
+            $jeton = $corps['access_token'] ?? null;
+
+            if (is_string($jeton) && $jeton !== '') {
+                return $this->token = $jeton;
+            }
+
+            $dernierDetail = self::detail($statut, $corpsBrut);
         }
 
-        $jeton = $corps['access_token'] ?? null;
+        throw new PosUnavailable('admin.pos.tokenRefused', $dernierDetail);
+    }
 
-        if (!is_string($jeton) || $jeton === '') {
-            throw new PosUnavailable('admin.pos.badAnswer');
+    /**
+     * Ce que la caisse a répondu, résumé pour l'écran.
+     *
+     * Le corps est TRONQUÉ : une page d'erreur HTML de plusieurs kilo-octets
+     * n'apprend rien de plus que ses premières lignes, et remplirait l'écran.
+     * Le secret n'y figure jamais — il ne part que dans la requête.
+     */
+    private static function detail(int $status, string $body): string
+    {
+        $resume = 'HTTP ' . $status;
+
+        /** @var mixed $corps */
+        $corps = json_decode($body, true);
+
+        if (is_array($corps)) {
+            $morceaux = [];
+
+            foreach (['error', 'error_description', 'message', 'description'] as $champ) {
+                if (is_string($corps[$champ] ?? null) && trim($corps[$champ]) !== '') {
+                    $morceaux[] = trim($corps[$champ]);
+                }
+            }
+
+            if ($morceaux !== []) {
+                return $resume . ' — ' . mb_substr(implode(' · ', array_unique($morceaux)), 0, 300);
+            }
         }
 
-        return $this->token = $jeton;
+        $texte = trim(preg_replace('/\s+/', ' ', strip_tags($body)) ?? '');
+
+        return $texte === '' ? $resume : $resume . ' — ' . mb_substr($texte, 0, 300);
     }
 
     /** @return array<string, mixed> */
@@ -260,10 +321,10 @@ final class GoPosService implements PosServiceInterface
             /** @var mixed $brut */
             $brut = json_decode($json, true, 32, \JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
-            throw new PosUnavailable('admin.pos.badAnswer', previous: $e);
+            throw new PosUnavailable('admin.pos.badAnswer', mb_substr(trim($json), 0, 300), $e);
         }
 
-        return is_array($brut) ? $brut : throw new PosUnavailable('admin.pos.badAnswer');
+        return is_array($brut) ? $brut : throw new PosUnavailable('admin.pos.badAnswer', mb_substr(trim($json), 0, 300));
     }
 
     private function client(): HttpClientInterface

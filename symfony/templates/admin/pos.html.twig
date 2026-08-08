@@ -128,8 +128,21 @@
     {% endif %}
   </details>
 
+  {#
+    L'erreur, ET ce que la caisse a répondu.
+
+    « La caisse a refusé les identifiants » est vrai et inutilisable : on ne
+    sait ni à quelle étape ni pourquoi. `/oauth/token` n'étant pas décrit dans
+    la spécification GoPOS, le mot de la caisse est souvent le seul indice
+    exploitable — d'où son affichage brut, tronqué mais non reformulé.
+  #}
   {% if error %}
-    {{ ui.banner('danger', error|trans) }}
+    <div class="banner banner--danger">
+      {{ error|trans }}
+      {% if errorDetail %}
+        <span class="pos__said">{{ 'admin.pos.hostSaid'|trans({ '%detail%': errorDetail }) }}</span>
+      {% endif %}
+    </div>
   {% endif %}
 
   {% if probed and not error %}

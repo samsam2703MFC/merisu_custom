@@ -331,6 +331,9 @@ admin:
         errorNameEmpty: 'Il faut un nom.'
         errorLevelMismatch: 'Ce niveau n''appartient pas à ce poste.'
     pos:
+        tokenRefused: 'La caisse a refusé la demande de jeton. Vérifiez le Client ID, le Client secret et l’Organization ID — puis, s’ils sont bons, la ligne ci-dessous : c’est la caisse qui parle.'
+        accessRefused: 'Jeton obtenu, mais l’accès à cette organisation est refusé. Les identifiants sont donc bons ; c’est l’Organization ID, ou le droit qui lui est attaché, qu’il faut revoir.'
+        hostSaid: 'Réponse de la caisse : %detail%'
         credentials: 'Identifiants de la caisse'
         clientId: 'Client ID'
         clientSecret: 'Client secret'

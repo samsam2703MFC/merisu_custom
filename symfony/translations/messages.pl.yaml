@@ -328,6 +328,9 @@ admin:
         errorNameEmpty: 'Potrzebna jest nazwa.'
         errorLevelMismatch: 'Ten poziom nie należy do tego stanowiska.'
     pos:
+        tokenRefused: 'Kasa odrzuciła żądanie tokenu. Sprawdź Client ID, Client secret i Organization ID — a jeśli są poprawne, przeczytaj poniższą linię: to mówi kasa.'
+        accessRefused: 'Token uzyskany, ale dostęp do tej organizacji jest odmówiony. Dane dostępowe są więc poprawne; do sprawdzenia pozostaje Organization ID lub przypisane mu uprawnienia.'
+        hostSaid: 'Odpowiedź kasy: %detail%'
         credentials: 'Dane dostępowe kasy'
         clientId: 'Client ID'
         clientSecret: 'Client secret'
