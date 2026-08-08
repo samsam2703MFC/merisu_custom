@@ -153,6 +153,23 @@ Les emplacements portent des codes stables `PRODUIT_1` … `PRODUIT_8`, qui ne
 changent pas quand l'admin renomme un produit et ne sont jamais affichés aux
 utilisateurs.
 
+### Les quatre langues, sans les retaper quatre fois
+
+L'administration ne montre qu'**une** langue : celle de l'écran. Les trois
+autres restent en base, et l'on passe de l'une à l'autre par le sélecteur de
+langue — c'est aussi la seule façon de traduire en VOYANT l'écran qu'on
+traduit.
+
+Un bouton _Traduire_ complète les langues vides à partir de celle affichée
+(_Admin ▸ Produits_, _Note du jour_, _Check-list_). Il **ne remplace jamais**
+une traduction déjà écrite : celle qu'un vendeur polonais a rédigée en
+connaissant le produit vaut mieux que celle d'une machine. Pour la refaire, on
+vide le champ dans la langue concernée — le geste est explicite.
+
+Il demande une clé d'API (`ANTHROPIC_API_KEY`, voir `DEPLOIEMENT.md` §7).
+Sans elle, la fonction reste éteinte et les écrans ne proposent pas le bouton :
+rien ne casse, et aucun libellé ne sort de la boutique.
+
 ### Questions restées ouvertes (§10 du cahier des charges)
 
 | Question                      | Réponse actuelle du code                                                                                                                                              |

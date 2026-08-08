@@ -457,6 +457,18 @@
       <path d="M7 8h10v10.5a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2Z"/>
       <path d="M5.5 4.5h13v3.5h-13z"/>
       <path d="M9.5 12h5"/>
+    {% elseif name == 'languages' %}
+      {#
+        Traduire : un globe, et ses méridiens.
+
+        Le globe plutôt que deux lettres d'alphabet — « A / 文 » aurait désigné
+        deux langues précises, dont aucune n'est parmi les quatre du module.
+        Les méridiens suffisent à le distinguer du simple cercle : c'est la
+        courbure verticale qui dit « globe » et non « bouton rond ».
+      #}
+      <circle cx="12" cy="12" r="8.5"/>
+      <path d="M3.5 12h17"/>
+      <path d="M12 3.5c2.2 2.4 3.3 5.3 3.3 8.5s-1.1 6.1-3.3 8.5c-2.2-2.4-3.3-5.3-3.3-8.5S9.8 5.9 12 3.5Z"/>
     {% endif %}
   </svg>
 {% endmacro %}

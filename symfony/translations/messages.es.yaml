@@ -171,6 +171,21 @@ produce:
     allergens: 'Alérgenos'
 
 admin:
+    translate:
+        button: 'Traducir'
+        hint: 'Completa los idiomas VACÍOS a partir del que se muestra. Una traducción ya escrita nunca se sustituye: para rehacerla, vacía el campo en el idioma correspondiente.'
+        done: 'Rótulos escritos en %written%.'
+        partial: 'Rótulos escritos en %written%. Siguen faltando: %missing%.'
+        nothing: 'Nada que traducir: a partir del idioma mostrado no hay nada que completar.'
+        notConfigured: 'Traducción asistida no disponible: no hay ninguna clave de API configurada.'
+        badKey: 'Clave de API rechazada: no se ha traducido nada.'
+        hostRefused: 'El servicio de traducción ha rechazado la petición: no se ha traducido nada.'
+        unreachable: 'Servicio de traducción inaccesible: no se ha traducido nada.'
+        badAnswer: 'Respuesta ilegible del servicio de traducción: no se ha escrito nada.'
+        state: 'Traducción asistida'
+        enabled: 'Activa'
+        disabled: 'Inactiva'
+        stateHint: 'La clave se coloca en ANTHROPIC_API_KEY, en el servidor (.env.local) o como secreto de GitHub con el mismo nombre. No se introduce aquí: una pantalla de administración no debe poder volver a leerla.'
     sync:
         title: 'Envíos'
         subtitle: 'Cola de envío de los recuentos hacia TF Buddy.'

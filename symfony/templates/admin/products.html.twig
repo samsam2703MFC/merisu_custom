@@ -131,7 +131,31 @@
 
         <div class="form-actions">
           <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
+
+          {#
+            Traduire : le MÊME formulaire, envoyé ailleurs.
+
+            `formaction` seul suffit — pas de second formulaire, donc pas de
+            champs à recopier, et rien à tenir synchronisé. Le serveur
+            enregistre d'abord, traduit ensuite : traduire le nom qui est en
+            base pendant qu'un autre s'affiche à l'écran aurait produit une
+            fiche dont les quatre langues ne disent pas la même chose.
+
+            Absent quand aucune clé n'est en place : Admin ▸ Paramètres dit
+            alors pourquoi, et où la poser.
+          #}
+          {% if translation_available() %}
+            <button type="submit" class="button button--ghost"
+                    formaction="{{ path('admin_product_translate', { id: product.id }) }}">
+              {{ ui.icon('languages') }}
+              <span>{{ 'admin.translate.button'|trans }}</span>
+            </button>
+          {% endif %}
         </div>
+
+        {% if translation_available() %}
+          <p class="field__hint">{{ 'admin.translate.hint'|trans }}</p>
+        {% endif %}
 
       </form>
     </details>

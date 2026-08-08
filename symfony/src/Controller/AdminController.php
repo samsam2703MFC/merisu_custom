@@ -7,6 +7,7 @@ namespace Merisu\Inventory\Controller;
 use Merisu\Inventory\Adapter\ConsultantServiceInterface;
 use Merisu\Inventory\Adapter\RecipeServiceInterface;
 use Merisu\Inventory\Adapter\ShopRankingServiceInterface;
+use Merisu\Inventory\Adapter\TranslationUnavailable;
 use Merisu\Inventory\Domain\BusinessDate;
 use Merisu\Inventory\Domain\ChecklistItem;
 use Merisu\Inventory\Domain\ChecklistSection;
@@ -31,11 +32,13 @@ use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Service\InventoryService;
 use Merisu\Inventory\Service\MinimumStockService;
 use Merisu\Inventory\Service\ReportService;
+use Merisu\Inventory\Service\TranslationService;
 use Merisu\Inventory\Store\Store;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Contracts\Translation\TranslatorInterface as SymfonyTranslator;
 
 /** §7.5 à §7.9 — Écrans d'administration. Réservés au rôle ADMIN. */
 #[Route('/admin')]
@@ -50,6 +53,12 @@ final class AdminController extends AbstractController
         private readonly ConsultantServiceInterface $consultants,
         private readonly ShopRankingServiceInterface $ranking,
         private readonly MinimumStockService $minimums,
+        private readonly TranslationService $translations,
+        // Le traducteur de l'INTERFACE, pas celui des libellés : il ne sert
+        // qu'à nommer les langues dans les messages de compte rendu
+        // (« écrit en polonais, italien »), qui n'ont pas leur place dans un
+        // gabarit puisqu'ils dépendent de ce qui vient d'être écrit.
+        private readonly SymfonyTranslator $i18n,
     ) {
     }
 
@@ -213,6 +222,112 @@ final class AdminController extends AbstractController
         $this->addFlash('success', 'common.saved');
 
         return $this->redirectToRoute('admin_products');
+    }
+
+    /**
+     * Enregistre la fiche, PUIS complète ses libellés dans les autres langues.
+     *
+     * Le même formulaire que « Enregistrer » — un simple `formaction` sur le
+     * second bouton —, et l'enregistrement d'abord : traduire le nom qui est
+     * en base pendant qu'un autre s'affiche à l'écran aurait produit une fiche
+     * dont les quatre langues ne disent pas la même chose.
+     *
+     * L'appel échoue-t-il ? La fiche est enregistrée quand même. C'est le
+     * geste que l'administrateur a demandé en premier, et le perdre pour une
+     * coupure réseau serait la pire des deux issues.
+     */
+    #[Route('/produits/{id}/traduire', name: 'admin_product_translate', methods: ['POST'])]
+    public function translateProduct(Request $request, string $id): Response
+    {
+        $admin = $this->currentUser->requireAdmin();
+
+        $product = $this->store->product($id);
+        if ($product === null) {
+            throw $this->createNotFoundException('PRODUCT_NOT_FOUND');
+        }
+
+        $product = $this->fromForm($request, $product);
+        $this->store->saveProduct($product);
+
+        $retour = $this->redirectToRoute('admin_products', ['ouvrir' => $id]);
+
+        try {
+            $resultat = $this->translations->complete(
+                [
+                    'name' => $product->name,
+                    'ingredients' => $product->ingredients,
+                    'allergens' => $product->allergens,
+                ],
+                $this->shownLocales($request)[0],
+                'nom, liste d’ingrédients et mentions d’allergènes d’un produit vendu en pâtisserie',
+            );
+        } catch (TranslationUnavailable $e) {
+            $this->addFlash('error', $e->getMessage());
+
+            return $retour;
+        }
+
+        if ($resultat['source'] === null) {
+            $this->addFlash('success', 'admin.translate.nothing');
+
+            return $retour;
+        }
+
+        $this->store->saveProduct($product->with(
+            name: $resultat['fields']['name'],
+            ingredients: $resultat['fields']['ingredients'],
+            allergens: $resultat['fields']['allergens'],
+        ));
+
+        $this->store->audit($admin->id, $admin->role->value, 'PRODUCT_TRANSLATED', null, null, [
+            'productId' => $id,
+            'from' => $resultat['source']->value,
+            'written' => array_map(static fn (Locale $l): string => $l->value, $resultat['written']),
+        ]);
+
+        $this->reportTranslation($resultat);
+
+        return $retour;
+    }
+
+    /**
+     * Dit ce que la traduction a écrit, et ce qu'elle n'a pas écrit.
+     *
+     * Indispensable ici, et pas ailleurs : l'administration ne montre qu'une
+     * langue. Sans ce compte rendu, l'écran serait exactement le même après un
+     * succès complet, un succès partiel et un remplissage qui n'a rien trouvé
+     * à faire.
+     *
+     * @param array{written: list<Locale>, missing: list<Locale>, source: ?Locale, ...} $result
+     */
+    private function reportTranslation(array $result): void
+    {
+        if ($result['written'] === []) {
+            $this->addFlash('success', 'admin.translate.nothing');
+
+            return;
+        }
+
+        $this->addFlash('success', [
+            'key' => $result['missing'] === [] ? 'admin.translate.done' : 'admin.translate.partial',
+            'params' => [
+                '%written%' => $this->localeNames($result['written']),
+                '%missing%' => $this->localeNames($result['missing']),
+            ],
+        ]);
+    }
+
+    /**
+     * « polonais, italien » — les langues nommées dans la langue de l'écran.
+     *
+     * @param list<Locale> $locales
+     */
+    private function localeNames(array $locales): string
+    {
+        return implode(', ', array_map(
+            fn (Locale $l): string => $this->i18n->trans('locales.' . $l->value),
+            $locales,
+        ));
     }
 
     /**
@@ -417,12 +532,99 @@ final class AdminController extends AbstractController
     {
         $admin = $this->currentUser->requireAdmin();
 
+        $compte = $this->saveDayNoteRows($request, $this->shownLocales($request));
+
+        $this->store->audit($admin->id, $admin->role->value, 'DAY_NOTE_UPDATE', null, null, [
+            'saved' => $compte['saved'],
+            'deleted' => $compte['deleted'],
+        ]);
+
+        $this->addFlash('success', 'common.saved');
+
+        return $this->redirectToRoute('admin_day_note');
+    }
+
+    /**
+     * Enregistre les consignes, PUIS complète leurs textes dans les autres langues.
+     *
+     * Un seul appel pour tout l'écran, comme l'enregistrement : les consignes
+     * d'une journée se lisent ensemble, et les traduire ensemble donne au
+     * modèle le contexte que « Sourire à l'entrée » n'a pas tout seul.
+     */
+    #[Route('/note-du-jour/traduire', name: 'admin_day_note_translate', methods: ['POST'])]
+    public function translateDayNote(Request $request): Response
+    {
+        $admin = $this->currentUser->requireAdmin();
+
+        $compte = $this->saveDayNoteRows($request, $this->shownLocales($request));
+        $retour = $this->redirectToRoute('admin_day_note');
+
+        // Les champs à traduire, aplatis : « <id>.heading », « <id>.body ».
+        // Un seul plan, donc une seule langue source pour tout l'écran — ce
+        // qui est bien ce qu'on veut : une consigne rédigée en français et la
+        // suivante en polonais serait un accident, pas une intention.
+        $champs = [];
+        foreach ($this->store->dayNotes() as $note) {
+            $champs[$note->id . '.heading'] = $note->heading;
+            $champs[$note->id . '.body'] = $note->body;
+        }
+
+        try {
+            $resultat = $this->translations->complete(
+                $champs,
+                $this->shownLocales($request)[0],
+                'consignes du jour affichées au poste de travail, à l’attention des vendeurs',
+            );
+        } catch (TranslationUnavailable $e) {
+            $this->addFlash('error', $e->getMessage());
+
+            return $retour;
+        }
+
+        if ($resultat['source'] === null) {
+            $this->addFlash('success', 'admin.translate.nothing');
+
+            return $retour;
+        }
+
+        foreach ($this->store->dayNotes() as $note) {
+            $this->store->saveDayNote(new DayNote(
+                $note->id,
+                $resultat['fields'][$note->id . '.heading'],
+                $resultat['fields'][$note->id . '.body'],
+                $note->sortOrder,
+                $note->active,
+            ));
+        }
+
+        $this->store->audit($admin->id, $admin->role->value, 'DAY_NOTE_TRANSLATED', null, null, [
+            'saved' => $compte['saved'],
+            'from' => $resultat['source']->value,
+            'written' => array_map(static fn (Locale $l): string => $l->value, $resultat['written']),
+        ]);
+
+        $this->reportTranslation($resultat);
+
+        return $retour;
+    }
+
+    /**
+     * La boucle d'enregistrement des consignes, partagée par les deux actions.
+     *
+     * Extraite parce que « traduire » commence par enregistrer : deux copies
+     * de cette boucle auraient divergé au premier champ ajouté, et l'écran
+     * aurait perdu ce champ selon le bouton employé.
+     *
+     * @param list<Locale> $shown
+     *
+     * @return array{saved: int, deleted: int}
+     */
+    private function saveDayNoteRows(Request $request, array $shown): array
+    {
         /** @var array<string,array<string,mixed>> $lignes */
         $lignes = $request->request->all('note');
         $enregistres = 0;
         $supprimes = 0;
-
-        $shown = $this->shownLocales($request);
 
         foreach ($lignes as $id => $champs) {
             $id = trim((string) $id);
@@ -478,14 +680,7 @@ final class AdminController extends AbstractController
             ++$enregistres;
         }
 
-        $this->store->audit($admin->id, $admin->role->value, 'DAY_NOTE_UPDATE', null, null, [
-            'saved' => $enregistres,
-            'deleted' => $supprimes,
-        ]);
-
-        $this->addFlash('success', 'common.saved');
-
-        return $this->redirectToRoute('admin_day_note');
+        return ['saved' => $enregistres, 'deleted' => $supprimes];
     }
 
     // ── Check-list ──────────────────────────────────────────────────────────
@@ -530,12 +725,92 @@ final class AdminController extends AbstractController
     {
         $admin = $this->currentUser->requireAdmin();
 
+        $compte = $this->saveChecklistRows($request, $this->shownLocales($request));
+
+        $this->store->audit($admin->id, $admin->role->value, 'CHECKLIST_ITEMS_UPDATE', null, null, [
+            'saved' => $compte['saved'],
+            'deleted' => $compte['deleted'],
+        ]);
+
+        $this->addFlash('success', 'common.saved');
+
+        return $this->redirectToRoute('admin_checklist');
+    }
+
+    /**
+     * Enregistre la check-list, PUIS complète ses libellés dans les autres langues.
+     *
+     * Tous les points d'un coup : c'est le seul écran où la traduction en
+     * masse change vraiment quelque chose — une check-list d'ouverture compte
+     * une quinzaine de points, soit quarante-cinq libellés à retaper.
+     */
+    #[Route('/check-list/traduire', name: 'admin_checklist_translate', methods: ['POST'])]
+    public function translateChecklist(Request $request): Response
+    {
+        $admin = $this->currentUser->requireAdmin();
+
+        $compte = $this->saveChecklistRows($request, $this->shownLocales($request));
+        $retour = $this->redirectToRoute('admin_checklist');
+
+        $champs = [];
+        foreach ($this->store->checklistItems() as $item) {
+            $champs[$item->id] = $item->label;
+        }
+
+        try {
+            $resultat = $this->translations->complete(
+                $champs,
+                $this->shownLocales($request)[0],
+                'points d’une check-list d’ouverture et de fermeture de boutique, formulés à l’impératif',
+            );
+        } catch (TranslationUnavailable $e) {
+            $this->addFlash('error', $e->getMessage());
+
+            return $retour;
+        }
+
+        if ($resultat['source'] === null) {
+            $this->addFlash('success', 'admin.translate.nothing');
+
+            return $retour;
+        }
+
+        foreach ($this->store->checklistItems() as $item) {
+            $this->store->saveChecklistItem(new ChecklistItem(
+                $item->id,
+                $item->section,
+                $resultat['fields'][$item->id],
+                $item->sortOrder,
+                $item->active,
+                $item->required,
+                $item->requiresPhoto,
+            ));
+        }
+
+        $this->store->audit($admin->id, $admin->role->value, 'CHECKLIST_TRANSLATED', null, null, [
+            'saved' => $compte['saved'],
+            'from' => $resultat['source']->value,
+            'written' => array_map(static fn (Locale $l): string => $l->value, $resultat['written']),
+        ]);
+
+        $this->reportTranslation($resultat);
+
+        return $retour;
+    }
+
+    /**
+     * La boucle d'enregistrement de la check-list, partagée par les deux actions.
+     *
+     * @param list<Locale> $shown
+     *
+     * @return array{saved: int, deleted: int}
+     */
+    private function saveChecklistRows(Request $request, array $shown): array
+    {
         /** @var array<string,array<string,mixed>> $lignes */
         $lignes = $request->request->all('item');
         $enregistres = 0;
         $supprimes = 0;
-
-        $shown = $this->shownLocales($request);
 
         foreach ($lignes as $id => $champs) {
             $id = trim((string) $id);
@@ -588,14 +863,7 @@ final class AdminController extends AbstractController
             ++$enregistres;
         }
 
-        $this->store->audit($admin->id, $admin->role->value, 'CHECKLIST_ITEMS_UPDATE', null, null, [
-            'saved' => $enregistres,
-            'deleted' => $supprimes,
-        ]);
-
-        $this->addFlash('success', 'common.saved');
-
-        return $this->redirectToRoute('admin_checklist');
+        return ['saved' => $enregistres, 'deleted' => $supprimes];
     }
 
     // ── §7.5 Matrice des seuils ─────────────────────────────────────────────

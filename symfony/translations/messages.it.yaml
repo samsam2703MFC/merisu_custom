@@ -171,6 +171,21 @@ produce:
     allergens: 'Allergeni'
 
 admin:
+    translate:
+        button: 'Traduci'
+        hint: 'Completa le lingue VUOTE a partire da quella visualizzata. Una traduzione già scritta non viene mai sostituita: per rifarla, svuota il campo nella lingua interessata.'
+        done: 'Diciture scritte in %written%.'
+        partial: 'Diciture scritte in %written%. Ancora mancanti: %missing%.'
+        nothing: 'Niente da tradurre: a partire dalla lingua visualizzata non c''è nulla da completare.'
+        notConfigured: 'Traduzione assistita non disponibile: nessuna chiave API configurata.'
+        badKey: 'Chiave API rifiutata: non è stato tradotto nulla.'
+        hostRefused: 'Il servizio di traduzione ha rifiutato la richiesta: non è stato tradotto nulla.'
+        unreachable: 'Servizio di traduzione irraggiungibile: non è stato tradotto nulla.'
+        badAnswer: 'Risposta illeggibile dal servizio di traduzione: non è stato scritto nulla.'
+        state: 'Traduzione assistita'
+        enabled: 'Attiva'
+        disabled: 'Inattiva'
+        stateHint: 'La chiave si imposta in ANTHROPIC_API_KEY, lato server (.env.local) o come segreto GitHub con lo stesso nome. Non si inserisce qui: una schermata di amministrazione non deve poterla rileggere.'
     sync:
         title: 'Invii'
         subtitle: 'Coda di invio delle rilevazioni verso TF Buddy.'

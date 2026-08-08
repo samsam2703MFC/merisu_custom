@@ -50,7 +50,22 @@
 
     <div class="form-actions">
       <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
+
+      {# Le même formulaire, envoyé ailleurs : le serveur enregistre d'abord,
+         traduit ensuite. Toutes les consignes d'un coup — elles se lisent
+         ensemble au poste, et se traduisent mieux ensemble. #}
+      {% if translation_available() %}
+        <button type="submit" class="button button--ghost"
+                formaction="{{ path('admin_day_note_translate') }}">
+          {{ ui.icon('languages') }}
+          <span>{{ 'admin.translate.button'|trans }}</span>
+        </button>
+      {% endif %}
     </div>
+
+    {% if translation_available() %}
+      <p class="field__hint">{{ 'admin.translate.hint'|trans }}</p>
+    {% endif %}
   </form>
 
 {% endblock %}

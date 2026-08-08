@@ -81,4 +81,30 @@
     </form>
   </section>
 
+  {#
+    État de la traduction assistée — en LECTURE seule.
+
+    La clé ne se saisit pas ici, et c'est délibéré : un champ de saisie
+    suppose un champ d'affichage, et l'écran d'administration deviendrait
+    l'endroit d'où l'on relit une clé d'API. Elle vit côté serveur, où seul
+    l'accès au serveur la livre.
+
+    Mais l'état, lui, se dit : sans cette ligne, un administrateur qui ne
+    trouve pas le bouton « Traduire » n'a aucun moyen de savoir s'il manque
+    une clé ou s'il regarde au mauvais endroit.
+  #}
+  <section class="card">
+    <div class="field">
+      <span class="field__label">{{ 'admin.translate.state'|trans }}</span>
+
+      {% if translation_available() %}
+        {{ ui.badge('ok', 'admin.translate.enabled'|trans) }}
+      {% else %}
+        {{ ui.badge('warn', 'admin.translate.disabled'|trans) }}
+      {% endif %}
+
+      <p class="field__hint">{{ 'admin.translate.stateHint'|trans }}</p>
+    </div>
+  </section>
+
 {% endblock %}

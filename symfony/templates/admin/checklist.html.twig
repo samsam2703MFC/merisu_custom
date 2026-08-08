@@ -39,7 +39,23 @@
 
     <div class="form-actions">
       <button type="submit" class="button button--primary button--large">{{ 'common.save'|trans }}</button>
+
+      {# Le même formulaire, envoyé ailleurs : le serveur enregistre d'abord,
+         traduit ensuite. Tous les points d'un coup — c'est l'écran où cela
+         change le plus, une check-list d'ouverture faisant une quinzaine de
+         points, soit quarante-cinq libellés à retaper à la main. #}
+      {% if translation_available() %}
+        <button type="submit" class="button button--ghost button--large"
+                formaction="{{ path('admin_checklist_translate') }}">
+          {{ ui.icon('languages') }}
+          <span>{{ 'admin.translate.button'|trans }}</span>
+        </button>
+      {% endif %}
     </div>
+
+    {% if translation_available() %}
+      <p class="field__hint">{{ 'admin.translate.hint'|trans }}</p>
+    {% endif %}
   </form>
 
 {% endblock %}

@@ -80,6 +80,30 @@ services:
     Merisu\Inventory\Adapter\InventorySyncInterface:
         alias: Merisu\Inventory\Adapter\NullInventorySync
 
+    # ── Traduction assistée des LIBELLÉS ────────────────────────────────────
+    # Pas de l'interface : les chaînes d'écran vivent dans translations/ et
+    # sont écrites à la main. Ici, ce sont les données de la boutique — noms de
+    # produits, ingrédients, allergènes, consignes du jour — qui changent
+    # toutes les semaines et qu'on ne retapera pas dans quatre langues.
+    #
+    # Sans clé, le service se déclare non configuré et les écrans ne proposent
+    # même pas le bouton : la fonction s'éteint d'elle-même, elle n'échoue pas.
+    #
+    # Pour couper la fonction même en présence d'une clé, remplacer l'alias
+    # ci-dessous par `NullAutoTranslator` — aucun libellé ne sortira alors de
+    # la boutique.
+    Merisu\Inventory\Adapter\ClaudeTranslator:
+        arguments:
+            $apiKey: '%env(ANTHROPIC_API_KEY)%'
+            $model: '%env(MERISU_AI_MODEL)%'
+            # Client HTTP découvert au premier appel (php-http/discovery).
+            # Explicite ici pour que l'autowiring n'aille pas y placer un
+            # service PSR-18 arrivé par une autre dépendance.
+            $transporter: null
+
+    Merisu\Inventory\Adapter\AutoTranslatorInterface:
+        alias: Merisu\Inventory\Adapter\ClaudeTranslator
+
     Merisu\Inventory\Service\PhotoStorage:
         arguments:
             $uploadDir: '%merisu.upload_dir%'

@@ -162,12 +162,25 @@
     <span data-queue-count hidden></span>
   </div>
 
+  {#
+    Un message éclair est une CLÉ de traduction, jamais une phrase : il est
+    écrit par le contrôleur et lu dans la langue de l'écran.
+
+    Certains portent des valeurs — « écrit en polonais, italien » — et arrivent
+    alors sous la forme { key, params }. Les deux formes cohabitent : la très
+    grande majorité des messages n'a rien à placer, et leur imposer une
+    enveloppe aurait alourdi trente appels pour en servir trois.
+  #}
   {% block flashes %}
     {% for message in app.flashes('success') %}
-      <p class="banner banner--ok" role="status">{{ message|trans }}</p>
+      <p class="banner banner--ok" role="status">
+        {{ message.key is defined ? message.key|trans(message.params|default({})) : message|trans }}
+      </p>
     {% endfor %}
     {% for message in app.flashes('error') %}
-      <p class="banner banner--danger" role="alert">{{ message|trans }}</p>
+      <p class="banner banner--danger" role="alert">
+        {{ message.key is defined ? message.key|trans(message.params|default({})) : message|trans }}
+      </p>
     {% endfor %}
   {% endblock %}
 

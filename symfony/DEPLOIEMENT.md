@@ -254,6 +254,30 @@ peut pas obtenir de certificat reconnu.
 
       Ces comptes disparaîtront de toute façon au branchement du vrai module
       Consultant (voir README).
+- [ ] **Traduction assistée des libellés (facultatif).** Le module exige quatre
+      langues ; sans aide, une fiche produit demande douze champs de libellé et
+      l'on en remplit trois. Le bouton _Traduire_ d'_Admin ▸ Produits_,
+      _Note du jour_ et _Check-list_ complète les langues vides à partir de
+      celle affichée.
+
+      Poser la clé dans `.env.local` :
+
+      ```dotenv
+      ANTHROPIC_API_KEY=sk-ant-…
+      MERISU_AI_MODEL=claude-opus-5   # facultatif
+      ```
+
+      Rien à redémarrer : `.env.local` est relu à chaque requête. Le
+      déploiement GitHub la pose tout seul si le secret `ANTHROPIC_API_KEY`
+      existe dans le dépôt.
+
+      Sans clé, la fonction reste éteinte et **les écrans ne proposent pas le
+      bouton** — rien ne casse, et aucun libellé ne sort de la boutique.
+      _Admin ▸ Paramètres_ affiche l'état.
+
+      Ce qui part : des noms de produits, des ingrédients, des allergènes et
+      des consignes du jour. Jamais de comptages, de codes PIN ni d'identités.
+      Une traduction déjà écrite n'est **jamais** remplacée.
 - [ ] Ajuster le limiteur de tentatives (`config/packages/rate_limiter.yaml`)
       selon le nombre de postes partageant l'adresse IP publique du site.
 - [ ] Remplacer les 8 produits et la matrice de seuils fictifs par les vraies

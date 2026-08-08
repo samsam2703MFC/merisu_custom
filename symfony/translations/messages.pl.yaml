@@ -171,6 +171,21 @@ produce:
     allergens: 'Alergeny'
 
 admin:
+    translate:
+        button: 'Przetłumacz'
+        hint: 'Uzupełnia PUSTE języki na podstawie wyświetlanego. Istniejące tłumaczenie nigdy nie zostaje nadpisane — aby je powtórzyć, wyczyść pole w danym języku.'
+        done: 'Etykiety zapisane w językach: %written%.'
+        partial: 'Etykiety zapisane w językach: %written%. Nadal brakuje: %missing%.'
+        nothing: 'Nie ma czego tłumaczyć: z wyświetlanego języka nie ma czego uzupełnić.'
+        notConfigured: 'Tłumaczenie automatyczne niedostępne: brak klucza API.'
+        badKey: 'Klucz API odrzucony: nic nie zostało przetłumaczone.'
+        hostRefused: 'Usługa tłumaczenia odrzuciła żądanie: nic nie zostało przetłumaczone.'
+        unreachable: 'Usługa tłumaczenia niedostępna: nic nie zostało przetłumaczone.'
+        badAnswer: 'Nieczytelna odpowiedź usługi tłumaczenia: nic nie zostało zapisane.'
+        state: 'Tłumaczenie automatyczne'
+        enabled: 'Włączone'
+        disabled: 'Wyłączone'
+        stateHint: 'Klucz umieszcza się w ANTHROPIC_API_KEY po stronie serwera (.env.local) lub jako sekret GitHub o tej samej nazwie. Nie wpisuje się go tutaj: ekran administracyjny nie powinien móc go odczytać.'
     sync:
         title: 'Przesyłanie'
         subtitle: 'Kolejka wysyłki spisów do TF Buddy.'

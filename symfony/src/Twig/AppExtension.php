@@ -17,6 +17,7 @@ use Merisu\Inventory\Domain\Locale;
 use Merisu\Inventory\Domain\Product;
 use Merisu\Inventory\Pwa\BuildVersion;
 use Merisu\Inventory\Security\CurrentUser;
+use Merisu\Inventory\Service\TranslationService;
 use Merisu\Inventory\Store\Store;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Twig\Extension\AbstractExtension;
@@ -39,6 +40,7 @@ final class AppExtension extends AbstractExtension
         private readonly ConsultantServiceInterface $consultants,
         private readonly ShopRankingServiceInterface $ranking,
         private readonly BuildVersion $buildVersion,
+        private readonly TranslationService $translations,
     ) {
     }
 
@@ -67,6 +69,15 @@ final class AppExtension extends AbstractExtension
             new TwigFunction('shown_locales', fn (): array => [
                 Locale::tryFrom($this->requestStack->getCurrentRequest()?->getLocale() ?? '') ?? Locale::Fr,
             ]),
+            /*
+              Une clé de traduction assistée est-elle en place ?
+
+              Les écrans s'en servent pour ne PAS afficher le bouton quand la
+              fonction est éteinte : proposer une action qui échouera à tous
+              les coups vaut moins que ne rien proposer, et Admin ▸ Paramètres
+              dit, lui, pourquoi elle est éteinte.
+            */
+            new TwigFunction('translation_available', fn (): bool => $this->translations->isAvailable()),
             new TwigFunction('available_workstations', $this->availableWorkstations(...)),
             new TwigFunction('workstation_name', $this->workstationName(...)),
             new TwigFunction('container_fractions', static fn (): array => ContainerQuantity::FRACTIONS),
