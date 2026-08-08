@@ -1675,6 +1675,11 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 .label__unit { font-size: .95rem; color: var(--latte); }
 .label__meta { margin: 0; font-size: .8rem; color: var(--latte); }
 
+/* Le rang dans la fournée — « 7 / 30 ». Poussé au bout de la ligne et discret :
+   il ne concerne pas le client qui lit l'étiquette, mais l'atelier qui la
+   colle, et il retrouve le lot d'un pot isolé au fond d'un frigo. */
+.label__rank { margin-left: auto; font-size: .78rem; font-weight: 600; color: var(--latte); }
+
 /*
   Au tirage : plus de fond crème (l'encre coûte), plus de bouton ni de barre
   d'outils, et des bordures franches. Ce qui reste sur la feuille, ce sont les

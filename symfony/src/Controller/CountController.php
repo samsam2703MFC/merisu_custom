@@ -8,6 +8,7 @@ use Merisu\Inventory\Adapter\ConsultantServiceInterface;
 use Merisu\Inventory\Domain\BusinessDate;
 use Merisu\Inventory\Domain\ContainerQuantity;
 use Merisu\Inventory\Domain\CountMoment;
+use Merisu\Inventory\Domain\LabelSheet;
 use Merisu\Inventory\Domain\ProductionProgress;
 use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Security\PinField;
@@ -443,6 +444,11 @@ final class CountController extends AbstractController
 
         return $this->render('count/labels.html.twig', $view + [
             'printedBy' => $consultant->displayName(),
+            // UNE étiquette par pièce : trente crèmes, trente pots, trente
+            // étiquettes. Le compte se fait ici et non dans le gabarit —
+            // l'arrondi vers le haut et le plafond de planche sont des règles,
+            // pas de la mise en page.
+            'sheet' => LabelSheet::of($view['lines']),
         ]);
     }
 

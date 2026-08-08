@@ -186,6 +186,9 @@ produce:
     statTotal: 'À produire'
     statDone: Faites
     statLeft: Restantes
+    labelsCount: '%count% étiquette(s)'
+    labelRank: '%rank% / %total%'
+    labelsTruncated: 'Planche limitée à %printed% étiquettes : %missing% n''ont pas été imprimées. Vérifiez le seuil du produit, puis relancez l''impression.'
 
 admin:
     translate:

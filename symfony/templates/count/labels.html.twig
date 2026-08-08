@@ -43,25 +43,62 @@
       {{ forDate|long_date }} · {{ workstation_name(workstationId) }}
       {% if category %} · {{ category }}{% endif %}
     </p>
-    <p class="print-header__meta muted">{{ 'produce.printedBy'|trans({ '%name%': printedBy }) }}</p>
+    <p class="print-header__meta muted">
+      {{ 'produce.printedBy'|trans({ '%name%': printedBy }) }}
+      · {{ 'produce.labelsCount'|trans({ '%count%': sheet.total }) }}
+    </p>
   </header>
 
-  {% if lines is empty %}
+  {#
+    Le plafond de planche a-t-il retenu quelque chose ?
+
+    Dit franchement, et à l'écran comme au tirage : une planche tronquée en
+    silence, c'est un lot de pots qui repart sans étiquette parce que personne
+    n'a compté les feuilles sorties de l'imprimante.
+  #}
+  {% if sheet.isTruncated %}
+    <div class="banner banner--warn">
+      {{ 'produce.labelsTruncated'|trans({ '%printed%': sheet.total, '%missing%': sheet.dropped }) }}
+    </div>
+  {% endif %}
+
+  {% if sheet.isEmpty %}
     <div class="banner banner--warn">{{ 'produce.empty'|trans }}</div>
   {% else %}
     <div class="labels">
       {% for line in lines %}
-        {# Un produit sans rien à produire n'a pas d'étiquette : imprimer
-           « 0 » gaspille du papier et embrouille le plan de travail. #}
-        {% if line.qtyToProduce > 0 %}
+        {#
+          UNE étiquette PAR PIÈCE.
+
+          Trente crèmes à produire, trente pots en vitrine, trente étiquettes :
+          chacun porte ses allergènes et sa date limite. Une seule étiquette
+          pour la fournée entière obligeait l'atelier à la recopier vingt-neuf
+          fois — ou, plus souvent, à n'en coller aucune.
+
+          Un produit sans rien à produire n'apparaît pas : `LabelSheet` ne lui
+          a pas donné d'exemplaire.
+        #}
+        {% set exemplaires = sheet.copies[line.productId] ?? 0 %}
+
+        {% if exemplaires > 0 %}
           {% set product = products[line.productId] ?? null %}
 
+          {% for rang in 1..exemplaires %}
           <article class="label">
             <p class="label__name">{{ product ? product_label(product) : line.productId }}</p>
 
+            {#
+              La quantité de CETTE étiquette, donc un pot — et non la fournée.
+              « 30 » sur le pot qu'on tient dans la main aurait désigné les
+              vingt-neuf autres.
+
+              Le rang à côté : il dit où l'on en est dans la fournée, et
+              retrouve le lot d'un pot isolé au fond d'un frigo.
+            #}
             <p class="label__qty">
-              <span class="label__value">{{ line.qtyToProduce|qty }}</span>
+              <span class="label__value">1</span>
               <span class="label__unit">{{ product ? product.unit : '' }}</span>
+              <span class="label__rank">{{ 'produce.labelRank'|trans({ '%rank%': rang, '%total%': exemplaires }) }}</span>
             </p>
 
             {#
@@ -103,6 +140,7 @@
               {% if product and product.category %} · {{ product.category }}{% endif %}
             </p>
           </article>
+          {% endfor %}
         {% endif %}
       {% endfor %}
     </div>

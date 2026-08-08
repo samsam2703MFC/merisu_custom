@@ -183,6 +183,9 @@ produce:
     statTotal: 'Da produrre'
     statDone: Fatte
     statLeft: Rimanenti
+    labelsCount: '%count% etichetta/e'
+    labelRank: '%rank% / %total%'
+    labelsTruncated: 'Foglio limitato a %printed% etichette: %missing% non sono state stampate. Verifica la soglia del prodotto, poi rilancia la stampa.'
 
 admin:
     translate:

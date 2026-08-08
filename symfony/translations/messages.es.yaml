@@ -183,6 +183,9 @@ produce:
     statTotal: 'Por producir'
     statDone: Hechas
     statLeft: Restantes
+    labelsCount: '%count% etiqueta(s)'
+    labelRank: '%rank% / %total%'
+    labelsTruncated: 'Hoja limitada a %printed% etiquetas: %missing% no se han impreso. Revisa el umbral del producto y vuelve a imprimir.'
 
 admin:
     translate:

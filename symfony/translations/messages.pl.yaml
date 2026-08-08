@@ -183,6 +183,9 @@ produce:
     statTotal: 'Do wykonania'
     statDone: Wykonane
     statLeft: Pozostałe
+    labelsCount: '%count% etykiet(y)'
+    labelRank: '%rank% / %total%'
+    labelsTruncated: 'Arkusz ograniczony do %printed% etykiet: %missing% nie zostało wydrukowanych. Sprawdź próg produktu i wydrukuj ponownie.'
 
 admin:
     translate:
