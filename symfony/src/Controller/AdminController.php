@@ -517,27 +517,32 @@ final class AdminController extends AbstractController
 
         $products = $this->store->products();
 
-        // Le temps qu'il fera : c'est une SAISIE, pas une mesure. Personne ne
-        // connaît la météo de demain depuis une base de données, et le
-        // sélecteur laisse l'atelier trancher. Temps ordinaire par défaut,
-        // c'est-à-dire aucune correction.
-        $meteo = WeatherKind::fromLoose($request->query->get('meteo'));
+        /*
+          Deux populations, deux façons d'obtenir un minimum — d'où deux
+          onglets, et non un tableau unique où l'on ne saurait plus lequel
+          gouverne.
+
+          · une MATIÈRE PREMIÈRE s'achète : son minimum est un seuil que
+            l'atelier POSE, produit par produit et jour par jour ;
+          · une COMPOSITION se fabrique : son minimum se DÉDUIT de ce qui s'est
+            écoulé les six dernières semaines, corrigé par le temps attendu.
+            Rien à saisir — et c'est précisément l'intérêt.
+        */
+        $matieres = array_values(array_filter($products, static fn ($p): bool => !$p->isProduced()));
+        $compositions = array_values(array_filter($products, static fn ($p): bool => $p->isProduced()));
 
         return $this->render('admin/par_matrix.html.twig', [
             'products' => $products,
+            'rawProducts' => $matieres,
+            'composedProducts' => $compositions,
             'days' => DayOfWeek::all(),
             'values' => $values,
             'productsInRows' => $request->query->get('orientation') !== 'days',
-            // Minimums déduits de l'écoulé des six dernières semaines, corrigés
-            // par la météo. Une SUGGESTION à côté du seuil saisi, jamais à sa
-            // place : c'est l'administrateur qui décide de l'adopter.
-            'suggestions' => $this->minimums->forWeek(
-                $products,
-                $this->inventory->today(),
-                null,
-                $meteo,
-            ),
-            'weather' => $meteo,
+            'computed' => $this->minimums->forWeek($compositions, $this->inventory->today(), null),
+            // Le temps ATTENDU, jour par jour : il change d'un jour à l'autre,
+            // et un réglage unique pour les sept ferait produire lundi comme
+            // dimanche. C'est une PRÉVISION que l'atelier saisit.
+            'dayWeathers' => $this->store->dayWeathers(),
             'weatherKinds' => WeatherKind::all(),
             'weatherRatios' => $this->store->weatherRatios(),
         ]);
@@ -569,13 +574,22 @@ final class AdminController extends AbstractController
             $modifies[$temps->value] = $pct;
         }
 
+        /** @var array<string,mixed> $prevus */
+        $prevus = $request->request->all('day');
+        foreach (DayOfWeek::all() as $jour) {
+            if (\array_key_exists($jour->value, $prevus)) {
+                $this->store->saveDayWeather($jour, WeatherKind::fromLoose($prevus[$jour->value]));
+                $modifies['day.' . $jour->value] = (string) $prevus[$jour->value];
+            }
+        }
+
         if ($modifies !== []) {
-            $this->store->audit($admin->id, $admin->role->value, 'WEATHER_RATIOS_UPDATED', null, null, $modifies);
+            $this->store->audit($admin->id, $admin->role->value, 'WEATHER_UPDATED', null, null, $modifies);
         }
 
         $this->addFlash('success', 'common.saved');
 
-        return $this->redirectToRoute('admin_par_matrix', ['meteo' => $request->request->get('meteo')]);
+        return $this->redirectToRoute('admin_par_matrix');
     }
 
     #[Route('/seuils', name: 'admin_par_matrix_save', methods: ['POST'])]

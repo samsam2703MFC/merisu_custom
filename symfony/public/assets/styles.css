@@ -2137,6 +2137,39 @@ body { overflow-x: hidden; }
   .tabs__tab:hover { color: var(--coffee); }
 }
 
+/* Le compteur qui suit le nom d'un onglet : une marge, et non l'espace du
+   gabarit — un nœud texte entre `}}` et `<span>` se fait manger au rendu, et
+   l'onglet se lisait « Matières premières(10) ». */
+.tabs__tab .muted { margin-left: .35rem; font-weight: 600; }
+
+/* Les onglets de la page des seuils n'en ont que deux : les règles de rang
+   écrites plus haut couvrent jusqu'à cinq, donc rien à ajouter. */
+
+/* Sept prévisions côte à côte : une grille plus serrée que la grille de
+   formulaire ordinaire, qui vise des champs de saisie larges. */
+/* « Temps ordinaire (0 %) » est le libellé le plus long : en dessous de
+   190 px il se tronquait, et le septième jour partait seul sur une ligne. */
+.field-grid--tight { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.field-grid--tight .field__input { width: 100%; }
+
+/* La légende des corrections : quatre repères sur une ligne, qui passent à la
+   suivante plutôt que de déborder. */
+.wlegend { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); align-items: center; }
+.wlegend__item { display: inline-flex; align-items: center; gap: .25rem; white-space: nowrap; }
+.wlegend__item .icon { width: 16px; height: 16px; }
+.wlegend strong { color: var(--plum); font-variant-numeric: tabular-nums; }
+
+/* Le tableau des minimums CALCULÉS : rien à saisir, donc rien qui ressemble à
+   un champ. Le chiffre en prune, comme partout ce qui est déduit. */
+.mins__cell { text-align: center; font-variant-numeric: tabular-nums; }
+.mins__value { font-weight: 700; color: var(--plum); cursor: help; }
+.mins__none { color: var(--text-muted); cursor: help; }
+
+/* La prévision au-dessus de sa colonne : sans elle on lirait un chiffre sans
+   savoir sous quel temps il a été calculé. */
+.mins__weather { display: block; margin-top: 2px; color: var(--text-muted); }
+.mins__weather .icon { width: 16px; height: 16px; }
+
 /* ── Stock minimum : météo et suggestions ────────────────────────────────── */
 
 /* Quatre vignettes plutôt que deux : l'interrupteur segmenté se déplie en une

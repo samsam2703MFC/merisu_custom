@@ -342,9 +342,17 @@ admin:
         NEAREST: 'Al más cercano'
         NONE: 'Sin redondeo'
     parMatrix:
-        weatherTitle: 'Stock mínimo deducido de lo consumido'
-        weatherIntro: 'Media de los seis últimos mismos días de la semana, corregida por el tiempo previsto. Es lo CONSUMIDO —ventas y mermas juntas— mientras la caja no esté conectada.'
-        weather: 'Tiempo previsto'
+        tabs:
+            raw: 'Materias primas'
+            composed: 'Composiciones'
+        rawHint: 'Un umbral que usted FIJA, producto por producto y día por día. Nada puede adivinarlo: lo que se consume de un saco de cacao no dice cuánto hay que tener de reserva hasta la próxima entrega.'
+        composedHint: 'Ningún umbral que introducir: el mínimo se DEDUCE de lo consumido en los seis últimos mismos días de la semana, corregido por el tiempo previsto.'
+        noRaw: 'Ninguna materia prima. La naturaleza se ajusta en la ficha del producto.'
+        noComposed: 'Ninguna composición. La naturaleza se ajusta en la ficha del producto.'
+        notEnough: '%samples% registros en las seis últimas semanas: hacen falta %min% para que la media signifique algo.'
+        computedFooter: 'Pase el ratón sobre una cifra para ver la media, el número de registros y la corrección aplicada. Un guion significa «aún no hay suficiente historial», nunca «cero».'
+        weatherIntro: 'Cambia de un día a otro: llueve el martes y el jueves vuelve el sol. Un único ajuste para los siete haría producir el lunes igual que el domingo. Es una previsión que usted introduce, no una medida.'
+        weather: 'Tiempo previsto, día a día'
         weatherEdit: 'Ajustar los porcentajes'
         weatherEditHint: 'Un porcentaje se aplica a la media: +5 % la sube cinco centésimas, −9 % la baja otro tanto. Cero = ningún efecto declarado.'
         suggestionTitle: 'Media %avg% sobre %samples% registros, corregida en %pct% %.'
@@ -355,7 +363,6 @@ admin:
             SNOW: 'Nieve'
         title: 'Matriz de umbrales'
         subtitle: 'Piezas requeridas en stock, por día y por producto.'
-        hint: "Una casilla vacía significa «sin umbral definido»: la producción calculada será 0 y aparecerá un aviso."
         productsInRows: 'Productos en filas'
         daysInRows: 'Días en filas'
     settings:

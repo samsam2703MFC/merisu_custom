@@ -342,9 +342,17 @@ admin:
         NEAREST: 'Al più vicino'
         NONE: 'Nessun arrotondamento'
     parMatrix:
-        weatherTitle: 'Scorta minima dedotta dallo smaltito'
-        weatherIntro: 'Media degli ultimi sei stessi giorni della settimana, corretta dal tempo previsto. È lo SMALTITO — vendite e perdite insieme — finché la cassa non è collegata.'
-        weather: 'Tempo previsto'
+        tabs:
+            raw: 'Materie prime'
+            composed: 'Composizioni'
+        rawHint: 'Una soglia che si IMPOSTA, prodotto per prodotto e giorno per giorno. Nulla può indovinarla: quanto si consuma di un sacco di cacao non dice quanto bisogna averne di scorta fino alla consegna successiva.'
+        composedHint: 'Nessuna soglia da inserire: il minimo si DEDUCE da quanto è stato smaltito negli ultimi sei stessi giorni della settimana, corretto dal tempo previsto.'
+        noRaw: 'Nessuna materia prima. La natura si imposta sulla scheda prodotto.'
+        noComposed: 'Nessuna composizione. La natura si imposta sulla scheda prodotto.'
+        notEnough: '%samples% rilevazioni sulle ultime sei settimane — ne servono %min% perché la media significhi qualcosa.'
+        computedFooter: 'Passa il mouse su un numero per vedere la media, il numero di rilevazioni e la correzione applicata. Un trattino significa « non abbastanza storico », mai « zero ».'
+        weatherIntro: 'Cambia da un giorno all''altro: martedì piove e giovedì torna il sole. Un''unica impostazione per sette giorni farebbe produrre lunedì come domenica. È una previsione che inserisci, non una misura.'
+        weather: 'Tempo previsto, giorno per giorno'
         weatherEdit: 'Regolare le percentuali'
         weatherEditHint: 'Una percentuale si applica alla media: +5 % la alza di cinque centesimi, −9 % la abbassa altrettanto. Zero = nessun effetto dichiarato.'
         suggestionTitle: 'Media %avg% su %samples% rilevazioni, corretta del %pct% %.'
@@ -355,7 +363,6 @@ admin:
             SNOW: 'Neve'
         title: 'Matrice delle soglie'
         subtitle: 'Pezzi richiesti in magazzino, per giorno e per prodotto.'
-        hint: "Una cella vuota significa «nessuna soglia definita»: la produzione calcolata sarà 0 e comparirà un avviso."
         productsInRows: 'Prodotti in righe'
         daysInRows: 'Giorni in righe'
     settings:

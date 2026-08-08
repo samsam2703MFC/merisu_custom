@@ -284,6 +284,24 @@ final class SchemaInstaller
         }
 
         /*
+          Temps ATTENDU pour chaque jour de la semaine.
+
+          Par jour, et non un réglage unique : la météo change d'un jour à
+          l'autre, et poser « pluie » pour toute la semaine ferait produire
+          lundi comme dimanche. C'est une PRÉVISION que l'atelier saisit, pas
+          une mesure — personne ne connaît le temps de jeudi depuis une base de
+          données.
+
+          Le jour EST la clé : deux lignes « mardi » n'auraient aucun sens.
+        */
+        if (!\in_array('inv_day_weather', $existing, true)) {
+            $t = $schema->createTable('inv_day_weather');
+            $t->addColumn('day_of_week', 'string', ['length' => 3]);
+            $t->addColumn('kind', 'string', ['length' => 16, 'default' => 'CLOUDY']);
+            $t->setPrimaryKey(['day_of_week']);
+        }
+
+        /*
           File d'envoi vers le système hôte — patron « boîte d'envoi ».
 
           En base, et non en mémoire : la validation d'un comptage y écrit dans

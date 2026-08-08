@@ -342,9 +342,17 @@ admin:
         NEAREST: 'Do najbliższej'
         NONE: 'Bez zaokrąglenia'
     parMatrix:
-        weatherTitle: 'Minimalny zapas z rozchodu'
-        weatherIntro: 'Średnia z sześciu ostatnich takich samych dni tygodnia, skorygowana o pogodę. To ROZCHÓD — sprzedaż i straty razem — dopóki kasa nie jest podłączona.'
-        weather: 'Prognoza'
+        tabs:
+            raw: 'Surowce'
+            composed: 'Wyroby'
+        rawHint: 'Próg, który USTAWIASZ, produkt po produkcie i dzień po dniu. Nic go nie odgadnie: zużycie worka kakao nie mówi, ile trzeba mieć w zapasie do następnej dostawy.'
+        composedHint: 'Nie ma progu do wpisania: minimum WYNIKA z rozchodu z sześciu ostatnich takich samych dni tygodnia, skorygowanego o spodziewaną pogodę.'
+        noRaw: 'Brak surowców. Rodzaj ustawia się na karcie produktu.'
+        noComposed: 'Brak wyrobów. Rodzaj ustawia się na karcie produktu.'
+        notEnough: '%samples% pomiarów z ostatnich sześciu tygodni — potrzeba %min%, żeby średnia coś znaczyła.'
+        computedFooter: 'Najedź na liczbę, aby zobaczyć średnią, liczbę pomiarów i zastosowaną korektę. Myślnik znaczy „za mało historii”, nigdy „zero”.'
+        weatherIntro: 'Zmienia się z dnia na dzień: we wtorek pada, a w czwartek wraca słońce. Jedno ustawienie na siedem dni kazałoby produkować w poniedziałek tak jak w niedzielę. To prognoza, którą wpisujesz, nie pomiar.'
+        weather: 'Spodziewana pogoda, dzień po dniu'
         weatherEdit: 'Ustaw procenty'
         weatherEditHint: 'Procent działa na średnią: +5 % podnosi ją o pięć setnych, −9 % obniża o tyle samo. Zero = brak zadeklarowanego wpływu.'
         suggestionTitle: 'Średnia %avg% z %samples% pomiarów, skorygowana o %pct% %.'
@@ -355,7 +363,6 @@ admin:
             SNOW: 'Śnieg'
         title: 'Matryca progów'
         subtitle: 'Wymagana liczba sztuk w magazynie, wg dnia i produktu.'
-        hint: 'Puste pole oznacza „brak progu”: obliczona produkcja wyniesie 0 i pojawi się ostrzeżenie.'
         productsInRows: 'Produkty w wierszach'
         daysInRows: 'Dni w wierszach'
     settings:

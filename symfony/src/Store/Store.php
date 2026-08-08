@@ -1040,6 +1040,37 @@ final class Store
         return $sortie;
     }
 
+    /**
+     * Le temps attendu pour chaque jour de la semaine.
+     *
+     * Un jour jamais renseigné vaut « temps ordinaire », c'est-à-dire aucune
+     * correction : une prévision qu'on n'a pas saisie ne doit pas changer les
+     * quantités.
+     *
+     * @return array<string, WeatherKind>
+     */
+    public function dayWeathers(): array
+    {
+        $connus = [];
+        foreach ($this->db->fetchAllAssociative('SELECT day_of_week, kind FROM inv_day_weather') as $r) {
+            $connus[(string) $r['day_of_week']] = WeatherKind::fromLoose($r['kind']);
+        }
+
+        $sortie = [];
+        foreach (DayOfWeek::all() as $jour) {
+            $sortie[$jour->value] = $connus[$jour->value] ?? WeatherKind::default();
+        }
+
+        return $sortie;
+    }
+
+    public function saveDayWeather(DayOfWeek $day, WeatherKind $kind): void
+    {
+        if ($this->db->update('inv_day_weather', ['kind' => $kind->value], ['day_of_week' => $day->value]) === 0) {
+            $this->db->insert('inv_day_weather', ['day_of_week' => $day->value, 'kind' => $kind->value]);
+        }
+    }
+
     public function saveWeatherRatio(WeatherKind $kind, float $percent): void
     {
         // Borné : une correction en dessous de −100 % viderait le rayon, et

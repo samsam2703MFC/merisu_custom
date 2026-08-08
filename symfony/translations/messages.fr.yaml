@@ -345,9 +345,17 @@ admin:
         NEAREST: 'Au plus proche'
         NONE: 'Aucun arrondi'
     parMatrix:
-        weatherTitle: 'Stock minimum déduit de l''écoulé'
-        weatherIntro: 'Moyenne des six derniers mêmes jours de semaine, corrigée par le temps qu''il fera. C''est de l''ÉCOULÉ — ventes et pertes confondues — tant que la caisse n''est pas branchée.'
-        weather: 'Temps prévu'
+        tabs:
+            raw: 'Matières premières'
+            composed: 'Compositions'
+        rawHint: 'Un seuil que vous POSEZ, produit par produit et jour par jour. Rien ne peut le deviner : ce qu''on consomme d''un sac de cacao ne dit pas combien il faut en avoir d''avance pour tenir jusqu''à la prochaine livraison.'
+        composedHint: 'Aucun seuil à saisir : le minimum se DÉDUIT de ce qui s''est écoulé les six derniers mêmes jours de semaine, corrigé par le temps attendu.'
+        noRaw: 'Aucune matière première. La nature se règle sur la fiche produit.'
+        noComposed: 'Aucune composition. La nature se règle sur la fiche produit.'
+        notEnough: '%samples% relevé(s) sur les six dernières semaines — il en faut %min% pour que la moyenne veuille dire quelque chose.'
+        computedFooter: 'Passez la souris sur un chiffre pour voir la moyenne, le nombre de relevés et la correction appliquée. Un tiret veut dire « pas encore assez d''historique », jamais « zéro ».'
+        weatherIntro: 'Il change d''un jour à l''autre : il pleut mardi et le soleil revient jeudi. Un seul réglage pour les sept ferait produire lundi comme dimanche. C''est une prévision que vous saisissez, pas une mesure.'
+        weather: 'Temps attendu, jour par jour'
         weatherEdit: 'Régler les pourcentages'
         weatherEditHint: 'Un pourcentage s''applique à la moyenne : +5 % la relève de cinq centièmes, −9 % l''abaisse d''autant. Zéro = aucun effet déclaré.'
         suggestionTitle: 'Moyenne %avg% sur %samples% relevé(s), corrigée de %pct% %.'
@@ -358,7 +366,6 @@ admin:
             SNOW: 'Neige'
         title: 'Matrice des seuils'
         subtitle: 'Pièces requises en stock, par jour et par produit.'
-        hint: "Une case vide signifie « aucun seuil défini » : la production calculée sera 0 et un avertissement apparaîtra."
         productsInRows: 'Produits en lignes'
         daysInRows: 'Jours en lignes'
     settings:

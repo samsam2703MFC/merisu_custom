@@ -1,8 +1,19 @@
 {#
-  §7.5 — Matrice des seuils, éditable (jour × produit).
+  §7.5 — Stock minimum, en deux onglets.
 
-  L'orientation est commutable : produits en lignes (confortable sur desktop)
-  ou jours en lignes (plus lisible sur mobile).
+  Deux populations, deux façons d'obtenir un minimum — d'où deux onglets, et
+  non un tableau unique où l'on ne saurait plus lequel gouverne :
+
+  · une MATIÈRE PREMIÈRE s'achète. Son minimum est un SEUIL que l'atelier pose,
+    produit par produit et jour par jour. Rien ne peut le deviner : la
+    consommation d'un sac de cacao ne dit pas combien il faut en avoir d'avance
+    pour tenir jusqu'à la prochaine livraison ;
+  · une COMPOSITION se fabrique. Son minimum se DÉDUIT de ce qui s'est écoulé
+    les six derniers mêmes jours de semaine, corrigé par le temps attendu.
+    Rien à saisir, et c'est précisément l'intérêt.
+
+  Les onglets tiennent sur des boutons radio et `:checked ~`, comme ceux de la
+  fiche produit : aucun script.
 #}
 {% extends 'admin/_layout.html.twig' %}
 {% import 'components/_macros.html.twig' as ui %}
@@ -13,182 +24,242 @@
 
   {{ ui.page_header('admin.parMatrix.title'|trans, 'admin.parMatrix.subtitle'|trans) }}
 
-  <div class="banner banner--info">{{ 'admin.parMatrix.hint'|trans }}</div>
+  <div class="tabs">
+    <input class="tabs__radio" type="radio" name="par-tab" id="par-tab-raw" checked>
+    <input class="tabs__radio" type="radio" name="par-tab" id="par-tab-composed">
 
-  {#
-    ── Stock minimum déduit de l'écoulé ──────────────────────────────────────
-
-    Moyenne des six derniers mêmes jours de semaine, corrigée par le temps
-    qu'il fera. Le même jour de semaine, et non les quarante-deux derniers
-    jours : un samedi ne ressemble pas à un mardi, et la moyenne à plat
-    écraserait justement la variation qu'on cherche à suivre.
-
-    Le temps est une SAISIE, pas une mesure : personne ne connaît la météo de
-    demain depuis une base de données. Changer le sélecteur recalcule les
-    suggestions sous chaque seuil.
-  #}
-  <section class="card">
-    <h2 class="card__title">{{ 'admin.parMatrix.weatherTitle'|trans }}</h2>
-    <p class="field__hint">{{ 'admin.parMatrix.weatherIntro'|trans }}</p>
-
-    <nav class="seg seg--wide" aria-label="{{ 'admin.parMatrix.weather'|trans }}">
-      <div class="seg__grid seg__grid--four">
-        {% for temps in weatherKinds %}
-          <a class="seg__box {{ temps == weather ? 'is-active' : '' }}"
-             href="{{ path('admin_par_matrix', {
-               meteo: temps.value,
-               orientation: productsInRows ? 'products' : 'days'
-             }) }}">
-            {{ ui.icon(temps.icon) }}
-            <span class="seg__name">{{ ('admin.parMatrix.weathers.' ~ temps.value)|trans }}</span>
-            <span class="seg__pct">{{ weatherRatios[temps.value] > 0 ? '+' : '' }}{{ weatherRatios[temps.value] }} %</span>
-          </a>
-        {% endfor %}
-      </div>
-    </nav>
-
-    {# Les pourcentages se règlent ici, sous les vignettes qui les affichent :
-       on voit tout de suite ce que le chiffre saisi change. #}
-    <details class="mt">
-      <summary class="admin-new__summary">
-        {{ ui.icon('sliders') }}
-        <span>{{ 'admin.parMatrix.weatherEdit'|trans }}</span>
-      </summary>
-
-      <form method="post" action="{{ path('admin_weather_save') }}" class="form">
-        <input type="hidden" name="meteo" value="{{ weather.value }}">
-
-        <div class="field-grid">
-          {% for temps in weatherKinds %}
-            <div class="field">
-              <label class="field__label" for="w-{{ temps.value }}">
-                {{ ('admin.parMatrix.weathers.' ~ temps.value)|trans }}
-              </label>
-              <input class="field__input" type="number" step="0.1" min="-100" max="500"
-                     id="w-{{ temps.value }}" name="weather[{{ temps.value }}]"
-                     value="{{ weatherRatios[temps.value] }}">
-            </div>
-          {% endfor %}
-        </div>
-
-        <p class="field__hint">{{ 'admin.parMatrix.weatherEditHint'|trans }}</p>
-
-        <div class="form-actions">
-          <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
-        </div>
-      </form>
-    </details>
-  </section>
-
-  <section class="card">
-    <div class="card__header">
-      <a class="button button--secondary"
-         href="{{ path('admin_par_matrix', { orientation: productsInRows ? 'days' : 'products' }) }}">
-        {{ (productsInRows ? 'admin.parMatrix.daysInRows' : 'admin.parMatrix.productsInRows')|trans }}
-      </a>
+    <div class="tabs__bar">
+      <label class="tabs__tab" for="par-tab-raw">
+        {{ 'admin.parMatrix.tabs.raw'|trans }} <span class="muted">({{ rawProducts|length }})</span>
+      </label>
+      <label class="tabs__tab" for="par-tab-composed">
+        {{ 'admin.parMatrix.tabs.composed'|trans }} <span class="muted">({{ composedProducts|length }})</span>
+      </label>
     </div>
 
-    <form method="post" action="{{ path('admin_par_matrix_save') }}">
-      <div class="table-scroll">
-        <table class="table table--matrix">
+    {# ── Matières premières : des seuils que l'on POSE ───────────────────── #}
+    <section class="tabs__panel">
+      <div class="banner banner--info">{{ 'admin.parMatrix.rawHint'|trans }}</div>
 
-          {% if productsInRows %}
-            <thead>
-              <tr>
-                <th>{{ 'common.product'|trans }}</th>
-                {% for day in days %}
-                  <th>{{ ('daysShort.' ~ day.value)|trans }}</th>
-                {% endfor %}
-              </tr>
-            </thead>
-            <tbody>
-              {% for product in products %}
+      {% if rawProducts is empty %}
+        {{ ui.banner('info', 'admin.parMatrix.noRaw'|trans) }}
+      {% else %}
+        <section class="card">
+          <div class="card__header">
+            <a class="button button--secondary"
+               href="{{ path('admin_par_matrix', { orientation: productsInRows ? 'days' : 'products' }) }}">
+              {{ (productsInRows ? 'admin.parMatrix.daysInRows' : 'admin.parMatrix.productsInRows')|trans }}
+            </a>
+          </div>
+
+          <form method="post" action="{{ path('admin_par_matrix_save') }}">
+            <div class="table-scroll">
+              <table class="table table--matrix">
+                {% if productsInRows %}
+                  <thead>
+                    <tr>
+                      <th>{{ 'common.product'|trans }}</th>
+                      {% for day in days %}<th>{{ ('daysShort.' ~ day.value)|trans }}</th>{% endfor %}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for product in rawProducts %}
+                      <tr>
+                        <th scope="row">
+                          {{ product_label(product) }}
+                          {% if not product.active %}{{ ui.badge('warn', 'admin.products.inactive'|trans) }}{% endif %}
+                        </th>
+                        {% for day in days %}
+                          <td class="table__cell--editable">
+                            <input class="table__input" type="number" min="0" step="any" inputmode="numeric"
+                                   name="par[{{ product.id }}][{{ day.value }}]"
+                                   value="{{ values[product.id][day.value] ?? '' }}"
+                                   aria-label="{{ product_label(product) }} — {{ ('days.' ~ day.value)|trans }}">
+                          </td>
+                        {% endfor %}
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                {% else %}
+                  <thead>
+                    <tr>
+                      <th>{{ 'common.date'|trans }}</th>
+                      {% for product in rawProducts %}<th>{{ product_label(product) }}</th>{% endfor %}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for day in days %}
+                      <tr>
+                        <th scope="row">{{ ('days.' ~ day.value)|trans }}</th>
+                        {% for product in rawProducts %}
+                          <td class="table__cell--editable">
+                            <input class="table__input" type="number" min="0" step="any" inputmode="numeric"
+                                   name="par[{{ product.id }}][{{ day.value }}]"
+                                   value="{{ values[product.id][day.value] ?? '' }}"
+                                   aria-label="{{ product_label(product) }} — {{ ('days.' ~ day.value)|trans }}">
+                          </td>
+                        {% endfor %}
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                {% endif %}
+              </table>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
+            </div>
+          </form>
+        </section>
+      {% endif %}
+    </section>
+
+    {# ── Compositions : un minimum CALCULÉ ───────────────────────────────── #}
+    <section class="tabs__panel">
+      <div class="banner banner--info">{{ 'admin.parMatrix.composedHint'|trans }}</div>
+
+      {#
+        Le temps attendu, JOUR PAR JOUR.
+
+        Un seul réglage pour les sept ne voudrait rien dire : il pleut mardi et
+        le soleil revient jeudi. Chaque jour porte donc sa prévision, et la
+        colonne du tableau qui suit s'en trouve corrigée.
+
+        C'est une SAISIE : personne ne connaît le temps de jeudi depuis une base
+        de données.
+      #}
+      <section class="card">
+        <h2 class="card__title">{{ 'admin.parMatrix.weather'|trans }}</h2>
+        <p class="field__hint">{{ 'admin.parMatrix.weatherIntro'|trans }}</p>
+
+        <form method="post" action="{{ path('admin_weather_save') }}" class="form">
+          <div class="field-grid field-grid--tight">
+            {% for day in days %}
+              <div class="field">
+                <label class="field__label" for="dw-{{ day.value }}">{{ ('days.' ~ day.value)|trans }}</label>
+                <select class="field__input" id="dw-{{ day.value }}" name="day[{{ day.value }}]">
+                  {#
+                    Le NOM seul dans les options : « Temps ordinaire (0 %) » ne
+                    tenait pas dans une liste déroulante, et répéter les quatre
+                    pourcentages vingt-huit fois — quatre options, sept jours —
+                    ne les rendait pas plus lisibles. La légende sous la grille
+                    les donne une fois pour toutes.
+                  #}
+                  {% for temps in weatherKinds %}
+                    <option value="{{ temps.value }}" {{ temps == dayWeathers[day.value] ? 'selected' : '' }}>
+                      {{ ('admin.parMatrix.weathers.' ~ temps.value)|trans }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+            {% endfor %}
+          </div>
+
+          {# La légende : ce que chaque temps retire ou ajoute, une fois pour
+             toutes plutôt que dans chacune des vingt-huit options. #}
+          <p class="field__hint wlegend">
+            {% for temps in weatherKinds %}
+              <span class="wlegend__item">
+                {{ ui.icon(temps.icon) }}
+                {{ ('admin.parMatrix.weathers.' ~ temps.value)|trans }}
+                <strong>{{ weatherRatios[temps.value] > 0 ? '+' : '' }}{{ weatherRatios[temps.value] }} %</strong>
+              </span>
+            {% endfor %}
+          </p>
+
+          {# Les pourcentages eux-mêmes : repliés, parce qu'on les règle une
+             fois par saison, alors que la prévision change chaque jour. #}
+          <details class="mt">
+            <summary class="admin-new__summary">
+              {{ ui.icon('sliders') }}
+              <span>{{ 'admin.parMatrix.weatherEdit'|trans }}</span>
+            </summary>
+
+            <div class="field-grid field-grid--tight">
+              {% for temps in weatherKinds %}
+                <div class="field">
+                  <label class="field__label" for="w-{{ temps.value }}">
+                    {{ ('admin.parMatrix.weathers.' ~ temps.value)|trans }}
+                  </label>
+                  <input class="field__input" type="number" step="0.1" min="-100" max="500"
+                         id="w-{{ temps.value }}" name="weather[{{ temps.value }}]"
+                         value="{{ weatherRatios[temps.value] }}">
+                </div>
+              {% endfor %}
+            </div>
+
+            <p class="field__hint">{{ 'admin.parMatrix.weatherEditHint'|trans }}</p>
+          </details>
+
+          <div class="form-actions">
+            <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
+          </div>
+        </form>
+      </section>
+
+      {% if composedProducts is empty %}
+        {{ ui.banner('info', 'admin.parMatrix.noComposed'|trans) }}
+      {% else %}
+        <section class="card">
+          <div class="table-scroll">
+            <table class="table table--matrix mins">
+              <thead>
                 <tr>
-                  <th scope="row">
-                    {{ product_label(product) }}
-                    {% if not product.active %}
-                      {{ ui.badge('warn', 'admin.products.inactive'|trans) }}
-                    {% endif %}
-                  </th>
+                  <th>{{ 'common.product'|trans }}</th>
                   {% for day in days %}
-                    <td class="table__cell--editable">
-                      <input class="table__input" type="number" min="0" step="any" inputmode="numeric"
-                             name="par[{{ product.id }}][{{ day.value }}]"
-                             value="{{ values[product.id][day.value] ?? '' }}"
-                             aria-label="{{ product_label(product) }} — {{ ('days.' ~ day.value)|trans }}">
-                      {#
-                        Suggestion, sous le seuil et non à sa place : le seuil
-                        saisi a été posé par quelqu'un qui connaît la boutique,
-                        et l'écraser d'office lui retirerait la main.
-
-                        Muette en dessous de trois relevés : une moyenne bâtie
-                        sur deux jours se laisse fausser par un seul jour de
-                        soldes, et la donner pour un repère tromperait.
-                      #}
-                      {% set sugg = suggestions[day.value][product.id] ?? null %}
-                      {% if sugg and sugg.isReliable %}
-                        <span class="table__sugg" title="{{ 'admin.parMatrix.suggestionTitle'|trans({
-                          '%avg%': sugg.average|qty,
-                          '%samples%': sugg.samples,
-                          '%pct%': sugg.weatherPercent
-                        }) }}">{{ sugg.value|qty }}</span>
-                      {% endif %}
-                    </td>
+                    <th>
+                      {{ ('daysShort.' ~ day.value)|trans }}
+                      {# La prévision se rappelle au-dessus de sa colonne :
+                         sans elle, on lirait un chiffre sans savoir sous quel
+                         temps il a été calculé. #}
+                      <span class="mins__weather" title="{{ ('admin.parMatrix.weathers.' ~ dayWeathers[day.value].value)|trans }}">
+                        {{ ui.icon(dayWeathers[day.value].icon) }}
+                      </span>
+                    </th>
                   {% endfor %}
                 </tr>
-              {% endfor %}
-            </tbody>
-
-          {% else %}
-            <thead>
-              <tr>
-                <th>{{ 'common.date'|trans }}</th>
-                {% for product in products %}
-                  <th>{{ product_label(product) }}</th>
+              </thead>
+              <tbody>
+                {% for product in composedProducts %}
+                  <tr>
+                    <th scope="row">
+                      {{ product_label(product) }}
+                      {% if not product.active %}{{ ui.badge('warn', 'admin.products.inactive'|trans) }}{% endif %}
+                    </th>
+                    {% for day in days %}
+                      {% set m = computed[day.value][product.id] ?? null %}
+                      <td class="mins__cell">
+                        {#
+                          Muet en dessous de trois relevés : une moyenne bâtie
+                          sur deux jours se laisse fausser par un seul jour de
+                          soldes, et la donner pour un minimum tromperait. Le
+                          tiret dit « pas encore », pas « zéro ».
+                        #}
+                        {% if m and m.isReliable %}
+                          <span class="mins__value"
+                                title="{{ 'admin.parMatrix.suggestionTitle'|trans({
+                                  '%avg%': m.average|qty,
+                                  '%samples%': m.samples,
+                                  '%pct%': m.weatherPercent
+                                }) }}">{{ m.value|qty }}</span>
+                        {% else %}
+                          <span class="mins__none" title="{{ 'admin.parMatrix.notEnough'|trans({
+                            '%samples%': m ? m.samples : 0,
+                            '%min%': 3
+                          }) }}">—</span>
+                        {% endif %}
+                      </td>
+                    {% endfor %}
+                  </tr>
                 {% endfor %}
-              </tr>
-            </thead>
-            <tbody>
-              {% for day in days %}
-                <tr>
-                  <th scope="row">{{ ('days.' ~ day.value)|trans }}</th>
-                  {% for product in products %}
-                    <td class="table__cell--editable">
-                      <input class="table__input" type="number" min="0" step="any" inputmode="numeric"
-                             name="par[{{ product.id }}][{{ day.value }}]"
-                             value="{{ values[product.id][day.value] ?? '' }}"
-                             aria-label="{{ product_label(product) }} — {{ ('days.' ~ day.value)|trans }}">
-                      {#
-                        Suggestion, sous le seuil et non à sa place : le seuil
-                        saisi a été posé par quelqu'un qui connaît la boutique,
-                        et l'écraser d'office lui retirerait la main.
+              </tbody>
+            </table>
+          </div>
 
-                        Muette en dessous de trois relevés : une moyenne bâtie
-                        sur deux jours se laisse fausser par un seul jour de
-                        soldes, et la donner pour un repère tromperait.
-                      #}
-                      {% set sugg = suggestions[day.value][product.id] ?? null %}
-                      {% if sugg and sugg.isReliable %}
-                        <span class="table__sugg" title="{{ 'admin.parMatrix.suggestionTitle'|trans({
-                          '%avg%': sugg.average|qty,
-                          '%samples%': sugg.samples,
-                          '%pct%': sugg.weatherPercent
-                        }) }}">{{ sugg.value|qty }}</span>
-                      {% endif %}
-                    </td>
-                  {% endfor %}
-                </tr>
-              {% endfor %}
-            </tbody>
-          {% endif %}
-
-        </table>
-      </div>
-
-      <div class="form-actions">
-        <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
-      </div>
-    </form>
-  </section>
+          <p class="field__hint">{{ 'admin.parMatrix.computedFooter'|trans }}</p>
+        </section>
+      {% endif %}
+    </section>
+  </div>
 
 {% endblock %}

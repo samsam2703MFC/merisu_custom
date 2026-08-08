@@ -10,7 +10,6 @@ use Merisu\Inventory\Domain\DayOfWeek;
 use Merisu\Inventory\Domain\MinimumStock;
 use Merisu\Inventory\Domain\NetVariance;
 use Merisu\Inventory\Domain\Product;
-use Merisu\Inventory\Domain\WeatherKind;
 use Merisu\Inventory\Store\Store;
 
 /**
@@ -46,9 +45,8 @@ final class MinimumStockService
         DayOfWeek $dayOfWeek,
         string $today,
         ?string $workstationId,
-        WeatherKind $weather,
     ): array {
-        return $this->forWeek($products, $today, $workstationId, $weather)[$dayOfWeek->value] ?? [];
+        return $this->forWeek($products, $today, $workstationId)[$dayOfWeek->value] ?? [];
     }
 
     /**
@@ -63,7 +61,7 @@ final class MinimumStockService
      *
      * @return array<string, array<string, MinimumStock|null>> [jour][produit]
      */
-    public function forWeek(array $products, string $today, ?string $workstationId, WeatherKind $weather): array
+    public function forWeek(array $products, string $today, ?string $workstationId): array
     {
         $parJour = [];
         $toutes = [];
@@ -74,10 +72,15 @@ final class MinimumStockService
         }
 
         $ecoule = $this->netByDate($toutes, $workstationId);
-        $pct = $this->store->weatherRatios()[$weather->value] ?? 0.0;
+
+        // Une correction PAR JOUR : la météo change d'un jour à l'autre, et un
+        // réglage unique pour les sept ferait produire lundi comme dimanche.
+        $ratios = $this->store->weatherRatios();
+        $temps = $this->store->dayWeathers();
 
         $sortie = [];
         foreach ($parJour as $jour => $dates) {
+            $pct = $ratios[$temps[$jour]->value] ?? 0.0;
             $sortie[$jour] = $this->compute($products, $dates, $ecoule, $pct);
         }
 
