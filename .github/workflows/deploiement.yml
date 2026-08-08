@@ -180,8 +180,12 @@ jobs:
       #
       # Rien à reconstruire derrière : `.env.local` est relu à chaque requête,
       # et les `%env(...)%` d'un conteneur compilé se résolvent à l'exécution.
+      #
+      # L'étape s'exécute TOUJOURS et se retire elle-même quand le secret est
+      # absent. Pas de `if:` ici : le contexte `secrets` n'est pas lisible dans
+      # une condition d'étape, et GitHub refuse alors le fichier ENTIER — le
+      # déploiement ne démarre même pas, sans qu'aucun job n'apparaisse.
       - name: Poser la clé de traduction assistée
-        if: ${{ secrets.ANTHROPIC_API_KEY != '' }}
         env:
           HOST: ${{ secrets.DEPLOY_HOST }}
           USER: ${{ secrets.DEPLOY_USER }}
@@ -191,6 +195,12 @@ jobs:
           MODELE: ${{ vars.MERISU_AI_MODEL }}
         run: |
           set -euo pipefail
+
+          if [ -z "${CLE:-}" ]; then
+            echo "→ Aucun secret ANTHROPIC_API_KEY : traduction assistée non configurée."
+            echo "  Rien de cassé — les écrans ne proposeront pas le bouton « Traduire »."
+            exit 0
+          fi
 
           APP_PATH="${APP_PATH//$'\r'/}"
           APP_PATH="${APP_PATH#"${APP_PATH%%[![:space:]]*}"}"
