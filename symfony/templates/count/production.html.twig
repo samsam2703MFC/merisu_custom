@@ -97,6 +97,38 @@
         <div class="banner banner--warn">{{ 'produce.missingThreshold'|trans }}</div>
       {% endif %}
 
+      {#
+        L'avancement de l'atelier.
+
+        Seules les lignes À PRODUIRE comptent : un plan de vingt lignes dont
+        quinze sont à zéro n'est pas « 5/20 fait ». Les mêmes tuiles et la même
+        barre que la check-list — un chiffre qui compte se présente partout de
+        la même façon.
+      #}
+      {% if progress.total > 0 %}
+        <section class="card">
+          <div class="stats stats--compact">
+            <div class="stat">
+              <p class="stat__label">{{ 'produce.statTotal'|trans }}</p>
+              <p class="stat__value">{{ progress.total }}</p>
+            </div>
+            <div class="stat">
+              <p class="stat__label">{{ 'produce.statDone'|trans }}</p>
+              <p class="stat__value stat__value--ok">{{ progress.done }}</p>
+            </div>
+            <div class="stat">
+              <p class="stat__label">{{ 'produce.statLeft'|trans }}</p>
+              <p class="stat__value stat__value--todo">{{ progress.left }}</p>
+            </div>
+          </div>
+
+          <span class="ck-bar ck-bar--lg">
+            <span class="ck-bar__fill ck-bar__fill--{{ progress.percent == 100 ? 'full' : (progress.percent > 0 ? 'part' : 'none') }}"
+                  style="--w: {{ progress.percent }}%"></span>
+          </span>
+        </section>
+      {% endif %}
+
       {# Impression des étiquettes depuis la liste elle-même : le lien porte la
          date et la catégorie affichées, on imprime donc ce qu'on regarde. #}
       <div class="form-actions">
@@ -110,9 +142,33 @@
       <div class="count-list">
         {% for line in lines %}
           {% set product = products[line.productId] ?? null %}
+          {% set entry = entries[line.productId] ?? null %}
+          {# La MÊME question que la barre d'avancement, posée par le domaine :
+             deux définitions du « à faire » auraient fini par diverger, et la
+             barre n'aurait plus décrit les cases affichées. #}
+          {% set aFaire = line.qtyToProduce > 0 or line.missingThreshold %}
 
-          <article class="count-item produce-item">
+          <article class="count-item produce-item {{ entry ? 'produce-item--done' : '' }}">
             <header class="count-item__header">
+              {#
+                La case à cocher est un LIEN, pas une case.
+
+                Cocher engage un nom : il faut donc un code, et un code ne se
+                saisit pas dans une case à cocher. Le lien mène à l'écran de
+                signature — le même geste qu'un point de check-list, pour la
+                même raison. Une vraie case aurait été plus rapide et aurait
+                menti sur qui a produit.
+              #}
+              {% if aFaire %}
+                <a class="produce-check {{ entry ? 'produce-check--done' : '' }}"
+                   href="{{ path('production_done', { productId: line.productId, forDate: forDate, category: category }) }}"
+                   aria-label="{{ (entry ? 'produce.undoLine' : 'produce.markLine')|trans({
+                     '%product%': product ? product_label(product) : line.productId
+                   }) }}">
+                  {% if entry %}{{ ui.icon('check') }}{% endif %}
+                </a>
+              {% endif %}
+
               <span class="count-item__name">
                 {{ product ? product_label(product) : line.productId }}
               </span>
@@ -121,6 +177,23 @@
               {% endif %}
               {% if line.missingThreshold %}
                 {{ ui.badge('warn', 'common.notDefined'|trans) }}
+              {% endif %}
+
+              {#
+                Imprimer CETTE ligne. Sans elle, terminer une fournée obligeait
+                à retirer toute la planche du jour pour une seule étiquette.
+                Absente quand il n'y a rien à produire : une étiquette « 0 »
+                gaspille du papier et embrouille le plan de travail.
+              #}
+              {% if line.qtyToProduce > 0 %}
+                <a class="produce-item__print"
+                   href="{{ path('production_labels', { forDate: forDate, productId: line.productId }) }}"
+                   title="{{ 'produce.printLine'|trans }}"
+                   aria-label="{{ 'produce.printLineOf'|trans({
+                     '%product%': product ? product_label(product) : line.productId
+                   }) }}">
+                  {{ ui.icon('printer') }}
+                </a>
               {% endif %}
             </header>
 
@@ -133,6 +206,21 @@
               {{ 'produce.required'|trans }} : {{ line.requiredPieces|qty }}
               · {{ 'produce.closingStock'|trans }} : {{ line.closingStock|qty }}
             </p>
+
+            {#
+              Qui l'a faite, et quand. C'est la raison d'être du code : la
+              ligne porte le nom de qui a réellement produit, et non de qui
+              avait ouvert la session ce matin-là.
+            #}
+            {% if entry %}
+              <p class="produce-item__who">
+                {{ ui.icon('check') }}
+                {{ 'produce.doneBy'|trans({
+                  '%name%': doneBy[line.productId] ?? '—',
+                  '%time%': entry.doneAt|time_short
+                }) }}
+              </p>
+            {% endif %}
 
             {% if line.qtyToProduce == 0 and not line.missingThreshold %}
               {{ ui.badge('ok', 'produce.nothing'|trans) }}

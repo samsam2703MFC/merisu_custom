@@ -172,6 +172,20 @@ produce:
     useBy: 'À consommer jusqu''au'
     ingredients: 'Ingrédients'
     allergens: 'Allergènes'
+    markLine: 'Marquer « %product% » comme produit'
+    undoLine: 'Reprendre la signature de « %product% »'
+    printLine: 'Imprimer cette étiquette'
+    printLineOf: 'Imprimer les étiquettes de « %product% »'
+    signWithCode: 'Signez avec votre code'
+    confirm: "C'est fait"
+    undo: 'Retirer la signature'
+    signed: 'Ligne signée.'
+    undone: 'Signature retirée.'
+    doneBy: 'Fait par %name% à %time%'
+    missingThresholdShort: 'Sans seuil'
+    statTotal: 'À produire'
+    statDone: Faites
+    statLeft: Restantes
 
 admin:
     translate:

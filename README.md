@@ -153,6 +153,20 @@ Les emplacements portent des codes stables `PRODUIT_1` … `PRODUIT_8`, qui ne
 changent pas quand l'admin renomme un produit et ne sont jamais affichés aux
 utilisateurs.
 
+### La liste de production se coche, et porte un nom
+
+Chaque ligne à produire a sa case, l'heure et le nom de qui l'a faite, et une
+icône d'impression qui ne sort **que ses** étiquettes — terminer une fournée
+n'oblige plus à retirer la planche entière du jour.
+
+Cocher demande un **code PIN**, comme un point de check-list, et pour la même
+raison : ce qui est enregistré est le nom de qui a **réellement produit**, pas
+de qui avait ouvert la session le matin. Décocher demande le même code — une
+signature qu'un simple clic efface ne vaut rien.
+
+Les signatures vivent dans leur propre table : le plan peut être recalculé et
+refigé sans que le travail de l'atelier disparaisse.
+
 ### Les quatre langues, sans les retaper quatre fois
 
 L'administration ne montre qu'**une** langue : celle de l'écran. Les trois

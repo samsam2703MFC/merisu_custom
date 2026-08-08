@@ -457,6 +457,10 @@
       <path d="M7 8h10v10.5a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2Z"/>
       <path d="M5.5 4.5h13v3.5h-13z"/>
       <path d="M9.5 12h5"/>
+    {% elseif name == 'check' %}
+      {# Fait. Un trait épais et une pente franche : à 16 px dans une case
+         cochée, un chevron trop fin se lit comme un accent. #}
+      <path d="M5 12.5 10 17.5 19 7" stroke-width="2.4"/>
     {% elseif name == 'languages' %}
       {#
         Traduire : un globe, et ses méridiens.

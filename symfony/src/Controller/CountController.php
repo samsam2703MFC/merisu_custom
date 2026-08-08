@@ -4,16 +4,20 @@ declare(strict_types=1);
 
 namespace Merisu\Inventory\Controller;
 
+use Merisu\Inventory\Adapter\ConsultantServiceInterface;
 use Merisu\Inventory\Domain\BusinessDate;
 use Merisu\Inventory\Domain\ContainerQuantity;
 use Merisu\Inventory\Domain\CountMoment;
+use Merisu\Inventory\Domain\ProductionProgress;
 use Merisu\Inventory\Security\CurrentUser;
+use Merisu\Inventory\Security\PinField;
 use Merisu\Inventory\Service\InventoryService;
 use Merisu\Inventory\Service\PhotoStorage;
 use Merisu\Inventory\Store\Store;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
 
 /** §7.2 / §7.3 — Écrans de saisie du matin (08:00) et du soir (22:00). */
@@ -25,6 +29,15 @@ final class CountController extends AbstractController
         private readonly Store $store,
         private readonly PhotoStorage $photos,
         private readonly ChecklistController $checklist,
+        private readonly ConsultantServiceInterface $consultants,
+        /**
+         * Le même limiteur que la connexion et la check-list.
+         *
+         * Signer une ligne de production, c'est présenter un code : c'est donc
+         * une porte, et elle donne sur le même million de combinaisons à six
+         * chiffres. En inventer un second l'aurait ouverte d'autant.
+         */
+        private readonly RateLimiterFactory $loginIpLimiter,
     ) {
     }
 
@@ -294,6 +307,123 @@ final class CountController extends AbstractController
     }
 
     /**
+     * Signature d'une ligne du plan : « c'est fait, et c'est moi ».
+     *
+     * Un écran par ligne, exactement comme un point de check-list, et pour la
+     * même raison : le code PIN désigne QUI a produit, pas qui était connecté.
+     * Marco ouvre la session à 8 h, Claire monte les verrines à 11 h — sans
+     * cette distinction, l'historique attribue le travail de Claire à Marco.
+     *
+     * Une case à cocher ordinaire aurait suffi si l'on s'était contenté de
+     * « quelqu'un l'a fait ». C'est justement ce qu'on ne veut pas.
+     */
+    #[Route('/a-produire/{productId}/fait', name: 'production_done', methods: ['GET'])]
+    public function productionDone(Request $request, string $productId): Response
+    {
+        $this->currentUser->requireConsultant();
+
+        [$line, $forDate, $workstationId] = $this->planLine($request, $productId);
+
+        $entry = $this->store->productionEntries($forDate, $workstationId)[$productId] ?? null;
+
+        return $this->render('count/production_point.html.twig', [
+            'product' => $this->store->product($productId),
+            'line' => $line,
+            'entry' => $entry,
+            'forDate' => $forDate,
+            'category' => trim((string) $request->query->get('category', '')),
+            'doneBy' => $entry === null ? null : $this->consultants->consultant($entry->consultantId)?->displayName(),
+        ]);
+    }
+
+    /**
+     * Coche — ou décoche — la ligne, au nom du code saisi.
+     *
+     * Le décochage passe par le MÊME code : une ligne signée ne se retire pas
+     * d'un simple clic, sans quoi la signature ne vaudrait rien. L'audit garde
+     * la trace des deux gestes, y compris de celui qui efface.
+     */
+    #[Route('/a-produire/{productId}/fait', name: 'production_done_save', methods: ['POST'])]
+    public function saveProductionDone(Request $request, string $productId): Response
+    {
+        $this->currentUser->requireConsultant();
+
+        [$line, $forDate, $workstationId] = $this->planLine($request, $productId);
+
+        $category = trim((string) $request->request->get('category', ''));
+        $retourEcran = ['forDate' => $forDate, 'category' => $category];
+        $retourSignature = $retourEcran + ['productId' => $productId];
+
+        // Le limiteur AVANT de regarder le code : sans cela, il suffirait de
+        // compter les réponses pour distinguer un code refusé d'un inconnu.
+        if (!$this->loginIpLimiter->create($request->getClientIp() ?? 'unknown')->consume()->isAccepted()) {
+            $this->store->audit('anonyme', 'ANONYMOUS', 'PRODUCTION_PIN_THROTTLED', $workstationId, $forDate, [
+                'productId' => $productId,
+            ]);
+            $this->addFlash('error', 'signature.throttled');
+
+            return $this->redirectToRoute('production_done', $retourSignature);
+        }
+
+        $signataire = $this->consultants->authenticateByPin(PinField::read($request));
+
+        if ($signataire === null) {
+            $this->addFlash('error', 'signature.unknownPin');
+
+            return $this->redirectToRoute('production_done', $retourSignature);
+        }
+
+        $annule = $request->request->get('action') === 'undo';
+
+        if ($annule) {
+            $this->store->clearProductionDone($forDate, $workstationId, $productId);
+        } else {
+            $this->store->markProductionDone($forDate, $workstationId, $productId, $line->qtyToProduce, $signataire->id);
+        }
+
+        $this->store->audit(
+            $signataire->id,
+            $signataire->role->value,
+            $annule ? 'PRODUCTION_UNDONE' : 'PRODUCTION_DONE',
+            $workstationId,
+            $forDate,
+            ['productId' => $productId, 'qty' => $line->qtyToProduce],
+        );
+
+        $this->addFlash('success', $annule ? 'produce.undone' : 'produce.signed');
+
+        return $this->redirectToRoute('production', $retourEcran);
+    }
+
+    /**
+     * La ligne de plan visée, ou 404.
+     *
+     * Le produit doit figurer AU PLAN du jour demandé : signer une ligne qui
+     * n'y est pas reviendrait à attester d'un travail que rien ne demandait,
+     * et l'écran suivant ne la montrerait même pas.
+     *
+     * @return array{\Merisu\Inventory\Domain\ProductionPlanRow, string, string}
+     */
+    private function planLine(Request $request, string $productId): array
+    {
+        $workstationId = $this->currentUser->resolveWorkstation($request->query->get('workstationId'));
+        $today = $this->inventory->today();
+
+        $forDate = (string) ($request->request->get('forDate') ?? $request->query->get('forDate', ''));
+        if (!BusinessDate::isValid($forDate)) {
+            $forDate = BusinessDate::next($today);
+        }
+
+        foreach ($this->store->plan($forDate, $workstationId) as $line) {
+            if ($line->productId === $productId) {
+                return [$line, $forDate, $workstationId];
+            }
+        }
+
+        throw $this->createNotFoundException('PLAN_LINE_NOT_FOUND');
+    }
+
+    /**
      * Étiquettes de production, prêtes à imprimer.
      *
      * Une page à part, sans navigation : ce qui sort de l'imprimante ne doit
@@ -346,7 +476,34 @@ final class CountController extends AbstractController
             ));
         }
 
+        // Un seul produit : c'est l'icône d'impression d'UNE ligne. La planche
+        // ne porte alors que ses étiquettes, ce qui est exactement ce qu'on
+        // veut quand on vient de terminer cette fournée-là et qu'on ne va pas
+        // gaspiller une feuille pour les quatorze autres.
+        $productId = trim((string) $request->query->get('productId', ''));
+
+        if ($productId !== '') {
+            $lines = array_values(array_filter(
+                $lines,
+                static fn ($line): bool => $line->productId === $productId,
+            ));
+        }
+
+        // Qui a fait quoi, et l'avancement qui en découle. Lus ici plutôt que
+        // dans le gabarit : l'écran et la planche d'étiquettes partagent cette
+        // vue, et une lecture par ligne aurait posé une requête par produit.
+        $entries = $this->store->productionEntries($forDate, $workstationId);
+
+        $doneBy = [];
+        foreach ($entries as $id => $entry) {
+            $doneBy[$id] = $this->consultants->consultant($entry->consultantId)?->displayName();
+        }
+
         return [
+            'entries' => $entries,
+            'doneBy' => $doneBy,
+            'progress' => ProductionProgress::of($lines, $entries),
+            'productId' => $productId,
             'forDate' => $forDate,
             'dayOfWeek' => BusinessDate::dayOfWeek($forDate),
             'computedFromDate' => BusinessDate::previous($forDate),

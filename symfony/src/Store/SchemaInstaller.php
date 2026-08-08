@@ -192,6 +192,31 @@ final class SchemaInstaller
             $t->addUniqueIndex(['for_date', 'workstation_id', 'product_id'], 'inv_plan_unique');
         }
 
+        // Lignes de production FAITES, signées au code PIN.
+        //
+        // Une table à part, et non deux colonnes sur `inv_production_plan` :
+        // le plan se supprime et se réinsère en bloc à chaque figeage, et une
+        // revalidation du comptage du soir aurait effacé le travail de
+        // l'atelier. Ici, le plan peut se recalculer sans que douze tiramisus
+        // sortis à 14 h 32 cessent d'être sortis.
+        if (!\in_array('inv_production_done', $existing, true)) {
+            $t = $schema->createTable('inv_production_done');
+            $t->addColumn('id', 'string', ['length' => 64]);
+            $t->addColumn('for_date', 'string', ['length' => 10]);
+            $t->addColumn('workstation_id', 'string', ['length' => 64]);
+            $t->addColumn('product_id', 'string', ['length' => 64]);
+            // La quantité PORTÉE PAR LE PLAN au moment de la signature : un
+            // plan refigé plus tard changerait sinon le chiffre sous la
+            // signature, sans que personne ait rien touché.
+            $t->addColumn('qty', 'float', ['default' => 0]);
+            $t->addColumn('consultant_id', 'string', ['length' => 64]);
+            $t->addColumn('done_at', 'string', ['length' => 32]);
+            $t->setPrimaryKey(['id']);
+            // Une ligne, un jour, un poste : une seule signature, reprise.
+            $t->addUniqueIndex(['for_date', 'workstation_id', 'product_id'], 'inv_production_done_unique');
+            $t->addIndex(['for_date', 'workstation_id'], 'inv_production_done_by_date');
+        }
+
         if (!\in_array('inv_material_movement', $existing, true)) {
             $t = $schema->createTable('inv_material_movement');
             $t->addColumn('id', 'string', ['length' => 64]);

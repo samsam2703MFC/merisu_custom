@@ -1,0 +1,131 @@
+{#
+  Signature d'une ligne de production.
+
+  Une seule question par écran : cette ligne, est-elle faite, et par qui ? Le
+  code PIN suffit à désigner qui signe — il est unique par personne, comme à la
+  connexion — donc aucun sélecteur de nom, et aucun moyen de signer d'un nom
+  qui ne serait pas le sien.
+
+  Le même écran, le même geste et le même gabarit qu'un point de check-list :
+  ce sont deux fois la même chose — attester d'un travail fait — et deux
+  présentations différentes n'auraient appris à personne à s'en servir plus
+  vite.
+
+  Le nom apparaît dès le sixième chiffre, avant que la signature ne soit
+  engagée : une faute de frappe se voit alors tout de suite, au lieu de se
+  découvrir sur une ligne signée au nom d'un collègue.
+#}
+{% extends 'base.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% set nom = product ? product_label(product) : line.productId %}
+
+{% block title %}{{ nom }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block content %}
+
+  <div class="identity-bar">
+    <span class="muted">{{ current_user().consultant.displayName }}</span>
+  </div>
+
+  <form class="sign"
+        method="post"
+        action="{{ path('production_done_save', { productId: line.productId }) }}"
+        data-sign-form
+        data-identify-url="{{ path('checklist_identify') }}">
+
+    {# La date et la catégorie voyagent avec l'envoi : le retour se fait sur
+       l'écran qu'on a quitté, filtre compris, et non sur « demain, tout ». #}
+    <input type="hidden" name="forDate" value="{{ forDate }}">
+    <input type="hidden" name="category" value="{{ category }}">
+
+    <header class="sign__head">
+      <p class="sign__eyebrow">
+        {{ 'produce.title'|trans }} · {{ forDate|long_date }}
+      </p>
+      <h1 class="sign__title">{{ nom }}</h1>
+
+      {# La quantité EST la question. Elle a la taille qui va avec : on signe
+         « douze », pas « la ligne tiramisu ». #}
+      <p class="sign__qty">
+        <span class="sign__qty-value">{{ line.qtyToProduce|qty }}</span>
+        <span class="sign__qty-unit">{{ product ? product.unit : '' }}</span>
+      </p>
+
+      {% if line.missingThreshold %}
+        <p class="sign__flags">
+          <span class="sign__flag">{{ 'produce.missingThresholdShort'|trans }}</span>
+        </p>
+      {% endif %}
+    </header>
+
+    {# Une ligne déjà signée se reprend : on rappelle son état plutôt que de la
+       laisser croire vierge — et le bouton change de sens plus bas. #}
+    {% if entry %}
+      <p class="banner banner--ok" role="status">
+        {{ 'produce.doneBy'|trans({ '%name%': doneBy ?? '—', '%time%': entry.doneAt|time_short }) }}
+      </p>
+    {% endif %}
+
+    <div class="sign__body">
+
+      {# Les coupes de l'écran de connexion, à l'identique. #}
+      <div class="pin sign__pin">
+        <span class="field__label" id="pin-label">{{ 'produce.signWithCode'|trans }}</span>
+
+        <div class="pin__cups" role="group" aria-labelledby="pin-label">
+          {% for rang in 1..6 %}
+            <span class="pin__cup-wrap">
+              <input class="pin__cup"
+                     type="password"
+                     id="{{ rang == 1 ? 'secret' : 'secret-' ~ rang }}"
+                     name="secret[]"
+                     inputmode="numeric"
+                     pattern="[0-9]"
+                     maxlength="1"
+                     placeholder=" "
+                     autocomplete="off"
+                     aria-label="{{ 'produce.signWithCode'|trans }} — {{ rang }}/6"
+                     {{ rang == 1 ? 'autofocus' : '' }}
+                     required>
+              <span class="pin__star" aria-hidden="true">✱</span>
+            </span>
+          {% endfor %}
+        </div>
+
+        {# Rempli par le script au sixième chiffre ; `aria-live` le fait
+           annoncer aux lecteurs d'écran, pour qui la confirmation compte
+           autant qu'à l'œil. Sans script, la zone reste vide et la signature
+           fonctionne quand même : le code est revérifié au serveur. #}
+        <p class="sign__who" data-sign-who aria-live="polite">
+          <span class="sign__who-name" data-sign-name></span>
+        </p>
+      </div>
+
+    </div>
+
+    <div class="sign__actions">
+      <button type="submit" class="button button--primary button--large sign__go"
+              name="action" value="done">
+        {{ 'produce.confirm'|trans }}
+      </button>
+
+      {# Décocher passe par le MÊME code : une ligne signée ne se retire pas
+         d'un simple clic, sans quoi la signature ne vaudrait rien. #}
+      {% if entry %}
+        <p class="sign__alt">
+          <button type="submit" class="sign__link sign__link--fail" name="action" value="undo">
+            {{ 'produce.undo'|trans }}
+          </button>
+        </p>
+      {% endif %}
+    </div>
+  </form>
+
+  <div class="form-actions form-actions--centered">
+    <a class="button button--ghost" href="{{ path('production', { forDate: forDate, category: category }) }}">
+      {{ 'common.cancel'|trans }}
+    </a>
+  </div>
+
+{% endblock %}

@@ -478,6 +478,54 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 .produce-item__qty { margin: 0; }
 .produce-item__value { font-family: var(--font-display); font-size: 2.2rem; font-weight: 600; color: var(--coffee); }
 
+/* ── Ligne de production : cocher, imprimer, signer ───────────────────────── */
+
+/* La case à cocher.
+   C'est un LIEN dessiné en case : cocher engage un nom, il faut donc un code,
+   et un code ne se saisit pas dans une case à cocher. La cible fait 44 px —
+   on la vise avec un pouce ganté de latex, au-dessus d'un plan de travail. */
+.produce-check {
+  flex: none;
+  width: var(--touch); height: var(--touch);
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 2px solid var(--cream-outline);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ok);
+  transition: border-color .15s, background .15s;
+}
+.produce-check:hover, .produce-check:focus-visible { border-color: var(--plum); }
+.produce-check .icon { width: 26px; height: 26px; }
+
+.produce-check--done { border-color: var(--ok); background: var(--ok-bg); }
+
+/* Impression d'UNE ligne, poussée à droite de l'entête : au bout du geste,
+   là où elle ne dispute la place ni au nom ni à la case. */
+.produce-item__print {
+  flex: none;
+  margin-left: auto;
+  width: var(--touch); height: var(--touch);
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 10px;
+  color: var(--plum);
+}
+.produce-item__print:hover, .produce-item__print:focus-visible { background: var(--plum-light); }
+
+/* Qui a produit, et quand. Vert comme la case cochée : les deux disent la
+   même chose, et une seconde couleur aurait laissé chercher le rapport. */
+.produce-item__who {
+  margin: 0;
+  display: flex; align-items: center; gap: var(--space-1);
+  color: var(--ok);
+  font-size: .9rem; font-weight: 600;
+}
+.produce-item__who .icon { width: 18px; height: 18px; flex: none; }
+
+/* La ligne faite reste lisible — elle n'est pas barrée ni grisée : on la
+   consulte encore pour imprimer une étiquette ou vérifier une quantité. Seul
+   son liseré change, ce qui suffit à la distinguer de loin. */
+.produce-item--done { border-color: var(--ok); }
+
 .photo-strip { display: flex; gap: .4rem; flex-wrap: wrap; }
 .photo-strip__thumb {
   width: 56px; height: 56px;
@@ -3403,6 +3451,13 @@ select:disabled, select.field__input:disabled { background-image: url("data:imag
   font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
 }
 .sign__flag--photo { background: var(--plum-light); color: var(--plum-dark); }
+
+/* La quantité à produire, sur l'écran de signature.
+   Elle EST la question : on signe « douze », pas « la ligne tiramisu ». D'où
+   la taille du chiffre de la liste, reprise telle quelle. */
+.sign__qty { margin: 0; display: flex; align-items: baseline; justify-content: center; gap: var(--space-1); }
+.sign__qty-value { font-family: var(--font-display); font-size: 2.6rem; font-weight: 600; color: var(--plum-dark); line-height: 1; }
+.sign__qty-unit { color: var(--text-muted); font-size: 1rem; }
 
 .sign__body { display: flex; flex-direction: column; gap: var(--space-3); }
 .field__optional { font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--text-muted); }

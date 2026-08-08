@@ -169,6 +169,20 @@ produce:
     useBy: 'Consumir preferentemente antes del'
     ingredients: 'Ingredientes'
     allergens: 'Alérgenos'
+    markLine: 'Marcar «%product%» como producido'
+    undoLine: 'Corregir la firma de «%product%»'
+    printLine: 'Imprimir esta etiqueta'
+    printLineOf: 'Imprimir las etiquetas de «%product%»'
+    signWithCode: 'Firma con tu código'
+    confirm: Hecho
+    undo: 'Retirar la firma'
+    signed: 'Línea firmada.'
+    undone: 'Firma retirada.'
+    doneBy: 'Hecho por %name% a las %time%'
+    missingThresholdShort: 'Sin umbral'
+    statTotal: 'Por producir'
+    statDone: Hechas
+    statLeft: Restantes
 
 admin:
     translate:

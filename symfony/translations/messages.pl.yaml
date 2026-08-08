@@ -169,6 +169,20 @@ produce:
     useBy: 'Należy spożyć do'
     ingredients: 'Składniki'
     allergens: 'Alergeny'
+    markLine: 'Oznacz „%product%” jako wykonane'
+    undoLine: 'Popraw podpis dla „%product%”'
+    printLine: 'Drukuj tę etykietę'
+    printLineOf: 'Drukuj etykiety dla „%product%”'
+    signWithCode: 'Podpisz swoim kodem'
+    confirm: 'Zrobione'
+    undo: 'Usuń podpis'
+    signed: 'Pozycja podpisana.'
+    undone: 'Podpis usunięty.'
+    doneBy: 'Wykonane przez %name% o %time%'
+    missingThresholdShort: 'Bez progu'
+    statTotal: 'Do wykonania'
+    statDone: Wykonane
+    statLeft: Pozostałe
 
 admin:
     translate:

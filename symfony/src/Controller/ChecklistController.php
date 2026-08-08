@@ -10,6 +10,7 @@ use Merisu\Inventory\Domain\ChecklistSection;
 use Merisu\Inventory\Domain\ChecklistSignature;
 use Merisu\Inventory\Domain\ChecklistStatus;
 use Merisu\Inventory\Security\CurrentUser;
+use Merisu\Inventory\Security\PinField;
 use Merisu\Inventory\Service\InventoryService;
 use Merisu\Inventory\Service\PhotoStorage;
 use Merisu\Inventory\Store\Store;
@@ -158,7 +159,7 @@ final class ChecklistController extends AbstractController
         // conserver — et trois lectures posaient trois fois la même requête.
         $existante = $this->store->checklistEntries($date, $workstationId)[$itemId] ?? null;
 
-        $signataire = $this->consultants->authenticateByPin(self::pin($request));
+        $signataire = $this->consultants->authenticateByPin(PinField::read($request));
         $status = ChecklistStatus::tryFromLoose($request->request->get('status'));
         $note = trim((string) $request->request->get('note', ''));
 
@@ -235,29 +236,12 @@ final class ChecklistController extends AbstractController
             return new JsonResponse(['name' => null], Response::HTTP_TOO_MANY_REQUESTS);
         }
 
-        $consultant = $this->consultants->authenticateByPin(self::pin($request));
+        $consultant = $this->consultants->authenticateByPin(PinField::read($request));
 
         return new JsonResponse(['name' => $consultant?->displayName()]);
     }
 
     // ── Utilitaires ──────────────────────────────────────────────────────────
-
-    /**
-     * Le code, saisi coupe par coupe comme à la connexion.
-     *
-     * Les six champs arrivent en tableau ; ils sont recollés ici et non dans le
-     * gabarit, pour que le format de saisie reste une affaire d'écran.
-     */
-    private static function pin(Request $request): string
-    {
-        $valeur = $request->request->all()['secret'] ?? '';
-
-        if (\is_array($valeur)) {
-            $valeur = implode('', array_map(static fn (mixed $c): string => trim((string) $c), $valeur));
-        }
-
-        return trim((string) $valeur);
-    }
 
     private function refus(string $itemId, string $cle): Response
     {

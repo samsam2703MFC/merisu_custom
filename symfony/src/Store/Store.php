@@ -27,6 +27,7 @@ use Merisu\Inventory\Domain\ParMatrixEntry;
 use Merisu\Inventory\Domain\Product;
 use Merisu\Inventory\Domain\ProductCategory;
 use Merisu\Inventory\Domain\ProductNature;
+use Merisu\Inventory\Domain\ProductionEntry;
 use Merisu\Inventory\Domain\ProductionPlanRow;
 use Merisu\Inventory\Domain\ProductionPlanStatus;
 use Merisu\Inventory\Domain\RecipeLine;
@@ -762,7 +763,88 @@ final class Store
         ]);
     }
 
-    // ── Arrêt de production ─────────────────────────────────────────────────
+    // ── Lignes de production faites ─────────────────────────────────────────
+
+    /**
+     * Les lignes signées d'un jour et d'un poste, indexées par produit.
+     *
+     * Indexées par produit et non par identifiant de ligne : l'écran pose la
+     * question dans ce sens — « ce produit est-il fait ? » — et une liste
+     * l'aurait obligé à la parcourir à chaque ligne affichée.
+     *
+     * @return array<string, ProductionEntry>
+     */
+    public function productionEntries(string $forDate, string $workstationId): array
+    {
+        $rows = $this->db->fetchAllAssociative(
+            'SELECT * FROM inv_production_done WHERE for_date = ? AND workstation_id = ?',
+            [$forDate, $workstationId],
+        );
+
+        $entries = [];
+
+        foreach ($rows as $row) {
+            $entries[(string) $row['product_id']] = new ProductionEntry(
+                (string) $row['for_date'],
+                (string) $row['workstation_id'],
+                (string) $row['product_id'],
+                (float) $row['qty'],
+                (string) $row['consultant_id'],
+                (string) $row['done_at'],
+            );
+        }
+
+        return $entries;
+    }
+
+    /**
+     * Signe une ligne comme faite — ou la resigne au nom d'un autre.
+     *
+     * Reprise plutôt que refus : une ligne cochée par erreur au nom de Marco
+     * se corrige en la recochant avec son propre code, sans passer par un
+     * effacement puis une nouvelle signature.
+     */
+    public function markProductionDone(
+        string $forDate,
+        string $workstationId,
+        string $productId,
+        float $qty,
+        string $consultantId,
+    ): void {
+        $existing = $this->db->fetchOne(
+            'SELECT id FROM inv_production_done WHERE for_date = ? AND workstation_id = ? AND product_id = ?',
+            [$forDate, $workstationId, $productId],
+        );
+
+        $data = [
+            'qty' => $qty,
+            'consultant_id' => $consultantId,
+            'done_at' => self::now(),
+        ];
+
+        if ($existing !== false) {
+            $this->db->update('inv_production_done', $data, ['id' => (string) $existing]);
+
+            return;
+        }
+
+        $this->db->insert('inv_production_done', $data + [
+            'id' => self::uuid(),
+            'for_date' => $forDate,
+            'workstation_id' => $workstationId,
+            'product_id' => $productId,
+        ]);
+    }
+
+    /** Décoche une ligne. L'audit, lui, garde la trace des deux gestes. */
+    public function clearProductionDone(string $forDate, string $workstationId, string $productId): void
+    {
+        $this->db->delete('inv_production_done', [
+            'for_date' => $forDate,
+            'workstation_id' => $workstationId,
+            'product_id' => $productId,
+        ]);
+    }
 
     // ── Note du jour ────────────────────────────────────────────────────────
 

@@ -169,6 +169,20 @@ produce:
     useBy: 'Da consumarsi entro il'
     ingredients: 'Ingredienti'
     allergens: 'Allergeni'
+    markLine: 'Segna «%product%» come prodotto'
+    undoLine: 'Correggi la firma di «%product%»'
+    printLine: 'Stampa questa etichetta'
+    printLineOf: 'Stampa le etichette di «%product%»'
+    signWithCode: 'Firma con il tuo codice'
+    confirm: Fatto
+    undo: 'Rimuovi la firma'
+    signed: 'Riga firmata.'
+    undone: 'Firma rimossa.'
+    doneBy: 'Fatto da %name% alle %time%'
+    missingThresholdShort: 'Senza soglia'
+    statTotal: 'Da produrre'
+    statDone: Fatte
+    statLeft: Rimanenti
 
 admin:
     translate:
