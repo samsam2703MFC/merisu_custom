@@ -336,6 +336,17 @@ admin:
         NEAREST: 'Al più vicino'
         NONE: 'Nessun arrotondamento'
     parMatrix:
+        weatherTitle: 'Scorta minima dedotta dallo smaltito'
+        weatherIntro: 'Media degli ultimi sei stessi giorni della settimana, corretta dal tempo previsto. È lo SMALTITO — vendite e perdite insieme — finché la cassa non è collegata.'
+        weather: 'Tempo previsto'
+        weatherEdit: 'Regolare le percentuali'
+        weatherEditHint: 'Una percentuale si applica alla media: +5 % la alza di cinque centesimi, −9 % la abbassa altrettanto. Zero = nessun effetto dichiarato.'
+        suggestionTitle: 'Media %avg% su %samples% rilevazioni, corretta del %pct% %.'
+        weathers:
+            SUNNY: 'Sole'
+            CLOUDY: 'Tempo ordinario'
+            RAIN: 'Pioggia'
+            SNOW: 'Neve'
         title: 'Matrice delle soglie'
         subtitle: 'Pezzi richiesti in magazzino, per giorno e per prodotto.'
         hint: "Una cella vuota significa «nessuna soglia definita»: la produzione calcolata sarà 0 e comparirà un avviso."

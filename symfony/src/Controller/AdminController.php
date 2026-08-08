@@ -26,8 +26,10 @@ use Merisu\Inventory\Domain\RoundingMode;
 use Merisu\Inventory\Domain\SalesSummary;
 use Merisu\Inventory\Domain\ShopRanking;
 use Merisu\Inventory\Domain\SupplierSource;
+use Merisu\Inventory\Domain\WeatherKind;
 use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Service\InventoryService;
+use Merisu\Inventory\Service\MinimumStockService;
 use Merisu\Inventory\Service\ReportService;
 use Merisu\Inventory\Store\Store;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -47,6 +49,7 @@ final class AdminController extends AbstractController
         private readonly RecipeServiceInterface $recipes,
         private readonly ConsultantServiceInterface $consultants,
         private readonly ShopRankingServiceInterface $ranking,
+        private readonly MinimumStockService $minimums,
     ) {
     }
 
@@ -512,12 +515,67 @@ final class AdminController extends AbstractController
             }
         }
 
+        $products = $this->store->products();
+
+        // Le temps qu'il fera : c'est une SAISIE, pas une mesure. Personne ne
+        // connaît la météo de demain depuis une base de données, et le
+        // sélecteur laisse l'atelier trancher. Temps ordinaire par défaut,
+        // c'est-à-dire aucune correction.
+        $meteo = WeatherKind::fromLoose($request->query->get('meteo'));
+
         return $this->render('admin/par_matrix.html.twig', [
-            'products' => $this->store->products(),
+            'products' => $products,
             'days' => DayOfWeek::all(),
             'values' => $values,
             'productsInRows' => $request->query->get('orientation') !== 'days',
+            // Minimums déduits de l'écoulé des six dernières semaines, corrigés
+            // par la météo. Une SUGGESTION à côté du seuil saisi, jamais à sa
+            // place : c'est l'administrateur qui décide de l'adopter.
+            'suggestions' => $this->minimums->forWeek(
+                $products,
+                $this->inventory->today(),
+                null,
+                $meteo,
+            ),
+            'weather' => $meteo,
+            'weatherKinds' => WeatherKind::all(),
+            'weatherRatios' => $this->store->weatherRatios(),
         ]);
+    }
+
+    /**
+     * Enregistre les corrections météo.
+     *
+     * Elles vivent avec les seuils, et non dans Paramètres : c'est le même
+     * geste — décider combien il faut avoir en rayon — et l'écran montre juste
+     * au-dessus ce que chaque pourcentage change.
+     */
+    #[Route('/seuils/meteo', name: 'admin_weather_save', methods: ['POST'])]
+    public function saveWeatherRatios(Request $request): Response
+    {
+        $admin = $this->currentUser->requireAdmin();
+
+        /** @var array<string,mixed> $saisis */
+        $saisis = $request->request->all('weather');
+        $modifies = [];
+
+        foreach (WeatherKind::all() as $temps) {
+            if (!\array_key_exists($temps->value, $saisis)) {
+                continue;
+            }
+
+            $pct = (float) str_replace(',', '.', (string) $saisis[$temps->value]);
+            $this->store->saveWeatherRatio($temps, $pct);
+            $modifies[$temps->value] = $pct;
+        }
+
+        if ($modifies !== []) {
+            $this->store->audit($admin->id, $admin->role->value, 'WEATHER_RATIOS_UPDATED', null, null, $modifies);
+        }
+
+        $this->addFlash('success', 'common.saved');
+
+        return $this->redirectToRoute('admin_par_matrix', ['meteo' => $request->request->get('meteo')]);
     }
 
     #[Route('/seuils', name: 'admin_par_matrix_save', methods: ['POST'])]

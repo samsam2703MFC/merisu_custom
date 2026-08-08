@@ -32,6 +32,7 @@ use Merisu\Inventory\Domain\RoundingMode;
 use Merisu\Inventory\Domain\SupplierSource;
 use Merisu\Inventory\Domain\SyncKind;
 use Merisu\Inventory\Domain\SyncStatus;
+use Merisu\Inventory\Domain\WeatherKind;
 
 /**
  * Accès aux données du module.
@@ -1002,6 +1003,52 @@ final class Store
         }
 
         return $byCount;
+    }
+
+    // ── Correction météo du stock minimum ───────────────────────────────────
+
+    /**
+     * Le pourcentage par type de temps, complété au besoin.
+     *
+     * Un type absent de la table y est INSCRIT à sa valeur de départ plutôt
+     * que renvoyé au vol : sans cela, l'écran d'administration afficherait un
+     * réglage que la base ne porte pas, et le premier enregistrement en aurait
+     * fait apparaître un qu'on n'a pas touché.
+     *
+     * @return array<string, float>
+     */
+    public function weatherRatios(): array
+    {
+        $connus = [];
+        foreach ($this->db->fetchAllAssociative('SELECT kind, percent FROM inv_weather_ratio') as $r) {
+            $connus[(string) $r['kind']] = (float) $r['percent'];
+        }
+
+        $sortie = [];
+        foreach (WeatherKind::all() as $temps) {
+            if (!isset($connus[$temps->value])) {
+                $this->db->insert('inv_weather_ratio', [
+                    'kind' => $temps->value,
+                    'percent' => $temps->defaultPercent(),
+                ]);
+                $connus[$temps->value] = $temps->defaultPercent();
+            }
+
+            $sortie[$temps->value] = $connus[$temps->value];
+        }
+
+        return $sortie;
+    }
+
+    public function saveWeatherRatio(WeatherKind $kind, float $percent): void
+    {
+        // Borné : une correction en dessous de −100 % viderait le rayon, et
+        // au-dessus de +500 % un réglage saisi de travers noierait l'atelier.
+        $percent = max(-100.0, min(500.0, $percent));
+
+        if ($this->db->update('inv_weather_ratio', ['percent' => $percent], ['kind' => $kind->value]) === 0) {
+            $this->db->insert('inv_weather_ratio', ['kind' => $kind->value, 'percent' => $percent]);
+        }
     }
 
     // ── File d'envoi vers le système hôte ───────────────────────────────────

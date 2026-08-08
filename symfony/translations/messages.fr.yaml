@@ -339,6 +339,17 @@ admin:
         NEAREST: 'Au plus proche'
         NONE: 'Aucun arrondi'
     parMatrix:
+        weatherTitle: 'Stock minimum déduit de l''écoulé'
+        weatherIntro: 'Moyenne des six derniers mêmes jours de semaine, corrigée par le temps qu''il fera. C''est de l''ÉCOULÉ — ventes et pertes confondues — tant que la caisse n''est pas branchée.'
+        weather: 'Temps prévu'
+        weatherEdit: 'Régler les pourcentages'
+        weatherEditHint: 'Un pourcentage s''applique à la moyenne : +5 % la relève de cinq centièmes, −9 % l''abaisse d''autant. Zéro = aucun effet déclaré.'
+        suggestionTitle: 'Moyenne %avg% sur %samples% relevé(s), corrigée de %pct% %.'
+        weathers:
+            SUNNY: 'Soleil'
+            CLOUDY: 'Temps ordinaire'
+            RAIN: 'Pluie'
+            SNOW: 'Neige'
         title: 'Matrice des seuils'
         subtitle: 'Pièces requises en stock, par jour et par produit.'
         hint: "Une case vide signifie « aucun seuil défini » : la production calculée sera 0 et un avertissement apparaîtra."

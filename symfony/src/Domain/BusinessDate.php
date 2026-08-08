@@ -44,6 +44,36 @@ final class BusinessDate
         return DayOfWeek::all()[$index - 1];
     }
 
+    /**
+     * Les N dernières occurrences d'un jour de semaine, `$today` EXCLU.
+     *
+     * Du plus récent au plus ancien. Aujourd'hui est écarté même quand c'est
+     * le bon jour : sa clôture n'a pas encore eu lieu, et l'écoulé d'une
+     * journée en cours ferait plonger une moyenne au moment précis où l'on
+     * s'en sert pour décider quoi produire demain.
+     *
+     * @return list<string>
+     */
+    public static function lastOccurrences(DayOfWeek $dayOfWeek, string $today, int $count = 6): array
+    {
+        self::assertValid($today);
+
+        // Reculer d'un jour, puis jusqu'au jour de semaine visé : au plus sept
+        // pas, et la boucle s'arrête forcément puisque les sept jours défilent.
+        $curseur = self::addDays($today, -1);
+        while (self::dayOfWeek($curseur) !== $dayOfWeek) {
+            $curseur = self::addDays($curseur, -1);
+        }
+
+        $dates = [];
+        for ($i = 0; $i < max(0, $count); ++$i) {
+            $dates[] = $curseur;
+            $curseur = self::addDays($curseur, -7);
+        }
+
+        return $dates;
+    }
+
     /** Jour suivant. Gère nativement le passage de semaine, de mois et d'année. */
     public static function next(string $date): string
     {

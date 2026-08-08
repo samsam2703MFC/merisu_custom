@@ -268,6 +268,22 @@ final class SchemaInstaller
         }
 
         /*
+          Correction météo du stock minimum, en pourcentage.
+
+          En base et non dans le code (§2) : le coefficient d'une averse à
+          Varsovie n'est pas celui d'une averse à Palerme, et l'atelier doit
+          pouvoir l'ajuster après une saison sans attendre un déploiement.
+
+          Le type EST la clé : deux lignes « pluie » n'auraient aucun sens.
+        */
+        if (!\in_array('inv_weather_ratio', $existing, true)) {
+            $t = $schema->createTable('inv_weather_ratio');
+            $t->addColumn('kind', 'string', ['length' => 16]);
+            $t->addColumn('percent', 'float', ['default' => 0]);
+            $t->setPrimaryKey(['kind']);
+        }
+
+        /*
           File d'envoi vers le système hôte — patron « boîte d'envoi ».
 
           En base, et non en mémoire : la validation d'un comptage y écrit dans

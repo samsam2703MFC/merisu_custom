@@ -88,4 +88,59 @@ final class BusinessDateTest extends TestCase
 
         self::assertSame('2026-07-31', BusinessDate::today('Zone/Inexistante', $instant));
     }
+
+    // ── Occurrences d'un jour de semaine ────────────────────────────────────
+
+    /** 2026-08-07 est un vendredi ; les six vendredis précédents. */
+    #[Test]
+    public function rend_les_six_dernieres_occurrences_du_jour_vise(): void
+    {
+        self::assertSame(
+            ['2026-07-31', '2026-07-24', '2026-07-17', '2026-07-10', '2026-07-03', '2026-06-26'],
+            BusinessDate::lastOccurrences(DayOfWeek::Fri, '2026-08-07'),
+        );
+    }
+
+    /**
+     * Aujourd'hui est écarté même quand c'est le bon jour : sa clôture n'a pas
+     * eu lieu, et l'écoulé d'une journée en cours ferait plonger la moyenne au
+     * moment précis où l'on s'en sert.
+     */
+    #[Test]
+    public function n_inclut_jamais_le_jour_meme(): void
+    {
+        $dates = BusinessDate::lastOccurrences(DayOfWeek::Fri, '2026-08-07');
+
+        self::assertNotContains('2026-08-07', $dates);
+        self::assertSame('2026-07-31', $dates[0]);
+    }
+
+    /** Un autre jour de semaine : on recule jusqu'à lui, puis de sept en sept. */
+    #[Test]
+    public function recule_jusqu_au_jour_vise_puis_de_semaine_en_semaine(): void
+    {
+        // Le lundi qui précède le vendredi 2026-08-07 est le 2026-08-03.
+        self::assertSame(
+            ['2026-08-03', '2026-07-27', '2026-07-20'],
+            BusinessDate::lastOccurrences(DayOfWeek::Mon, '2026-08-07', 3),
+        );
+    }
+
+    /** Le passage de mois et d'année se fait tout seul. */
+    #[Test]
+    public function traverse_le_changement_d_annee(): void
+    {
+        // 2027-01-04 est un lundi ; le vendredi précédent est le 2027-01-01.
+        self::assertSame(
+            ['2027-01-01', '2026-12-25'],
+            BusinessDate::lastOccurrences(DayOfWeek::Fri, '2027-01-04', 2),
+        );
+    }
+
+    #[Test]
+    public function un_nombre_nul_ou_negatif_ne_rend_aucune_date(): void
+    {
+        self::assertSame([], BusinessDate::lastOccurrences(DayOfWeek::Fri, '2026-08-07', 0));
+        self::assertSame([], BusinessDate::lastOccurrences(DayOfWeek::Fri, '2026-08-07', -3));
+    }
 }

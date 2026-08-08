@@ -2055,6 +2055,56 @@ body { overflow-x: hidden; }
 .cats__nature .seg { min-width: 8rem; }
 .cats__nature .seg__name { white-space: normal; }
 
+/* ── Stock minimum : météo et suggestions ────────────────────────────────── */
+
+/* Quatre vignettes plutôt que deux : l'interrupteur segmenté se déplie en une
+   grille qui se replie à deux colonnes sur téléphone. `minmax(0, 1fr)` et non
+   `1fr` — « Temps ordinaire » fixerait sinon la largeur des quatre. */
+.seg__grid--four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+@media (max-width: 560px) {
+  .seg__grid--four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* Les arrondis d'un interrupteur à une seule ligne ne valent plus rien sur
+     deux : chaque vignette reprend les siens, et sa bordure droite. */
+  .seg--wide .seg__box { border-radius: var(--radius); border-right-width: 1px; }
+  .seg--wide .seg__grid { gap: var(--space-1); }
+}
+
+/* Vignettes cliquables : ce sont des liens, pas des boutons radio. */
+.seg--wide .seg__box {
+  flex-direction: column;
+  gap: 2px;
+  min-height: 72px;
+  color: inherit;
+  text-decoration: none;
+}
+.seg--wide .seg__box.is-active {
+  border-color: var(--plum);
+  background: var(--plum-light);
+  color: var(--plum-dark);
+  box-shadow: inset 0 0 0 1px var(--plum);
+  border-right-width: 1px;
+}
+@media (hover: hover) {
+  .seg--wide .seg__box:not(.is-active):hover { border-color: var(--plum); }
+}
+
+.seg__pct { font-size: .7rem; font-variant-numeric: tabular-nums; opacity: .75; }
+
+/* La suggestion, sous le seuil saisi et visiblement moins forte que lui : elle
+   informe, elle ne remplace pas. Prune, comme tout ce qui est calculé. */
+.table__sugg {
+  display: block;
+  margin-top: 2px;
+  font-size: .7rem;
+  font-weight: 600;
+  color: var(--plum);
+  font-variant-numeric: tabular-nums;
+  cursor: help;
+}
+
+.mt { margin-top: var(--space-4); }
+
 /* ── File de remontée vers l'hôte ────────────────────────────────────────── */
 
 /* Les trois compteurs servent aussi de filtre : cliquables, donc, et celui qui

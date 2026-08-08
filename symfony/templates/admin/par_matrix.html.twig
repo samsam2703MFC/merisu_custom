@@ -15,6 +15,71 @@
 
   <div class="banner banner--info">{{ 'admin.parMatrix.hint'|trans }}</div>
 
+  {#
+    ── Stock minimum déduit de l'écoulé ──────────────────────────────────────
+
+    Moyenne des six derniers mêmes jours de semaine, corrigée par le temps
+    qu'il fera. Le même jour de semaine, et non les quarante-deux derniers
+    jours : un samedi ne ressemble pas à un mardi, et la moyenne à plat
+    écraserait justement la variation qu'on cherche à suivre.
+
+    Le temps est une SAISIE, pas une mesure : personne ne connaît la météo de
+    demain depuis une base de données. Changer le sélecteur recalcule les
+    suggestions sous chaque seuil.
+  #}
+  <section class="card">
+    <h2 class="card__title">{{ 'admin.parMatrix.weatherTitle'|trans }}</h2>
+    <p class="field__hint">{{ 'admin.parMatrix.weatherIntro'|trans }}</p>
+
+    <nav class="seg seg--wide" aria-label="{{ 'admin.parMatrix.weather'|trans }}">
+      <div class="seg__grid seg__grid--four">
+        {% for temps in weatherKinds %}
+          <a class="seg__box {{ temps == weather ? 'is-active' : '' }}"
+             href="{{ path('admin_par_matrix', {
+               meteo: temps.value,
+               orientation: productsInRows ? 'products' : 'days'
+             }) }}">
+            {{ ui.icon(temps.icon) }}
+            <span class="seg__name">{{ ('admin.parMatrix.weathers.' ~ temps.value)|trans }}</span>
+            <span class="seg__pct">{{ weatherRatios[temps.value] > 0 ? '+' : '' }}{{ weatherRatios[temps.value] }} %</span>
+          </a>
+        {% endfor %}
+      </div>
+    </nav>
+
+    {# Les pourcentages se règlent ici, sous les vignettes qui les affichent :
+       on voit tout de suite ce que le chiffre saisi change. #}
+    <details class="mt">
+      <summary class="admin-new__summary">
+        {{ ui.icon('sliders') }}
+        <span>{{ 'admin.parMatrix.weatherEdit'|trans }}</span>
+      </summary>
+
+      <form method="post" action="{{ path('admin_weather_save') }}" class="form">
+        <input type="hidden" name="meteo" value="{{ weather.value }}">
+
+        <div class="field-grid">
+          {% for temps in weatherKinds %}
+            <div class="field">
+              <label class="field__label" for="w-{{ temps.value }}">
+                {{ ('admin.parMatrix.weathers.' ~ temps.value)|trans }}
+              </label>
+              <input class="field__input" type="number" step="0.1" min="-100" max="500"
+                     id="w-{{ temps.value }}" name="weather[{{ temps.value }}]"
+                     value="{{ weatherRatios[temps.value] }}">
+            </div>
+          {% endfor %}
+        </div>
+
+        <p class="field__hint">{{ 'admin.parMatrix.weatherEditHint'|trans }}</p>
+
+        <div class="form-actions">
+          <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
+        </div>
+      </form>
+    </details>
+  </section>
+
   <section class="card">
     <div class="card__header">
       <a class="button button--secondary"
@@ -51,6 +116,23 @@
                              name="par[{{ product.id }}][{{ day.value }}]"
                              value="{{ values[product.id][day.value] ?? '' }}"
                              aria-label="{{ product_label(product) }} — {{ ('days.' ~ day.value)|trans }}">
+                      {#
+                        Suggestion, sous le seuil et non à sa place : le seuil
+                        saisi a été posé par quelqu'un qui connaît la boutique,
+                        et l'écraser d'office lui retirerait la main.
+
+                        Muette en dessous de trois relevés : une moyenne bâtie
+                        sur deux jours se laisse fausser par un seul jour de
+                        soldes, et la donner pour un repère tromperait.
+                      #}
+                      {% set sugg = suggestions[day.value][product.id] ?? null %}
+                      {% if sugg and sugg.isReliable %}
+                        <span class="table__sugg" title="{{ 'admin.parMatrix.suggestionTitle'|trans({
+                          '%avg%': sugg.average|qty,
+                          '%samples%': sugg.samples,
+                          '%pct%': sugg.weatherPercent
+                        }) }}">{{ sugg.value|qty }}</span>
+                      {% endif %}
                     </td>
                   {% endfor %}
                 </tr>
@@ -76,6 +158,23 @@
                              name="par[{{ product.id }}][{{ day.value }}]"
                              value="{{ values[product.id][day.value] ?? '' }}"
                              aria-label="{{ product_label(product) }} — {{ ('days.' ~ day.value)|trans }}">
+                      {#
+                        Suggestion, sous le seuil et non à sa place : le seuil
+                        saisi a été posé par quelqu'un qui connaît la boutique,
+                        et l'écraser d'office lui retirerait la main.
+
+                        Muette en dessous de trois relevés : une moyenne bâtie
+                        sur deux jours se laisse fausser par un seul jour de
+                        soldes, et la donner pour un repère tromperait.
+                      #}
+                      {% set sugg = suggestions[day.value][product.id] ?? null %}
+                      {% if sugg and sugg.isReliable %}
+                        <span class="table__sugg" title="{{ 'admin.parMatrix.suggestionTitle'|trans({
+                          '%avg%': sugg.average|qty,
+                          '%samples%': sugg.samples,
+                          '%pct%': sugg.weatherPercent
+                        }) }}">{{ sugg.value|qty }}</span>
+                      {% endif %}
                     </td>
                   {% endfor %}
                 </tr>

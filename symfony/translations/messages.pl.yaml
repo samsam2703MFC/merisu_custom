@@ -336,6 +336,17 @@ admin:
         NEAREST: 'Do najbliższej'
         NONE: 'Bez zaokrąglenia'
     parMatrix:
+        weatherTitle: 'Minimalny zapas z rozchodu'
+        weatherIntro: 'Średnia z sześciu ostatnich takich samych dni tygodnia, skorygowana o pogodę. To ROZCHÓD — sprzedaż i straty razem — dopóki kasa nie jest podłączona.'
+        weather: 'Prognoza'
+        weatherEdit: 'Ustaw procenty'
+        weatherEditHint: 'Procent działa na średnią: +5 % podnosi ją o pięć setnych, −9 % obniża o tyle samo. Zero = brak zadeklarowanego wpływu.'
+        suggestionTitle: 'Średnia %avg% z %samples% pomiarów, skorygowana o %pct% %.'
+        weathers:
+            SUNNY: 'Słońce'
+            CLOUDY: 'Zwykła pogoda'
+            RAIN: 'Deszcz'
+            SNOW: 'Śnieg'
         title: 'Matryca progów'
         subtitle: 'Wymagana liczba sztuk w magazynie, wg dnia i produktu.'
         hint: 'Puste pole oznacza „brak progu”: obliczona produkcja wyniesie 0 i pojawi się ostrzeżenie.'
