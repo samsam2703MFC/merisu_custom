@@ -120,6 +120,9 @@
       texte. L'icône suit l'état — cagette vide ou chargée — pour que la tuile
       se lise d'un coup d'œil, de loin, en cuisine.
     #}
+    {# Absente pour qui n'a pas la tuile : le menu ne propose pas une porte
+       fermée. Le verrou, lui, est dans le contrôleur. #}
+    {% if produceOpen %}
     <div class="task task--produce">
       {# Deux liens VOISINS, jamais superposés : le premier occupe tout ce qui
          reste, le second sa pastille. Un lien étiré par-dessus la tuile aurait
@@ -151,6 +154,7 @@
         </a>
       {% endif %}
     </div>
+    {% endif %}
 
     {# Consultations, présentées à part des tâches à faire. #}
     <a class="task task--secondary" href="{{ path('network') }}">

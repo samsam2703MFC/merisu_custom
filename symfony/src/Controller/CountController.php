@@ -10,6 +10,8 @@ use Merisu\Inventory\Domain\ContainerQuantity;
 use Merisu\Inventory\Domain\CountMoment;
 use Merisu\Inventory\Domain\LabelSheet;
 use Merisu\Inventory\Domain\ProductionProgress;
+use Merisu\Inventory\Domain\TaskAccess;
+use Merisu\Inventory\Domain\TaskTile;
 use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Security\PinField;
 use Merisu\Inventory\Service\InventoryService;
@@ -55,7 +57,12 @@ final class CountController extends AbstractController
     #[Route('/', name: 'home', methods: ['GET'])]
     public function home(): Response
     {
-        $this->currentUser->requireConsultant();
+        $consultant = $this->currentUser->requireConsultant();
+
+        // Le menu ne montre que les tuiles ouvertes à cette personne. Il ne
+        // les PROTÈGE pas — c'est le rôle de `requireTile` dans chaque action.
+        // Ici, il s'agit seulement de ne pas proposer une porte fermée.
+        $ouvertes = TaskAccess::open($consultant->tiles, $consultant->role);
 
         $date = $this->inventory->today();
         $workstationId = $this->currentUser->resolveWorkstation();
@@ -80,9 +87,11 @@ final class CountController extends AbstractController
             'date' => $date,
             'workstationId' => $workstationId,
             'suggested' => $suggested,
-            'tasks' => [
+            // Filtrées sur les tuiles ouvertes, en gardant l'ordre du menu.
+            'tasks' => array_values(array_filter([
                 [
                     'route' => 'count_morning', 'icon' => 'sunrise',
+                    'tile' => TaskTile::Morning,
                     'label' => 'nav.morning',
                     'progressKey' => 'tasks.inProgress',
                     'todoKey' => 'tasks.todo',
@@ -96,6 +105,7 @@ final class CountController extends AbstractController
                 ],
                 [
                     'route' => 'count_evening', 'icon' => 'moon',
+                    'tile' => TaskTile::Evening,
                     'label' => 'nav.evening',
                     'progressKey' => 'tasks.inProgress',
                     'todoKey' => 'tasks.todo',
@@ -111,6 +121,7 @@ final class CountController extends AbstractController
                 // entière, d'où l'absence de `time` et de mise en avant.
                 [
                     'route' => 'checklist', 'icon' => 'checklist',
+                    'tile' => TaskTile::Checklist,
                     'label' => 'nav.checklist',
                     // « 4 sur 6 produits saisis » n'aurait aucun sens ici :
                     // une check-list compte des points, pas des produits.
@@ -127,7 +138,10 @@ final class CountController extends AbstractController
                     'total' => $checklist['total'],
                     'highlight' => false,
                 ],
-            ],
+            ], static fn (array $t): bool => \in_array($t['tile'], $ouvertes, true))),
+            // La tuile « À produire » suit la même règle, mais elle est rendue
+            // à part dans le gabarit : elle a sa propre mise en page.
+            'produceOpen' => \in_array(TaskTile::Produce, $ouvertes, true),
             // Le plan du jour vient du soir précédent : c'est une consultation,
             // pas une saisie, d'où sa présentation distincte.
             'planForToday' => $morning['planForToday'],
@@ -159,7 +173,9 @@ final class CountController extends AbstractController
 
     private function renderSheet(Request $request, CountMoment $moment): Response
     {
-        $this->currentUser->requireConsultant();
+        // Le droit se vérifie ICI, pas seulement dans le menu : une tuile
+        // masquée mais atteignable par son adresse n'est pas une permission.
+        $this->currentUser->requireTile($moment->isEvening() ? TaskTile::Evening : TaskTile::Morning);
 
         $date = $this->resolveDate($request);
         $workstationId = $this->currentUser->resolveWorkstation($request->query->get('workstationId'));
@@ -300,7 +316,7 @@ final class CountController extends AbstractController
     #[Route('/a-produire', name: 'production', methods: ['GET'])]
     public function production(Request $request): Response
     {
-        $this->currentUser->requireConsultant();
+        $this->currentUser->requireTile(TaskTile::Produce);
 
         $view = $this->productionView($request);
 
@@ -321,7 +337,7 @@ final class CountController extends AbstractController
     #[Route('/a-produire/{productId}/fait', name: 'production_done', methods: ['GET'])]
     public function productionDone(Request $request, string $productId): Response
     {
-        $this->currentUser->requireConsultant();
+        $this->currentUser->requireTile(TaskTile::Produce);
 
         [$line, $forDate, $workstationId] = $this->planLine($request, $productId);
 
@@ -347,7 +363,7 @@ final class CountController extends AbstractController
     #[Route('/a-produire/{productId}/fait', name: 'production_done_save', methods: ['POST'])]
     public function saveProductionDone(Request $request, string $productId): Response
     {
-        $this->currentUser->requireConsultant();
+        $this->currentUser->requireTile(TaskTile::Produce);
 
         [$line, $forDate, $workstationId] = $this->planLine($request, $productId);
 
@@ -438,7 +454,7 @@ final class CountController extends AbstractController
     #[Route('/a-produire/etiquettes', name: 'production_labels', methods: ['GET'])]
     public function labels(Request $request): Response
     {
-        $consultant = $this->currentUser->requireConsultant();
+        $consultant = $this->currentUser->requireTile(TaskTile::Produce);
 
         $view = $this->productionView($request);
 

@@ -257,6 +257,8 @@ admin:
         noShop: 'La cassa non indica a quale negozio appartiene questa postazione: i dati del negozio non possono essere mostrati.'
         source: 'Dati provenienti dalla cassa, mai dalle giacenze: questo modulo non conosce né gli incassi né gli scontrini. Finché la cassa non è collegata, sono valori dimostrativi.'
     team:
+        tiles: 'Attività consentite'
+        tilesHint: 'Nessuna casella spuntata = tutte le attività. Spuntare limita: il menu della postazione mostra solo queste, e le altre vengono rifiutate anche digitandone l''indirizzo. Per escludere del tutto una persona, togli la spunta a «Attivo» in cima alla scheda.'
         title: 'Squadra'
         subtitle: 'Account dei venditori e postazioni di lavoro.'
         adapterWarning: 'Questi account vivono in questa applicazione. Quando il modulo « Consulente / Stanowisko » sarà collegato, saranno gestiti lì e questa schermata sparirà.'

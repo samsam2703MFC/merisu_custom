@@ -9,6 +9,7 @@ use Merisu\Inventory\Domain\ChecklistItem;
 use Merisu\Inventory\Domain\ChecklistSection;
 use Merisu\Inventory\Domain\ChecklistSignature;
 use Merisu\Inventory\Domain\ChecklistStatus;
+use Merisu\Inventory\Domain\TaskTile;
 use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Security\PinField;
 use Merisu\Inventory\Service\InventoryService;
@@ -67,7 +68,7 @@ final class ChecklistController extends AbstractController
     #[Route('/check-list', name: 'checklist', methods: ['GET'])]
     public function show(): Response
     {
-        $this->currentUser->requireConsultant();
+        $this->currentUser->requireTile(TaskTile::Checklist);
 
         $date = $this->inventory->today();
         $workstationId = $this->currentUser->resolveWorkstation();
@@ -84,7 +85,7 @@ final class ChecklistController extends AbstractController
     #[Route('/check-list/{section}', name: 'checklist_section', methods: ['GET'])]
     public function section(string $section): Response
     {
-        $this->currentUser->requireConsultant();
+        $this->currentUser->requireTile(TaskTile::Checklist);
 
         $volet = ChecklistSection::tryFromLoose($section);
         if ($volet === null) {
@@ -111,7 +112,7 @@ final class ChecklistController extends AbstractController
     #[Route('/check-list/point/{itemId}', name: 'checklist_point', methods: ['GET'])]
     public function point(string $itemId): Response
     {
-        $this->currentUser->requireConsultant();
+        $this->currentUser->requireTile(TaskTile::Checklist);
 
         $item = $this->store->checklistItem($itemId);
         if ($item === null || !$item->active) {
@@ -133,7 +134,7 @@ final class ChecklistController extends AbstractController
     #[Route('/check-list/point/{itemId}', name: 'checklist_point_save', methods: ['POST'])]
     public function savePoint(Request $request, string $itemId): Response
     {
-        $this->currentUser->requireConsultant();
+        $this->currentUser->requireTile(TaskTile::Checklist);
 
         $item = $this->store->checklistItem($itemId);
         if ($item === null || !$item->active) {
@@ -230,6 +231,10 @@ final class ChecklistController extends AbstractController
     #[Route('/check-list/reconnaitre', name: 'checklist_identify', methods: ['POST'])]
     public function identify(Request $request): JsonResponse
     {
+        // Une simple reconnaissance de code, PARTAGÉE : l'écran de signature
+        // du plan de production s'en sert aussi. L'exiger sous la tuile
+        // check-list aurait privé de son retour de frappe quelqu'un qui a le
+        // droit de produire mais pas celui de cocher la check-list.
         $this->currentUser->requireConsultant();
 
         if (!$this->loginIpLimiter->create($request->getClientIp() ?? 'unknown')->consume()->isAccepted()) {

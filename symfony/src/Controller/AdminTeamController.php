@@ -8,6 +8,7 @@ use Merisu\Inventory\Adapter\Consultant;
 use Merisu\Inventory\Adapter\Workstation;
 use Merisu\Inventory\Domain\Locale;
 use Merisu\Inventory\Domain\Role;
+use Merisu\Inventory\Domain\TaskTile;
 use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Service\PinHasher;
 use Merisu\Inventory\Store\ConsultantStore;
@@ -55,6 +56,9 @@ final class AdminTeamController extends AbstractController
             // Boutiques déjà citées, proposées en autocomplétion : sans elles,
             // « Merisù Centrum » finirait écrit de trois façons différentes.
             'shops' => $this->boutiquesConnues(),
+            // Les tuiles du menu, proposées à cocher. Une liste FERMÉE : elles
+            // correspondent aux écrans du poste, et il n'y a rien à y inventer.
+            'tiles' => TaskTile::all(),
         ]);
     }
 
@@ -140,6 +144,9 @@ final class AdminTeamController extends AbstractController
                 self::listeLibre((string) $request->request->get('shops', '')),
                 $request->request->all()['workstations'] ?? [],
                 Locale::tryFromLoose((string) $request->request->get('locale')),
+                // Tuiles autorisées. Aucune case cochée = toutes : c'est
+                // `TaskAccess` qui le décide, et l'écran le dit.
+                TaskTile::cleanList((array) ($request->request->all()['tiles'] ?? [])),
             ),
             $pinHash,
             max(0, (int) $request->request->get('sortOrder', 0)),

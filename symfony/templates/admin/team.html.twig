@@ -28,7 +28,7 @@
     Bloc de champs partagé par la fiche existante et par la fiche vierge : deux
     copies divergeraient au premier ajout de champ.
   #}
-  {% macro fields(c, roles, locales, workstations, isNew) %}
+  {% macro fields(c, roles, locales, workstations, tiles, isNew) %}
     {% import 'components/_macros.html.twig' as ui %}
 
     <div class="checkbox-row">
@@ -113,6 +113,37 @@
       </div>
     </fieldset>
 
+    {#
+      Tuiles autorisées — CE QUE cette personne fait au poste.
+
+      À ne pas confondre avec les postes ci-dessus : un poste (« stanowisko »)
+      est l'endroit où l'on compte, une tuile est ce qu'on y fait. Quelqu'un
+      peut tenir deux postes et n'avoir droit qu'à la check-list sur les deux.
+
+      AUCUNE case cochée = toutes les tuiles. C'est la seule lecture possible
+      des fiches créées avant ce réglage : les traiter comme « aucun droit »
+      aurait renvoyé toute la boutique sur un menu vide au premier
+      déploiement. Restreindre est donc un geste délibéré — et pour écarter
+      quelqu'un tout à fait, on le désactive, ce que dit la case du haut.
+
+      L'administrateur n'est pas concerné : il règle les droits, il ne se les
+      applique pas. Il ne pourrait sinon plus les rendre à personne.
+    #}
+    <fieldset class="field">
+      <legend class="field__label">{{ 'admin.team.tiles'|trans }}</legend>
+      <div class="checkbox-grid">
+        {% for tuile in tiles %}
+          <div class="checkbox-row">
+            <input type="checkbox" id="tile-{{ c ? c.id : 'nouveau' }}-{{ tuile.value }}"
+                   name="tiles[]" value="{{ tuile.value }}"
+                   {{ c and tuile in c.tiles ? 'checked' : '' }}>
+            <label for="tile-{{ c ? c.id : 'nouveau' }}-{{ tuile.value }}">{{ tuile.labelKey|trans }}</label>
+          </div>
+        {% endfor %}
+      </div>
+      <p class="field__hint">{{ 'admin.team.tilesHint'|trans }}</p>
+    </fieldset>
+
     <div class="field">
       <label class="field__label" for="shops-{{ c ? c.id : 'nouveau' }}">{{ 'admin.team.shops'|trans }}</label>
       <input class="field__input" type="text" id="shops-{{ c ? c.id : 'nouveau' }}"
@@ -161,7 +192,7 @@
       </summary>
 
       <form method="post" action="{{ path('admin_team_save', { id: c.id }) }}" class="form">
-        {{ _self.fields(c, roles, locales, workstations, false) }}
+        {{ _self.fields(c, roles, locales, workstations, tiles, false) }}
 
         <div class="form-actions">
           <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
@@ -189,7 +220,7 @@
     </summary>
 
     <form method="post" action="{{ path('admin_team_save', { id: 'nouveau' }) }}" class="form">
-      {{ _self.fields(null, roles, locales, workstations, true) }}
+      {{ _self.fields(null, roles, locales, workstations, tiles, true) }}
 
       <div class="form-actions">
         <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>

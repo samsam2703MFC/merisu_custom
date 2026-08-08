@@ -9,6 +9,7 @@ use Merisu\Inventory\Adapter\Consultant;
 use Merisu\Inventory\Adapter\Workstation;
 use Merisu\Inventory\Domain\Locale;
 use Merisu\Inventory\Domain\Role;
+use Merisu\Inventory\Domain\TaskTile;
 
 /**
  * Accès aux consultants et aux postes stockés localement.
@@ -150,6 +151,13 @@ final class ConsultantStore
             'locale' => $c->locale?->value,
             'shops' => json_encode($c->shops, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
             'workstations' => json_encode($c->workstations, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+            // Les tuiles autorisées, écrites par leur VALEUR : l'énumération
+            // ne se sérialise pas d'elle-même, et une base doit rester lisible
+            // par un humain qui ouvre la table.
+            'tiles' => json_encode(
+                array_map(static fn (TaskTile $t): string => $t->value, $c->tiles),
+                JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR,
+            ),
             'sort_order' => $sortOrder,
         ];
 
@@ -224,6 +232,7 @@ final class ConsultantStore
             json_decode((string) ($r['shops'] ?? '[]'), true) ?: [],
             json_decode((string) ($r['workstations'] ?? '[]'), true) ?: [],
             Locale::tryFrom((string) ($r['locale'] ?? '')) ?: null,
+            TaskTile::cleanList(json_decode((string) ($r['tiles'] ?? '[]'), true) ?: []),
         );
     }
 }

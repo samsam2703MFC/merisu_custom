@@ -257,6 +257,8 @@ admin:
         noShop: 'La caja no indica a qué tienda pertenece este puesto: no se pueden mostrar las cifras de la tienda.'
         source: 'Cifras procedentes de la caja, nunca de las existencias: este módulo no conoce ni los cobros ni los tickets. Mientras la caja no esté conectada, son valores de demostración.'
     team:
+        tiles: 'Tareas permitidas'
+        tilesHint: 'Ninguna casilla marcada = todas las tareas. Marcar restringe: el menú del puesto solo muestra estas, y las demás se rechazan incluso escribiendo su dirección. Para excluir del todo a alguien, desmarca «Activo» en la parte superior de la ficha.'
         title: 'Equipo'
         subtitle: 'Cuentas de los vendedores y puestos de trabajo.'
         adapterWarning: 'Estas cuentas viven en esta aplicación. Cuando se conecte el módulo « Consultor / Stanowisko », se gestionarán allí y esta pantalla desaparecerá.'

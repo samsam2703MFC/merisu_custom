@@ -6,6 +6,7 @@ namespace Merisu\Inventory\Adapter;
 
 use Merisu\Inventory\Domain\Locale;
 use Merisu\Inventory\Domain\Role;
+use Merisu\Inventory\Domain\TaskTile;
 
 /**
  * Consultant — provient du module « Consultant / Stanowisko » existant.
@@ -38,6 +39,16 @@ final readonly class Consultant
         public array $workstations = [],
         /** Langue préférée, si le module existant la connaît. */
         public ?Locale $locale = null,
+        /**
+         * Tuiles du menu ouvertes à cette personne.
+         *
+         * VIDE = toutes. Les fiches déjà en base n'en portent aucune, et lire
+         * cela comme « aucun droit » aurait renvoyé toute la boutique sur un
+         * menu vide dès la mise à jour. Restreindre est un geste délibéré.
+         *
+         * @var list<TaskTile>
+         */
+        public array $tiles = [],
     ) {
     }
 

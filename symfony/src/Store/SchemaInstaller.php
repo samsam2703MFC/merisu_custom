@@ -108,6 +108,10 @@ final class SchemaInstaller
             $t->addColumn('locale', 'string', ['length' => 5, 'notnull' => false]);
             $t->addColumn('shops', 'text', ['default' => '[]']);           // JSON
             $t->addColumn('workstations', 'text', ['default' => '[]']);    // JSON
+            // Tuiles du menu ouvertes à cette personne. VIDE = toutes : les
+            // fiches créées avant cette colonne ne doivent pas se retrouver
+            // sans aucun droit du jour au lendemain.
+            $t->addColumn('tiles', 'text', ['default' => '[]']);            // JSON
             $t->addColumn('sort_order', 'integer', ['default' => 0]);
             $t->setPrimaryKey(['id']);
             $t->addUniqueIndex(['pin_hash'], 'inv_consultant_pin');
@@ -465,6 +469,16 @@ final class SchemaInstaller
                 // Ajoutée en même temps que celle des produits : une base
                 // installée avant n'a que des rayons de composition.
                 'nature' => "VARCHAR(16) DEFAULT 'COMPOSED' NOT NULL",
+            ],
+            'inv_consultant' => [
+                // Tuiles du menu ouvertes à cette personne.
+                //
+                // La liste VIDE par défaut, et elle vaut « toutes ». C'est la
+                // seule valeur possible : lire l'absence de réglage comme
+                // « aucun droit » aurait renvoyé toute la boutique sur un menu
+                // vide au premier déploiement, un matin à huit heures, sans
+                // qu'un vendeur puisse y remédier.
+                'tiles' => "TEXT DEFAULT '[]' NOT NULL",
             ],
             'inv_checklist_item' => [
                 // Exigence de photo, réglée point par point en administration.

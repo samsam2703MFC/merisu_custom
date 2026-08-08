@@ -7,6 +7,8 @@ namespace Merisu\Inventory\Security;
 use Merisu\Inventory\Adapter\Consultant;
 use Merisu\Inventory\Adapter\ConsultantServiceInterface;
 use Merisu\Inventory\Domain\Role;
+use Merisu\Inventory\Domain\TaskAccess;
+use Merisu\Inventory\Domain\TaskTile;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -84,6 +86,27 @@ final class CurrentUser
     public function requireConsultant(): Consultant
     {
         return $this->consultant() ?? throw new AccessDeniedHttpException('MISSING_TOKEN');
+    }
+
+    /**
+     * Exige le droit d'ouvrir une tuile du menu.
+     *
+     * Appelé par les contrôleurs, et pas seulement par le gabarit : une tuile
+     * masquée à l'écran mais atteignable en tapant son adresse n'est pas une
+     * permission, c'est une décoration. C'est ici que la restriction existe ;
+     * le menu ne fait que la refléter.
+     *
+     * @throws AccessDeniedHttpException si la tuile n'est pas ouverte
+     */
+    public function requireTile(TaskTile $tile): Consultant
+    {
+        $consultant = $this->requireConsultant();
+
+        if (!TaskAccess::allows($consultant->tiles, $tile, $consultant->role)) {
+            throw new AccessDeniedHttpException('TILE_NOT_ALLOWED');
+        }
+
+        return $consultant;
     }
 
     /** @throws AccessDeniedHttpException si le rôle n'est pas ADMIN */

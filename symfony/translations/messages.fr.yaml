@@ -260,6 +260,8 @@ admin:
         noShop: 'La caisse n''indique pas à quelle boutique ce poste est rattaché : les chiffres de la boutique ne peuvent pas être affichés.'
         source: 'Chiffres issus de la caisse, jamais des stocks : ce module ne connaît ni les encaissements ni les tickets. Tant que la caisse n''est pas branchée, ce sont des valeurs de démonstration.'
     team:
+        tiles: 'Tâches autorisées'
+        tilesHint: 'Aucune case cochée = toutes les tâches. Cocher restreint : le menu du poste ne montre plus que celles-ci, et les autres sont refusées même par leur adresse. Pour écarter quelqu''un tout à fait, décochez « Actif » en haut de la fiche.'
         title: 'Équipe'
         subtitle: 'Comptes des vendeurs et postes de travail.'
         adapterWarning: 'Ces comptes vivent dans cette application. Le jour où le module « Consultant / Stanowisko » sera branché, ils seront gérés là-bas et cet écran disparaîtra.'

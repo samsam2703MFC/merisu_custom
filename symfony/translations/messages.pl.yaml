@@ -257,6 +257,8 @@ admin:
         noShop: 'Kasa nie wskazuje, do którego sklepu należy to stanowisko: nie można wyświetlić danych sklepu.'
         source: 'Dane pochodzą z kasy, nigdy ze stanów magazynowych: ten moduł nie zna wpłat ani paragonów. Dopóki kasa nie jest podłączona, są to wartości demonstracyjne.'
     team:
+        tiles: 'Dozwolone zadania'
+        tilesHint: 'Żadne pole niezaznaczone = wszystkie zadania. Zaznaczenie ogranicza: menu stanowiska pokazuje tylko te, a pozostałe są odrzucane nawet po wpisaniu adresu. Aby całkowicie odsunąć osobę, odznacz „Aktywny” na górze karty.'
         title: 'Zespół'
         subtitle: 'Konta sprzedawców i stanowiska pracy.'
         adapterWarning: 'Te konta należą do tej aplikacji. Gdy moduł „Konsultant / Stanowisko” zostanie podłączony, będą zarządzane tam, a ten ekran zniknie.'
