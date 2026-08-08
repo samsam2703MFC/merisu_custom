@@ -48,24 +48,32 @@ final class DbRecipeService implements RecipeServiceInterface
 
     public function materials(): array
     {
-        return array_map(self::toMaterial(...), $this->rawProducts());
+        return array_map(self::toMaterial(...), $this->componentProducts());
     }
 
     public function material(string $id): ?Material
     {
         $product = $this->store->product($id);
 
-        // Un produit fini n'est pas une matière : le rendre ici laisserait le
-        // delta technique comparer un tiramisu à lui-même.
-        return $product === null || $product->isProduced() ? null : self::toMaterial($product);
+        // Un produit EN VENTE n'est le composant de rien : le rendre ici
+        // laisserait le delta technique comparer un tiramisu à lui-même.
+        return $product === null || !$product->nature->canBeComponent()
+            ? null
+            : self::toMaterial($product);
     }
 
-    /** @return list<Product> */
-    private function rawProducts(): array
+    /**
+     * Tout ce qui peut ENTRER dans une nomenclature : matières, emballages et
+     * préparations. Le produit en vente en est exclu — il est le sommet de
+     * l'assemblage, et l'admettre ouvrirait la porte aux cycles.
+     *
+     * @return list<Product>
+     */
+    private function componentProducts(): array
     {
         return array_values(array_filter(
             $this->store->products(activeOnly: true),
-            static fn (Product $p): bool => !$p->isProduced(),
+            static fn (Product $p): bool => $p->nature->canBeComponent(),
         ));
     }
 

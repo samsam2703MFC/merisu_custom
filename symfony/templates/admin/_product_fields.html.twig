@@ -151,7 +151,7 @@
     <fieldset class="field seg">
       <legend class="field__label">{{ 'admin.products.nature'|trans }}</legend>
 
-      <div class="seg__grid">
+      <div class="seg__grid seg__grid--auto">
         {% for nature in natures %}
           <label class="seg__item">
             <input class="seg__radio" type="radio" name="nature" value="{{ nature.value }}"

@@ -86,10 +86,11 @@ final readonly class SyncPayload
     /**
      * Regroupe les lignes selon l'endroit où l'hôte les attend.
      *
-     * Les produits finis se posent un par un
-     * (`PATCH /shops/{id}/products/{id}/inventory`), les matières premières
-     * partent d'un bloc (`POST /shops/{id}/materials/stocktakings`). Le tri se
-     * fait sur la NATURE, déjà portée par chaque fiche.
+     * Ce qui se FABRIQUE se pose un par un
+     * (`PATCH /shops/{id}/products/{id}/inventory`) ; ce qui s'ACHÈTE — matières
+     * et emballages — part d'un bloc
+     * (`POST /shops/{id}/materials/stocktakings`). Le tri se fait sur la
+     * NATURE, déjà portée par chaque fiche.
      *
      * @param list<array<string,mixed>> $lines
      *
@@ -101,7 +102,7 @@ final readonly class SyncPayload
         $sortie = [];
 
         foreach ($lines as $ligne) {
-            if (($ligne['nature'] ?? '') === ProductNature::Raw->value) {
+            if (ProductNature::fromLoose($ligne['nature'] ?? null)->isPurchased()) {
                 $matieres[] = $ligne;
                 continue;
             }

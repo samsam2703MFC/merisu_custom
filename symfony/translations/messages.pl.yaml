@@ -107,7 +107,7 @@ nav:
     products: Produkty
     categories: 'Kategorie'
     parMatrix: Progi
-    recipes: 'Receptury'
+    compositions: 'Składy'
     settings: Ustawienia
     delta: 'Delta techniczna'
     audit: Historia
@@ -283,7 +283,8 @@ admin:
         categoryManage: 'Zarządzaj kategoriami'
         categoryNone: 'Bez kategorii'
         nature: 'Rodzaj'
-        natureHint: 'Do planu produkcji trafiają tylko wyroby: surowiec się kupuje, nie wytwarza. Nadal liczy się go rano i wieczorem.'
+        natureHint: 'Czym jest pozycja. Surowce i opakowania się KUPUJE: ich próg ustawia się ręcznie. Receptury i produkty na sprzedaż się WYTWARZA: ich minimum wynika z rozchodu i trafiają do planu produkcji. Produkt na sprzedaż składa się z pozostałych trzech.'
+        purchasedShelf: 'Dział kupowany'
         schedule: 'Rytm spisu'
         countMorning: 'Przy otwarciu'
         countEvening: 'Przy zamknięciu'
@@ -297,8 +298,10 @@ admin:
         createPlaceholder: 'Tiramisu pistacjowe'
         createEmpty: 'Pusta nazwa produktu: nic nie zostało utworzone.'
         natures:
-            COMPOSED: 'Wyrób'
+            SALE: 'Produkt na sprzedaż'
+            RECIPE: 'Receptura'
             RAW: 'Surowiec'
+            PACKAGING: 'Opakowanie'
         labelSection: 'Informacje na etykiecie'
         shelfLifeDays: 'Termin przydatności (dni)'
         shelfLifeDaysHint: 'Liczony od dnia produkcji. 0 = nie podano: data nie jest drukowana.'
@@ -343,7 +346,7 @@ admin:
         FLOOR: 'W dół do wielokrotności'
         NEAREST: 'Do najbliższej'
         NONE: 'Bez zaokrąglenia'
-    recipes:
+    compositions:
         title: 'Receptury'
         subtitle: 'Ile zużywa jedna sztuka produktu.'
         intro: 'To dane, z których żyje delta techniczna: teoria = wyprodukowano × ilość na sztukę, porównana z rzeczywistym spisem surowców. Bez receptury produkt nie pojawi się w żadnej rozbieżności.'
@@ -359,10 +362,10 @@ admin:
         rejected: 'Zapisano, ale nieczytelne ilości zostały pominięte.'
     parMatrix:
         tabs:
-            raw: 'Surowce'
-            composed: 'Wyroby'
-        rawHint: 'Próg, który USTAWIASZ, produkt po produkcie i dzień po dniu. Nic go nie odgadnie: zużycie worka kakao nie mówi, ile trzeba mieć w zapasie do następnej dostawy.'
-        composedHint: 'Nie ma progu do wpisania: minimum WYNIKA z rozchodu z sześciu ostatnich takich samych dni tygodnia, skorygowanego o spodziewaną pogodę.'
+            raw: 'Kupowane'
+            composed: 'Wytwarzane'
+        rawHint: 'Próg, który USTAWIASZ, pozycja po pozycji i dzień po dniu — surowce i opakowania. Nic go nie odgadnie: zużycie worka kakao nie mówi, ile trzeba mieć w zapasie do następnej dostawy.'
+        composedHint: 'Nie ma progu do wpisania: minimum WYNIKA z rozchodu z sześciu ostatnich takich samych dni tygodnia, skorygowanego o spodziewaną pogodę. Dotyczy produktów na sprzedaż i receptur — receptura się nie sprzedaje, ale się zużywa.'
         noRaw: 'Brak surowców. Rodzaj ustawia się na karcie produktu.'
         noComposed: 'Brak wyrobów. Rodzaj ustawia się na karcie produktu.'
         notEnough: '%samples% pomiarów z ostatnich sześciu tygodni — potrzeba %min%, żeby średnia coś znaczyła.'

@@ -110,7 +110,7 @@ nav:
     products: Produits
     categories: 'Catégories'
     parMatrix: Seuils
-    recipes: 'Recettes'
+    compositions: 'Compositions'
     settings: Paramètres
     delta: 'Delta technique'
     audit: Historique
@@ -286,7 +286,8 @@ admin:
         categoryManage: 'Gérer les catégories'
         categoryNone: 'Non classé'
         nature: 'Nature'
-        natureHint: 'Seules les compositions entrent au plan de production : une matière première s''achète, elle ne se fabrique pas. Elle reste comptée matin et soir.'
+        natureHint: 'Ce que la ligne EST. On ACHÈTE les matières et les emballages : leur seuil se pose à la main. On FABRIQUE les recettes et les produits en vente : leur minimum se déduit de l''écoulé, et ils entrent au plan de production. Un produit en vente s''assemble à partir des trois autres.'
+        purchasedShelf: 'Rayon acheté'
         schedule: 'Rythme de comptage'
         countMorning: 'À l''ouverture'
         countEvening: 'À la clôture'
@@ -300,8 +301,10 @@ admin:
         createPlaceholder: 'Tiramisu pistache'
         createEmpty: 'Nom de produit vide : rien n''a été créé.'
         natures:
-            COMPOSED: 'Composition'
+            SALE: 'Produit en vente'
+            RECIPE: 'Recette'
             RAW: 'Matière première'
+            PACKAGING: 'Emballage'
         labelSection: "Mentions de l'étiquette"
         shelfLifeDays: 'Durée de vie (jours)'
         shelfLifeDaysHint: "À partir du jour de production. 0 = non renseignée : aucune DLC n'est imprimée."
@@ -346,7 +349,7 @@ admin:
         FLOOR: 'Au multiple inférieur'
         NEAREST: 'Au plus proche'
         NONE: 'Aucun arrondi'
-    recipes:
+    compositions:
         title: 'Recettes'
         subtitle: 'Ce qu''une unité de produit consomme.'
         intro: 'C''est la donnée dont vit le delta technique : théorique = produit × quantité par unité, comparé au réel relevé sur les matières. Sans recette, un produit n''apparaît dans aucun écart.'
@@ -362,10 +365,10 @@ admin:
         rejected: 'Enregistré, mais des quantités illisibles ont été écartées.'
     parMatrix:
         tabs:
-            raw: 'Matières premières'
-            composed: 'Compositions'
-        rawHint: 'Un seuil que vous POSEZ, produit par produit et jour par jour. Rien ne peut le deviner : ce qu''on consomme d''un sac de cacao ne dit pas combien il faut en avoir d''avance pour tenir jusqu''à la prochaine livraison.'
-        composedHint: 'Aucun seuil à saisir : le minimum se DÉDUIT de ce qui s''est écoulé les six derniers mêmes jours de semaine, corrigé par le temps attendu.'
+            raw: 'Achetés'
+            composed: 'Fabriqués'
+        rawHint: 'Un seuil que vous POSEZ, ligne par ligne et jour par jour — matières premières et emballages. Rien ne peut le deviner : ce qu''on consomme d''un sac de cacao ne dit pas combien il faut en avoir d''avance pour tenir jusqu''à la prochaine livraison.'
+        composedHint: 'Aucun seuil à saisir : le minimum se DÉDUIT de ce qui s''est écoulé les six derniers mêmes jours de semaine, corrigé par le temps attendu. Vaut pour les produits en vente comme pour les recettes — une recette ne se vend pas, mais elle se consomme.'
         noRaw: 'Aucune matière première. La nature se règle sur la fiche produit.'
         noComposed: 'Aucune composition. La nature se règle sur la fiche produit.'
         notEnough: '%samples% relevé(s) sur les six dernières semaines — il en faut %min% pour que la moyenne veuille dire quelque chose.'

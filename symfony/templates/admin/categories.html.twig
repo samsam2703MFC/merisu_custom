@@ -156,11 +156,13 @@
     <fieldset class="field seg">
       <legend class="field__label">{{ 'admin.products.nature'|trans }}</legend>
 
-      <div class="seg__grid">
+      <div class="seg__grid seg__grid--auto">
         {% for nature in natures %}
           <label class="seg__item">
+            {# Le produit en vente coché d'office : c'est le cas ordinaire, et
+               un rayon se crée le plus souvent pour ce qui passe en caisse. #}
             <input class="seg__radio" type="radio" name="nature" value="{{ nature.value }}"
-                   {{ nature.isComposed ? 'checked' : '' }}>
+                   {{ nature.value == 'SALE' ? 'checked' : '' }}>
             <span class="seg__box">
               {{ ui.icon(nature.icon) }}
               <span class="seg__name">{{ ('admin.products.natures.' ~ nature.value)|trans }}</span>

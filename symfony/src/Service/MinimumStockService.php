@@ -99,9 +99,12 @@ final class MinimumStockService
         $sortie = [];
 
         foreach ($products as $product) {
-            // Une matière première ne se fabrique pas : lui calculer un stock
-            // minimum de PRODUCTION n'aurait aucun sens. Elle se recommande,
-            // et c'est l'approvisionnement qui s'en charge.
+            // Ce qui s'achète — matières, emballages — n'a pas de minimum de
+            // PRODUCTION : cela se recommande, et l'approvisionnement s'en
+            // charge sur un seuil posé à la main.
+            //
+            // Une PRÉPARATION, elle, en a un : elle ne se vend pas, mais elle
+            // se consomme, et son écoulé dit donc quelque chose.
             if (!$product->isProduced()) {
                 $sortie[$product->id] = null;
                 continue;

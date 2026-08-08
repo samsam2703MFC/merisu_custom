@@ -91,17 +91,20 @@ final class Production
 
         foreach ($products as $product) {
             /*
-              Les matières premières n'entrent pas au plan.
+              Ce qui s'ACHÈTE n'entre pas au plan.
 
-              Le mascarpone se commande, il ne se fabrique pas : lui demander
-              une quantité « à produire » n'a aucun sens. Et comme aucune
-              matière n'a de seuil dans la matrice, chacune ajoutait en plus un
+              Le mascarpone se commande, la barquette aussi : leur demander une
+              quantité « à produire » n'a aucun sens. Et comme aucun des deux
+              n'a de seuil dans la matrice, chacun ajoutait en plus un
               avertissement « seuil manquant » qui noyait les vrais.
+
+              Restent les PRÉPARATIONS et les PRODUITS EN VENTE : tous deux se
+              fabriquent, tous deux se planifient.
 
               Le filtre est ici et non dans le service : c'est une règle de
               production, et c'est ici qu'elle se lit avec la formule.
             */
-            if ($product->nature->isRaw()) {
+            if ($product->nature->isPurchased()) {
                 continue;
             }
 

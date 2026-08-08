@@ -184,18 +184,19 @@
           <span class="cat__name">{{ groupe.category ?: 'produce.uncategorised'|trans }}</span>
 
           {#
-            Rayon de matières premières : ce qu'on commande, pas ce qu'on
-            fabrique. Le repère change ce que le vendeur fait du chiffre — un
-            stock bas de mascarpone se rattrape par une commande, pas par une
-            fournée — et ces lignes n'apparaîtront pas à l'écran « À produire ».
+            Rayon de choses qu'on ACHÈTE — matières, emballages — et non
+            qu'on fabrique. Le repère change ce que le vendeur fait du chiffre :
+            un stock bas de mascarpone ou de barquettes se rattrape par une
+            commande, pas par une fournée, et ces lignes n'apparaîtront pas à
+            l'écran « À produire ».
 
-            Affiché seulement quand TOUT le groupe est de la matière : sur un
-            rayon panaché, le dire serait faux pour la moitié des lignes.
+            Affiché seulement quand TOUT le groupe s'achète : sur un rayon
+            panaché, le dire serait faux pour la moitié des lignes.
           #}
-          {% if groupe.products|filter(p => p.nature.isRaw)|length == groupe.products|length %}
-            {% set nature = 'admin.products.natures.RAW'|trans %}
+          {% if groupe.products|filter(p => p.nature.isPurchased)|length == groupe.products|length %}
+            {% set nature = 'admin.products.purchasedShelf'|trans %}
             <span class="badge badge--info badge--icon" title="{{ nature }}">
-              {{ ui.icon('nature-raw', nature) }}
+              {{ ui.icon('supply-central', nature) }}
             </span>
           {% endif %}
 

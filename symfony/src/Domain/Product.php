@@ -61,13 +61,15 @@ final readonly class Product
          */
         public ContainerType $containerType = ContainerType::Tub,
         /**
-         * Matière première ou composition.
+         * Ce que la ligne EST : produit en vente, préparation, matière
+         * première ou emballage.
          *
-         * Seules les compositions entrent au plan de production : demander une
-         * quantité de mascarpone « à produire » n'a aucun sens, et le plan en
-         * réclamait pourtant.
+         * Seul ce qui se FABRIQUE entre au plan de production : demander une
+         * quantité de mascarpone ou de barquettes « à produire » n'a aucun
+         * sens. C'est aussi elle qui décide si la fiche peut porter une
+         * nomenclature, et si elle peut entrer dans celle d'une autre.
          */
-        public ProductNature $nature = ProductNature::Composed,
+        public ProductNature $nature = ProductNature::Sale,
         /**
          * Quand cette ligne se compte : à quels moments, et à quel rythme.
          *
@@ -101,7 +103,7 @@ final readonly class Product
     /** Se fabrique-t-il ? Raccourci de lecture pour les gabarits. */
     public function isProduced(): bool
     {
-        return $this->nature->isComposed();
+        return $this->nature->isProduced();
     }
 
     /** Ingrédients dans la langue demandée, avec le même repli que le libellé. */

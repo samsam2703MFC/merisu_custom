@@ -353,6 +353,23 @@ final class SchemaInstaller
             $this->connection->executeStatement($sql);
         }
 
+        /*
+          `COMPOSED` était l'ancien nom du produit en vente, du temps où la
+          nature n'avait que deux valeurs.
+
+          `ProductNature::fromLoose` le relit déjà comme `SALE`, donc rien n'est
+          cassé sans cette normalisation — mais une base qui porte deux noms
+          pour la même chose se lit mal, et une requête écrite à la main
+          passerait à côté de la moitié des lignes. Idempotent.
+        */
+        foreach (['inv_product', 'inv_category'] as $table) {
+            if (\in_array($table, $existing, true)) {
+                $this->connection->executeStatement(
+                    "UPDATE {$table} SET nature = 'SALE' WHERE nature = 'COMPOSED'",
+                );
+            }
+        }
+
         $this->ensureColumns();
         $this->ensureSettingsRow();
     }

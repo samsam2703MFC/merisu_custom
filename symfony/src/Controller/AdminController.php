@@ -528,17 +528,17 @@ final class AdminController extends AbstractController
             écoulé les six dernières semaines, corrigé par le temps attendu.
             Rien à saisir — et c'est précisément l'intérêt.
         */
-        $matieres = array_values(array_filter($products, static fn ($p): bool => !$p->isProduced()));
-        $compositions = array_values(array_filter($products, static fn ($p): bool => $p->isProduced()));
+        $achetes = array_values(array_filter($products, static fn ($p): bool => $p->nature->isPurchased()));
+        $fabriques = array_values(array_filter($products, static fn ($p): bool => $p->isProduced()));
 
         return $this->render('admin/par_matrix.html.twig', [
             'products' => $products,
-            'rawProducts' => $matieres,
-            'composedProducts' => $compositions,
+            'rawProducts' => $achetes,
+            'composedProducts' => $fabriques,
             'days' => DayOfWeek::all(),
             'values' => $values,
             'productsInRows' => $request->query->get('orientation') !== 'days',
-            'computed' => $this->minimums->forWeek($compositions, $this->inventory->today(), null),
+            'computed' => $this->minimums->forWeek($fabriques, $this->inventory->today(), null),
             // Le temps ATTENDU, jour par jour : il change d'un jour à l'autre,
             // et un réglage unique pour les sept ferait produire lundi comme
             // dimanche. C'est une PRÉVISION que l'atelier saisit.

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Merisu\Inventory\Controller;
 
 use Merisu\Inventory\Domain\Product;
+use Merisu\Inventory\Domain\ProductNature;
 use Merisu\Inventory\Domain\RecipeLine;
 use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Store\Store;
@@ -20,11 +21,19 @@ use Symfony\Component\Routing\Attribute\Route;
  * sur `LocalRecipeService` : quatre matières en dur et six nomenclatures
  * inventées, qui ne décrivaient aucune boutique.
  *
- * ── Une fiche par COMPOSITION, et rien pour les matières
+ * ── Une fiche par chose FABRIQUÉE
  *
- * Une matière première ne se fabrique pas : elle n'a pas de nomenclature, elle
- * EST une nomenclature pour les autres. Lui en ouvrir une inviterait à décrire
- * le mascarpone en termes de mascarpone.
+ * Un produit en vente s'assemble — un emballage, une ou plusieurs recettes,
+ * parfois des matières directement. Une recette se fabrique à partir de
+ * matières. Les deux portent donc une composition.
+ *
+ * Ce qui s'ACHÈTE n'en porte pas : une matière ou un emballage ne se fabrique
+ * pas, ils ENTRENT dans la composition des autres. Ouvrir une fiche au
+ * mascarpone inviterait à le décrire en termes de mascarpone.
+ *
+ * Et un produit en vente n'entre dans la composition de personne : il est le
+ * sommet de l'assemblage, et l'admettre comme composant ouvrirait la porte aux
+ * cycles — un tiramisu fait de tiramisu.
  *
  * ── Par unité, quitte à saisir par fournée
  *
@@ -34,8 +43,8 @@ use Symfony\Component\Routing\Attribute\Route;
  * faute de quoi une fournée passée de 20 à 24 parts fausserait tout
  * l'historique sans que rien ne le signale.
  */
-#[Route('/admin/recettes')]
-final class AdminRecipeController extends AbstractController
+#[Route('/admin/compositions')]
+final class AdminCompositionController extends AbstractController
 {
     public function __construct(
         private readonly Store $store,
@@ -43,15 +52,38 @@ final class AdminRecipeController extends AbstractController
     ) {
     }
 
-    #[Route('', name: 'admin_recipes', methods: ['GET'])]
+    #[Route('', name: 'admin_compositions', methods: ['GET'])]
     public function index(Request $request): Response
     {
         $this->currentUser->requireAdmin();
 
         $produits = $this->store->products(activeOnly: true);
 
-        $compositions = array_values(array_filter($produits, static fn (Product $p): bool => $p->isProduced()));
-        $matieres = array_values(array_filter($produits, static fn (Product $p): bool => !$p->isProduced()));
+        // Ce qui PORTE une composition : produits en vente et recettes.
+        $assembles = array_values(array_filter(
+            $produits,
+            static fn (Product $p): bool => $p->nature->canHaveRecipe(),
+        ));
+
+        // Ce qui peut y ENTRER : emballages, recettes et matières — tout sauf
+        // le produit en vente, sommet de l'assemblage.
+        $composants = array_values(array_filter(
+            $produits,
+            static fn (Product $p): bool => $p->nature->canBeComponent(),
+        ));
+
+        // Rangés par nature : l'écran les regroupe sous des intertitres, et un
+        // regroupement suppose que les semblables se suivent. L'ordre est celui
+        // de l'enum, donc le même partout dans l'application.
+        $rang = array_flip(array_map(
+            static fn (ProductNature $n): string => $n->value,
+            ProductNature::all(),
+        ));
+        usort(
+            $composants,
+            static fn (Product $a, Product $b): int => [$rang[$a->nature->value], $a->sortOrder]
+                <=> [$rang[$b->nature->value], $b->sortOrder],
+        );
 
         // Toutes les nomenclatures en une lecture : une par fiche en aurait
         // lancé autant que la boutique a de compositions.
@@ -60,9 +92,10 @@ final class AdminRecipeController extends AbstractController
             $parProduit[$ligne->productId][$ligne->materialId] = $ligne->qtyPerUnit;
         }
 
-        return $this->render('admin/recipes.html.twig', [
-            'compositions' => $compositions,
-            'materials' => $matieres,
+        return $this->render('admin/compositions.html.twig', [
+            'assembled' => $assembles,
+            'components' => $composants,
+            'natures' => ProductNature::all(),
             'lines' => $parProduit,
             // Fiche à déplier au chargement : celle qu'on vient d'enregistrer.
             'open' => (string) $request->query->get('ouvrir', ''),
@@ -76,13 +109,13 @@ final class AdminRecipeController extends AbstractController
      * recette entière, et enregistrer doit donner exactement ce qu'on voit —
      * y compris les matières dont on vient de vider la quantité.
      */
-    #[Route('/{id}', name: 'admin_recipe_save', methods: ['POST'])]
+    #[Route('/{id}', name: 'admin_composition_save', methods: ['POST'])]
     public function save(Request $request, string $id): Response
     {
         $admin = $this->currentUser->requireAdmin();
 
         $produit = $this->store->product($id);
-        if ($produit === null || !$produit->isProduced()) {
+        if ($produit === null || !$produit->nature->canHaveRecipe()) {
             throw $this->createNotFoundException('PRODUCT_NOT_FOUND');
         }
 
@@ -114,9 +147,9 @@ final class AdminRecipeController extends AbstractController
         // Un rendement nul ou négatif rend TOUTES les lignes indéchiffrables :
         // enregistrer une recette vide effacerait celle qui existait.
         if ($rendement <= 0) {
-            $this->addFlash('error', 'admin.recipes.badYield');
+            $this->addFlash('error', 'admin.compositions.badYield');
 
-            return $this->redirectToRoute('admin_recipes', ['ouvrir' => $id]);
+            return $this->redirectToRoute('admin_compositions', ['ouvrir' => $id]);
         }
 
         $this->store->replaceRecipe($id, $lignes);
@@ -127,8 +160,8 @@ final class AdminRecipeController extends AbstractController
             'rejected' => $refusees,
         ]);
 
-        $this->addFlash($refusees > 0 ? 'error' : 'success', $refusees > 0 ? 'admin.recipes.rejected' : 'common.saved');
+        $this->addFlash($refusees > 0 ? 'error' : 'success', $refusees > 0 ? 'admin.compositions.rejected' : 'common.saved');
 
-        return $this->redirectToRoute('admin_recipes', ['ouvrir' => $id]);
+        return $this->redirectToRoute('admin_compositions', ['ouvrir' => $id]);
     }
 }

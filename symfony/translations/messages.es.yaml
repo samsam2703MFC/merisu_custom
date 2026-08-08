@@ -107,7 +107,7 @@ nav:
     products: Productos
     categories: 'Categorías'
     parMatrix: Umbrales
-    recipes: 'Recetas'
+    compositions: 'Composiciones'
     settings: Ajustes
     delta: 'Delta técnico'
     audit: Historial
@@ -283,7 +283,8 @@ admin:
         categoryManage: 'Gestionar las categorías'
         categoryNone: 'Sin clasificar'
         nature: 'Naturaleza'
-        natureHint: 'Solo las composiciones entran en el plan de producción: una materia prima se compra, no se fabrica. Se sigue contando mañana y noche.'
+        natureHint: 'Lo que la línea ES. Las materias y los envases se COMPRAN: su umbral se fija a mano. Las recetas y los productos en venta se FABRICAN: su mínimo se deduce de lo consumido y entran en el plan de producción. Un producto en venta se ensambla a partir de los otros tres.'
+        purchasedShelf: 'Sección comprada'
         schedule: 'Ritmo de recuento'
         countMorning: 'En la apertura'
         countEvening: 'En el cierre'
@@ -297,8 +298,10 @@ admin:
         createPlaceholder: 'Tiramisú de pistacho'
         createEmpty: 'Nombre de producto vacío: no se ha creado nada.'
         natures:
-            COMPOSED: 'Composición'
+            SALE: 'Producto en venta'
+            RECIPE: 'Receta'
             RAW: 'Materia prima'
+            PACKAGING: 'Envase'
         labelSection: 'Menciones de la etiqueta'
         shelfLifeDays: 'Vida útil (días)'
         shelfLifeDaysHint: 'A partir del día de producción. 0 = sin indicar: no se imprime ninguna fecha.'
@@ -343,7 +346,7 @@ admin:
         FLOOR: 'Al múltiplo inferior'
         NEAREST: 'Al más cercano'
         NONE: 'Sin redondeo'
-    recipes:
+    compositions:
         title: 'Recetas'
         subtitle: 'Lo que consume una unidad de producto.'
         intro: 'Es el dato del que vive el delta técnico: teórico = producido × cantidad por unidad, comparado con lo real medido en las materias. Sin receta, un producto no aparece en ninguna desviación.'
@@ -359,10 +362,10 @@ admin:
         rejected: 'Registrado, pero se han descartado cantidades ilegibles.'
     parMatrix:
         tabs:
-            raw: 'Materias primas'
-            composed: 'Composiciones'
-        rawHint: 'Un umbral que usted FIJA, producto por producto y día por día. Nada puede adivinarlo: lo que se consume de un saco de cacao no dice cuánto hay que tener de reserva hasta la próxima entrega.'
-        composedHint: 'Ningún umbral que introducir: el mínimo se DEDUCE de lo consumido en los seis últimos mismos días de la semana, corregido por el tiempo previsto.'
+            raw: 'Comprados'
+            composed: 'Fabricados'
+        rawHint: 'Un umbral que usted FIJA, línea por línea y día por día: materias primas y envases. Nada puede adivinarlo: lo que se consume de un saco de cacao no dice cuánto hay que tener de reserva hasta la próxima entrega.'
+        composedHint: 'Ningún umbral que introducir: el mínimo se DEDUCE de lo consumido en los seis últimos mismos días de la semana, corregido por el tiempo previsto. Vale para los productos en venta y para las recetas: una receta no se vende, pero se consume.'
         noRaw: 'Ninguna materia prima. La naturaleza se ajusta en la ficha del producto.'
         noComposed: 'Ninguna composición. La naturaleza se ajusta en la ficha del producto.'
         notEnough: '%samples% registros en las seis últimas semanas: hacen falta %min% para que la media signifique algo.'

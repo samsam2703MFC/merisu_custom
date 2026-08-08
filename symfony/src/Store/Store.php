@@ -254,7 +254,7 @@ final class Store
      * lève pas d'erreur — le résultat voulu est là — mais renvoie false, pour
      * que l'écran dise « existe déjà » plutôt que « créée ».
      */
-    public function addCategory(string $name, ProductNature $nature = ProductNature::Composed): bool
+    public function addCategory(string $name, ProductNature $nature = ProductNature::Sale): bool
     {
         if ($name === '' || $this->db->fetchOne('SELECT name FROM inv_category WHERE name = ?', [$name]) !== false) {
             return false;

@@ -17,7 +17,7 @@ final class SyncPayloadTest extends TestCase
     private static function produit(
         string $id,
         ?string $reference,
-        ProductNature $nature = ProductNature::Composed,
+        ProductNature $nature = ProductNature::Sale,
         string $unit = 'pcs',
     ): Product {
         return new Product($id, strtoupper($id), ['fr' => $id], $unit, true, 0.0, 1.0,
@@ -54,7 +54,7 @@ final class SyncPayloadTest extends TestCase
             'moment' => 'CLOSE_2200',
             'qty' => 12.5,
             'unit' => 'g',
-            'nature' => 'COMPOSED',
+            'nature' => 'SALE',
             'validatedBy' => 'acteur-1',
         ], $r['ready'][0]);
     }
@@ -114,7 +114,7 @@ final class SyncPayloadTest extends TestCase
 
     // ── Regroupement selon l'endroit où l'hôte les attend ───────────────────
 
-    public function testLesProduitsFinisPartentUnParUn(): void
+    public function testCeQuiSeFabriquePartUnParUn(): void
     {
         $r = self::lignes([self::produit('p1', 'A'), self::produit('p2', 'B')], ['p1' => 1.0, 'p2' => 2.0]);
 
@@ -126,7 +126,7 @@ final class SyncPayloadTest extends TestCase
         }
     }
 
-    public function testLesMatieresPremieresPartentDUnBloc(): void
+    public function testCeQuiSAchetePartDUnBloc(): void
     {
         $r = self::lignes([
             self::produit('m1', 'MAT-1', ProductNature::Raw, 'g'),
@@ -143,6 +143,32 @@ final class SyncPayloadTest extends TestCase
         ], $envois[0]['payload']['items']);
         self::assertSame('shop-42', $envois[0]['payload']['shopId']);
         self::assertSame('2026-08-07', $envois[0]['payload']['businessDate']);
+    }
+
+    /** L'emballage s'ACHÈTE : il part avec les matières, pas avec les desserts. */
+    public function testUnEmballagePartAvecLesMatieres(): void
+    {
+        $r = self::lignes([
+            self::produit('p1', 'A'),
+            self::produit('b1', 'BARQ-1', ProductNature::Packaging, 'pcs'),
+        ], ['p1' => 1.0, 'b1' => 300.0]);
+
+        $envois = SyncPayload::group($r['ready']);
+
+        self::assertSame(SyncKind::ProductInventory, $envois[0]['kind']);
+        self::assertSame(SyncKind::MaterialStocktaking, $envois[1]['kind']);
+        self::assertSame('BARQ-1', $envois[1]['payload']['items'][0]['externalProductId']);
+    }
+
+    /** Une RECETTE se fabrique : elle part une par une, comme un dessert. */
+    public function testUneRecettePartCommeCeQuiSeFabrique(): void
+    {
+        $r = self::lignes([self::produit('r1', 'SUB-1', ProductNature::Recipe, 'l')], ['r1' => 8.0]);
+
+        $envois = SyncPayload::group($r['ready']);
+
+        self::assertCount(1, $envois);
+        self::assertSame(SyncKind::ProductInventory, $envois[0]['kind']);
     }
 
     /** Un comptage panaché produit les deux formes, sans rien perdre. */

@@ -41,7 +41,7 @@ final readonly class ProductCategory
          * plutôt que corrigé d'office — un produit fini rangé au frais parmi
          * les matières est une situation réelle, pas une faute de saisie.
          */
-        public ProductNature $nature = ProductNature::Composed,
+        public ProductNature $nature = ProductNature::Sale,
     ) {
     }
 

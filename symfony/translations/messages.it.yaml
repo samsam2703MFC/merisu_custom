@@ -107,7 +107,7 @@ nav:
     products: Prodotti
     categories: 'Categorie'
     parMatrix: Soglie
-    recipes: 'Ricette'
+    compositions: 'Composizioni'
     settings: Impostazioni
     delta: 'Delta tecnico'
     audit: Storico
@@ -283,7 +283,8 @@ admin:
         categoryManage: 'Gestisci le categorie'
         categoryNone: 'Non classificato'
         nature: 'Natura'
-        natureHint: 'Solo le composizioni entrano nel piano di produzione: una materia prima si acquista, non si fabbrica. Resta contata mattina e sera.'
+        natureHint: 'Che cosa la riga È. Materie e imballaggi si ACQUISTANO: la loro soglia si imposta a mano. Ricette e prodotti in vendita si FABBRICANO: il loro minimo si deduce dallo smaltito ed entrano nel piano di produzione. Un prodotto in vendita si assembla a partire dagli altri tre.'
+        purchasedShelf: 'Reparto acquistato'
         schedule: 'Ritmo di rilevazione'
         countMorning: 'All''apertura'
         countEvening: 'Alla chiusura'
@@ -297,8 +298,10 @@ admin:
         createPlaceholder: 'Tiramisù al pistacchio'
         createEmpty: 'Nome di prodotto vuoto: non è stato creato nulla.'
         natures:
-            COMPOSED: 'Composizione'
+            SALE: 'Prodotto in vendita'
+            RECIPE: 'Ricetta'
             RAW: 'Materia prima'
+            PACKAGING: 'Imballaggio'
         labelSection: "Diciture dell'etichetta"
         shelfLifeDays: 'Durata di conservazione (giorni)'
         shelfLifeDaysHint: 'A partire dal giorno di produzione. 0 = non indicata: nessuna data viene stampata.'
@@ -343,7 +346,7 @@ admin:
         FLOOR: 'Al multiplo inferiore'
         NEAREST: 'Al più vicino'
         NONE: 'Nessun arrotondamento'
-    recipes:
+    compositions:
         title: 'Ricette'
         subtitle: 'Quanto consuma un''unità di prodotto.'
         intro: 'È il dato di cui vive il delta tecnico: teorico = prodotto × quantità per unità, confrontato con il reale rilevato sulle materie. Senza ricetta, un prodotto non compare in nessuno scarto.'
@@ -359,10 +362,10 @@ admin:
         rejected: 'Registrato, ma quantità illeggibili sono state scartate.'
     parMatrix:
         tabs:
-            raw: 'Materie prime'
-            composed: 'Composizioni'
-        rawHint: 'Una soglia che si IMPOSTA, prodotto per prodotto e giorno per giorno. Nulla può indovinarla: quanto si consuma di un sacco di cacao non dice quanto bisogna averne di scorta fino alla consegna successiva.'
-        composedHint: 'Nessuna soglia da inserire: il minimo si DEDUCE da quanto è stato smaltito negli ultimi sei stessi giorni della settimana, corretto dal tempo previsto.'
+            raw: 'Acquistati'
+            composed: 'Fabbricati'
+        rawHint: 'Una soglia che si IMPOSTA, riga per riga e giorno per giorno — materie prime e imballaggi. Nulla può indovinarla: quanto si consuma di un sacco di cacao non dice quanto bisogna averne di scorta fino alla consegna successiva.'
+        composedHint: 'Nessuna soglia da inserire: il minimo si DEDUCE da quanto è stato smaltito negli ultimi sei stessi giorni della settimana, corretto dal tempo previsto. Vale per i prodotti in vendita come per le ricette — una ricetta non si vende, ma si consuma.'
         noRaw: 'Nessuna materia prima. La natura si imposta sulla scheda prodotto.'
         noComposed: 'Nessuna composizione. La natura si imposta sulla scheda prodotto.'
         notEnough: '%samples% rilevazioni sulle ultime sei settimane — ne servono %min% perché la media significhi qualcosa.'

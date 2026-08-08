@@ -2171,6 +2171,22 @@ body { overflow-x: hidden; }
    division par le rendement ne doit pas se faire dans le noir. */
 .rcp__stored { width: 1%; white-space: nowrap; color: var(--plum); font-variant-numeric: tabular-nums; }
 
+/* L'intertitre d'un groupe de composants : emballages, recettes, matières. Il
+   ferme la ligne précédente et ouvre la suivante — sans lui, il fallait
+   retrouver la barquette au milieu de trente lignes. */
+.rcp__group th {
+  padding-top: var(--space-4);
+  font-size: .75rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: left;
+  background: var(--bg);
+}
+.rcp__group .icon { width: 16px; height: 16px; vertical-align: -3px; margin-right: .3rem; }
+.rcp tbody tr:first-child .rcp__group th,
+.rcp__group:first-child th { padding-top: var(--space-2); }
+
 .rcp thead th { text-align: center; }
 .rcp thead th:first-child { text-align: left; }
 .rcp td, .rcp th { vertical-align: middle; }
@@ -2257,6 +2273,13 @@ body { overflow-x: hidden; }
    grille qui se replie à deux colonnes sur téléphone. `minmax(0, 1fr)` et non
    `1fr` — « Temps ordinaire » fixerait sinon la largeur des quatre. */
 .seg__grid--four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+/* Quatre natures : deux par deux sur téléphone, sur une ligne dès qu'il y a la
+   place. `auto-fit` plutôt qu'un nombre fixe — « Produit en vente » est deux
+   fois plus long que « Recette », et quatre colonnes égales à 320 px les
+   coupaient toutes. */
+.seg__grid--auto { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: var(--space-1); }
+.seg__grid--auto .seg__box { border-radius: var(--radius); border-right-width: 1px; }
 
 @media (max-width: 560px) {
   .seg__grid--four { grid-template-columns: repeat(2, minmax(0, 1fr)); }

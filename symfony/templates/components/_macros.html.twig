@@ -403,11 +403,24 @@
       <path d="M4 10h16v9.5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1Z"/>
       <path d="M3 10 5 5h14l2 5"/>
       <path d="M10 20.5V14h4v6.5"/>
-    {% elseif name == 'nature-composed' %}
-      {# Composition : la part montée en couches, ce que la recette assemble. #}
+    {% elseif name == 'nature-sale' %}
+      {# Produit en vente : la part montée en couches, prête à passer en caisse. #}
       <path d="M4 9.5h16v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5Z"/>
       <path d="M4 13.5h16M4 16.5h16"/>
       <path d="M6.5 9.5 12 4l5.5 5.5"/>
+    {% elseif name == 'nature-recipe' %}
+      {# Recette : le cul-de-poule et le fouet — ce qui se prépare à l'atelier
+         et ne passe jamais en caisse tel quel. #}
+      <path d="M3.5 10.5h14a7 7 0 0 1-7 7 7 7 0 0 1-7-7Z"/>
+      <path d="M3.5 20.5h14"/>
+      <path d="M19 3.5c1.6 1.4 1.9 3.3.9 5.1-.7 1.3-1.9 2.2-3.4 2.6"/>
+      <path d="M17.2 3.2 20.8 5"/>
+    {% elseif name == 'nature-packaging' %}
+      {# Emballage : la barquette et son couvercle, séparés d'un trait — c'est
+         le couvercle qui la distingue du bac de la liste des contenants. #}
+      <path d="M5 11h14l-1.2 8.2a1.5 1.5 0 0 1-1.5 1.3H7.7a1.5 1.5 0 0 1-1.5-1.3Z"/>
+      <path d="M3.5 7.5h17v3h-17Z"/>
+      <path d="M10 4.5h4"/>
 
     {% elseif name == 'container-tub' %}
       {# Bac : parois droites, légèrement évasées, et un rebord. #}

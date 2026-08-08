@@ -11,30 +11,38 @@
 {% extends 'admin/_layout.html.twig' %}
 {% import 'components/_macros.html.twig' as ui %}
 
-{% block title %}{{ 'admin.recipes.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+{% block title %}{{ 'admin.compositions.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
 
 {% block admin_content %}
 
-  {{ ui.page_header('admin.recipes.title'|trans, 'admin.recipes.subtitle'|trans) }}
+  {{ ui.page_header('admin.compositions.title'|trans, 'admin.compositions.subtitle'|trans) }}
 
-  <div class="banner banner--info">{{ 'admin.recipes.intro'|trans }}</div>
+  <div class="banner banner--info">{{ 'admin.compositions.intro'|trans }}</div>
 
   {#
     Sans matière première déclarée, il n'y a rien à mettre dans une recette.
     Le dire ici évite de chercher pourquoi les fiches sont vides.
   #}
-  {% if materials is empty %}
-    {{ ui.banner('warn', 'admin.recipes.noMaterials'|trans) }}
-  {% elseif compositions is empty %}
-    {{ ui.banner('warn', 'admin.recipes.noCompositions'|trans) }}
+  {% if components is empty %}
+    {{ ui.banner('warn', 'admin.compositions.noMaterials'|trans) }}
+  {% elseif assembled is empty %}
+    {{ ui.banner('warn', 'admin.compositions.noCompositions'|trans) }}
   {% else %}
-    {% for product in compositions %}
+    {% for product in assembled %}
       {% set recette = lines[product.id] ?? {} %}
 
       <details class="card admin-item" {{ product.id == open ? 'open' : '' }}>
         <summary class="admin-item__summary">
           <span class="admin-item__head">
-            {{ ui.badge('neutral', product.code) }}
+            {#
+              La nature en tête : un produit en vente et une recette portent
+              tous deux une composition, mais on ne les règle pas dans le même
+              esprit — l'un s'assemble, l'autre se cuisine.
+            #}
+            {% set nom = ('admin.products.natures.' ~ product.nature.value)|trans %}
+            <span class="badge badge--info badge--icon" title="{{ nom }}">
+              {{ ui.icon(product.nature.icon, nom) }}
+            </span>
             <span class="admin-item__name">{{ product_label(product) }}</span>
           </span>
 
@@ -45,14 +53,14 @@
               jamais été saisie, et dont le delta technique ne dira rien.
             #}
             {% if recette is empty %}
-              {{ ui.badge('warn', 'admin.recipes.empty'|trans) }}
+              {{ ui.badge('warn', 'admin.compositions.empty'|trans) }}
             {% else %}
-              {{ ui.badge('neutral', 'admin.recipes.count'|trans({ '%count%': recette|length })) }}
+              {{ ui.badge('neutral', 'admin.compositions.count'|trans({ '%count%': recette|length })) }}
             {% endif %}
           </span>
         </summary>
 
-        <form method="post" action="{{ path('admin_recipe_save', { id: product.id }) }}" class="form">
+        <form method="post" action="{{ path('admin_composition_save', { id: product.id }) }}" class="form">
 
           {#
             Le rendement : « pour combien d'unités » valent les quantités
@@ -62,24 +70,44 @@
           #}
           <div class="field">
             <label class="field__label" for="yield-{{ product.id }}">
-              {{ 'admin.recipes.yield'|trans }}
+              {{ 'admin.compositions.yield'|trans }}
             </label>
             <input class="field__input rcp__yield" type="number" min="0.001" step="any"
                    id="yield-{{ product.id }}" name="yield" value="1">
-            <p class="field__hint">{{ 'admin.recipes.yieldHint'|trans({ '%unit%': product.unit }) }}</p>
+            <p class="field__hint">{{ 'admin.compositions.yieldHint'|trans({ '%unit%': product.unit }) }}</p>
           </div>
 
           <div class="table-scroll">
             <table class="table rcp">
               <thead>
                 <tr>
-                  <th scope="col">{{ 'admin.recipes.material'|trans }}</th>
+                  <th scope="col">{{ 'admin.compositions.material'|trans }}</th>
                   <th scope="col">{{ 'common.quantity'|trans }}</th>
-                  <th scope="col">{{ 'admin.recipes.perUnit'|trans }}</th>
+                  <th scope="col">{{ 'admin.compositions.perUnit'|trans }}</th>
                 </tr>
               </thead>
               <tbody>
-                {% for material in materials %}
+                {#
+                  Les composants regroupés par nature, chacun sous son
+                  intertitre : emballages, recettes, matières. À plat, il
+                  fallait retrouver la barquette au milieu de trente lignes,
+                  alors qu'un produit en vente n'en porte qu'une.
+                #}
+                {#
+                  Comparé au composant PRÉCÉDENT, et non à une variable
+                  accumulée : un `set` posé dans une boucle Twig ne survit pas
+                  à l'itération, et l'intertitre se répétait à chaque ligne.
+                #}
+                {% for material in components %}
+                  {% if loop.first or material.nature != components[loop.index0 - 1].nature %}
+                    <tr class="rcp__group">
+                      <th colspan="3" scope="colgroup">
+                        {{ ui.icon(material.nature.icon) }}
+                        {{ ('admin.products.natures.' ~ material.nature.value)|trans }}
+                      </th>
+                    </tr>
+                  {% endif %}
+
                   {% set qty = recette[material.id] ?? null %}
                   <tr>
                     <th scope="row" class="rcp__name">

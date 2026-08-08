@@ -84,12 +84,13 @@
         #}
         <span class="admin-item__tags">
           {#
-            Seule la matière première se signale : la composition est le cas
-            ordinaire, et l'annoncer sur les huit fiches ne dirait rien. Ce
-            qu'il faut voir de loin, c'est la ligne qui N'ENTRE PAS au plan.
+            Le produit EN VENTE ne se signale pas : c'est le cas ordinaire, et
+            l'annoncer sur trente fiches ne dirait rien. Ce qu'il faut voir de
+            loin, ce sont les trois autres — la recette qui ne passe pas en
+            caisse, la matière et l'emballage qui n'entrent pas au plan.
           #}
-          {% if product.nature.isRaw %}
-            {% set nature = 'admin.products.natures.RAW'|trans %}
+          {% if product.nature.value != 'SALE' %}
+            {% set nature = ('admin.products.natures.' ~ product.nature.value)|trans %}
             <span class="badge badge--info badge--icon" title="{{ nature }}">
               {{ ui.icon(product.nature.icon, nature) }}
             </span>
