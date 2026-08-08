@@ -56,6 +56,17 @@ final class AppExtension extends AbstractExtension
             new TwigFunction('current_user', fn () => $this->currentUser),
             new TwigFunction('app_settings', fn () => $this->store->settings()),
             new TwigFunction('supported_locales', static fn (): array => Locale::all()),
+            /*
+              Les langues que les écrans d'ADMINISTRATION montrent : celle de
+              l'écran, et elle seule.
+
+              Distincte de `supported_locales`, qui reste la liste complète —
+              le sélecteur de langue en a besoin, et c'est par lui qu'on passe
+              d'une traduction à l'autre.
+            */
+            new TwigFunction('shown_locales', fn (): array => [
+                Locale::tryFrom($this->requestStack->getCurrentRequest()?->getLocale() ?? '') ?? Locale::Fr,
+            ]),
             new TwigFunction('available_workstations', $this->availableWorkstations(...)),
             new TwigFunction('workstation_name', $this->workstationName(...)),
             new TwigFunction('container_fractions', static fn (): array => ContainerQuantity::FRACTIONS),

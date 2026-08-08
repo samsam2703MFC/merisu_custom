@@ -230,13 +230,22 @@ final class AdminController extends AbstractController
     {
         // Un libellé par langue : ce sont des DONNÉES, pas des chaînes
         // d'interface (celles-ci vivent dans translations/).
-        $names = [];
-        foreach (Locale::all() as $locale) {
-            $value = trim((string) $request->request->get('name_' . $locale->value, ''));
-            if ($value !== '') {
-                $names[$locale->value] = mb_substr($value, 0, 120);
-            }
+        //
+        // Seule la langue de l'écran est saisie ; les autres sont reprises
+        // telles quelles de la fiche. Sans cette fusion, enregistrer une fiche
+        // en français effacerait ses trois traductions.
+        $shown = $this->shownLocales($request);
+        $saisis = [];
+
+        foreach ($shown as $locale) {
+            $saisis[$locale->value] = mb_substr(
+                trim((string) $request->request->get('name_' . $locale->value, '')),
+                0,
+                120,
+            );
         }
+
+        $names = self::mergeLocalised($base->name, $saisis, $shown);
 
         $wasteFactor = max(0.0, (float) str_replace(',', '.', (string) $request->request->get('wasteFactor', '0')));
         $roundingStep = (float) str_replace(',', '.', (string) $request->request->get('roundingStep', '1'));
@@ -281,8 +290,16 @@ final class AdminController extends AbstractController
             // renseignée » : l'étiquette n'imprime alors aucune DLC, plutôt
             // qu'une date fausse qui engagerait la boutique.
             shelfLifeDays: max(0, (int) $request->request->get('shelfLifeDays', 0)),
-            ingredients: $this->parLangue($request, 'ingredients'),
-            allergens: $this->parLangue($request, 'allergens'),
+            ingredients: self::mergeLocalised(
+                $base->ingredients,
+                $this->parLangue($request, 'ingredients', $shown),
+                $shown,
+            ),
+            allergens: self::mergeLocalised(
+                $base->allergens,
+                $this->parLangue($request, 'allergens', $shown),
+                $shown,
+            ),
             // Approvisionnement : d'où la ligne vient, et sous quelle référence
             // on la recommande. Repli sur la valeur enregistrée plutôt que sur
             // « centrale » — une requête tronquée ne doit pas rapatrier au
@@ -296,19 +313,78 @@ final class AdminController extends AbstractController
     }
 
     /**
-     * Champ multilingue d'un formulaire produit : `ingredients_fr`, `_pl`…
+     * Les langues que les écrans d'administration MONTRENT.
+     *
+     * Une seule : celle de l'écran. Douze champs de libellé sur une fiche
+     * produit — quatre pour le nom, quatre pour les ingrédients, quatre pour
+     * les allergènes — se recopiaient d'une langue à l'autre plus qu'ils ne se
+     * traduisaient, et noyaient les onze réglages qui, eux, changent quelque
+     * chose.
+     *
+     * Les autres langues ne sont pas perdues pour autant : elles restent en
+     * base, et l'on passe de l'une à l'autre par le sélecteur de langue de
+     * l'application. C'est aussi la seule façon de traduire en VOYANT l'écran
+     * qu'on traduit.
+     *
+     * @return list<Locale>
+     */
+    private function shownLocales(Request $request): array
+    {
+        return [Locale::tryFrom($request->getLocale()) ?? Locale::Fr];
+    }
+
+    /**
+     * Pose les valeurs saisies SUR celles déjà enregistrées.
+     *
+     * C'est le garde-fou de l'écran monolingue, et il n'est pas optionnel :
+     * les trois langues absentes du formulaire ne sont pas des champs vides,
+     * ce sont des champs qu'on n'a pas montrés. Les écraser aurait effacé
+     * trois traductions à chaque enregistrement — et sur les écrans où « tout
+     * vide = suppression », cela aurait supprimé la ligne entière.
+     *
+     * Une langue MONTRÉE et vidée, elle, est bien un effacement voulu.
+     *
+     * @param array<string,string> $existing
+     * @param array<string,string> $submitted valeurs des langues montrées
+     * @param list<Locale>         $shown
      *
      * @return array<string,string>
      */
-    private function parLangue(Request $request, string $champ): array
+    private static function mergeLocalised(array $existing, array $submitted, array $shown): array
+    {
+        $sortie = $existing;
+
+        foreach ($shown as $locale) {
+            unset($sortie[$locale->value]);
+
+            if (($submitted[$locale->value] ?? '') !== '') {
+                $sortie[$locale->value] = $submitted[$locale->value];
+            }
+        }
+
+        return $sortie;
+    }
+
+    /**
+     * Champ multilingue d'un formulaire produit : `ingredients_fr`, `_pl`…
+     *
+     * Ne lit que les langues MONTRÉES : ce sont les seules que le formulaire
+     * porte.
+     *
+     * @param list<Locale> $shown
+     *
+     * @return array<string,string>
+     */
+    private function parLangue(Request $request, string $champ, array $shown): array
     {
         $valeurs = [];
 
-        foreach (Locale::all() as $locale) {
-            $valeur = trim((string) $request->request->get($champ . '_' . $locale->value, ''));
-            if ($valeur !== '') {
-                $valeurs[$locale->value] = mb_substr($valeur, 0, 600);
-            }
+        foreach ($shown as $locale) {
+            $valeurs[$locale->value] = mb_substr(
+                trim((string) $request->request->get($champ . '_' . $locale->value, '')),
+                0,
+                600,
+            );
         }
 
         return $valeurs;
@@ -317,7 +393,7 @@ final class AdminController extends AbstractController
     // ── Note du jour ────────────────────────────────────────────────────────
 
     #[Route('/note-du-jour', name: 'admin_day_note', methods: ['GET'])]
-    public function dayNote(): Response
+    public function dayNote(Request $request): Response
     {
         $this->currentUser->requireAdmin();
 
@@ -326,7 +402,7 @@ final class AdminController extends AbstractController
             // Un identifiant neuf pour la ligne d'ajout : le tirer au sort dans
             // le gabarit risquerait d'écraser une consigne à chaque affichage.
             'newId' => 'note-' . Store::uuid(),
-            'locales' => Locale::all(),
+            'locales' => $this->shownLocales($request),
         ]);
     }
 
@@ -346,29 +422,40 @@ final class AdminController extends AbstractController
         $enregistres = 0;
         $supprimes = 0;
 
+        $shown = $this->shownLocales($request);
+
         foreach ($lignes as $id => $champs) {
             $id = trim((string) $id);
             if ($id === '') {
                 continue;
             }
 
-            $heading = [];
-            $body = [];
+            $titres = [];
+            $textes = [];
 
-            foreach (Locale::all() as $locale) {
-                $titre = trim((string) ($champs['heading_' . $locale->value] ?? ''));
-                if ($titre !== '') {
-                    $heading[$locale->value] = mb_substr($titre, 0, 120);
-                }
+            foreach ($shown as $locale) {
+                $titres[$locale->value] = mb_substr(
+                    trim((string) ($champs['heading_' . $locale->value] ?? '')),
+                    0,
+                    120,
+                );
 
                 // Les retours à la ligne sont conservés : « Ciao à l'entrée »
                 // et « Grazie au départ » sont deux gestes, et les écrire l'un
                 // sous l'autre les rend plus lisibles qu'un paragraphe.
-                $texte = trim((string) ($champs['body_' . $locale->value] ?? ''));
-                if ($texte !== '') {
-                    $body[$locale->value] = mb_substr($texte, 0, 1000);
-                }
+                $textes[$locale->value] = mb_substr(
+                    trim((string) ($champs['body_' . $locale->value] ?? '')),
+                    0,
+                    1000,
+                );
             }
+
+            // Fusionnés sur l'existant, sans quoi enregistrer en français
+            // aurait vidé les trois autres langues — et une consigne dont tout
+            // est vide se supprime.
+            $existante = $this->store->dayNote($id);
+            $heading = self::mergeLocalised($existante?->heading ?? [], $titres, $shown);
+            $body = self::mergeLocalised($existante?->body ?? [], $textes, $shown);
 
             // Tout vide = suppression. C'est le geste naturel pour retirer une
             // consigne, et il évite un bouton « Supprimer » par ligne.
@@ -404,7 +491,7 @@ final class AdminController extends AbstractController
     // ── Check-list ──────────────────────────────────────────────────────────
 
     #[Route('/check-list', name: 'admin_checklist', methods: ['GET'])]
-    public function checklist(): Response
+    public function checklist(Request $request): Response
     {
         $this->currentUser->requireAdmin();
 
@@ -428,7 +515,7 @@ final class AdminController extends AbstractController
             'sections' => ChecklistSection::all(),
             'itemsBySection' => $parSection,
             'newIds' => $nouveaux,
-            'locales' => Locale::all(),
+            'locales' => $this->shownLocales($request),
         ]);
     }
 
@@ -448,19 +535,31 @@ final class AdminController extends AbstractController
         $enregistres = 0;
         $supprimes = 0;
 
+        $shown = $this->shownLocales($request);
+
         foreach ($lignes as $id => $champs) {
             $id = trim((string) $id);
             if ($id === '') {
                 continue;
             }
 
-            $labels = [];
-            foreach (Locale::all() as $locale) {
-                $valeur = trim((string) ($champs['label_' . $locale->value] ?? ''));
-                if ($valeur !== '') {
-                    $labels[$locale->value] = mb_substr($valeur, 0, 200);
-                }
+            // Fusionné sur l'existant : seule la langue de l'écran est
+            // saisie, et traiter les trois autres comme vides aurait fait
+            // passer le point pour « tout vide », donc à supprimer.
+            $saisis = [];
+            foreach ($shown as $locale) {
+                $saisis[$locale->value] = mb_substr(
+                    trim((string) ($champs['label_' . $locale->value] ?? '')),
+                    0,
+                    200,
+                );
             }
+
+            $labels = self::mergeLocalised(
+                $this->store->checklistItem($id)?->label ?? [],
+                $saisis,
+                $shown,
+            );
 
             // Tous les libellés vides = suppression. C'est le geste naturel
             // pour retirer un point, et il évite un bouton « Supprimer » par
@@ -634,13 +733,13 @@ final class AdminController extends AbstractController
     // ── §7.7 Paramètres généraux ────────────────────────────────────────────
 
     #[Route('/parametres', name: 'admin_settings', methods: ['GET'])]
-    public function settings(): Response
+    public function settings(Request $request): Response
     {
         $this->currentUser->requireAdmin();
 
         return $this->render('admin/settings.html.twig', [
             'settings' => $this->store->settings(),
-            'locales' => Locale::all(),
+            'locales' => $this->shownLocales($request),
         ]);
     }
 

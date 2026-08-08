@@ -67,10 +67,22 @@
              {{ product.active ? 'checked' : '' }}>
       <label for="active-{{ product.id }}">{{ 'admin.products.active'|trans }}</label>
     </div>
-    {# Un libellé par langue : ce sont des DONNÉES saisies ici, pas des
-       chaînes d'interface (celles-ci vivent dans translations/). #}
+    {#
+      Le libellé, dans la langue de l'écran SEULEMENT.
+
+      Ce sont des DONNÉES saisies ici, pas des chaînes d'interface (celles-ci
+      vivent dans translations/). Douze champs de libellé sur une fiche —
+      quatre pour le nom, quatre pour les ingrédients, quatre pour les
+      allergènes — se recopiaient d'une langue à l'autre plus qu'ils ne se
+      traduisaient, et noyaient les onze réglages qui, eux, changent quelque
+      chose.
+
+      Les autres langues restent en base : on passe de l'une à l'autre par le
+      sélecteur de langue de l'application, et c'est la seule façon de traduire
+      en VOYANT l'écran qu'on traduit. Le serveur fusionne, il n'écrase pas.
+    #}
     <div class="field-grid">
-      {% for locale in supported_locales() %}
+      {% for locale in shown_locales() %}
         <div class="field">
           <label class="field__label" for="name-{{ product.id }}-{{ locale.value }}">
             {{ 'admin.products.namePerLocale'|trans({ '%locale%': ('locales.' ~ locale.value)|trans }) }}
@@ -323,7 +335,7 @@
       <p class="field__hint">{{ 'admin.products.shelfLifeDaysHint'|trans }}</p>
     </div>
 
-    {% for locale in supported_locales() %}
+    {% for locale in shown_locales() %}
       <div class="field">
         <label class="field__label" for="ing-{{ product.id }}-{{ locale.value }}">
           {{ 'admin.products.ingredients'|trans({ '%locale%': ('locales.' ~ locale.value)|trans }) }}
@@ -334,7 +346,7 @@
       </div>
     {% endfor %}
 
-    {% for locale in supported_locales() %}
+    {% for locale in shown_locales() %}
       <div class="field">
         <label class="field__label" for="all-{{ product.id }}-{{ locale.value }}">
           {{ 'admin.products.allergens'|trans({ '%locale%': ('locales.' ~ locale.value)|trans }) }}
