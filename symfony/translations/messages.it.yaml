@@ -148,6 +148,7 @@ produce:
     needEveningCountHint: 'Il piano si calcola alla convalida della scorta di chiusura. Senza quella del %date% non c''è nulla da mostrare.'
     frozenAt: 'Piano congelato il %datetime%'
     missingThreshold: 'Nessuna soglia definita per questo giorno — da correggere in amministrazione.'
+    source: 'Le quantità seguono la media di quanto è stato smaltito negli ultimi sei stessi giorni della settimana, corretta dal tempo previsto. La soglia impostata in amministrazione resta la rete di sicurezza per i prodotti senza storico sufficiente.'
     computedFrom: 'Calcolato dalla scorta di chiusura del %date%'
     shortcutToday: Oggi
     shortcutTomorrow: Domani

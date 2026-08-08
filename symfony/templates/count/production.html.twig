@@ -82,6 +82,17 @@
         · {{ 'produce.frozenAt'|trans({ '%datetime%': lines|first.computedAt|datetime_short }) }}
       </p>
 
+      {#
+        D'où sortent ces quantités.
+
+        Une quantité qui change toute seule d'un jour à l'autre inquiète tant
+        qu'on ne sait pas qu'elle SUIT la demande. La phrase vaut pour tout
+        plan figé depuis que le calcul pilote la production ; elle ne prétend
+        pas dire, ligne par ligne, laquelle vient de l'historique — le plan
+        figé ne conserve pas cette distinction.
+      #}
+      <p class="field__hint">{{ 'produce.source'|trans }}</p>
+
       {% if lines|filter(l => l.missingThreshold)|length > 0 %}
         <div class="banner banner--warn">{{ 'produce.missingThreshold'|trans }}</div>
       {% endif %}

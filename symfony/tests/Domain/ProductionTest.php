@@ -104,6 +104,121 @@ final class ProductionTest extends TestCase
         self::assertSame(6.0, $plan->lines[0]->qtyToProduce);
     }
 
+    // ── Le minimum calculé pilote le plan ───────────────────────────────────
+
+    /**
+     * Une composition se fabrique : ce qu'il faut en avoir demain, c'est ce qui
+     * s'est écoulé, pas un chiffre posé il y a six mois.
+     */
+    #[Test]
+    public function le_minimum_calcule_prime_sur_le_seuil_saisi(): void
+    {
+        $plan = Production::plan(
+            '2026-07-31',
+            [$this->product('p1')],
+            ['p1' => 0.0],
+            [$this->par('p1', DayOfWeek::Sat, 100)],   // seuil saisi : 100
+            'ws1',
+            ['p1' => 24.0],                            // minimum calculé : 24
+        );
+
+        self::assertSame(24.0, $plan->lines[0]->requiredPieces);
+        self::assertSame(24.0, $plan->lines[0]->qtyToProduce);
+        self::assertTrue($plan->lines[0]->fromHistory);
+    }
+
+    /** Il PRIME, il n'additionne pas : les cumuler doublerait la production. */
+    #[Test]
+    public function le_minimum_calcule_ne_s_ajoute_pas_au_seuil(): void
+    {
+        $plan = Production::plan(
+            '2026-07-31',
+            [$this->product('p1')],
+            ['p1' => 0.0],
+            [$this->par('p1', DayOfWeek::Sat, 30)],
+            'ws1',
+            ['p1' => 20.0],
+        );
+
+        self::assertSame(20.0, $plan->lines[0]->qtyToProduce);
+    }
+
+    /**
+     * Sans minimum calculé — fiche trop jeune, ou relevés trop rares pour
+     * qu'une moyenne veuille dire quelque chose — le seuil saisi reprend la
+     * main. C'est le filet, et il doit tenir.
+     */
+    #[Test]
+    public function sans_minimum_calcule_le_seuil_saisi_reprend_la_main(): void
+    {
+        $plan = Production::plan(
+            '2026-07-31',
+            [$this->product('p1'), $this->product('p2')],
+            ['p1' => 0.0, 'p2' => 0.0],
+            [$this->par('p1', DayOfWeek::Sat, 15), $this->par('p2', DayOfWeek::Sat, 40)],
+            'ws1',
+            ['p2' => 12.0],
+        );
+
+        self::assertSame(15.0, $plan->lines[0]->qtyToProduce);
+        self::assertFalse($plan->lines[0]->fromHistory);
+        self::assertSame(12.0, $plan->lines[1]->qtyToProduce);
+        self::assertTrue($plan->lines[1]->fromHistory);
+    }
+
+    /** Un minimum calculé rend l'absence de seuil sans conséquence. */
+    #[Test]
+    public function un_minimum_calcule_leve_l_avertissement_de_seuil_manquant(): void
+    {
+        $plan = Production::plan(
+            '2026-07-31',
+            [$this->product('p1')],
+            ['p1' => 0.0],
+            [],                                        // aucun seuil saisi
+            'ws1',
+            ['p1' => 18.0],
+        );
+
+        self::assertSame([], $plan->warningsMissingThreshold);
+        self::assertFalse($plan->lines[0]->missingThreshold);
+        self::assertSame(18.0, $plan->lines[0]->qtyToProduce);
+    }
+
+    /** Le stock de clôture se retranche du minimum calculé comme du seuil. */
+    #[Test]
+    public function le_stock_de_cloture_se_retranche_du_minimum_calcule(): void
+    {
+        $plan = Production::plan(
+            '2026-07-31',
+            [$this->product('p1', wasteFactor: 0.1)],
+            ['p1' => 5.0],
+            [],
+            'ws1',
+            ['p1' => 25.0],
+        );
+
+        // (25 − 5) × 1,1 = 22
+        self::assertSame(22.0, $plan->lines[0]->qtyToProduce);
+    }
+
+    /** Un minimum calculé nul veut dire « rien à produire », pas « pas de seuil ». */
+    #[Test]
+    public function un_minimum_calcule_nul_ne_passe_pas_pour_un_seuil_absent(): void
+    {
+        $plan = Production::plan(
+            '2026-07-31',
+            [$this->product('p1')],
+            ['p1' => 0.0],
+            [$this->par('p1', DayOfWeek::Sat, 50)],
+            'ws1',
+            ['p1' => 0.0],
+        );
+
+        self::assertSame(0.0, $plan->lines[0]->qtyToProduce);
+        self::assertFalse($plan->lines[0]->missingThreshold);
+        self::assertTrue($plan->lines[0]->fromHistory);
+    }
+
     #[Test]
     public function produit_la_difference_entre_le_seuil_et_le_stock_de_cloture(): void
     {

@@ -148,6 +148,7 @@ produce:
     needEveningCountHint: 'El plan se calcula al validar la existencia de cierre. Sin la del %date% no hay nada que mostrar.'
     frozenAt: 'Plan congelado el %datetime%'
     missingThreshold: 'Sin umbral definido para este día — corrígelo en administración.'
+    source: 'Las cantidades siguen la media de lo consumido en los seis últimos mismos días de la semana, corregida por el tiempo previsto. El umbral fijado en administración sigue siendo la red para los productos sin historial suficiente.'
     computedFrom: 'Calculado a partir del stock de cierre del %date%'
     shortcutToday: Hoy
     shortcutTomorrow: Mañana

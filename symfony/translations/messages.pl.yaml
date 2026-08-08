@@ -148,6 +148,7 @@ produce:
     needEveningCountHint: 'Plan wylicza się przy zatwierdzeniu stanu zamknięcia. Bez stanu z %date% nie ma czego pokazać.'
     frozenAt: 'Plan utrwalony %datetime%'
     missingThreshold: 'Brak progu na ten dzień — popraw w administracji.'
+    source: 'Ilości wynikają ze średniego rozchodu z sześciu ostatnich takich samych dni tygodnia, skorygowanego o spodziewaną pogodę. Próg wpisany w administracji pozostaje zabezpieczeniem dla produktów bez wystarczającej historii.'
     computedFrom: 'Obliczone na podstawie stanu zamknięcia z %date%'
     shortcutToday: Dziś
     shortcutTomorrow: Jutro

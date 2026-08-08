@@ -7,10 +7,18 @@ namespace Merisu\Inventory\Domain;
 /**
  * §5.2 — Production à réaliser pour le lendemain matin.
  *
- *   Requis(demain)  = ParMatrix[produit, jour_de_demain].required_pieces
+ *   Requis(demain)  = minimum calculé pour le jour de demain,
+ *                     À DÉFAUT ParMatrix[produit, jour_de_demain]
  *   Stock_clôture   = comptage CLOSE_2200 validé du jour
  *   À_produire_brut = max(0, Requis(demain) − Stock_clôture)
  *   À_produire      = arrondi( À_produire_brut × (1 + waste_factor), rounding )
+ *
+ * Le REQUIS a changé de source : il vient désormais de la moyenne de l'écoulé
+ * des six derniers mêmes jours de semaine, corrigée du temps attendu (voir
+ * `MinimumStock`). Le seuil saisi en administration reste le filet, pour les
+ * fiches trop jeunes pour avoir un historique et pour celles dont les relevés
+ * sont trop rares. Les matières premières, elles, n'ont que le seuil : elles
+ * ne se fabriquent pas et n'entrent pas dans ce plan.
  *
  * Calculé à la validation du stock du soir, puis figé et horodaté.
  */
@@ -25,8 +33,12 @@ final class Production
      * - clôture absente → considérée nulle (il faut produire le requis), signalée ;
      * - facteur de perte appliqué APRÈS le max(0, …), jamais sur un besoin nul.
      */
-    public static function line(Product $product, ?float $closingStock, ?float $requiredPieces): ProductionLine
-    {
+    public static function line(
+        Product $product,
+        ?float $closingStock,
+        ?float $requiredPieces,
+        bool $fromHistory = false,
+    ): ProductionLine {
         $missingThreshold = $requiredPieces === null;
         $missingClosingStock = $closingStock === null;
 
@@ -49,6 +61,7 @@ final class Production
             $qty,
             $missingThreshold,
             $missingClosingStock,
+            $fromHistory,
         );
     }
 
@@ -58,6 +71,9 @@ final class Production
      * @param list<Product>              $products      produits ACTIFS uniquement
      * @param array<string, float|null>  $closingStocks stocks 22:00 indexés par productId
      * @param list<ParMatrixEntry>       $parMatrix
+     * @param array<string, float>       $minimums      minimums déduits de l'historique,
+     *                                                  indexés par productId ; ils PRIMENT
+     *                                                  sur le seuil saisi
      */
     public static function plan(
         string $today,
@@ -65,6 +81,7 @@ final class Production
         array $closingStocks,
         array $parMatrix,
         string $workstationId,
+        array $minimums = [],
     ): ProductionPlanResult {
         $forDate = BusinessDate::next($today);
         $forDayOfWeek = BusinessDate::dayOfWeek($forDate);
@@ -88,8 +105,26 @@ final class Production
                 continue;
             }
 
-            $required = self::resolveRequiredPieces($parMatrix, $product->id, $forDayOfWeek, $workstationId);
-            $line = self::line($product, $closingStocks[$product->id] ?? null, $required);
+            /*
+              Le minimum CALCULÉ prime sur le seuil saisi.
+
+              Une composition se fabrique : ce qu'il faut en avoir demain, c'est
+              ce qui s'est écoulé les six derniers mêmes jours de semaine,
+              corrigé du temps attendu. Le seuil manuel reste le filet — pour
+              les fiches trop jeunes pour avoir un historique, et pour celles
+              dont les relevés sont trop rares pour qu'une moyenne veuille dire
+              quelque chose.
+
+              Prime, et n'additionne pas : les deux répondent à la même question,
+              et les cumuler doublerait la production.
+            */
+            $calcule = $minimums[$product->id] ?? null;
+            $depuisHistorique = $calcule !== null;
+
+            $required = $calcule
+                ?? self::resolveRequiredPieces($parMatrix, $product->id, $forDayOfWeek, $workstationId);
+
+            $line = self::line($product, $closingStocks[$product->id] ?? null, $required, $depuisHistorique);
 
             $lines[] = $line;
             if ($line->missingThreshold) {

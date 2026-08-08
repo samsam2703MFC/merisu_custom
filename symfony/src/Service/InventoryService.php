@@ -31,6 +31,7 @@ final class InventoryService
 {
     public function __construct(
         private readonly Store $store,
+        private readonly MinimumStockService $minimums,
         // Pour l'identifiant de boutique côté hôte, que la remontée doit
         // porter : ce module raisonne en POSTES, l'hôte en boutiques.
         private readonly ShopRankingServiceInterface $ranking,
@@ -422,6 +423,10 @@ final class InventoryService
             'forDate' => $computed->forDate,
             'lines' => \count($computed->lines),
             'missingThresholds' => $computed->warningsMissingThreshold,
+            // D'où viennent les quantités : ce que le plan doit pouvoir dire
+            // six mois plus tard, quand personne ne se souvient si le chiffre
+            // sortait de l'historique ou d'un seuil posé à la main.
+            'fromHistory' => \count(array_filter($computed->lines, static fn ($l): bool => $l->fromHistory)),
         ]);
 
         return $this->store->plan($computed->forDate, $workstationId);
@@ -457,7 +462,40 @@ final class InventoryService
             $closingStocks[$count->productId] = $count->qty;
         }
 
-        return Production::plan($date, $products, $closingStocks, $this->store->parMatrix(), $workstationId);
+        /*
+          Le minimum calculé pilote le plan.
+
+          Il porte sur le jour de DEMAIN — c'est pour demain qu'on produit — et
+          avec la prévision météo de demain. `lastOccurrences` écarte déjà
+          aujourd'hui : sa clôture n'a pas encore eu lieu.
+
+          Seuls les minimums FIABLES sont transmis (trois relevés au moins).
+          Les autres ne figurent pas dans le tableau, et `Production::plan`
+          retombe alors sur le seuil saisi — une moyenne bâtie sur deux jours
+          ne doit pas décider de la production.
+        */
+        $demain = BusinessDate::next($date);
+        $minimums = [];
+
+        foreach ($this->minimums->forDayOfWeek(
+            $products,
+            BusinessDate::dayOfWeek($demain),
+            $date,
+            $workstationId,
+        ) as $productId => $minimum) {
+            if ($minimum !== null && $minimum->isReliable()) {
+                $minimums[$productId] = $minimum->value;
+            }
+        }
+
+        return Production::plan(
+            $date,
+            $products,
+            $closingStocks,
+            $this->store->parMatrix(),
+            $workstationId,
+            $minimums,
+        );
     }
 
     /**
