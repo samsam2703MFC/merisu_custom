@@ -107,6 +107,7 @@ nav:
     products: Produkty
     categories: 'Kategorie'
     parMatrix: Progi
+    recipes: 'Receptury'
     settings: Ustawienia
     delta: 'Delta techniczna'
     audit: Historia
@@ -342,6 +343,20 @@ admin:
         FLOOR: 'W dół do wielokrotności'
         NEAREST: 'Do najbliższej'
         NONE: 'Bez zaokrąglenia'
+    recipes:
+        title: 'Receptury'
+        subtitle: 'Ile zużywa jedna sztuka produktu.'
+        intro: 'To dane, z których żyje delta techniczna: teoria = wyprodukowano × ilość na sztukę, porównana z rzeczywistym spisem surowców. Bez receptury produkt nie pojawi się w żadnej rozbieżności.'
+        noMaterials: 'Brak zadeklarowanych surowców: nie ma czego wpisać do receptury. Rodzaj ustawia się na karcie produktu.'
+        noCompositions: 'Brak wyrobów. Rodzaj ustawia się na karcie produktu.'
+        empty: 'Brak receptury'
+        count: '%count% surowców'
+        material: 'Surowiec'
+        perUnit: 'Zapisane, na sztukę'
+        yield: 'Na ile sztuk'
+        yieldHint: 'Kuchnia myśli wsadami: wpisz „4” mleka na „20” porcji, aplikacja przeliczy na sztukę. Zostaw 1, jeśli ilości są już na %unit%.'
+        badYield: 'Zerowa lub ujemna wydajność: nic nie zapisano, poprzednia receptura pozostaje nietknięta.'
+        rejected: 'Zapisano, ale nieczytelne ilości zostały pominięte.'
     parMatrix:
         tabs:
             raw: 'Surowce'

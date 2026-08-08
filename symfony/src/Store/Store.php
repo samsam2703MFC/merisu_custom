@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Merisu\Inventory\Store;
 
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Merisu\Inventory\Domain\AuditEntry;
 use Merisu\Inventory\Domain\ChecklistEntry;
@@ -28,6 +29,7 @@ use Merisu\Inventory\Domain\ProductCategory;
 use Merisu\Inventory\Domain\ProductNature;
 use Merisu\Inventory\Domain\ProductionPlanRow;
 use Merisu\Inventory\Domain\ProductionPlanStatus;
+use Merisu\Inventory\Domain\RecipeLine;
 use Merisu\Inventory\Domain\RoundingMode;
 use Merisu\Inventory\Domain\SupplierSource;
 use Merisu\Inventory\Domain\SyncKind;
@@ -1003,6 +1005,74 @@ final class Store
         }
 
         return $byCount;
+    }
+
+    // ── Nomenclatures ───────────────────────────────────────────────────────
+
+    /**
+     * Toutes les lignes de nomenclature, ou celles des produits demandés.
+     *
+     * @param list<string>|null $productIds
+     *
+     * @return list<RecipeLine>
+     */
+    public function recipeLines(?array $productIds = null): array
+    {
+        $sql = 'SELECT * FROM inv_recipe_line';
+        $params = [];
+        $types = [];
+
+        if ($productIds !== null) {
+            if ($productIds === []) {
+                return [];
+            }
+
+            $sql .= ' IN_CLAUSE';
+            $params = [$productIds];
+            $types = [ArrayParameterType::STRING];
+            $sql = str_replace(' IN_CLAUSE', ' WHERE product_id IN (?)', $sql);
+        }
+
+        $sql .= ' ORDER BY product_id, material_id';
+
+        return array_map(
+            static fn (array $r): RecipeLine => new RecipeLine(
+                (string) $r['product_id'],
+                (string) $r['material_id'],
+                (float) $r['qty_per_unit'],
+            ),
+            $this->db->fetchAllAssociative($sql, $params, $types),
+        );
+    }
+
+    /**
+     * Remplace la nomenclature d'UN produit, d'un bloc.
+     *
+     * En une transaction, et par remplacement complet : une nomenclature à
+     * moitié écrite ferait calculer un delta technique sur une recette qui
+     * n'a jamais existé.
+     *
+     * @param array<string, float> $lines matière => quantité par unité
+     */
+    public function replaceRecipe(string $productId, array $lines): void
+    {
+        $this->db->transactional(function () use ($productId, $lines): void {
+            $this->db->delete('inv_recipe_line', ['product_id' => $productId]);
+
+            foreach ($lines as $materialId => $qty) {
+                // Une ligne à zéro ne dit rien : c'est l'ABSENCE de ligne qui
+                // dit « ce produit ne consomme pas cette matière ».
+                if ($qty <= 0) {
+                    continue;
+                }
+
+                $this->db->insert('inv_recipe_line', [
+                    'product_id' => $productId,
+                    'material_id' => (string) $materialId,
+                    'qty_per_unit' => $qty,
+                ]);
+            }
+        });
     }
 
     // ── Correction météo du stock minimum ───────────────────────────────────

@@ -107,6 +107,7 @@ nav:
     products: Prodotti
     categories: 'Categorie'
     parMatrix: Soglie
+    recipes: 'Ricette'
     settings: Impostazioni
     delta: 'Delta tecnico'
     audit: Storico
@@ -342,6 +343,20 @@ admin:
         FLOOR: 'Al multiplo inferiore'
         NEAREST: 'Al più vicino'
         NONE: 'Nessun arrotondamento'
+    recipes:
+        title: 'Ricette'
+        subtitle: 'Quanto consuma un''unità di prodotto.'
+        intro: 'È il dato di cui vive il delta tecnico: teorico = prodotto × quantità per unità, confrontato con il reale rilevato sulle materie. Senza ricetta, un prodotto non compare in nessuno scarto.'
+        noMaterials: 'Nessuna materia prima dichiarata: non c''è nulla da mettere in una ricetta. La natura si imposta sulla scheda prodotto.'
+        noCompositions: 'Nessuna composizione. La natura si imposta sulla scheda prodotto.'
+        empty: 'Ricetta non inserita'
+        count: '%count% materie'
+        material: 'Materia'
+        perUnit: 'Registrato, per unità'
+        yield: 'Per quante unità'
+        yieldHint: 'Il laboratorio ragiona a infornate: inserisci « 4 » di latte per « 20 » porzioni, l''applicazione riporta all''unità. Lascia 1 se le quantità sono già per %unit%.'
+        badYield: 'Resa nulla o negativa: non è stato registrato nulla, la ricetta precedente è intatta.'
+        rejected: 'Registrato, ma quantità illeggibili sono state scartate.'
     parMatrix:
         tabs:
             raw: 'Materie prime'

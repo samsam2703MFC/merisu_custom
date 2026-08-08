@@ -63,8 +63,12 @@ services:
         arguments:
             $appSecret: '%env(APP_SECRET)%'
 
+    # Nomenclatures tenues en base, saisies dans Admin ▸ Recettes.
+    # `LocalRecipeService` (quatre matières FICTIVES) reste disponible pour une
+    # démonstration sans base, mais n'est plus branché : le delta technique
+    # tournait sur des chiffres qui ne décrivaient aucune boutique.
     Merisu\Inventory\Adapter\RecipeServiceInterface:
-        alias: Merisu\Inventory\Adapter\LocalRecipeService
+        alias: Merisu\Inventory\Adapter\DbRecipeService
 
     # Remontée des comptages vers TF Buddy — le SEUL adaptateur qui écrit chez
     # l'hôte. En attente du contrat de ses deux endpoints, non décrits dans la

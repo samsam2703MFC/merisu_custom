@@ -107,6 +107,7 @@ nav:
     products: Productos
     categories: 'Categorías'
     parMatrix: Umbrales
+    recipes: 'Recetas'
     settings: Ajustes
     delta: 'Delta técnico'
     audit: Historial
@@ -342,6 +343,20 @@ admin:
         FLOOR: 'Al múltiplo inferior'
         NEAREST: 'Al más cercano'
         NONE: 'Sin redondeo'
+    recipes:
+        title: 'Recetas'
+        subtitle: 'Lo que consume una unidad de producto.'
+        intro: 'Es el dato del que vive el delta técnico: teórico = producido × cantidad por unidad, comparado con lo real medido en las materias. Sin receta, un producto no aparece en ninguna desviación.'
+        noMaterials: 'Ninguna materia prima declarada: no hay nada que poner en una receta. La naturaleza se ajusta en la ficha del producto.'
+        noCompositions: 'Ninguna composición. La naturaleza se ajusta en la ficha del producto.'
+        empty: 'Receta sin introducir'
+        count: '%count% materias'
+        material: 'Materia'
+        perUnit: 'Registrado, por unidad'
+        yield: 'Para cuántas unidades'
+        yieldHint: 'El obrador piensa en hornadas: introduzca «4» de leche para «20» raciones, la aplicación lo reduce a la unidad. Deje 1 si sus cantidades ya son por %unit%.'
+        badYield: 'Rendimiento nulo o negativo: no se ha registrado nada, la receta anterior queda intacta.'
+        rejected: 'Registrado, pero se han descartado cantidades ilegibles.'
     parMatrix:
         tabs:
             raw: 'Materias primas'

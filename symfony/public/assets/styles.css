@@ -2152,6 +2152,29 @@ body { overflow-x: hidden; }
 .field-grid--tight { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
 .field-grid--tight .field__input { width: 100%; }
 
+/* ── Recettes ────────────────────────────────────────────────────────────── */
+
+/* Le rendement n'a pas besoin de toute la largeur d'un formulaire : c'est un
+   petit nombre, et un champ large invite à y voir autre chose. */
+.rcp__yield { max-width: 10rem; }
+
+.rcp__name { text-align: left; min-width: 10rem; }
+.rcp__name label { cursor: pointer; }
+
+/* Le champ de quantité et son unité sur une ligne : l'unité EST la moitié de
+   l'information — « 0,2 » ne dit rien sans « l ». */
+.rcp__qty { width: 1%; white-space: nowrap; }
+.rcp__qty .field__input { width: 7rem; display: inline-block; text-align: right; }
+.rcp__unit { margin-left: .4rem; font-size: .8rem; }
+
+/* Ce qui est réellement stocké, en prune comme tout ce qui est calculé : la
+   division par le rendement ne doit pas se faire dans le noir. */
+.rcp__stored { width: 1%; white-space: nowrap; color: var(--plum); font-variant-numeric: tabular-nums; }
+
+.rcp thead th { text-align: center; }
+.rcp thead th:first-child { text-align: left; }
+.rcp td, .rcp th { vertical-align: middle; }
+
 /* ── Choix du temps attendu, jour par jour ───────────────────────────────── */
 
 /* Sept petits groupes de quatre silhouettes. La grille les range côte à côte

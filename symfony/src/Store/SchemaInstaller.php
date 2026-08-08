@@ -284,6 +284,25 @@ final class SchemaInstaller
         }
 
         /*
+          Nomenclatures : ce qu'une unité de produit consomme.
+
+          La quantité est TOUJOURS ramenée à l'unité, jamais gardée « pour une
+          fournée de vingt » : sans cela, chaque calcul devrait connaître aussi
+          le rendement, et une fournée passée de vingt à vingt-quatre parts
+          aurait faussé tout l'historique sans que rien ne le signale.
+
+          Le couple (produit, matière) EST la clé : une matière citée deux fois
+          pour le même produit se règle à la saisie, en additionnant.
+        */
+        if (!\in_array('inv_recipe_line', $existing, true)) {
+            $t = $schema->createTable('inv_recipe_line');
+            $t->addColumn('product_id', 'string', ['length' => 64]);
+            $t->addColumn('material_id', 'string', ['length' => 64]);
+            $t->addColumn('qty_per_unit', 'float', ['default' => 0]);
+            $t->setPrimaryKey(['product_id', 'material_id']);
+        }
+
+        /*
           Temps ATTENDU pour chaque jour de la semaine.
 
           Par jour, et non un réglage unique : la météo change d'un jour à

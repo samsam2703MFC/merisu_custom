@@ -110,6 +110,7 @@ nav:
     products: Produits
     categories: 'Catégories'
     parMatrix: Seuils
+    recipes: 'Recettes'
     settings: Paramètres
     delta: 'Delta technique'
     audit: Historique
@@ -345,6 +346,20 @@ admin:
         FLOOR: 'Au multiple inférieur'
         NEAREST: 'Au plus proche'
         NONE: 'Aucun arrondi'
+    recipes:
+        title: 'Recettes'
+        subtitle: 'Ce qu''une unité de produit consomme.'
+        intro: 'C''est la donnée dont vit le delta technique : théorique = produit × quantité par unité, comparé au réel relevé sur les matières. Sans recette, un produit n''apparaît dans aucun écart.'
+        noMaterials: 'Aucune matière première déclarée : il n''y a rien à mettre dans une recette. La nature se règle sur la fiche produit.'
+        noCompositions: 'Aucune composition. La nature se règle sur la fiche produit.'
+        empty: 'Recette non saisie'
+        count: '%count% matière(s)'
+        material: 'Matière'
+        perUnit: 'Enregistré, par unité'
+        yield: 'Pour combien d''unités'
+        yieldHint: 'L''atelier pense en fournées : saisissez « 4 » de lait pour « 20 » parts, l''application ramène à l''unité. Laissez 1 si vos quantités sont déjà par %unit%.'
+        badYield: 'Rendement nul ou négatif : rien n''a été enregistré, la recette précédente est intacte.'
+        rejected: 'Enregistré, mais des quantités illisibles ont été écartées.'
     parMatrix:
         tabs:
             raw: 'Matières premières'

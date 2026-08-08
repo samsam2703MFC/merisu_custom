@@ -1,0 +1,123 @@
+{#
+  Admin ▸ Recettes — ce qu'une unité de produit consomme.
+
+  Une fiche repliée par composition, comme les produits : avec vingt-huit
+  compositions et une dizaine de matières chacune, la page dépliée ferait
+  trente écrans de haut.
+
+  Rien pour les matières premières : elles ne se fabriquent pas, elles SONT la
+  nomenclature des autres.
+#}
+{% extends 'admin/_layout.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'admin.recipes.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block admin_content %}
+
+  {{ ui.page_header('admin.recipes.title'|trans, 'admin.recipes.subtitle'|trans) }}
+
+  <div class="banner banner--info">{{ 'admin.recipes.intro'|trans }}</div>
+
+  {#
+    Sans matière première déclarée, il n'y a rien à mettre dans une recette.
+    Le dire ici évite de chercher pourquoi les fiches sont vides.
+  #}
+  {% if materials is empty %}
+    {{ ui.banner('warn', 'admin.recipes.noMaterials'|trans) }}
+  {% elseif compositions is empty %}
+    {{ ui.banner('warn', 'admin.recipes.noCompositions'|trans) }}
+  {% else %}
+    {% for product in compositions %}
+      {% set recette = lines[product.id] ?? {} %}
+
+      <details class="card admin-item" {{ product.id == open ? 'open' : '' }}>
+        <summary class="admin-item__summary">
+          <span class="admin-item__head">
+            {{ ui.badge('neutral', product.code) }}
+            <span class="admin-item__name">{{ product_label(product) }}</span>
+          </span>
+
+          <span class="admin-item__tags">
+            {#
+              Le nombre de matières annoncé dès la liste repliée : c'est ce
+              qu'on cherche du regard — la composition dont la recette n'a
+              jamais été saisie, et dont le delta technique ne dira rien.
+            #}
+            {% if recette is empty %}
+              {{ ui.badge('warn', 'admin.recipes.empty'|trans) }}
+            {% else %}
+              {{ ui.badge('neutral', 'admin.recipes.count'|trans({ '%count%': recette|length })) }}
+            {% endif %}
+          </span>
+        </summary>
+
+        <form method="post" action="{{ path('admin_recipe_save', { id: product.id }) }}" class="form">
+
+          {#
+            Le rendement : « pour combien d'unités » valent les quantités
+            saisies. L'atelier pense en fournées — « 4 l de lait pour 20 parts »
+            — et le ramener à l'unité de tête invite à l'erreur. Ce qui est
+            ENREGISTRÉ est toujours par unité.
+          #}
+          <div class="field">
+            <label class="field__label" for="yield-{{ product.id }}">
+              {{ 'admin.recipes.yield'|trans }}
+            </label>
+            <input class="field__input rcp__yield" type="number" min="0.001" step="any"
+                   id="yield-{{ product.id }}" name="yield" value="1">
+            <p class="field__hint">{{ 'admin.recipes.yieldHint'|trans({ '%unit%': product.unit }) }}</p>
+          </div>
+
+          <div class="table-scroll">
+            <table class="table rcp">
+              <thead>
+                <tr>
+                  <th scope="col">{{ 'admin.recipes.material'|trans }}</th>
+                  <th scope="col">{{ 'common.quantity'|trans }}</th>
+                  <th scope="col">{{ 'admin.recipes.perUnit'|trans }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for material in materials %}
+                  {% set qty = recette[material.id] ?? null %}
+                  <tr>
+                    <th scope="row" class="rcp__name">
+                      <label for="q-{{ product.id }}-{{ material.id }}">{{ product_label(material) }}</label>
+                    </th>
+
+                    <td class="rcp__qty">
+                      {#
+                        Vide plutôt que zéro : c'est l'ABSENCE de ligne qui dit
+                        « ce produit ne consomme pas cette matière ». Un zéro
+                        affirmerait la même chose, mais en occupant la place et
+                        en donnant à croire qu'on l'a mesuré.
+                      #}
+                      <input class="field__input" type="number" min="0" step="any" inputmode="decimal"
+                             id="q-{{ product.id }}-{{ material.id }}"
+                             name="qty[{{ material.id }}]"
+                             value="{{ qty is null ? '' : qty }}"
+                             placeholder="—">
+                      <span class="rcp__unit muted">{{ material.unit }}</span>
+                    </td>
+
+                    {# Ce qui est réellement stocké, pour que la division par le
+                       rendement ne se fasse pas dans le noir. #}
+                    <td class="rcp__stored">
+                      {% if qty is not null %}{{ qty|qty }} {{ material.unit }}{% else %}—{% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
+          </div>
+        </form>
+      </details>
+    {% endfor %}
+  {% endif %}
+
+{% endblock %}
