@@ -69,6 +69,9 @@ final class Translation
     /**
      * Le travail à faire : les textes à envoyer et les langues à obtenir.
      *
+     * Ne porte QUE ce qui manque : un champ déjà traduit dans les quatre
+     * langues ne repart pas, même quand ses voisins, eux, ont des trous.
+     *
      * Rend un plan VIDE — source nulle — dès qu'il n'y a rien à faire : aucune
      * source, ou déjà tout traduit. L'appelant n'a donc pas à décider s'il
      * appelle l'API ; il regarde la source.
@@ -86,13 +89,34 @@ final class Translation
             return $vide;
         }
 
-        // Seuls les champs renseignés DANS la source partent : traduire à
-        // partir du vide produirait une invention, pas une traduction.
+        // Un champ n'entre dans la requête qu'à DEUX conditions : être
+        // renseigné dans la source, et manquer quelque part.
+        //
+        // La première écarte ce qu'on ne saurait pas traduire — partir du vide
+        // produirait une invention, pas une traduction. La seconde écarte ce
+        // qui n'a plus rien à recevoir : le nom d'un produit se traduit une
+        // fois, les ingrédients se remanient à chaque saison, et sans ce
+        // filtre le nom repartait à chaque retouche de l'étiquette pour que sa
+        // traduction soit ensuite jetée — elle existait déjà, et une
+        // traduction existante n'est jamais remplacée.
         $textes = [];
+        $manquantes = [];
+
         foreach ($fields as $champ => $values) {
             $texte = $values[$source->value] ?? '';
-            if (self::isFilled($texte)) {
-                $textes[$champ] = trim($texte);
+            if (!self::isFilled($texte)) {
+                continue;
+            }
+
+            $trous = self::missing($values);
+            if ($trous === []) {
+                continue;
+            }
+
+            $textes[$champ] = trim($texte);
+
+            foreach ($trous as $locale) {
+                $manquantes[$locale->value] = $locale;
             }
         }
 
@@ -100,24 +124,15 @@ final class Translation
             return $vide;
         }
 
-        // Une langue n'est demandée que s'il lui manque au moins un des champs
-        // qu'on sait traduire. Sans ce filtre, rouvrir une fiche complète
-        // relancerait un appel entier pour n'écrire nulle part.
-        $cibles = [];
-        foreach (Locale::all() as $locale) {
-            if ($locale === $source) {
-                continue;
-            }
+        // Les langues demandées, dans l'ordre du module et non dans celui où
+        // les champs les ont réclamées : c'est cet ordre que le compte rendu
+        // affiche, et il n'a pas à dépendre du champ qui manquait le premier.
+        $cibles = array_values(array_filter(
+            Locale::all(),
+            static fn (Locale $l): bool => isset($manquantes[$l->value]),
+        ));
 
-            foreach (array_keys($textes) as $champ) {
-                if (!self::isFilled($fields[$champ][$locale->value] ?? null)) {
-                    $cibles[] = $locale;
-                    break;
-                }
-            }
-        }
-
-        return $cibles === [] ? $vide : ['source' => $source, 'texts' => $textes, 'targets' => $cibles];
+        return ['source' => $source, 'texts' => $textes, 'targets' => $cibles];
     }
 
     /**

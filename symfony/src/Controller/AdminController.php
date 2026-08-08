@@ -251,6 +251,14 @@ final class AdminController extends AbstractController
 
         $retour = $this->redirectToRoute('admin_products', ['ouvrir' => $id]);
 
+        $langue = $this->shownLocales($request)[0];
+
+        // Le nom du produit est nommé DANS le contexte, et pas seulement passé
+        // comme champ à traduire : quand il est déjà traduit partout il ne
+        // part plus, et « café, cacao » se traduirait alors sans savoir que
+        // c'est un tiramisu qu'on décrit.
+        $intitule = $product->name[$langue->value] ?? reset($product->name);
+
         try {
             $resultat = $this->translations->complete(
                 [
@@ -258,8 +266,11 @@ final class AdminController extends AbstractController
                     'ingredients' => $product->ingredients,
                     'allergens' => $product->allergens,
                 ],
-                $this->shownLocales($request)[0],
-                'nom, liste d’ingrédients et mentions d’allergènes d’un produit vendu en pâtisserie',
+                $langue,
+                sprintf(
+                    'nom, liste d’ingrédients et mentions d’allergènes du produit « %s », vendu en pâtisserie',
+                    is_string($intitule) && $intitule !== '' ? $intitule : 'sans nom',
+                ),
             );
         } catch (TranslationUnavailable $e) {
             $this->addFlash('error', $e->getMessage());

@@ -21,10 +21,14 @@ use Merisu\Inventory\Domain\Locale;
  *
  * ── Ce que l'implémentation doit garantir
  *
- * Un appel, tous les champs, toutes les langues. Le regroupement n'est pas un
- * détail d'optimisation : traduire « Tiramisu classique », ses ingrédients et
- * ses allergènes DANS LE MÊME appel donne au modèle le contexte du produit,
- * qu'un ingrédient isolé n'aurait pas.
+ * Un appel, tous les champs à traduire, toutes les langues manquantes. Le
+ * regroupement n'est pas un détail d'optimisation : une liste d'ingrédients et
+ * les allergènes qui en découlent se traduisent mieux ensemble que séparément.
+ *
+ * Ce qui n'a rien à recevoir ne voyage pas pour autant : un champ déjà traduit
+ * partout reste à quai. Le contexte qu'il apportait, lui, passe par
+ * `$context` — c'est une phrase, pas un champ, et elle ne coûte pas une
+ * traduction dont on ne ferait rien.
  */
 interface AutoTranslatorInterface
 {

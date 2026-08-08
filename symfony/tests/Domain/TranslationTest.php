@@ -88,6 +88,40 @@ final class TranslationTest extends TestCase
         self::assertSame([Locale::Es], $plan['targets']);
     }
 
+    /**
+     * Un champ déjà traduit partout ne repart pas, même quand ses voisins ont
+     * des trous.
+     *
+     * Le nom d'un produit se traduit une fois ; ses ingrédients se remanient à
+     * chaque saison. Sans ce filtre, le nom repartait à chaque retouche de
+     * l'étiquette pour que sa traduction soit ensuite jetée — elle existait
+     * déjà, et une traduction existante n'est jamais remplacée.
+     */
+    public function testUnChampDejaCompletNeRepartPas(): void
+    {
+        $plan = Translation::plan([
+            'name' => ['fr' => 'Tiramisu', 'pl' => 'Tiramisu klasyczne', 'it' => 'Tiramisù', 'es' => 'Tiramisú'],
+            'ingredients' => ['fr' => 'Mascarpone, café'],
+        ], Locale::Fr);
+
+        self::assertSame(['ingredients'], array_keys($plan['texts']));
+        self::assertSame([Locale::Pl, Locale::It, Locale::Es], $plan['targets']);
+    }
+
+    /**
+     * Les langues demandées suivent l'ordre du module, et non celui où les
+     * champs les ont réclamées : c'est cet ordre que le compte rendu affiche.
+     */
+    public function testLesLanguesDemandeesGardentLOrdreDuModule(): void
+    {
+        $plan = Translation::plan([
+            'allergens' => ['fr' => 'Lait', 'pl' => 'Mleko', 'it' => 'Latte'],
+            'ingredients' => ['fr' => 'Mascarpone', 'es' => 'Mascarpone'],
+        ], Locale::Fr);
+
+        self::assertSame([Locale::Pl, Locale::It, Locale::Es], $plan['targets']);
+    }
+
     public function testUneFicheCompleteNeProduitAucunPlan(): void
     {
         $plan = Translation::plan([
