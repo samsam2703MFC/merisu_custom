@@ -3702,3 +3702,22 @@ select:disabled, select.field__input:disabled { background-image: url("data:imag
   font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
   color: var(--text-muted);
 }
+
+/* ── Caisse : ce que le catalogue distant contient ───────────────────────── */
+
+/* Une ligne par article, son état à droite. Le même dessin que les listes
+   d'indicateurs et de compétences — quatre listes de même nature n'ont pas à
+   se présenter de quatre façons. */
+.pos-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); }
+.pos {
+  display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--cream-outline);
+}
+.pos:last-child { border-bottom: 0; }
+.pos__name { flex: 1 1 auto; min-width: 0; font-weight: 600; color: var(--coffee-800); }
+.pos__meta { display: block; font-weight: 400; font-size: .78rem; }
+
+/* Le nom d'organisation est un texte, pas un nombre : la taille des tuiles
+   chiffrées l'aurait fait déborder dès qu'il dépasse dix caractères. */
+.stat__value--sm { font-size: 1.1rem; overflow-wrap: anywhere; }

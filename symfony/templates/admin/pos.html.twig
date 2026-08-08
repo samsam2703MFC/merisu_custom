@@ -1,0 +1,149 @@
+{#
+  Admin ▸ Caisse (GoPOS).
+
+  Voir AVANT d'importer. Un import qui se déclenche au premier clic sur une
+  boutique de trois cents articles est irrattrapable : l'écran montre d'abord
+  ce que la caisse renvoie — et QUELLE organisation répond — sans rien écrire.
+
+  L'onglet ne va donc rien chercher tant qu'on ne le lui demande pas : l'ouvrir
+  ne doit pas déclencher deux cents appels chez la caisse.
+#}
+{% extends 'admin/_layout.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'admin.pos.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block admin_content %}
+
+  {{ ui.page_header('admin.pos.title'|trans, 'admin.pos.subtitle'|trans) }}
+
+  <section class="card">
+    <div class="field">
+      <span class="field__label">{{ 'admin.pos.state'|trans }}</span>
+
+      {% if configured %}
+        {{ ui.badge('ok', 'admin.pos.configured'|trans) }}
+      {% else %}
+        {{ ui.badge('warn', 'admin.pos.notConfiguredShort'|trans) }}
+      {% endif %}
+
+      {#
+        Les identifiants ne se saisissent pas ici, et c'est délibéré : un champ
+        de saisie suppose un champ d'affichage, et l'écran d'administration
+        deviendrait l'endroit d'où l'on relit un secret de caisse. Ils vivent
+        côté serveur, où seul l'accès au serveur les livre.
+      #}
+      <p class="field__hint">{{ 'admin.pos.stateHint'|trans }}</p>
+    </div>
+
+    {% if configured %}
+      <div class="form-actions">
+        <a class="button button--secondary" href="{{ path('admin_cash', { tester: 1 }) }}">
+          {{ 'admin.pos.probe'|trans }}
+        </a>
+      </div>
+    {% endif %}
+  </section>
+
+  {% if error %}
+    {{ ui.banner('danger', error|trans) }}
+  {% endif %}
+
+  {% if probed and not error %}
+    {# QUELLE boutique répond. « Connexion réussie » n'aurait pas dit laquelle,
+       et l'on peut très bien avoir branché l'organisation du voisin. #}
+    <section class="card">
+      <div class="stats stats--compact">
+        <div class="stat">
+          <p class="stat__label">{{ 'admin.pos.organization'|trans }}</p>
+          <p class="stat__value stat__value--sm">{{ shopName }}</p>
+        </div>
+        <div class="stat">
+          <p class="stat__label">{{ 'admin.pos.categoriesFound'|trans }}</p>
+          <p class="stat__value">{{ categories|length }}</p>
+        </div>
+        <div class="stat">
+          <p class="stat__label">{{ 'admin.pos.itemsFound'|trans }}</p>
+          <p class="stat__value">{{ items|length }}</p>
+        </div>
+      </div>
+    </section>
+
+    {# ── Catégories ──────────────────────────────────────────────────────── #}
+
+    <section class="card">
+      <h2 class="card__title">{{ 'admin.pos.categories'|trans }}</h2>
+
+      {% if categories is empty %}
+        {{ ui.banner('info', 'admin.pos.noCategory'|trans) }}
+      {% else %}
+        <ul class="pos-list">
+          {% for categorie in categories %}
+            <li class="pos">
+              <span class="pos__name">{{ categorie.name }}</span>
+              {% if categorie.name in knownCategories %}
+                {{ ui.badge('neutral', 'admin.pos.alreadyHere'|trans) }}
+              {% else %}
+                {{ ui.badge('ok', 'admin.pos.wouldBeAdded'|trans) }}
+              {% endif %}
+              {% if not categorie.enabled %}
+                {{ ui.badge('warn', 'admin.pos.disabled'|trans) }}
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+
+        <form method="post" action="{{ path('admin_cash_import_categories') }}" class="form">
+          <div class="form-actions">
+            <button type="submit" class="button button--primary">{{ 'admin.pos.importCategories'|trans }}</button>
+          </div>
+          <p class="field__hint">{{ 'admin.pos.importCategoriesHint'|trans }}</p>
+        </form>
+      {% endif %}
+    </section>
+
+    {# ── Articles ────────────────────────────────────────────────────────── #}
+
+    <section class="card">
+      <h2 class="card__title">{{ 'admin.pos.items'|trans }}</h2>
+
+      {% if items is empty %}
+        {{ ui.banner('info', 'admin.pos.noItem'|trans) }}
+      {% else %}
+        <ul class="pos-list">
+          {% for article in items %}
+            <li class="pos">
+              <span class="pos__name">
+                {{ article.name }}
+                <span class="pos__meta muted">
+                  {{ article.externalId }}{% if article.categoryName %} · {{ article.categoryName }}{% endif %}
+                </span>
+              </span>
+              {#
+                Déjà rattaché, ou non : c'est la seule chose que l'admin a
+                besoin de savoir avant de cliquer. Le rattachement se fait par
+                la RÉFÉRENCE, jamais par le nom — un nom se retape.
+              #}
+              {% if knownRefs[article.externalId] is defined %}
+                {{ ui.badge('neutral', 'admin.pos.alreadyLinked'|trans) }}
+              {% else %}
+                {{ ui.badge('ok', 'admin.pos.wouldBeAdded'|trans) }}
+              {% endif %}
+              {% if not article.enabled %}
+                {{ ui.badge('warn', 'admin.pos.disabled'|trans) }}
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+
+        <form method="post" action="{{ path('admin_cash_import_items') }}" class="form">
+          <div class="form-actions">
+            <button type="submit" class="button button--primary">{{ 'admin.pos.importItems'|trans }}</button>
+          </div>
+          <p class="field__hint">{{ 'admin.pos.importItemsHint'|trans }}</p>
+        </form>
+      {% endif %}
+    </section>
+  {% endif %}
+
+{% endblock %}

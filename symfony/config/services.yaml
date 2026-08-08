@@ -80,6 +80,28 @@ services:
     Merisu\Inventory\Adapter\InventorySyncInterface:
         alias: Merisu\Inventory\Adapter\NullInventorySync
 
+    # ── Caisse GoPOS ────────────────────────────────────────────────────────
+    # Le catalogue de la boutique vit dans la CAISSE : c'est là qu'un
+    # responsable crée un produit, le renomme ou le retire, parce que c'est là
+    # qu'il passe en vente. Ce module en prend copie pour savoir quoi compter ;
+    # l'inverse aurait donné deux catalogues, et deux vérités.
+    #
+    # Trois valeurs, à générer dans GoPOS ▸ Settings. Le jeton, lui, ne se
+    # configure pas : il se demande à /oauth/token et se renouvelle seul.
+    #
+    # Sans elles, le service se déclare non configuré et l'écran ne propose
+    # aucun import. Pour couper la fonction même en présence d'identifiants,
+    # remplacer l'alias par `NullPosService`.
+    Merisu\Inventory\Adapter\GoPosService:
+        arguments:
+            $clientId: '%env(GOPOS_CLIENT_ID)%'
+            $clientSecret: '%env(GOPOS_CLIENT_SECRET)%'
+            $organizationId: '%env(GOPOS_ORGANIZATION_ID)%'
+            $baseUrl: '%env(GOPOS_BASE_URL)%'
+
+    Merisu\Inventory\Adapter\PosServiceInterface:
+        alias: Merisu\Inventory\Adapter\GoPosService
+
     # ── Traduction assistée des LIBELLÉS ────────────────────────────────────
     # Pas de l'interface : les chaînes d'écran vivent dans translations/ et
     # sont écrites à la main. Ici, ce sont les données de la boutique — noms de
