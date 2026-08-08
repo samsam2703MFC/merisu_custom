@@ -322,6 +322,16 @@ admin:
         roundingMode: "Mode d'arrondi"
         recipeRef: 'Référence recette'
         recipeRefHint: 'Identifiant du produit dans le module Recette technique.'
+        supplySection: 'Approvisionnement'
+        supplySource: 'Origine'
+        supplySourceHint: 'Centrale : la référence est celle du catalogue du réseau, et la commande part au siège. Libre : la boutique achète où elle veut, et c''est le nom du fournisseur qui devient utile.'
+        supplySources:
+            CENTRAL: 'Centrale'
+            FREE: 'Fournisseur libre'
+        supplierRef: 'Référence fournisseur'
+        supplierRefHint: 'Sous laquelle on recommande. Distincte de la référence hôte plus haut, qui sert à remonter les comptages.'
+        supplierName: 'Fournisseur'
+        supplierNameHint: 'Ne sert qu''en approvisionnement libre : en centrale, c''est le réseau.'
         placeholderWarning: 'Libellés provisoires : à remplacer par les vrais noms de produits.'
     roundingMode:
         CEIL: 'Au multiple supérieur'

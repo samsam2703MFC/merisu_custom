@@ -319,6 +319,16 @@ admin:
         roundingMode: 'Modalità di arrotondamento'
         recipeRef: 'Riferimento ricetta'
         recipeRefHint: 'Identificativo del prodotto nel modulo Ricetta tecnica.'
+        supplySection: 'Approvvigionamento'
+        supplySource: 'Origine'
+        supplySourceHint: 'Centrale: il codice è quello del catalogo della rete e l''ordine parte dalla sede. Libero: il negozio acquista dove vuole, ed è il nome del fornitore a diventare utile.'
+        supplySources:
+            CENTRAL: 'Centrale'
+            FREE: 'Fornitore libero'
+        supplierRef: 'Codice fornitore'
+        supplierRefHint: 'Quello con cui si riordina. Diverso dal codice host qui sopra, che serve a inviare le rilevazioni.'
+        supplierName: 'Fornitore'
+        supplierNameHint: 'Serve solo con un fornitore libero: in centrale è la rete.'
         placeholderWarning: 'Denominazioni provvisorie: da sostituire con i nomi reali dei prodotti.'
     roundingMode:
         CEIL: 'Al multiplo superiore'

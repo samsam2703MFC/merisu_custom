@@ -29,6 +29,7 @@ use Merisu\Inventory\Domain\ProductNature;
 use Merisu\Inventory\Domain\ProductionPlanRow;
 use Merisu\Inventory\Domain\ProductionPlanStatus;
 use Merisu\Inventory\Domain\RoundingMode;
+use Merisu\Inventory\Domain\SupplierSource;
 use Merisu\Inventory\Domain\SyncKind;
 use Merisu\Inventory\Domain\SyncStatus;
 
@@ -162,6 +163,9 @@ final class Store
             'count_morning' => $product->schedule->morning ? 1 : 0,
             'count_evening' => $product->schedule->evening ? 1 : 0,
             'count_frequency' => $product->schedule->frequency,
+            'supplier_source' => $product->supplierSource->value,
+            'supplier_ref' => $product->supplierRef,
+            'supplier_name' => $product->supplierName,
         ];
 
         $exists = (int) $this->db->fetchOne('SELECT COUNT(*) FROM inv_product WHERE id = ?', [$product->id]) > 0;
@@ -917,6 +921,12 @@ final class Store
                 (bool) ($row['count_evening'] ?? true),
                 $row['count_frequency'] ?? 7,
             ),
+            // Repli sur la centrale : voir SupplierSource::fromLoose. Une base
+            // installée avant la distinction n'a rien déclaré, et supposer un
+            // achat libre inventerait une décision que personne n'a prise.
+            SupplierSource::fromLoose($row['supplier_source'] ?? null),
+            trim((string) ($row['supplier_ref'] ?? '')),
+            trim((string) ($row['supplier_name'] ?? '')),
         );
     }
 

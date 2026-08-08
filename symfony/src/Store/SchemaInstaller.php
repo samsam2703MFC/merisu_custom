@@ -65,6 +65,9 @@ final class SchemaInstaller
             $t->addColumn('count_morning', 'boolean', ['default' => true]);
             $t->addColumn('count_evening', 'boolean', ['default' => true]);
             $t->addColumn('count_frequency', 'integer', ['default' => 7]);
+            $t->addColumn('supplier_source', 'string', ['length' => 16, 'default' => 'CENTRAL']);
+            $t->addColumn('supplier_ref', 'string', ['length' => 64, 'default' => '']);
+            $t->addColumn('supplier_name', 'string', ['length' => 120, 'default' => '']);
             $t->setPrimaryKey(['id']);
             $t->addUniqueIndex(['code'], 'inv_product_code');
         }
@@ -354,6 +357,14 @@ final class SchemaInstaller
                 'count_morning' => 'BOOLEAN DEFAULT 1 NOT NULL',
                 'count_evening' => 'BOOLEAN DEFAULT 1 NOT NULL',
                 'count_frequency' => 'INTEGER DEFAULT 7 NOT NULL',
+                // Approvisionnement. La CENTRALE par défaut : dans un réseau
+                // de franchise, l'achat centralisé est la règle et l'achat
+                // libre l'exception qu'une boutique déclare. Poser « libre »
+                // d'office aurait laissé croire que chacune se débrouille,
+                // alors que personne n'a rien déclaré.
+                'supplier_source' => "VARCHAR(16) DEFAULT 'CENTRAL' NOT NULL",
+                'supplier_ref' => "VARCHAR(64) DEFAULT '' NOT NULL",
+                'supplier_name' => "VARCHAR(120) DEFAULT '' NOT NULL",
             ],
             'inv_category' => [
                 // Ajoutée en même temps que celle des produits : une base

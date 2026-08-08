@@ -261,6 +261,66 @@
 </div>
 
 {#
+  ── Approvisionnement ───────────────────────────────────────────────────────
+
+  D'où la ligne vient, et sous quelle référence on la recommande. Regroupé à
+  part : ces trois champs ne servent ni au comptage ni au calcul, ils servent
+  à PASSER COMMANDE quand le stock descend.
+
+  La référence fournisseur est distincte de la référence hôte plus haut :
+  l'une sert à commander, l'autre à remonter un comptage. Les confondre aurait
+  marché tant que les deux coïncident, et cassé le jour où une boutique change
+  de fournisseur.
+#}
+<h3 class="card__title">{{ 'admin.products.supplySection'|trans }}</h3>
+
+<fieldset class="field seg">
+  <legend class="field__label">{{ 'admin.products.supplySource'|trans }}</legend>
+
+  <div class="seg__grid">
+    {% for source in supplySources %}
+      <label class="seg__item">
+        <input class="seg__radio" type="radio" name="supplierSource" value="{{ source.value }}"
+               {{ source == product.supplierSource ? 'checked' : '' }}>
+        <span class="seg__box">
+          {{ ui.icon(source.icon) }}
+          <span class="seg__name">{{ ('admin.products.supplySources.' ~ source.value)|trans }}</span>
+        </span>
+      </label>
+    {% endfor %}
+  </div>
+
+  <p class="field__hint">{{ 'admin.products.supplySourceHint'|trans }}</p>
+</fieldset>
+
+<div class="field-grid">
+  <div class="field">
+    <label class="field__label" for="supref-{{ product.id }}">
+      {{ 'admin.products.supplierRef'|trans }}
+    </label>
+    <input class="field__input" type="text" id="supref-{{ product.id }}"
+           name="supplierRef" maxlength="64" value="{{ product.supplierRef }}">
+    <p class="field__hint">{{ 'admin.products.supplierRefHint'|trans }}</p>
+  </div>
+
+  {#
+    Le nom du fournisseur n'a de sens qu'en approvisionnement libre — en
+    centrale, c'est le réseau, et le champ n'apprendrait rien. Il reste
+    néanmoins toujours affiché : le masquer demanderait du script, et une
+    boutique qui repasse en libre retrouverait un champ vide alors que la
+    valeur, elle, n'a jamais été effacée.
+  #}
+  <div class="field">
+    <label class="field__label" for="supname-{{ product.id }}">
+      {{ 'admin.products.supplierName'|trans }}
+    </label>
+    <input class="field__input" type="text" id="supname-{{ product.id }}"
+           name="supplierName" maxlength="120" value="{{ product.supplierName }}">
+    <p class="field__hint">{{ 'admin.products.supplierNameHint'|trans }}</p>
+  </div>
+</div>
+
+{#
   Mentions de l'étiquette de production. Regroupées à part : elles ne
   servent ni au comptage ni au calcul, elles ne sortent que sur le
   papier collé sur la barquette.

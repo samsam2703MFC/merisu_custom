@@ -25,6 +25,7 @@ use Merisu\Inventory\Domain\RankingMetric;
 use Merisu\Inventory\Domain\RoundingMode;
 use Merisu\Inventory\Domain\SalesSummary;
 use Merisu\Inventory\Domain\ShopRanking;
+use Merisu\Inventory\Domain\SupplierSource;
 use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Service\InventoryService;
 use Merisu\Inventory\Service\ReportService;
@@ -104,6 +105,7 @@ final class AdminController extends AbstractController
             'countModes' => CountMode::all(),
             'containerTypes' => ContainerType::all(),
             'natures' => ProductNature::all(),
+            'supplySources' => SupplierSource::all(),
             'frequencies' => CountSchedule::FREQUENCIES,
             // Fiche vierge du formulaire de création : le MÊME gabarit sert aux
             // deux, et il lui faut donc un produit à afficher. Elle porte déjà
@@ -278,6 +280,15 @@ final class AdminController extends AbstractController
             shelfLifeDays: max(0, (int) $request->request->get('shelfLifeDays', 0)),
             ingredients: $this->parLangue($request, 'ingredients'),
             allergens: $this->parLangue($request, 'allergens'),
+            // Approvisionnement : d'où la ligne vient, et sous quelle référence
+            // on la recommande. Repli sur la valeur enregistrée plutôt que sur
+            // « centrale » — une requête tronquée ne doit pas rapatrier au
+            // réseau un produit que la boutique achète chez son voisin.
+            supplierSource: SupplierSource::fromLoose(
+                $request->request->get('supplierSource') ?? $base->supplierSource->value,
+            ),
+            supplierRef: mb_substr(trim((string) $request->request->get('supplierRef', '')), 0, 64),
+            supplierName: mb_substr(trim((string) $request->request->get('supplierName', '')), 0, 120),
         );
     }
 

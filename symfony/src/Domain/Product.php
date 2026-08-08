@@ -79,6 +79,22 @@ final readonly class Product
          * retire rien à personne.
          */
         public CountSchedule $schedule = new CountSchedule(),
+        /**
+         * D'où la ligne s'approvisionne : la centrale du réseau, ou un
+         * fournisseur choisi par la boutique.
+         */
+        public SupplierSource $supplierSource = SupplierSource::Central,
+        /**
+         * Référence chez le fournisseur.
+         *
+         * Distincte de `recipeRef`, qui identifie le produit dans le système
+         * hôte : l'une sert à COMMANDER, l'autre à remonter un comptage. Les
+         * confondre aurait marché tant que les deux coïncident, et cassé le
+         * jour où une boutique change de fournisseur.
+         */
+        public string $supplierRef = '',
+        /** Nom du fournisseur — n'a de sens qu'en approvisionnement libre. */
+        public string $supplierName = '',
     ) {
     }
 
@@ -173,6 +189,9 @@ final readonly class Product
             $changes['containerType'] ?? $this->containerType,
             $changes['nature'] ?? $this->nature,
             $changes['schedule'] ?? $this->schedule,
+            $changes['supplierSource'] ?? $this->supplierSource,
+            $changes['supplierRef'] ?? $this->supplierRef,
+            $changes['supplierName'] ?? $this->supplierName,
         );
     }
 }

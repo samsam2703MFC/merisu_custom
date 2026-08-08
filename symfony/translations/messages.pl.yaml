@@ -319,6 +319,16 @@ admin:
         roundingMode: 'Tryb zaokrąglenia'
         recipeRef: 'Referencja receptury'
         recipeRefHint: 'Identyfikator produktu w module Receptur technicznych.'
+        supplySection: 'Zaopatrzenie'
+        supplySource: 'Pochodzenie'
+        supplySourceHint: 'Centrala: indeks pochodzi z katalogu sieci, a zamówienie idzie do centrali. Własny: sklep kupuje gdzie chce i wtedy liczy się nazwa dostawcy.'
+        supplySources:
+            CENTRAL: 'Centrala'
+            FREE: 'Dostawca własny'
+        supplierRef: 'Indeks u dostawcy'
+        supplierRefHint: 'Pod nim się zamawia. Inny niż indeks systemu powyżej, który służy do przesyłania spisów.'
+        supplierName: 'Dostawca'
+        supplierNameHint: 'Przydaje się tylko przy dostawcy własnym: w centrali to sieć.'
         placeholderWarning: 'Nazwy tymczasowe: zastąp je prawdziwymi nazwami produktów.'
     roundingMode:
         CEIL: 'W górę do wielokrotności'
