@@ -88,7 +88,7 @@
                      aria-label="{{ 'produce.signWithCode'|trans }} — {{ rang }}/6"
                      {{ rang == 1 ? 'autofocus' : '' }}
                      required>
-              <span class="pin__star" aria-hidden="true">✱</span>
+              <span class="pin__star" aria-hidden="true">{{ ui.icon('asterisk') }}</span>
             </span>
           {% endfor %}
         </div>

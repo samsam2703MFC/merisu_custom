@@ -480,6 +480,33 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 
 /* ── Ligne de production : cocher, imprimer, signer ───────────────────────── */
 
+/* UNE ligne par produit, à toutes les largeurs.
+   L'écran de comptage garde ses trois colonnes — on y saisit trente nombres à
+   la file, et les serrer épargne du défilement. Ici on FAIT les lignes une par
+   une, et trois cartes côte à côte obligeaient à balayer l'écran en zigzag
+   pour suivre une liste qui se lit de haut en bas.
+   Deux classes plutôt qu'une : les règles à 768 et 1024 px sont écrites plus
+   bas dans ce fichier, et à égalité de poids c'est la dernière qui gagne. */
+.count-list.produce-list { grid-template-columns: minmax(0, 1fr); }
+
+/* Trois cases, et non une file qui s'enroule : la case, le libellé,
+   l'imprimante. Enroulée, l'imprimante passait à la ligne dès qu'un rayon
+   portait un nom un peu long. */
+/* La case reste en haut, en face du NOM. Centrée, elle flottait au milieu du
+   vide dès qu'un rayon poussait ses pastilles sur trois lignes — et l'on ne
+   savait plus laquelle des trois elle cochait. */
+.produce-item__head { flex-wrap: nowrap; align-items: flex-start; }
+
+/* La hauteur de la case comme plancher, et des lignes centrées dedans : un
+   libellé d'une ligne s'aligne alors sur la case, un libellé de trois lignes
+   commence en haut avec elle. */
+.produce-item__label {
+  min-width: 0; flex: 1 1 auto;
+  min-height: var(--touch);
+  display: flex; flex-wrap: wrap; gap: var(--space-2);
+  align-items: center; align-content: center;
+}
+
 /* La case à cocher.
    C'est un LIEN dessiné en case : cocher engage un nom, il faut donc un code,
    et un code ne se saisit pas dans une case à cocher. La cible fait 44 px —
@@ -499,11 +526,12 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 
 .produce-check--done { border-color: var(--ok); background: var(--ok-bg); }
 
-/* Impression d'UNE ligne, poussée à droite de l'entête : au bout du geste,
-   là où elle ne dispute la place ni au nom ni à la case. */
+/* Impression d'UNE ligne : au bout du geste, à l'extrême droite, là où elle ne
+   dispute la place ni au nom ni à la quantité. Sa case dans la grille est
+   réservée même quand elle est absente, pour que le reste ne se décale pas
+   d'une ligne à l'autre. */
 .produce-item__print {
   flex: none;
-  margin-left: auto;
   width: var(--touch); height: var(--touch);
   display: inline-flex; align-items: center; justify-content: center;
   border-radius: 10px;
@@ -525,6 +553,44 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
    consulte encore pour imprimer une étiquette ou vérifier une quantité. Seul
    son liseré change, ce qui suffit à la distinguer de loin. */
 .produce-item--done { border-color: var(--ok); }
+
+/* Une grille NOMMÉE, et non un empilement.
+   Chaque morceau a sa case, y compris l'imprimante qui peut manquer : sa case
+   reste alors vide, et rien ne vient s'y glisser — sans quoi la pastille
+   « rien à produire » remontait se ranger en haut à droite. */
+.produce-item {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "tete   imprimer"
+    "nombre nombre"
+    "detail detail"
+    "signe  signe"
+    "rien   rien";
+  align-items: center;
+}
+.produce-item__head  { grid-area: tete; }
+.produce-item__print { grid-area: imprimer; }
+.produce-item__qty   { grid-area: nombre; }
+.produce-item__meta  { grid-area: detail; }
+.produce-item__who   { grid-area: signe; }
+.produce-item__none  { grid-area: rien; margin: 0; }
+
+/* Dès qu'il y a de la place, la quantité passe À DROITE du nom plutôt que
+   dessous : une ligne pleine largeur avec le chiffre empilé sous le libellé
+   laissait les deux tiers de l'écran vides et allongeait la liste pour rien.
+   Sur téléphone elle reste dessous — le nom y prend déjà toute la largeur. */
+@media (min-width: 768px) {
+  .produce-item {
+    grid-template-columns: minmax(0, 1fr) auto var(--touch);
+    grid-template-areas:
+      "tete   nombre imprimer"
+      "detail nombre imprimer"
+      "signe  signe  signe"
+      "rien   rien   rien";
+    column-gap: var(--space-4);
+  }
+  .produce-item__qty { text-align: right; }
+}
 
 .photo-strip { display: flex; gap: .4rem; flex-wrap: wrap; }
 .photo-strip__thumb {
@@ -1367,15 +1433,20 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
   place-items: center;
   pointer-events: none;
   color: var(--plum);
-  /* Étoile GRASSE : c'est la seule marque de l'écran qui dise « ce chiffre
-     est posé ». Un trait fin sur fond crème se serait effacé au premier
-     reflet, sur une tablette posée près d'une vitrine. */
-  font-weight: 800;
-  font-size: 1.7rem;
-  line-height: 1;
+  line-height: 0;
   opacity: 0;
   transition: opacity var(--dur) var(--ease);
 }
+
+/* Étoile GRASSE : c'est la seule marque de l'écran qui dise « ce chiffre est
+   posé ». Un trait fin sur fond crème se serait effacé au premier reflet, sur
+   une tablette posée près d'une vitrine.
+
+   Dessinée, et non écrite : une forme SVG se centre sur son propre carré, à
+   l'unité près et sur n'importe quel poste. Le caractère « ✱ » se plaçait
+   selon la police de secours qui allait le chercher — et celle-ci change d'un
+   système à l'autre, avec ses métriques. */
+.sign__pin .pin__star .icon { width: 26px; height: 26px; }
 
 .sign__pin .pin__cup:not(:placeholder-shown) ~ .pin__star { opacity: 1; }
 .sign__pin .pin__cup:focus { border-color: var(--plum); box-shadow: none; transform: none; }

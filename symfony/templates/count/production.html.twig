@@ -139,7 +139,16 @@
         </a>
       </div>
 
-      <div class="count-list">
+      {#
+        UNE ligne par produit, à toutes les largeurs.
+
+        L'écran de comptage, lui, garde ses trois colonnes : on y saisit trente
+        nombres à la file, et les serrer épargne du défilement. Ici on FAIT les
+        lignes une par une — on coche, on imprime, on passe à la suivante — et
+        trois cartes côte à côte obligeaient à balayer l'écran en zigzag pour
+        suivre une liste qui se lit de haut en bas.
+      #}
+      <div class="count-list produce-list">
         {% for line in lines %}
           {% set product = products[line.productId] ?? null %}
           {% set entry = entries[line.productId] ?? null %}
@@ -149,7 +158,17 @@
           {% set aFaire = line.qtyToProduce > 0 or line.missingThreshold %}
 
           <article class="count-item produce-item {{ entry ? 'produce-item--done' : '' }}">
-            <header class="count-item__header">
+            {#
+              La case et le libellé, et RIEN d'autre.
+
+              L'imprimante est sortie de cet entête : rangée à sa suite, elle
+              passait à la ligne dès qu'un rayon portait un nom un peu long —
+              elle se retrouvait sous le produit voisin, et l'on imprimait
+              l'étiquette du dessus en croyant cliquer sur celle du dessous.
+              Elle a désormais sa case dans la grille de la ligne, à l'extrême
+              droite, où rien ne la déplace.
+            #}
+            <header class="count-item__header produce-item__head">
               {#
                 La case à cocher est un LIEN, pas une case.
 
@@ -169,32 +188,17 @@
                 </a>
               {% endif %}
 
-              <span class="count-item__name">
-                {{ product ? product_label(product) : line.productId }}
+              <span class="produce-item__label">
+                <span class="count-item__name">
+                  {{ product ? product_label(product) : line.productId }}
+                </span>
+                {% if product and product.category %}
+                  {{ ui.badge('neutral', product.category) }}
+                {% endif %}
+                {% if line.missingThreshold %}
+                  {{ ui.badge('warn', 'common.notDefined'|trans) }}
+                {% endif %}
               </span>
-              {% if product and product.category %}
-                {{ ui.badge('neutral', product.category) }}
-              {% endif %}
-              {% if line.missingThreshold %}
-                {{ ui.badge('warn', 'common.notDefined'|trans) }}
-              {% endif %}
-
-              {#
-                Imprimer CETTE ligne. Sans elle, terminer une fournée obligeait
-                à retirer toute la planche du jour pour une seule étiquette.
-                Absente quand il n'y a rien à produire : une étiquette « 0 »
-                gaspille du papier et embrouille le plan de travail.
-              #}
-              {% if line.qtyToProduce > 0 %}
-                <a class="produce-item__print"
-                   href="{{ path('production_labels', { forDate: forDate, productId: line.productId }) }}"
-                   title="{{ 'produce.printLine'|trans }}"
-                   aria-label="{{ 'produce.printLineOf'|trans({
-                     '%product%': product ? product_label(product) : line.productId
-                   }) }}">
-                  {{ ui.icon('printer') }}
-                </a>
-              {% endif %}
             </header>
 
             <p class="produce-item__qty">
@@ -202,7 +206,26 @@
               <span class="produce-item__unit muted">{{ product ? product.unit : '' }}</span>
             </p>
 
-            <p class="muted">
+            {#
+              Imprimer CETTE ligne. Sans elle, terminer une fournée obligeait à
+              retirer toute la planche du jour pour une seule étiquette.
+
+              Absente quand il n'y a rien à produire : une étiquette « 0 »
+              gaspille du papier et embrouille le plan de travail. Sa case dans
+              la grille reste vide, et rien ne bouge.
+            #}
+            {% if line.qtyToProduce > 0 %}
+              <a class="produce-item__print"
+                 href="{{ path('production_labels', { forDate: forDate, productId: line.productId }) }}"
+                 title="{{ 'produce.printLine'|trans }}"
+                 aria-label="{{ 'produce.printLineOf'|trans({
+                   '%product%': product ? product_label(product) : line.productId
+                 }) }}">
+                {{ ui.icon('printer') }}
+              </a>
+            {% endif %}
+
+            <p class="muted produce-item__meta">
               {{ 'produce.required'|trans }} : {{ line.requiredPieces|qty }}
               · {{ 'produce.closingStock'|trans }} : {{ line.closingStock|qty }}
             </p>
@@ -222,8 +245,10 @@
               </p>
             {% endif %}
 
+            {# Enveloppée : sans conteneur, la pastille se glisserait dans la
+               case laissée libre par l'imprimante, tout en haut à droite. #}
             {% if line.qtyToProduce == 0 and not line.missingThreshold %}
-              {{ ui.badge('ok', 'produce.nothing'|trans) }}
+              <p class="produce-item__none">{{ ui.badge('ok', 'produce.nothing'|trans) }}</p>
             {% endif %}
           </article>
         {% endfor %}

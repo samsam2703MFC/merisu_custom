@@ -457,6 +457,22 @@
       <path d="M7 8h10v10.5a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2Z"/>
       <path d="M5.5 4.5h13v3.5h-13z"/>
       <path d="M9.5 12h5"/>
+    {% elseif name == 'asterisk' %}
+      {#
+        Le masque d'un chiffre saisi.
+
+        DESSINÉE, et non écrite « ✱ ».
+
+        Un caractère se place selon la police qui le porte, et « ✱ » (U+2731)
+        n'existe dans aucune des polices de l'application : le navigateur va le
+        chercher ailleurs, et cette police de secours n'est pas la même d'un
+        poste à l'autre. Ses métriques non plus — d'où une astérisque centrée
+        ici, montée d'un tiers de coupe là, sans qu'aucune règle CSS ne puisse
+        y faire quoi que ce soit.
+
+        Trois traits qui se croisent sur (12,12) se centrent, eux, partout.
+      #}
+      <path d="M12 4.5v15M5.5 8.25l13 7.5M18.5 8.25l-13 7.5" stroke-width="3"/>
     {% elseif name == 'check' %}
       {# Fait. Un trait épais et une pente franche : à 16 px dans une case
          cochée, un chevron trop fin se lit comme un accent. #}
