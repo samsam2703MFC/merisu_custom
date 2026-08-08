@@ -105,6 +105,11 @@ final class AdminController extends AbstractController
             'containerTypes' => ContainerType::all(),
             'natures' => ProductNature::all(),
             'frequencies' => CountSchedule::FREQUENCIES,
+            // Fiche vierge du formulaire de création : le MÊME gabarit sert aux
+            // deux, et il lui faut donc un produit à afficher. Elle porte déjà
+            // l'emplacement réservé, ce qui rend ses identifiants d'éléments
+            // uniques parmi ceux des fiches de la liste.
+            'blank' => self::blankProduct($this->store->nextProductSlot()),
             // Fiche à déplier au chargement : celle qu'on vient de créer.
             'open' => (string) $request->query->get('ouvrir', ''),
         ]);
@@ -118,10 +123,12 @@ final class AdminController extends AbstractController
      * d'autre choix que de renommer un emplacement occupé, en perdant ce qu'il
      * portait. Le nombre de produits n'est plus borné.
      *
-     * Quatre champs seulement à la création — nom, rayon, nature, unité. Le
-     * reste (perte, arrondi, étiquette, mentions par langue) se règle sur la
-     * fiche, qui s'ouvre juste après : demander onze champs avant d'avoir
-     * seulement nommé le produit ferait renoncer.
+     * LE MÊME formulaire qu'à l'édition, et le même analyseur. Il n'en
+     * demandait d'abord que quatre champs, mais on rouvrait la fiche aussitôt
+     * pour régler les onze autres : deux gestes pour un seul produit, et un
+     * produit qui existait un moment sans son rythme de comptage. Deux
+     * analyseurs séparés auraient fini par diverger — une règle corrigée d'un
+     * côté, oubliée de l'autre.
      *
      * Déclarée AVANT `admin_product_save` : `/produits/{id}` capterait sinon
      * « nouveau » comme un identifiant, et le formulaire répondrait 404.
@@ -131,53 +138,58 @@ final class AdminController extends AbstractController
     {
         $admin = $this->currentUser->requireAdmin();
 
-        $nom = trim((string) $request->request->get('name', ''));
+        $slot = $this->store->nextProductSlot();
 
-        if ($nom === '') {
+        $produit = $this->fromForm($request, self::blankProduct($slot));
+
+        // Aucun libellé, dans aucune langue : le produit ne serait lisible sur
+        // aucun écran. Le formulaire l'exige déjà côté navigateur ; ce garde-fou
+        // couvre le cas où il ne s'exécute pas.
+        if ($produit->name === []) {
             $this->addFlash('error', 'admin.products.createEmpty');
 
             return $this->redirectToRoute('admin_products');
         }
 
-        $slot = $this->store->nextProductSlot();
-
-        /*
-          Un seul libellé demandé, dans la langue de l'écran.
-
-          Les trois autres restent vides et `product_label` se replie dessus :
-          un produit lisible tout de suite dans une langue vaut mieux qu'un
-          formulaire de quatre champs qu'on remplit en recopiant le même mot.
-          Les traductions se posent ensuite sur la fiche.
-        */
-        $langue = $request->getLocale();
-
-        $this->store->saveProduct(new Product(
-            $slot['id'],
-            $slot['code'],
-            [$langue => mb_substr($nom, 0, 120)],
-            mb_substr(trim((string) $request->request->get('unit', 'pcs')), 0, 16) ?: 'pcs',
-            true,
-            0.0,
-            1.0,
-            RoundingMode::Ceil,
-            null,
-            $slot['sortOrder'],
-            category: ProductCategory::clean((string) $request->request->get('category', '')),
-            nature: ProductNature::fromLoose($request->request->get('nature')),
-        ));
+        $this->store->saveProduct($produit);
 
         $this->store->audit($admin->id, $admin->role->value, 'PRODUCT_CREATED', null, null, [
             'id' => $slot['id'],
             'code' => $slot['code'],
-            'name' => $nom,
         ]);
 
         $this->addFlash('success', 'common.saved');
 
         // La fiche s'ouvre sur la page : sans cela, le produit rejoindrait le
         // bas d'une liste de trente fiches repliées et il faudrait le chercher
-        // pour finir de le régler.
+        // pour vérifier ce qu'on vient de saisir.
         return $this->redirectToRoute('admin_products', ['ouvrir' => $slot['id']]);
+    }
+
+    /**
+     * Fiche vierge servant de base à une création.
+     *
+     * Les valeurs par défaut sont celles qui ne surprennent pas : active, à
+     * l'unité, sans perte, arrondi à l'entier supérieur, comptée matin et soir
+     * tous les jours. Ce sont aussi celles que le formulaire affiche — l'écran
+     * et le code disent donc la même chose.
+     *
+     * @param array{id: string, code: string, sortOrder: int} $slot
+     */
+    private static function blankProduct(array $slot): Product
+    {
+        return new Product(
+            $slot['id'],
+            $slot['code'],
+            [],
+            'pcs',
+            true,
+            0.0,
+            1.0,
+            RoundingMode::Ceil,
+            null,
+            $slot['sortOrder'],
+        );
     }
 
     #[Route('/produits/{id}', name: 'admin_product_save', methods: ['POST'])]
@@ -190,7 +202,29 @@ final class AdminController extends AbstractController
             throw $this->createNotFoundException('PRODUCT_NOT_FOUND');
         }
 
-        // Un libellé par langue : ce sont des DONNÉES, pas des chaînes d'interface.
+        $this->store->saveProduct($this->fromForm($request, $product));
+
+        $this->store->audit($admin->id, $admin->role->value, 'PRODUCT_UPDATED', null, null, ['productId' => $id]);
+        $this->addFlash('success', 'common.saved');
+
+        return $this->redirectToRoute('admin_products');
+    }
+
+    /**
+     * Lit le formulaire produit et le pose sur une fiche.
+     *
+     * UN SEUL analyseur pour la création et l'édition, comme il n'y a qu'un
+     * seul gabarit : c'est ce qui garantit qu'un champ ajouté à l'écran est lu
+     * des deux côtés, et qu'une règle corrigée l'est partout.
+     *
+     * `$base` porte les valeurs de repli — la fiche enregistrée à l'édition,
+     * une fiche vierge à la création. Chaque champ absent ou aberrant retombe
+     * donc sur quelque chose de sensé, jamais sur zéro.
+     */
+    private function fromForm(Request $request, Product $base): Product
+    {
+        // Un libellé par langue : ce sont des DONNÉES, pas des chaînes
+        // d'interface (celles-ci vivent dans translations/).
         $names = [];
         foreach (Locale::all() as $locale) {
             $value = trim((string) $request->request->get('name_' . $locale->value, ''));
@@ -202,25 +236,25 @@ final class AdminController extends AbstractController
         $wasteFactor = max(0.0, (float) str_replace(',', '.', (string) $request->request->get('wasteFactor', '0')));
         $roundingStep = (float) str_replace(',', '.', (string) $request->request->get('roundingStep', '1'));
 
-        $this->store->saveProduct($product->with(
-            name: $names !== [] ? $names : $product->name,
-            unit: mb_substr(trim((string) $request->request->get('unit', $product->unit)), 0, 16) ?: $product->unit,
+        return $base->with(
+            name: $names !== [] ? $names : $base->name,
+            unit: mb_substr(trim((string) $request->request->get('unit', $base->unit)), 0, 16) ?: $base->unit,
             active: $request->request->getBoolean('active'),
             wasteFactor: $wasteFactor,
-            roundingStep: $roundingStep > 0 ? $roundingStep : $product->roundingStep,
-            roundingMode: RoundingMode::tryFrom((string) $request->request->get('roundingMode')) ?? $product->roundingMode,
+            roundingStep: $roundingStep > 0 ? $roundingStep : $base->roundingStep,
+            roundingMode: RoundingMode::tryFrom((string) $request->request->get('roundingMode')) ?? $base->roundingMode,
             recipeRef: trim((string) $request->request->get('recipeRef', '')) ?: null,
-            countMode: CountMode::tryFromLoose($request->request->get('countMode')) ?? $product->countMode,
+            countMode: CountMode::tryFromLoose($request->request->get('countMode')) ?? $base->countMode,
             // Forme du contenant : purement visuelle, elle ne touche à aucun
             // calcul. Conservée même quand le produit repasse « à l'unité »,
             // pour qu'un aller-retour entre les deux modes ne l'efface pas.
-            containerType: ContainerType::tryFromLoose($request->request->get('containerType')) ?? $product->containerType,
+            containerType: ContainerType::tryFromLoose($request->request->get('containerType')) ?? $base->containerType,
             // Matière première ou composition. C'est elle qui décide de
             // l'entrée au plan de production, d'où le repli sur la valeur déjà
             // enregistrée plutôt que sur « composition » : un champ absent
             // d'une requête tronquée ne doit pas remettre le mascarpone en
             // fabrication.
-            nature: ProductNature::fromLoose($request->request->get('nature') ?? $product->nature->value),
+            nature: ProductNature::fromLoose($request->request->get('nature') ?? $base->nature->value),
             // Rythme de comptage. `CountSchedule::of` rattrape le cas des deux
             // moments décochés : une ligne comptée à aucun moment aurait
             // disparu de tous les écrans sans que rien ne le dise.
@@ -244,12 +278,7 @@ final class AdminController extends AbstractController
             shelfLifeDays: max(0, (int) $request->request->get('shelfLifeDays', 0)),
             ingredients: $this->parLangue($request, 'ingredients'),
             allergens: $this->parLangue($request, 'allergens'),
-        ));
-
-        $this->store->audit($admin->id, $admin->role->value, 'PRODUCT_UPDATED', null, null, ['productId' => $id]);
-        $this->addFlash('success', 'common.saved');
-
-        return $this->redirectToRoute('admin_products');
+        );
     }
 
     /**
