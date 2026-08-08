@@ -83,4 +83,36 @@ final readonly class OutboxEntry
     {
         return $this->attempts >= self::MAX_ATTEMPTS;
     }
+
+    /**
+     * De quoi cette ligne parle, en clair.
+     *
+     * L'écran d'administration montre une file, pas un journal technique :
+     * « TFB-77 × 12 » se reconnaît, `{"externalProductId":"TFB-77",…}` non.
+     *
+     * @return array{date: ?string, moment: ?string, what: string, count: int}
+     */
+    public function describe(): array
+    {
+        $p = $this->payload;
+
+        // Un relevé de matières porte ses lignes ; un inventaire produit n'en
+        // a qu'une, la sienne.
+        $items = \is_array($p['items'] ?? null) ? $p['items'] : null;
+
+        return [
+            'date' => isset($p['businessDate']) ? (string) $p['businessDate'] : null,
+            'moment' => isset($p['moment']) ? (string) $p['moment'] : null,
+            'what' => $items === null ? (string) ($p['externalProductId'] ?? '—') : '',
+            'count' => $items === null ? 1 : \count($items),
+        ];
+    }
+
+    /** Quantité d'un inventaire produit ; null pour un relevé de matières. */
+    public function quantity(): ?float
+    {
+        return isset($this->payload['qty']) && is_numeric($this->payload['qty'])
+            ? (float) $this->payload['qty']
+            : null;
+    }
 }

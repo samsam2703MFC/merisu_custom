@@ -113,6 +113,7 @@ nav:
     settings: Paramètres
     delta: 'Delta technique'
     audit: Historique
+    sync: 'Remontées'
 
 morning:
     title: "Stock d'ouverture"
@@ -172,6 +173,22 @@ produce:
 
 admin:
     sync:
+        title: 'Remontées'
+        subtitle: 'File d''envoi des comptages vers TF Buddy.'
+        what: 'Contenu'
+        state: 'État'
+        attempts: 'Tentatives'
+        lastError: 'Dernière erreur'
+        retry: 'Reprendre'
+        drain: 'Envoyer maintenant'
+        empty: 'La file est vide.'
+        materials: '%count% matière(s) première(s)'
+        notConfigured: 'Aucune intégration branchée : rien n''a été envoyé.'
+        notConfiguredHint: 'Aucune intégration n''est encore branchée : « en attente » est ici l''état normal, pas un retard. Les comptages sont conservés et partiront tous au premier envoi réussi.'
+        status:
+            PENDING: 'En attente'
+            SENT: 'Envoyés'
+            FAILED: 'Abandonnés'
         pending: '%count% comptage(s) en attente de remontée vers TF Buddy.'
         failed: '%count% remontée(s) abandonnée(s) vers TF Buddy — les comptages sont conservés.'
         hint: 'Rien n''est perdu : la file se vide avec « merisu:synchroniser ».'

@@ -110,6 +110,7 @@ nav:
     settings: Ustawienia
     delta: 'Delta techniczna'
     audit: Historia
+    sync: 'Przesyłanie'
 
 morning:
     title: 'Stan otwarcia'
@@ -169,6 +170,22 @@ produce:
 
 admin:
     sync:
+        title: 'Przesyłanie'
+        subtitle: 'Kolejka wysyłki spisów do TF Buddy.'
+        what: 'Zawartość'
+        state: 'Stan'
+        attempts: 'Próby'
+        lastError: 'Ostatni błąd'
+        retry: 'Ponów'
+        drain: 'Wyślij teraz'
+        empty: 'Kolejka jest pusta.'
+        materials: '%count% surowców'
+        notConfigured: 'Brak podłączonej integracji: nic nie zostało wysłane.'
+        notConfiguredHint: 'Integracja nie jest jeszcze podłączona: „oczekujące” to tu stan normalny, nie opóźnienie. Spisy są zachowane i wyjdą przy pierwszej udanej wysyłce.'
+        status:
+            PENDING: 'Oczekujące'
+            SENT: 'Wysłane'
+            FAILED: 'Porzucone'
         pending: '%count% spisów czeka na przesłanie do TF Buddy.'
         failed: '%count% przesłań do TF Buddy porzuconych — spisy są zachowane.'
         hint: 'Nic nie ginie: kolejkę opróżnia „merisu:synchroniser”.'

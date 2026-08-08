@@ -23,6 +23,12 @@ final class SyncService
     ) {
     }
 
+    /** Une intégration réelle est-elle branchée ? */
+    public function isConfigured(): bool
+    {
+        return $this->sync->isConfigured();
+    }
+
     /**
      * @return array{sent: int, retried: int, failed: int, skipped: int}
      */

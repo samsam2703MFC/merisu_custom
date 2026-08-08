@@ -1,0 +1,120 @@
+{#
+  Admin ▸ Remontées — la file d'envoi vers le système hôte.
+
+  Un tableau, comme l'historique : ce sont des lignes qu'on parcourt du regard
+  pour repérer celles qui coincent, pas des fiches qu'on ouvre une à une.
+#}
+{% extends 'admin/_layout.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'admin.sync.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block admin_content %}
+
+  {{ ui.page_header('admin.sync.title'|trans, 'admin.sync.subtitle'|trans) }}
+
+  {#
+    Tant qu'aucune intégration n'est branchée, « en attente » est l'état NORMAL
+    et non un retard. Le dire ici évite qu'on cherche une panne là où il n'y a
+    qu'une intégration qui n'existe pas encore.
+  #}
+  {% if not configured %}
+    {{ ui.banner('info', 'admin.sync.notConfiguredHint'|trans) }}
+  {% endif %}
+
+  <section class="card">
+    <div class="stats stats--compact">
+      {% for etat in statuses %}
+        <a class="stat {{ filter == etat ? 'is-active' : '' }}"
+           href="{{ path('admin_sync', filter == etat ? {} : { etat: etat.value }) }}">
+          <span class="stat__label">{{ ('admin.sync.status.' ~ etat.value)|trans }}</span>
+          <span class="stat__value">{{ counts[etat.value] }}</span>
+        </a>
+      {% endfor %}
+    </div>
+
+    <div class="form-actions">
+      <form method="post" action="{{ path('admin_sync_drain') }}">
+        <button type="submit" class="button button--primary" {{ counts.PENDING == 0 ? 'disabled' : '' }}>
+          {{ 'admin.sync.drain'|trans }}
+        </button>
+      </form>
+    </div>
+  </section>
+
+  {% if entries is empty %}
+    {{ ui.banner('info', 'admin.sync.empty'|trans) }}
+  {% else %}
+    <div class="table-scroll">
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">{{ 'admin.sync.what'|trans }}</th>
+            <th scope="col">{{ 'common.date'|trans }}</th>
+            <th scope="col">{{ 'admin.sync.state'|trans }}</th>
+            <th scope="col">{{ 'admin.sync.attempts'|trans }}</th>
+            <th scope="col">{{ 'admin.sync.lastError'|trans }}</th>
+            <th scope="col"><span class="visually-hidden">{{ 'admin.sync.retry'|trans }}</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entree in entries %}
+            {% set vu = entree.describe %}
+            <tr>
+              <th scope="row" class="sync__what">
+                {% if entree.kind.value == 'MATERIAL_STOCKTAKING' %}
+                  {{ ui.icon('nature-raw') }}
+                  {{ 'admin.sync.materials'|trans({ '%count%': vu.count }) }}
+                {% else %}
+                  {{ ui.icon('nature-composed') }}
+                  <code>{{ vu.what }}</code>
+                  {% if entree.quantity is not null %}
+                    <span class="muted">× {{ entree.quantity|qty }}</span>
+                  {% endif %}
+                {% endif %}
+              </th>
+
+              <td class="sync__when">
+                {{ vu.date ?: '—' }}
+                {% if vu.moment %}
+                  <span class="muted">{{ vu.moment == 'OPEN_0800' ? 'nav.morning'|trans : 'nav.evening'|trans }}</span>
+                {% endif %}
+              </td>
+
+              <td>
+                {% set ton = { 'PENDING': 'neutral', 'SENT': 'ok', 'FAILED': 'danger' } %}
+                {{ ui.badge(ton[entree.status.value], ('admin.sync.status.' ~ entree.status.value)|trans) }}
+              </td>
+
+              <td class="sync__attempts">{{ entree.attempts }}</td>
+
+              {# L'erreur telle que l'hôte l'a rendue : c'est elle qui dit quoi
+                 corriger, et la reformuler la rendrait méconnaissable. #}
+              <td class="sync__error">
+                {% if entree.lastError %}<code>{{ entree.lastError }}</code>{% endif %}
+              </td>
+
+              <td class="sync__action">
+                {% if entree.status.value == 'FAILED' %}
+                  <button type="submit" class="button button--ghost" form="retry-{{ entree.id }}">
+                    {{ 'admin.sync.retry'|trans }}
+                  </button>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {# Hors du tableau : imbriquer un formulaire dans une cellule de <table>
+       est valide, mais le navigateur en déplace le contenu au parsing. #}
+    {% for entree in entries %}
+      {% if entree.status.value == 'FAILED' %}
+        <form method="post" id="retry-{{ entree.id }}" class="visually-hidden"
+              action="{{ path('admin_sync_retry', { id: entree.id }) }}"></form>
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
+{% endblock %}

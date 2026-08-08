@@ -2055,6 +2055,29 @@ body { overflow-x: hidden; }
 .cats__nature .seg { min-width: 8rem; }
 .cats__nature .seg__name { white-space: normal; }
 
+/* ── File de remontée vers l'hôte ────────────────────────────────────────── */
+
+/* Les trois compteurs servent aussi de filtre : cliquables, donc, et celui qui
+   filtre se distingue. Le lien hérite la couleur du texte — sans quoi trois
+   chiffres framboise sur fond crème passeraient pour des alertes. */
+.stats a.stat { color: inherit; text-decoration: none; }
+.stats a.stat.is-active { border-color: var(--plum); box-shadow: inset 0 0 0 1px var(--plum); }
+@media (hover: hover) {
+  .stats a.stat:hover { border-color: var(--plum); }
+}
+
+.sync__what { text-align: left; white-space: nowrap; }
+.sync__what .icon { width: 18px; height: 18px; vertical-align: -3px; margin-right: .25rem; }
+.sync__when { white-space: nowrap; }
+.sync__attempts { width: 1%; text-align: center; font-variant-numeric: tabular-nums; }
+.sync__action { width: 1%; white-space: nowrap; }
+
+/* L'erreur telle que l'hôte l'a rendue : bornée en largeur pour ne pas
+   repousser le bouton de reprise hors de l'écran, mais jamais tronquée —
+   c'est elle qui dit quoi corriger. */
+.sync__error { max-width: 22rem; }
+.sync__error code { font-size: .75rem; overflow-wrap: anywhere; }
+
 /* ── Rythme de comptage ──────────────────────────────────────────────────── */
 
 .sched__moments {
@@ -2931,7 +2954,11 @@ select:disabled, select.field__input:disabled { background-image: url("data:imag
   background: var(--bg);
 }
 
-.stat__label { margin: 0 0 var(--space-1); font-size: .8rem; color: var(--text-muted); }
+/* `display: block` explicite : la marge suffisait tant que le libellé était un
+   <p>, mais posé sur un <span> il se remettait sur la même ligne que le
+   chiffre, et une tuile sur trois se lisait « Envoyés 0 » au lieu de deux
+   lignes comme ses voisines. */
+.stat__label { display: block; margin: 0 0 var(--space-1); font-size: .8rem; color: var(--text-muted); }
 
 /*
   Chiffres PROPORTIONNELS, pas tabulaires.

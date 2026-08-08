@@ -1033,6 +1033,42 @@ final class Store
         ));
     }
 
+    /**
+     * La file, pour l'écran d'administration.
+     *
+     * Les ennuis d'abord — abandonnées, puis en attente, puis envoyées — et
+     * les plus récentes en tête de chaque groupe. Un ordre chronologique pur
+     * aurait noyé les trois lignes à reprendre sous six mois d'envois réussis,
+     * qui sont précisément ceux dont personne n'a rien à faire.
+     *
+     * @return list<OutboxEntry>
+     */
+    public function syncEntries(?SyncStatus $status = null, int $limit = 100): array
+    {
+        $sql = 'SELECT * FROM inv_sync_outbox';
+        $params = [];
+
+        if ($status !== null) {
+            $sql .= ' WHERE status = ?';
+            $params[] = $status->value;
+        }
+
+        $sql .= " ORDER BY CASE status WHEN 'FAILED' THEN 0 WHEN 'PENDING' THEN 1 ELSE 2 END, id DESC"
+            . ' LIMIT ' . max(1, $limit);
+
+        return array_map($this->hydrateOutbox(...), $this->db->fetchAllAssociative($sql, $params));
+    }
+
+    /** Remet UNE ligne en file — la reprise au cas par cas. */
+    public function retrySync(int $id): bool
+    {
+        return $this->db->update('inv_sync_outbox', [
+            'status' => SyncStatus::Pending->value,
+            'attempts' => 0,
+            'next_attempt_at' => null,
+        ], ['id' => $id, 'status' => SyncStatus::Failed->value]) > 0;
+    }
+
     /** Compte les lignes par état — pour l'écran d'administration. */
     public function syncCounts(): array
     {

@@ -110,6 +110,7 @@ nav:
     settings: Impostazioni
     delta: 'Delta tecnico'
     audit: Storico
+    sync: 'Invii'
 
 morning:
     title: 'Scorta di apertura'
@@ -169,6 +170,22 @@ produce:
 
 admin:
     sync:
+        title: 'Invii'
+        subtitle: 'Coda di invio delle rilevazioni verso TF Buddy.'
+        what: 'Contenuto'
+        state: 'Stato'
+        attempts: 'Tentativi'
+        lastError: 'Ultimo errore'
+        retry: 'Riprendi'
+        drain: 'Invia ora'
+        empty: 'La coda è vuota.'
+        materials: '%count% materie prime'
+        notConfigured: 'Nessuna integrazione collegata: non è stato inviato nulla.'
+        notConfiguredHint: 'Nessuna integrazione è ancora collegata: « in attesa » è qui lo stato normale, non un ritardo. Le rilevazioni sono conservate e partiranno tutte al primo invio riuscito.'
+        status:
+            PENDING: 'In attesa'
+            SENT: 'Inviate'
+            FAILED: 'Abbandonate'
         pending: '%count% rilevazioni in attesa di invio a TF Buddy.'
         failed: '%count% invii a TF Buddy abbandonati — le rilevazioni sono conservate.'
         hint: 'Nulla è perduto: la coda si svuota con « merisu:synchroniser ».'

@@ -110,6 +110,7 @@ nav:
     settings: Ajustes
     delta: 'Delta técnico'
     audit: Historial
+    sync: 'Envíos'
 
 morning:
     title: 'Stock de apertura'
@@ -169,6 +170,22 @@ produce:
 
 admin:
     sync:
+        title: 'Envíos'
+        subtitle: 'Cola de envío de los recuentos hacia TF Buddy.'
+        what: 'Contenido'
+        state: 'Estado'
+        attempts: 'Intentos'
+        lastError: 'Último error'
+        retry: 'Reanudar'
+        drain: 'Enviar ahora'
+        empty: 'La cola está vacía.'
+        materials: '%count% materias primas'
+        notConfigured: 'Ninguna integración conectada: no se ha enviado nada.'
+        notConfiguredHint: 'Aún no hay integración conectada: «pendiente» es aquí el estado normal, no un retraso. Los recuentos se conservan y saldrán todos en el primer envío correcto.'
+        status:
+            PENDING: 'Pendientes'
+            SENT: 'Enviados'
+            FAILED: 'Abandonados'
         pending: '%count% recuentos pendientes de envío a TF Buddy.'
         failed: '%count% envíos a TF Buddy abandonados: los recuentos se conservan.'
         hint: 'Nada se pierde: la cola se vacía con «merisu:synchroniser».'
