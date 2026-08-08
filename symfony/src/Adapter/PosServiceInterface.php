@@ -34,6 +34,15 @@ interface PosServiceInterface
     public function isConfigured(): bool;
 
     /**
+     * Les identifiants en vigueur, pour que l'écran dise D'OÙ ils viennent.
+     *
+     * Le secret est porté par l'objet — il en faut bien un pour appeler la
+     * caisse — mais `PosCredentials::display()` est ce que le gabarit affiche,
+     * et il ne le contient pas.
+     */
+    public function credentials(): \Merisu\Inventory\Domain\PosCredentials;
+
+    /**
      * Vérifie que la caisse répond et que les identifiants sont acceptés.
      *
      * Rend le nom de l'organisation quand la caisse le donne, sinon son

@@ -328,6 +328,29 @@ final class SchemaInstaller
             $t->setPrimaryKey(['consultant_id', 'competency_id']);
         }
 
+        /*
+          Identifiants de la caisse, saisis en administration.
+
+          Une seule ligne : une installation ne parle qu'à une caisse.
+
+          Le secret est CHIFFRÉ, avec une clé dérivée d'APP_SECRET, qui vit
+          hors de la base. Une base dérobée seule ne livre donc pas de quoi
+          appeler la caisse — même protection que les codes PIN, et pour la
+          même raison. Les deux autres valeurs ne sont pas des secrets : un
+          identifiant client et un numéro d'organisation ne servent à rien
+          sans lui.
+        */
+        if (!\in_array('inv_pos_credential', $existing, true)) {
+            $t = $schema->createTable('inv_pos_credential');
+            $t->addColumn('id', 'smallint');
+            $t->addColumn('client_id', 'string', ['length' => 190, 'default' => '']);
+            $t->addColumn('client_secret', 'text', ['notnull' => false]);
+            $t->addColumn('organization_id', 'string', ['length' => 64, 'default' => '']);
+            $t->addColumn('base_url', 'string', ['length' => 190, 'default' => '']);
+            $t->addColumn('updated_at', 'string', ['length' => 32, 'default' => '']);
+            $t->setPrimaryKey(['id']);
+        }
+
         if (!\in_array('inv_material_movement', $existing, true)) {
             $t = $schema->createTable('inv_material_movement');
             $t->addColumn('id', 'string', ['length' => 64]);

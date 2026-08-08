@@ -63,6 +63,13 @@ services:
         arguments:
             $appSecret: '%env(APP_SECRET)%'
 
+    # Chiffrement RÉVERSIBLE des secrets qu'il faut relire — celui de la caisse.
+    # Même clé d'origine que les codes PIN, et pour la même raison : elle vit
+    # hors de la base, donc une base dérobée seule ne livre rien.
+    Merisu\Inventory\Service\SecretBox:
+        arguments:
+            $appSecret: '%env(APP_SECRET)%'
+
     # Nomenclatures tenues en base, saisies dans Admin ▸ Recettes.
     # `LocalRecipeService` (quatre matières FICTIVES) reste disponible pour une
     # démonstration sans base, mais n'est plus branché : le delta technique
@@ -94,10 +101,14 @@ services:
     # remplacer l'alias par `NullPosService`.
     Merisu\Inventory\Adapter\GoPosService:
         arguments:
-            $clientId: '%env(GOPOS_CLIENT_ID)%'
-            $clientSecret: '%env(GOPOS_CLIENT_SECRET)%'
-            $organizationId: '%env(GOPOS_ORGANIZATION_ID)%'
-            $baseUrl: '%env(GOPOS_BASE_URL)%'
+            # Repli : ce que porte le serveur. La saisie d'Admin ▸ Caisse
+            # l'emporte quand elle est complète — c'est le geste le plus récent
+            # et le plus délibéré, et un écran où l'on saisit sans effet
+            # n'aurait été compris de personne.
+            $envClientId: '%env(GOPOS_CLIENT_ID)%'
+            $envClientSecret: '%env(GOPOS_CLIENT_SECRET)%'
+            $envOrganizationId: '%env(GOPOS_ORGANIZATION_ID)%'
+            $envBaseUrl: '%env(GOPOS_BASE_URL)%'
 
     Merisu\Inventory\Adapter\PosServiceInterface:
         alias: Merisu\Inventory\Adapter\GoPosService

@@ -36,7 +36,18 @@
       <p class="field__hint">{{ 'admin.pos.stateHint'|trans }}</p>
     </div>
 
+    {#
+      D'OÙ viennent les identifiants en vigueur. Ce n'est pas un détail
+      d'affichage : quelqu'un qui saisit ici et voit la caisse répondre autre
+      chose doit pouvoir comprendre qui, du serveur ou de l'écran, a le
+      dernier mot. Sans cette ligne, le réglage devient indébrouillable dès
+      qu'il existe à deux endroits.
+    #}
     {% if configured %}
+      <p class="field__hint">
+        {{ (fromScreen ? 'admin.pos.fromScreen' : 'admin.pos.fromServer')|trans }}
+      </p>
+
       <div class="form-actions">
         <a class="button button--secondary" href="{{ path('admin_cash', { tester: 1 }) }}">
           {{ 'admin.pos.probe'|trans }}
@@ -44,6 +55,78 @@
       </div>
     {% endif %}
   </section>
+
+  {# ── Les identifiants, saisis ici ─────────────────────────────────────── #}
+
+  <details class="card admin-new" {{ configured ? '' : 'open' }}>
+    <summary class="admin-new__summary">
+      {{ ui.icon('plus') }}
+      <span>{{ 'admin.pos.credentials'|trans }}</span>
+    </summary>
+
+    {% if not canStore %}
+      {{ ui.banner('danger', 'admin.pos.errorNoCrypto'|trans) }}
+    {% else %}
+      <form method="post" action="{{ path('admin_cash_credentials') }}" class="form">
+        <div class="field-grid">
+          <div class="field">
+            <label class="field__label" for="pos-client">{{ 'admin.pos.clientId'|trans }}</label>
+            <input class="field__input" type="text" id="pos-client" name="clientId"
+                   maxlength="190" autocomplete="off" value="{{ credentials.clientId }}">
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="pos-org">{{ 'admin.pos.organizationIdLabel'|trans }}</label>
+            <input class="field__input" type="text" id="pos-org" name="organizationId"
+                   maxlength="64" autocomplete="off" value="{{ credentials.organizationId }}">
+          </div>
+        </div>
+
+        {#
+          Le secret : ÉCRITURE SEULE. Il n'est jamais renvoyé au navigateur,
+          pas même tronqué — « …4f2a » suffit à confirmer à qui l'a volé qu'il
+          tient le bon. Laissé vide, il n'est pas effacé : sans cette règle,
+          corriger une faute de frappe dans l'identifiant aurait effacé un
+          secret que personne ne peut relire pour le retaper.
+        #}
+        <div class="field">
+          <label class="field__label" for="pos-secret">{{ 'admin.pos.clientSecret'|trans }}</label>
+          <input class="field__input" type="password" id="pos-secret" name="clientSecret"
+                  autocomplete="new-password"
+                  placeholder="{{ (credentials.hasSecret ? 'admin.pos.secretKeep' : 'admin.pos.secretEmpty')|trans }}">
+          <p class="field__hint">
+            {% if credentials.hasSecret %}{{ ui.badge('ok', 'admin.pos.secretSet'|trans) }}{% endif %}
+            {{ 'admin.pos.secretHint'|trans }}
+          </p>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="pos-url">{{ 'admin.pos.baseUrl'|trans }}</label>
+          <input class="field__input" type="url" id="pos-url" name="baseUrl" maxlength="190"
+                 value="{{ credentials.baseUrl }}" placeholder="{{ defaultBaseUrl }}">
+          <p class="field__hint">{{ 'admin.pos.baseUrlHint'|trans }}</p>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
+        </div>
+      </form>
+
+      {# Hors du formulaire principal : imbriquer deux formulaires est interdit
+         en HTML, et le navigateur en ignorerait un sans rien dire. #}
+      {% if fromScreen %}
+        <form method="post" action="{{ path('admin_cash_credentials_clear') }}" class="form">
+          <div class="form-actions">
+            <button type="submit" class="button button--ghost"
+                    data-confirm="{{ 'admin.pos.confirmClear'|trans }}">
+              {{ 'admin.pos.clearCredentials'|trans }}
+            </button>
+          </div>
+          <p class="field__hint">{{ 'admin.pos.clearHint'|trans }}</p>
+        </form>
+      {% endif %}
+    {% endif %}
+  </details>
 
   {% if error %}
     {{ ui.banner('danger', error|trans) }}

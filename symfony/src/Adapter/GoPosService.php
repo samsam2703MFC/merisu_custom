@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Merisu\Inventory\Adapter;
 
 use Merisu\Inventory\Domain\PosCategory;
+use Merisu\Inventory\Domain\PosCredentials;
 use Merisu\Inventory\Domain\PosItem;
+use Merisu\Inventory\Store\PosCredentialStore;
 use Symfony\Component\HttpClient\Exception\TransportException;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -49,24 +51,44 @@ final class GoPosService implements PosServiceInterface
 
     private const TIMEOUT = 20.0;
 
+    /** L'adresse de production GoPOS, quand rien n'est réglé. */
+    public const DEFAULT_BASE_URL = 'https://app.gopos.io';
+
     private ?string $token = null;
 
     public function __construct(
+        private readonly PosCredentialStore $credentialStore,
         #[\SensitiveParameter]
-        private readonly string $clientId = '',
+        private readonly string $envClientId = '',
         #[\SensitiveParameter]
-        private readonly string $clientSecret = '',
-        private readonly string $organizationId = '',
-        private readonly string $baseUrl = 'https://app.gopos.io',
+        private readonly string $envClientSecret = '',
+        private readonly string $envOrganizationId = '',
+        private readonly string $envBaseUrl = 'https://app.gopos.io',
         private readonly ?HttpClientInterface $http = null,
     ) {
     }
 
+    /**
+     * Les identifiants en vigueur : l'ÉCRAN d'abord, le serveur ensuite.
+     *
+     * L'écran l'emporte parce que c'est le geste le plus récent et le plus
+     * délibéré — quelqu'un vient de taper trois valeurs et attend qu'elles
+     * s'appliquent. Une variable d'environnement qui les aurait silencieusement
+     * recouvertes aurait donné un écran où l'on saisit sans effet.
+     */
+    public function credentials(): PosCredentials
+    {
+        return $this->credentialStore->effective(new PosCredentials(
+            $this->envClientId,
+            $this->envClientSecret,
+            $this->envOrganizationId,
+            trim($this->envBaseUrl) !== '' ? $this->envBaseUrl : self::DEFAULT_BASE_URL,
+        ));
+    }
+
     public function isConfigured(): bool
     {
-        return trim($this->clientId) !== ''
-            && trim($this->clientSecret) !== ''
-            && trim($this->organizationId) !== '';
+        return $this->credentials()->isComplete();
     }
 
     public function ping(): string
@@ -85,7 +107,7 @@ final class GoPosService implements PosServiceInterface
 
         // La caisse n'a pas donné de nom : on rend l'identifiant plutôt qu'un
         // « connexion réussie » qui ne dirait pas QUELLE boutique répond.
-        return $this->organizationId;
+        return $this->credentials()->organizationId;
     }
 
     public function categories(): array
@@ -159,7 +181,9 @@ final class GoPosService implements PosServiceInterface
             throw new PosUnavailable('admin.pos.notConfigured');
         }
 
-        $url = rtrim($this->baseUrl, '/') . '/api/v3/' . rawurlencode($this->organizationId) . $chemin;
+        $identifiants = $this->credentials();
+        $url = rtrim($identifiants->baseUrl, '/') . '/api/v3/'
+            . rawurlencode($identifiants->organizationId) . $chemin;
 
         try {
             $reponse = $this->client()->request('GET', $url, [
@@ -196,15 +220,17 @@ final class GoPosService implements PosServiceInterface
         }
 
         try {
-            $reponse = $this->client()->request('POST', rtrim($this->baseUrl, '/') . '/oauth/token', [
+            $identifiants = $this->credentials();
+
+            $reponse = $this->client()->request('POST', rtrim($identifiants->baseUrl, '/') . '/oauth/token', [
                 'headers' => ['Accept' => 'application/json'],
                 // Le contrat GoPOS : « grant_type = organization », et les
                 // trois valeurs de l'administrateur. Rien d'autre.
                 'body' => [
                     'grant_type' => 'organization',
-                    'client_id' => $this->clientId,
-                    'client_secret' => $this->clientSecret,
-                    'organization_id' => $this->organizationId,
+                    'client_id' => $identifiants->clientId,
+                    'client_secret' => $identifiants->clientSecret,
+                    'organization_id' => $identifiants->organizationId,
                 ],
                 'timeout' => self::TIMEOUT,
             ]);

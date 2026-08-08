@@ -20,6 +20,11 @@ final class NullPosService implements PosServiceInterface
         return false;
     }
 
+    public function credentials(): \Merisu\Inventory\Domain\PosCredentials
+    {
+        return new \Merisu\Inventory\Domain\PosCredentials('', '', '', GoPosService::DEFAULT_BASE_URL);
+    }
+
     public function ping(): string
     {
         throw new PosUnavailable('admin.pos.notConfigured');

@@ -9,6 +9,8 @@ use Merisu\Inventory\Adapter\PosUnavailable;
 use Merisu\Inventory\Domain\ProductCategory;
 use Merisu\Inventory\Domain\ProductNature;
 use Merisu\Inventory\Security\CurrentUser;
+use Merisu\Inventory\Service\SecretBox;
+use Merisu\Inventory\Store\PosCredentialStore;
 use Merisu\Inventory\Store\Store;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -41,6 +43,8 @@ final class AdminPosController extends AbstractController
         private readonly CurrentUser $currentUser,
         private readonly PosServiceInterface $pos,
         private readonly Store $store,
+        private readonly PosCredentialStore $credentials,
+        private readonly SecretBox $box,
     ) {
     }
 
@@ -70,10 +74,100 @@ final class AdminPosController extends AbstractController
             }
         }
 
+        $identifiants = $this->pos->credentials();
+
         return $this->render('admin/pos.html.twig', $vue + [
             'knownCategories' => $this->store->categoryOrder(),
             'knownRefs' => $this->referencesConnues(),
+            // Ce que l'écran a le droit de montrer — le secret n'en fait PAS
+            // partie, jamais, même tronqué : « sk-… 4f2a » suffit à confirmer
+            // à qui l'a volé qu'il tient le bon.
+            'credentials' => $identifiants->display(),
+            'fromScreen' => $identifiants->fromScreen,
+            'canStore' => $this->box->isAvailable(),
+            'defaultBaseUrl' => \Merisu\Inventory\Adapter\GoPosService::DEFAULT_BASE_URL,
         ]);
+    }
+
+    /**
+     * Enregistre les identifiants saisis à l'écran.
+     *
+     * ── Le secret est en ÉCRITURE SEULE
+     *
+     * Il n'est jamais renvoyé au navigateur. Laissé vide, il n'est pas
+     * effacé : c'est la contrepartie obligée d'un champ qu'on n'affiche pas —
+     * sans cette règle, corriger une faute de frappe dans l'identifiant aurait
+     * effacé un secret que personne ne peut relire pour le retaper.
+     */
+    #[Route('/identifiants', name: 'admin_cash_credentials', methods: ['POST'])]
+    public function saveCredentials(Request $request): Response
+    {
+        $admin = $this->currentUser->requireAdmin();
+
+        // Sans chiffrement possible, on n'écrit RIEN : mieux vaut un écran qui
+        // refuse et l'explique qu'un secret de caisse posé en clair dans une
+        // base que l'on sauvegarde toutes les nuits.
+        if (!$this->box->isAvailable()) {
+            $this->addFlash('error', 'admin.pos.errorNoCrypto');
+
+            return $this->redirectToRoute('admin_cash');
+        }
+
+        $clientId = mb_substr(trim((string) $request->request->get('clientId', '')), 0, 190);
+        $organisation = mb_substr(trim((string) $request->request->get('organizationId', '')), 0, 64);
+        $adresse = mb_substr(trim((string) $request->request->get('baseUrl', '')), 0, 190);
+        $secret = (string) $request->request->get('clientSecret', '');
+
+        // HTTPS, et rien d'autre. Le message le disait déjà ; le code, lui,
+        // acceptait aussi `http://` — la commodité qui sert à essayer en
+        // local et qui devient, un mois plus tard, un secret de caisse qui
+        // traverse le réseau en clair.
+        //
+        // La variable d'environnement, elle, n'est pas contrainte : régler un
+        // laboratoire depuis le serveur suppose déjà l'accès au serveur.
+        if ($adresse !== '' && !str_starts_with($adresse, 'https://')) {
+            $this->addFlash('error', 'admin.pos.errorBadUrl');
+
+            return $this->redirectToRoute('admin_cash');
+        }
+
+        try {
+            $this->credentials->save(
+                $clientId,
+                $secret,
+                $organisation,
+                $adresse !== '' ? $adresse : \Merisu\Inventory\Adapter\GoPosService::DEFAULT_BASE_URL,
+            );
+        } catch (\RuntimeException) {
+            $this->addFlash('error', 'admin.pos.errorNoCrypto');
+
+            return $this->redirectToRoute('admin_cash');
+        }
+
+        // Ni le secret, ni son empreinte : l'historique se consulte en
+        // administration, et n'a pas à en porter la trace.
+        $this->store->audit($admin->id, $admin->role->value, 'POS_CREDENTIALS_SAVED', null, null, [
+            'organizationId' => $organisation,
+            'secretChanged' => trim($secret) !== '',
+        ]);
+
+        $this->addFlash('success', 'common.saved');
+
+        return $this->redirectToRoute('admin_cash');
+    }
+
+    /** Efface la saisie d'écran : la configuration du serveur reprend la main. */
+    #[Route('/identifiants/effacer', name: 'admin_cash_credentials_clear', methods: ['POST'])]
+    public function clearCredentials(): Response
+    {
+        $admin = $this->currentUser->requireAdmin();
+
+        $this->credentials->clear();
+
+        $this->store->audit($admin->id, $admin->role->value, 'POS_CREDENTIALS_CLEARED');
+        $this->addFlash('success', 'admin.pos.credentialsCleared');
+
+        return $this->redirectToRoute('admin_cash');
     }
 
     /**
