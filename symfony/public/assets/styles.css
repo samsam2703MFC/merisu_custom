@@ -3653,3 +3653,52 @@ select:disabled, select.field__input:disabled { background-image: url("data:imag
 .cats-add__row { display: flex; gap: var(--space-2); align-items: flex-start; }
 .cats-add__row .field__input { flex: 1 1 auto; min-width: 0; }
 .cats-add__row .button { flex: 0 0 auto; }
+
+/* ── Objectifs par boutique ──────────────────────────────────────────────── */
+
+/* La grille des seuils. Le nom de l'indicateur porte trois informations
+   empilées — libellé, unité, clé technique — parce qu'elles se lisent
+   ensemble : on saisit « 36000 » en sachant que c'est des euros, et la clé
+   rappelle sous quel nom la ligne partira chez l'hôte. */
+.tgt__metric { min-width: 12rem; }
+.tgt__label { display: block; font-weight: 600; color: var(--coffee-800); }
+.tgt__unit { margin-left: .35rem; font-size: .85rem; }
+.tgt__key { display: block; font-size: .72rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.tgt__cell { min-width: 7rem; }
+.tgt__past { white-space: nowrap; font-size: .85rem; }
+.tgt__warn { padding-top: 0; }
+
+/* Le catalogue : une ligne, son nom, son bouton. Le même dessin que les
+   niveaux et les compétences plus bas — trois listes de même nature n'ont pas
+   à se présenter de trois façons. */
+.mtr-list, .lvl-list, .cmp-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
+
+.mtr, .lvl, .cmp {
+  display: flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--cream-outline);
+}
+.mtr:last-child, .lvl:last-child, .cmp:last-child { border-bottom: 0; }
+
+.mtr__name, .lvl__name, .cmp__name { flex: 1 1 auto; min-width: 0; font-weight: 600; color: var(--coffee-800); }
+.mtr__key, .lvl__desc, .cmp__how { display: block; font-weight: 400; font-size: .82rem; }
+
+/* ── Postes RH & compétences ─────────────────────────────────────────────── */
+
+/* Le rang du niveau, en pastille : c'est la PROGRESSION qui compte ici, pas
+   l'ordre alphabétique, et un chiffre isolé se lit plus vite qu'un mot. */
+.lvl__order {
+  flex: none;
+  min-width: 2rem; height: 2rem;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-pill);
+  background: var(--plum-light); color: var(--plum-dark);
+  font-weight: 700; font-size: .85rem;
+}
+
+.cmp__category { margin: 0 0 var(--space-2); font-family: var(--font-display); font-size: 1.1rem; color: var(--coffee); }
+.cmp__subcategory {
+  margin: var(--space-3) 0 var(--space-1);
+  font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--text-muted);
+}

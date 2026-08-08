@@ -221,6 +221,113 @@ final class SchemaInstaller
             $t->addIndex(['for_date', 'workstation_id'], 'inv_production_done_by_date');
         }
 
+        /*
+          Objectifs par boutique — indicateurs et seuils.
+
+          Deux tables : le CATALOGUE des indicateurs, qui ne dépend ni du mois
+          ni de la boutique, et les SEUILS, qui en dépendent des deux. Tout
+          mettre dans une seule aurait recopié le libellé et l'unité de
+          « chiffre d'affaires » douze fois par an et par boutique — et les
+          aurait laissés diverger.
+
+          La clé de l'indicateur suit le format de l'hôte (`metric_key`) :
+          c'est elle qui reliera le local au réseau au branchement.
+        */
+        if (!\in_array('inv_shop_metric', $existing, true)) {
+            $t = $schema->createTable('inv_shop_metric');
+            $t->addColumn('metric_key', 'string', ['length' => 64]);
+            $t->addColumn('label', 'string', ['length' => 120]);
+            $t->addColumn('unit', 'string', ['length' => 24, 'default' => '']);
+            // Un objectif de vente se dépasse, un temps d'attente se réduit.
+            // Sans ce drapeau, l'écran colorerait du mauvais côté.
+            $t->addColumn('lower_is_better', 'boolean', ['default' => false]);
+            $t->addColumn('sort_order', 'integer', ['default' => 0]);
+            $t->setPrimaryKey(['metric_key']);
+        }
+
+        if (!\in_array('inv_shop_target', $existing, true)) {
+            $t = $schema->createTable('inv_shop_target');
+            $t->addColumn('id', 'string', ['length' => 64]);
+            $t->addColumn('shop_id', 'string', ['length' => 64]);
+            $t->addColumn('year', 'integer');
+            $t->addColumn('month', 'smallint');
+            $t->addColumn('metric_key', 'string', ['length' => 64]);
+            $t->addColumn('threshold_1', 'float', ['default' => 0]);
+            $t->addColumn('threshold_2', 'float', ['default' => 0]);
+            $t->addColumn('threshold_3', 'float', ['default' => 0]);
+            $t->addColumn('author_id', 'string', ['length' => 64, 'default' => '']);
+            $t->addColumn('updated_at', 'string', ['length' => 32, 'default' => '']);
+            $t->setPrimaryKey(['id']);
+            // Une boutique, un mois, un indicateur : une seule ligne, reprise.
+            $t->addUniqueIndex(['shop_id', 'year', 'month', 'metric_key'], 'inv_shop_target_unique');
+            $t->addIndex(['shop_id', 'year', 'month'], 'inv_shop_target_month');
+        }
+
+        /*
+          Postes RH, niveaux et compétences.
+
+          ⚠️ Le poste RH n'est PAS le poste de travail (`inv_workstation`).
+          L'un est la fonction qu'on occupe, l'autre l'endroit où l'on compte.
+          Deux tables séparées, et deux vocabulaires séparés à l'écran : les
+          confondre aurait fait dépendre le plan de production d'une promotion.
+        */
+        if (!\in_array('inv_job_position', $existing, true)) {
+            $t = $schema->createTable('inv_job_position');
+            $t->addColumn('id', 'string', ['length' => 64]);
+            $t->addColumn('name', 'string', ['length' => 120]);
+            $t->addColumn('description', 'text', ['notnull' => false]);
+            $t->addColumn('sort_order', 'integer', ['default' => 0]);
+            $t->setPrimaryKey(['id']);
+        }
+
+        if (!\in_array('inv_position_level', $existing, true)) {
+            $t = $schema->createTable('inv_position_level');
+            $t->addColumn('id', 'string', ['length' => 64]);
+            $t->addColumn('position_id', 'string', ['length' => 64]);
+            $t->addColumn('name', 'string', ['length' => 120]);
+            $t->addColumn('description', 'text', ['notnull' => false]);
+            // La PROGRESSION, et non l'ordre de création : « débutant »
+            // précède « confirmé » même si on a saisi le second en premier.
+            $t->addColumn('level_order', 'integer', ['default' => 0]);
+            $t->setPrimaryKey(['id']);
+            $t->addIndex(['position_id'], 'inv_position_level_by_position');
+        }
+
+        if (!\in_array('inv_competency', $existing, true)) {
+            $t = $schema->createTable('inv_competency');
+            $t->addColumn('id', 'string', ['length' => 64]);
+            $t->addColumn('name', 'string', ['length' => 190]);
+            $t->addColumn('category', 'string', ['length' => 120, 'default' => '']);
+            $t->addColumn('subcategory', 'string', ['length' => 120, 'default' => '']);
+            // Comment on constate qu'elle est acquise. Facultatif : une
+            // boutique qui n'a pas formalisé ses vérifications doit pouvoir
+            // tenir la liste quand même.
+            $t->addColumn('verification_method', 'text', ['notnull' => false]);
+            $t->addColumn('sort_order', 'integer', ['default' => 0]);
+            $t->setPrimaryKey(['id']);
+        }
+
+        // Affectation : un poste ET son niveau, jamais l'un sans l'autre —
+        // c'est le couple qu'attend l'hôte (`position_id`, `level_id`).
+        if (!\in_array('inv_employee_position', $existing, true)) {
+            $t = $schema->createTable('inv_employee_position');
+            $t->addColumn('consultant_id', 'string', ['length' => 64]);
+            $t->addColumn('position_id', 'string', ['length' => 64]);
+            $t->addColumn('level_id', 'string', ['length' => 64]);
+            $t->addColumn('assigned_at', 'string', ['length' => 32, 'default' => '']);
+            // Un poste par personne : une promotion REMPLACE, elle n'ajoute
+            // pas. Deux postes simultanés rendraient « son niveau » ambigu.
+            $t->setPrimaryKey(['consultant_id']);
+        }
+
+        if (!\in_array('inv_employee_competency', $existing, true)) {
+            $t = $schema->createTable('inv_employee_competency');
+            $t->addColumn('consultant_id', 'string', ['length' => 64]);
+            $t->addColumn('competency_id', 'string', ['length' => 64]);
+            $t->addColumn('acquired_at', 'string', ['length' => 32, 'default' => '']);
+            $t->setPrimaryKey(['consultant_id', 'competency_id']);
+        }
+
         if (!\in_array('inv_material_movement', $existing, true)) {
             $t = $schema->createTable('inv_material_movement');
             $t->addColumn('id', 'string', ['length' => 64]);

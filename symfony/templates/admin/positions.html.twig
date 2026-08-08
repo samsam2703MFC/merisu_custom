@@ -1,0 +1,308 @@
+{#
+  Admin ▸ Postes & compétences.
+
+  ⚠️ CE N'EST PAS L'ÉCRAN DES POSTES DE TRAVAIL. Un poste de travail
+  (« stanowisko », ws-1, ws-2) est l'endroit où l'on compte : il se règle dans
+  Admin ▸ Équipe. Un poste RH est la fonction qu'on occupe — vendeur, chef de
+  rang — et il ne décide de rien dans l'inventaire.
+
+  Les deux notions restent séparées jusque dans le vocabulaire, à la demande de
+  la boutique. Les confondre aurait fait dépendre le plan de production d'une
+  promotion.
+
+  Trois blocs, dans l'ordre où on les remplit : les postes et leurs niveaux, le
+  catalogue de compétences, puis l'affectation des personnes — qui ne peut se
+  faire qu'une fois les deux premiers en place.
+#}
+{% extends 'admin/_layout.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'admin.positions.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block admin_content %}
+
+  {{ ui.page_header('admin.positions.title'|trans, 'admin.positions.subtitle'|trans) }}
+
+  {{ ui.banner('info', 'admin.positions.notWorkstation'|trans) }}
+
+  {# ── Les postes et leurs niveaux ───────────────────────────────────────── #}
+
+  <h2 class="card__title">{{ 'admin.positions.positions'|trans }}</h2>
+
+  {% for position in positions %}
+    <details class="card admin-item">
+      <summary class="admin-item__summary">
+        <span class="admin-item__head">
+          <span class="admin-item__name">{{ position.name }}</span>
+        </span>
+        <span class="admin-item__tags">
+          {#
+            Un poste sans niveau ne peut être affecté à personne : l'hôte
+            attend toujours un couple poste + niveau. Le dire ici évite de le
+            chercher dans une liste d'affectation où il n'apparaît pas.
+          #}
+          {% if not position.isAssignable %}
+            {{ ui.badge('warn', 'admin.positions.noLevel'|trans) }}
+          {% else %}
+            {{ ui.badge('neutral', 'admin.positions.levelCount'|trans({ '%count%': position.levels|length })) }}
+          {% endif %}
+        </span>
+      </summary>
+
+      <form method="post" action="{{ path('admin_position_save', { id: position.id }) }}" class="form">
+        <div class="field-grid">
+          <div class="field">
+            <label class="field__label" for="pn-{{ position.id }}">{{ 'admin.positions.name'|trans }}</label>
+            <input class="field__input" type="text" id="pn-{{ position.id }}" name="name"
+                   maxlength="120" value="{{ position.name }}">
+          </div>
+          <div class="field">
+            <label class="field__label" for="po-{{ position.id }}">{{ 'common.order'|trans }}</label>
+            <input class="field__input" type="number" id="po-{{ position.id }}" name="sortOrder"
+                   min="0" step="1" value="{{ position.sortOrder }}">
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="pd-{{ position.id }}">{{ 'admin.positions.description'|trans }}</label>
+          <input class="field__input" type="text" id="pd-{{ position.id }}" name="description"
+                 maxlength="500" value="{{ position.description }}">
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
+        </div>
+      </form>
+
+      {# Les niveaux, dans leur ORDRE de progression — non l'ordre de création
+         ni l'alphabétique : c'est lui qui dit que « débutant » précède
+         « confirmé ». #}
+      <ul class="lvl-list">
+        {% for level in position.levels %}
+          <li class="lvl">
+            <span class="lvl__order">{{ level.order }}</span>
+            <span class="lvl__name">
+              {{ level.name }}
+              {% if level.description %}<span class="lvl__desc muted">{{ level.description }}</span>{% endif %}
+            </span>
+            <form method="post" action="{{ path('admin_position_level_delete', { id: level.id }) }}">
+              <button type="submit" class="button button--ghost"
+                      data-confirm="{{ 'admin.positions.confirmDeleteLevel'|trans({ '%name%': level.name }) }}">
+                {{ 'common.delete'|trans }}
+              </button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+
+      <form method="post" action="{{ path('admin_position_level_add', { positionId: position.id }) }}" class="form">
+        <div class="field-grid field-grid--tight">
+          <div class="field">
+            <label class="field__label" for="ln-{{ position.id }}">{{ 'admin.positions.addLevel'|trans }}</label>
+            <input class="field__input" type="text" id="ln-{{ position.id }}" name="name" maxlength="120"
+                   placeholder="{{ 'admin.positions.levelPlaceholder'|trans }}">
+          </div>
+          <div class="field">
+            <label class="field__label" for="lo-{{ position.id }}">{{ 'admin.positions.levelOrder'|trans }}</label>
+            <input class="field__input" type="number" id="lo-{{ position.id }}" name="order"
+                   min="0" step="1" value="{{ position.levels|length }}">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="button button--secondary">{{ 'common.add'|trans }}</button>
+        </div>
+      </form>
+
+      <form method="post" action="{{ path('admin_position_delete', { id: position.id }) }}" class="form">
+        <div class="form-actions">
+          <button type="submit" class="button button--ghost"
+                  data-confirm="{{ 'admin.positions.confirmDeletePosition'|trans({ '%name%': position.name }) }}">
+            {{ 'admin.positions.deletePosition'|trans }}
+          </button>
+        </div>
+      </form>
+    </details>
+  {% else %}
+    {{ ui.banner('info', 'admin.positions.noPosition'|trans) }}
+  {% endfor %}
+
+  <details class="card admin-new">
+    <summary class="admin-new__summary">
+      {{ ui.icon('plus') }}
+      <span>{{ 'admin.positions.addPosition'|trans }}</span>
+    </summary>
+
+    <form method="post" action="{{ path('admin_position_save', { id: newPositionId }) }}" class="form">
+      <div class="field">
+        <label class="field__label" for="new-position">{{ 'admin.positions.name'|trans }}</label>
+        <input class="field__input" type="text" id="new-position" name="name" maxlength="120" required
+               placeholder="{{ 'admin.positions.namePlaceholder'|trans }}">
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="button button--primary">{{ 'common.add'|trans }}</button>
+      </div>
+    </form>
+  </details>
+
+  {# ── Le catalogue de compétences ───────────────────────────────────────── #}
+
+  <h2 class="card__title">{{ 'admin.positions.competencies'|trans }}</h2>
+
+  {% for categorie, sousCategories in grouped %}
+    <section class="card">
+      <h3 class="cmp__category">{{ categorie ?: 'admin.positions.noCategory'|trans }}</h3>
+
+      {% for sousCategorie, liste in sousCategories %}
+        {% if sousCategorie %}<p class="cmp__subcategory">{{ sousCategorie }}</p>{% endif %}
+
+        <ul class="cmp-list">
+          {% for competency in liste %}
+            <li class="cmp">
+              <span class="cmp__name">
+                {{ competency.name }}
+                {#
+                  Comment on constate qu'elle est acquise. Absente, c'est dit :
+                  une compétence qu'on ne sait pas vérifier est une intention,
+                  et l'écran ne doit pas la faire passer pour un acquis.
+                #}
+                {% if competency.verificationMethod %}
+                  <span class="cmp__how muted">{{ competency.verificationMethod }}</span>
+                {% else %}
+                  {{ ui.badge('warn', 'admin.positions.noVerification'|trans) }}
+                {% endif %}
+              </span>
+              <form method="post" action="{{ path('admin_competency_delete', { id: competency.id }) }}">
+                <button type="submit" class="button button--ghost"
+                        data-confirm="{{ 'admin.positions.confirmDeleteCompetency'|trans({ '%name%': competency.name }) }}">
+                  {{ 'common.delete'|trans }}
+                </button>
+              </form>
+            </li>
+          {% endfor %}
+        </ul>
+      {% endfor %}
+    </section>
+  {% else %}
+    {{ ui.banner('info', 'admin.positions.noCompetency'|trans) }}
+  {% endfor %}
+
+  <details class="card admin-new">
+    <summary class="admin-new__summary">
+      {{ ui.icon('plus') }}
+      <span>{{ 'admin.positions.addCompetency'|trans }}</span>
+    </summary>
+
+    <form method="post" action="{{ path('admin_competency_save', { id: newCompetencyId }) }}" class="form">
+      <div class="field">
+        <label class="field__label" for="new-competency">{{ 'admin.positions.competencyName'|trans }}</label>
+        <input class="field__input" type="text" id="new-competency" name="name" maxlength="190" required
+               placeholder="{{ 'admin.positions.competencyPlaceholder'|trans }}">
+      </div>
+
+      <div class="field-grid">
+        <div class="field">
+          <label class="field__label" for="new-cat">{{ 'admin.positions.category'|trans }}</label>
+          <input class="field__input" type="text" id="new-cat" name="category" maxlength="120" list="cmp-categories">
+        </div>
+        <div class="field">
+          <label class="field__label" for="new-subcat">{{ 'admin.positions.subcategory'|trans }}</label>
+          <input class="field__input" type="text" id="new-subcat" name="subcategory" maxlength="120">
+        </div>
+      </div>
+
+      {# Les catégories déjà employées, proposées : sans elles, « Hygiène » et
+         « hygiene » cohabiteraient et feraient deux blocs pour un seul sujet. #}
+      <datalist id="cmp-categories">
+        {% for categorie in grouped|keys %}<option value="{{ categorie }}">{% endfor %}
+      </datalist>
+
+      <div class="field">
+        <label class="field__label" for="new-verif">{{ 'admin.positions.verification'|trans }}</label>
+        <input class="field__input" type="text" id="new-verif" name="verificationMethod" maxlength="500"
+               placeholder="{{ 'admin.positions.verificationPlaceholder'|trans }}">
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="button button--primary">{{ 'common.add'|trans }}</button>
+      </div>
+    </form>
+  </details>
+
+  {# ── L'affectation des personnes ───────────────────────────────────────── #}
+
+  <h2 class="card__title">{{ 'admin.positions.assignments'|trans }}</h2>
+
+  {% for consultant in consultants %}
+    {% set affectation = assignedPositions[consultant.id] ?? null %}
+    {% set acquises = assignedCompetencies[consultant.id] ?? [] %}
+
+    <details class="card admin-item">
+      <summary class="admin-item__summary">
+        <span class="admin-item__head">
+          <span class="admin-item__name">{{ consultant.displayName }}</span>
+        </span>
+        <span class="admin-item__tags">
+          {% if affectation %}
+            {% for position in positions|filter(p => p.id == affectation.position_id) %}
+              {% set niveau = position.level(affectation.level_id) %}
+              {{ ui.badge('info', position.name ~ (niveau ? ' · ' ~ niveau.name : '')) }}
+            {% endfor %}
+          {% else %}
+            {{ ui.badge('neutral', 'admin.positions.noAssignment'|trans) }}
+          {% endif %}
+
+          {% if acquises|length > 0 %}
+            {{ ui.badge('ok', 'admin.positions.competencyCount'|trans({ '%count%': acquises|length })) }}
+          {% endif %}
+        </span>
+      </summary>
+
+      <form method="post" action="{{ path('admin_position_assign', { consultantId: consultant.id }) }}" class="form">
+        {#
+          Poste ET niveau dans UN SEUL choix.
+
+          Deux listes séparées auraient laissé choisir le niveau d'un autre
+          poste — l'hôte aurait alors reçu un couple qui n'existe pas. Le
+          serveur revérifie de toute façon : une requête forgée n'a pas à
+          passer parce que l'écran, lui, était bien fait.
+        #}
+        <div class="field">
+          <label class="field__label" for="pos-{{ consultant.id }}">{{ 'admin.positions.position'|trans }}</label>
+          <select class="field__input" id="pos-{{ consultant.id }}" name="position">
+            <option value="">{{ 'admin.positions.noAssignment'|trans }}</option>
+            {% for position in positions %}
+              {% for level in position.levels %}
+                {% set couple = position.id ~ '|' ~ level.id %}
+                <option value="{{ couple }}"
+                        {{ affectation and affectation.position_id == position.id and affectation.level_id == level.id ? 'selected' : '' }}>
+                  {{ position.name }} — {{ level.name }}
+                </option>
+              {% endfor %}
+            {% endfor %}
+          </select>
+        </div>
+
+        {% if competencies is not empty %}
+          <fieldset class="field">
+            <legend class="field__label">{{ 'admin.positions.competencies'|trans }}</legend>
+            <div class="checkbox-grid">
+              {% for competency in competencies %}
+                <div class="checkbox-row">
+                  <input type="checkbox" id="cmp-{{ consultant.id }}-{{ competency.id }}"
+                         name="competencies[]" value="{{ competency.id }}"
+                         {{ competency.id in acquises ? 'checked' : '' }}>
+                  <label for="cmp-{{ consultant.id }}-{{ competency.id }}">{{ competency.name }}</label>
+                </div>
+              {% endfor %}
+            </div>
+          </fieldset>
+        {% endif %}
+
+        <div class="form-actions">
+          <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
+        </div>
+      </form>
+    </details>
+  {% endfor %}
+
+{% endblock %}

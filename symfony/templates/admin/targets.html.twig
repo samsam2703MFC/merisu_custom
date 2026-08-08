@@ -1,0 +1,220 @@
+{#
+  Admin ▸ Objectifs par boutique.
+
+  Une grille : un indicateur par ligne, trois seuils par colonne, un mois à la
+  fois. C'est la forme qu'attend l'hôte (`threshold_1..3`) et c'est aussi celle
+  qui se lit — le premier seuil est le minimum acceptable, le troisième
+  l'excellence. Un objectif unique n'aurait dit que « atteint » ou « raté ».
+
+  Le catalogue d'indicateurs vit sur le MÊME écran, en bas : les séparer aurait
+  obligé à un aller-retour pour créer la ligne qu'on veut justement remplir.
+#}
+{% extends 'admin/_layout.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'admin.targets.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block admin_content %}
+
+  {{ ui.page_header('admin.targets.title'|trans, 'admin.targets.subtitle'|trans) }}
+
+  {# Boutique et mois : les deux seules choses qui décident de ce qu'on voit.
+     En tête, et dans un formulaire GET — l'adresse porte alors l'écran, et se
+     partage ou se met en favori. #}
+  <section class="card">
+    <form class="filters" method="get" action="{{ path('admin_targets') }}">
+      <div class="field">
+        <label class="field__label" for="boutique">{{ 'admin.targets.shop'|trans }}</label>
+        <select class="field__input" id="boutique" name="boutique" data-autosubmit>
+          {% for nom in shops %}
+            <option value="{{ nom }}" {{ nom == shopId ? 'selected' : '' }}>{{ nom }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="mois">{{ 'admin.targets.month'|trans }}</label>
+        <input class="field__input" type="month" id="mois" name="mois" value="{{ monthKey }}">
+      </div>
+
+      <div class="filters__actions">
+        <button type="submit" class="button button--secondary">{{ 'common.apply'|trans }}</button>
+        <a class="button button--secondary"
+           href="{{ path('admin_targets', { mois: previousKey, boutique: shopId }) }}">{{ 'admin.targets.previousMonth'|trans }}</a>
+        <a class="button button--secondary"
+           href="{{ path('admin_targets', { mois: nextKey, boutique: shopId }) }}">{{ 'admin.targets.nextMonth'|trans }}</a>
+      </div>
+    </form>
+  </section>
+
+  {% if shops is empty %}
+    {{ ui.banner('warn', 'admin.targets.noShop'|trans) }}
+  {% endif %}
+
+  {% if metrics is empty %}
+    {{ ui.banner('info', 'admin.targets.noMetric'|trans) }}
+  {% else %}
+    <form method="post" action="{{ path('admin_targets_save') }}" class="form">
+      <input type="hidden" name="mois" value="{{ monthKey }}">
+      <input type="hidden" name="boutique" value="{{ shopId }}">
+
+      <div class="table-scroll">
+        <table class="table tgt">
+          <thead>
+            <tr>
+              <th scope="col">{{ 'admin.targets.metric'|trans }}</th>
+              <th scope="col">{{ 'admin.targets.t1'|trans }}</th>
+              <th scope="col">{{ 'admin.targets.t2'|trans }}</th>
+              <th scope="col">{{ 'admin.targets.t3'|trans }}</th>
+              <th scope="col">{{ 'admin.targets.lastMonth'|trans }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for metric in metrics %}
+              {% set cible = targets[metric.key] ?? null %}
+              {% set avant = previous[metric.key] ?? null %}
+
+              <tr>
+                <th scope="row" class="tgt__metric">
+                  <span class="tgt__label">{{ metric.label }}</span>
+                  {% if metric.unit %}<span class="tgt__unit muted">{{ metric.unit }}</span>{% endif %}
+                  {#
+                    Le sens de l'indicateur, annoncé : un chiffre d'affaires se
+                    dépasse, un temps d'attente se réduit. Sans ce repère, on
+                    saisit trois seuils décroissants sur une vente sans voir
+                    que les colonnes sont interverties.
+                  #}
+                  {% if metric.lowerIsBetter %}
+                    {{ ui.badge('info', 'admin.targets.lowerIsBetter'|trans) }}
+                  {% endif %}
+                  <span class="tgt__key muted">{{ metric.key }}</span>
+                </th>
+
+                {% for rang in 1..3 %}
+                  <td class="tgt__cell">
+                    <label class="visually-hidden" for="t{{ rang }}-{{ metric.key }}">
+                      {{ ('admin.targets.t' ~ rang)|trans }} — {{ metric.label }}
+                    </label>
+                    <input class="field__input" type="number" step="any" inputmode="decimal"
+                           id="t{{ rang }}-{{ metric.key }}"
+                           name="target[{{ metric.key }}][t{{ rang }}]"
+                           value="{{ cible ? attribute(cible, 'threshold' ~ rang) : '' }}">
+                  </td>
+                {% endfor %}
+
+                {# Le mois précédent, en lecture : c'est la référence qu'on
+                   regarde en posant celui-ci, et l'ouvrir dans un autre onglet
+                   pour la lire faisait perdre la saisie en cours. #}
+                <td class="tgt__past muted">
+                  {% if avant %}
+                    {{ avant.threshold1 }} · {{ avant.threshold2 }} · {{ avant.threshold3 }}
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+              </tr>
+
+              {% if cible and not cible.isOrdered(metric.lowerIsBetter) %}
+                <tr>
+                  <td colspan="5" class="tgt__warn">
+                    {{ ui.badge('warn', 'admin.targets.outOfOrder'|trans) }}
+                  </td>
+                </tr>
+              {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <p class="field__hint">{{ 'admin.targets.clearHint'|trans }}</p>
+
+      <div class="form-actions">
+        <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
+      </div>
+    </form>
+
+    {# Report du mois précédent — hors du formulaire principal : imbriquer deux
+       formulaires est interdit en HTML, et le navigateur en ignorerait un. #}
+    <form method="post" action="{{ path('admin_targets_copy') }}" class="form">
+      <input type="hidden" name="mois" value="{{ monthKey }}">
+      <input type="hidden" name="boutique" value="{{ shopId }}">
+      <div class="form-actions">
+        <button type="submit" class="button button--secondary">
+          {{ 'admin.targets.copyPrevious'|trans({ '%month%': previousKey }) }}
+        </button>
+      </div>
+      <p class="field__hint">{{ 'admin.targets.copyHint'|trans }}</p>
+    </form>
+  {% endif %}
+
+  {# ── Le catalogue d'indicateurs ───────────────────────────────────────── #}
+
+  <details class="card admin-new">
+    <summary class="admin-new__summary">
+      {{ ui.icon('plus') }}
+      <span>{{ 'admin.targets.addMetric'|trans }}</span>
+    </summary>
+
+    <form method="post" action="{{ path('admin_targets_metric_add') }}" class="form">
+      <div class="field-grid">
+        <div class="field">
+          <label class="field__label" for="metric-label">{{ 'admin.targets.metricLabel'|trans }}</label>
+          <input class="field__input" type="text" id="metric-label" name="label" maxlength="120" required>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="metric-unit">{{ 'admin.targets.metricUnit'|trans }}</label>
+          <input class="field__input" type="text" id="metric-unit" name="unit" maxlength="24"
+                 placeholder="{{ 'admin.targets.metricUnitPlaceholder'|trans }}">
+        </div>
+
+        {# La clé technique, facultative : elle se déduit du libellé. On la
+           laisse saisissable pour coller à celle de l'hôte le jour du
+           branchement — c'est elle qui reliera les deux, pas le libellé. #}
+        <div class="field">
+          <label class="field__label" for="metric-key">{{ 'admin.targets.metricKey'|trans }}</label>
+          <input class="field__input" type="text" id="metric-key" name="key" maxlength="64">
+          <p class="field__hint">{{ 'admin.targets.metricKeyHint'|trans }}</p>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="metric-order">{{ 'common.order'|trans }}</label>
+          <input class="field__input" type="number" id="metric-order" name="sortOrder" min="0" step="1" value="0">
+        </div>
+      </div>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="metric-lower" name="lowerIsBetter" value="1">
+        <label for="metric-lower">{{ 'admin.targets.lowerIsBetterLabel'|trans }}</label>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="button button--primary">{{ 'common.add'|trans }}</button>
+      </div>
+    </form>
+  </details>
+
+  {% if metrics is not empty %}
+    <section class="card">
+      <h2 class="card__title">{{ 'admin.targets.metrics'|trans }}</h2>
+      <ul class="mtr-list">
+        {% for metric in metrics %}
+          <li class="mtr">
+            <span class="mtr__name">
+              {{ metric.label }}
+              <span class="mtr__key muted">{{ metric.key }}{% if metric.unit %} · {{ metric.unit }}{% endif %}</span>
+            </span>
+            <form method="post" action="{{ path('admin_targets_metric_delete', { key: metric.key }) }}">
+              <button type="submit" class="button button--ghost"
+                      data-confirm="{{ 'admin.targets.confirmDeleteMetric'|trans({ '%name%': metric.label }) }}">
+                {{ 'common.delete'|trans }}
+              </button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+      <p class="field__hint">{{ 'admin.targets.deleteMetricHint'|trans }}</p>
+    </section>
+  {% endif %}
+
+{% endblock %}
