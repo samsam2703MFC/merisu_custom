@@ -2152,6 +2152,64 @@ body { overflow-x: hidden; }
 .field-grid--tight { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
 .field-grid--tight .field__input { width: 100%; }
 
+/* ── Choix du temps attendu, jour par jour ───────────────────────────────── */
+
+/* Sept petits groupes de quatre silhouettes. La grille les range côte à côte
+   tant qu'ils tiennent, et les empile ensuite — un jour ne se coupe jamais en
+   deux, sa largeur minimale valant les quatre cibles tactiles plus les
+   intervalles. */
+.wpick {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.wpick__day { border: 0; padding: 0; margin: 0; min-width: 0; }
+.wpick__row { display: flex; gap: var(--space-1); margin-top: var(--space-1); }
+.wpick__item { flex: 1 1 0; min-width: 0; cursor: pointer; }
+
+.wpick__radio {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.wpick__box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* La cible tactile prime : une icône de 24 px se rate au doigt. */
+  min-height: var(--touch);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-muted);
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease),
+              color var(--dur) var(--ease);
+}
+
+.wpick__box .icon { width: 22px; height: 22px; }
+
+.wpick__radio:checked ~ .wpick__box {
+  border-color: var(--plum);
+  background: var(--plum-light);
+  color: var(--plum-dark);
+  box-shadow: inset 0 0 0 1px var(--plum);
+}
+
+/* Le focus se voit sur la vignette, le radio étant invisible. */
+.wpick__radio:focus-visible ~ .wpick__box {
+  outline: 2px solid var(--plum);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .wpick__radio:not(:checked) ~ .wpick__box:hover { border-color: var(--plum); color: var(--coffee); }
+}
+
 /* La légende des corrections : quatre repères sur une ligne, qui passent à la
    suivante plutôt que de déborder. */
 .wlegend { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); align-items: center; }

@@ -133,25 +133,43 @@
         <p class="field__hint">{{ 'admin.parMatrix.weatherIntro'|trans }}</p>
 
         <form method="post" action="{{ path('admin_weather_save') }}" class="form">
-          <div class="field-grid field-grid--tight">
+          {#
+            Quatre silhouettes par jour, et non une liste déroulante.
+
+            Une prévision se choisit d'un geste : sept listes demandaient sept
+            ouvertures, sept défilements et sept fermetures pour dire ce qu'un
+            regard sur des icônes dit tout de suite. Et le soleil, le nuage, la
+            pluie et la neige se reconnaissent sans se lire — c'est le cas où
+            le dessin bat le mot, y compris d'une langue à l'autre.
+
+            Bâti sur des boutons radio, comme les vignettes de contenant : la
+            sélection tient sans script et le clavier parcourt chaque jour
+            comme un groupe.
+
+            Le nom reste porté par un texte masqué : une silhouette ne dit rien
+            à un lecteur d'écran, et le pourcentage suit dans l'infobulle.
+          #}
+          <div class="wpick">
             {% for day in days %}
-              <div class="field">
-                <label class="field__label" for="dw-{{ day.value }}">{{ ('days.' ~ day.value)|trans }}</label>
-                <select class="field__input" id="dw-{{ day.value }}" name="day[{{ day.value }}]">
-                  {#
-                    Le NOM seul dans les options : « Temps ordinaire (0 %) » ne
-                    tenait pas dans une liste déroulante, et répéter les quatre
-                    pourcentages vingt-huit fois — quatre options, sept jours —
-                    ne les rendait pas plus lisibles. La légende sous la grille
-                    les donne une fois pour toutes.
-                  #}
+              <fieldset class="wpick__day">
+                <legend class="field__label">{{ ('days.' ~ day.value)|trans }}</legend>
+
+                <div class="wpick__row">
                   {% for temps in weatherKinds %}
-                    <option value="{{ temps.value }}" {{ temps == dayWeathers[day.value] ? 'selected' : '' }}>
-                      {{ ('admin.parMatrix.weathers.' ~ temps.value)|trans }}
-                    </option>
+                    {% set nom = ('admin.parMatrix.weathers.' ~ temps.value)|trans %}
+                    <label class="wpick__item">
+                      <input class="wpick__radio" type="radio"
+                             name="day[{{ day.value }}]" value="{{ temps.value }}"
+                             {{ temps == dayWeathers[day.value] ? 'checked' : '' }}>
+                      <span class="wpick__box"
+                            title="{{ nom }} — {{ weatherRatios[temps.value] > 0 ? '+' : '' }}{{ weatherRatios[temps.value] }} %">
+                        {{ ui.icon(temps.icon) }}
+                        <span class="visually-hidden">{{ nom }}</span>
+                      </span>
+                    </label>
                   {% endfor %}
-                </select>
-              </div>
+                </div>
+              </fieldset>
             {% endfor %}
           </div>
 
