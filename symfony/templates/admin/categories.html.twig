@@ -47,31 +47,32 @@
                 </td>
 
                 {#
-                  Nature du rayon. Le nom du groupe de radios porte le nom de
-                  la catégorie, comme les deux champs voisins : c'est lui qui
-                  relie la ligne du formulaire à la ligne en base, et un
-                  renommage simultané resterait sinon sans repère.
+                  Nature du rayon — une liste déroulante, et non l'interrupteur
+                  segmenté de la fiche produit.
+
+                  Le même choix, mais pas la même place : sur une fiche, deux
+                  vignettes côte à côte se lisent d'un regard ; dans une ligne
+                  de tableau, elles se retrouvaient écrasées à soixante pixels
+                  et « Composition » débordait de sa case. Une liste tient sur
+                  une ligne, s'aligne avec les deux champs voisins, et dit la
+                  même chose.
+
+                  Le nom du champ porte le nom de la catégorie, comme ses deux
+                  voisins : c'est lui qui relie la ligne du formulaire à la
+                  ligne en base, et un renommage simultané resterait sinon sans
+                  repère.
                 #}
                 <td class="cats__nature">
-                  <fieldset class="seg seg--tight">
-                    <legend class="visually-hidden">
-                      {{ 'admin.categories.natureOf'|trans({ '%name%': categorie.name }) }}
-                    </legend>
-
-                    <div class="seg__grid">
-                      {% for nature in natures %}
-                        <label class="seg__item">
-                          <input class="seg__radio" type="radio"
-                                 name="nature[{{ categorie.name }}]" value="{{ nature.value }}"
-                                 {{ nature == categorie.nature ? 'checked' : '' }}>
-                          <span class="seg__box">
-                            {{ ui.icon(nature.icon) }}
-                            <span class="seg__name">{{ ('admin.products.natures.' ~ nature.value)|trans }}</span>
-                          </span>
-                        </label>
-                      {% endfor %}
-                    </div>
-                  </fieldset>
+                  <label class="visually-hidden" for="nat-{{ loop.index }}">
+                    {{ 'admin.categories.natureOf'|trans({ '%name%': categorie.name }) }}
+                  </label>
+                  <select class="field__input" id="nat-{{ loop.index }}" name="nature[{{ categorie.name }}]">
+                    {% for nature in natures %}
+                      <option value="{{ nature.value }}" {{ nature == categorie.nature ? 'selected' : '' }}>
+                        {{ ('admin.products.natures.' ~ nature.value)|trans }}
+                      </option>
+                    {% endfor %}
+                  </select>
 
                   {#
                     Un produit du rayon qui ne suit pas la nature du rayon : ce

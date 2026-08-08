@@ -2051,9 +2051,6 @@ body { overflow-x: hidden; }
    en deux se lit mal. Ici il le faut : « Matière première » sur une seule ligne
    ferait une colonne de 260 px, et le refuser sans le dire faisait déborder le
    libellé hors de sa moitié d'interrupteur. */
-.cats__nature { width: 1%; }
-.cats__nature .seg { min-width: 8rem; }
-.cats__nature .seg__name { white-space: normal; }
 
 /* ── Onglets d'une fiche produit ─────────────────────────────────────────── */
 
@@ -3351,12 +3348,35 @@ select:disabled, select.field__input:disabled { background-image: url("data:imag
 
 /* Le tableau générique aligne tout à droite : ici les deux colonnes de saisie
    se lisent à gauche, comme partout ailleurs dans un formulaire. */
-.cats__name { text-align: left; min-width: 12rem; }
+/* Le tableau est plafonné : sur un écran large, les quatre colonnes étroites
+   gardent leur taille et TOUT le reste allait au nom — quatre cent cinquante
+   pixels pour un mot de dix lettres, à côté d'une colonne écrasée. Plafonné,
+   il se lit d'un seul regard au lieu de s'étirer d'un bord à l'autre. */
+.cats { max-width: 62rem; }
+
+.cats__name { text-align: left; min-width: 10rem; }
 .cats__name .field__input { width: 100%; }
+
+/* Les en-têtes suivent l'alignement de leur colonne : le générique les pousse
+   à droite, et « ORDRE » se retrouvait au-dessus du vide tandis que son champ
+   était centré dessous. */
+.cats thead th { text-align: center; }
+.cats thead th:first-child { text-align: left; }
+
 .cats__order { width: 1%; }
-.cats__order .field__input { width: 6rem; text-align: center; font-variant-numeric: tabular-nums; }
+.cats__order .field__input { width: 5rem; text-align: center; font-variant-numeric: tabular-nums; }
+
+/* Assez large pour « Matière première » sans troncature, et pas davantage. */
+.cats__nature { width: 1%; }
+.cats__nature .field__input { min-width: 12.5rem; }
+
 .cats__count { width: 1%; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .cats__action { width: 1%; white-space: nowrap; }
+
+/* Les cellules d'une même ligne s'alignent sur leur milieu : la pastille
+   « aucun produit » et le bouton de suppression flottaient sinon en haut,
+   décalés des trois champs de saisie. */
+.cats td, .cats th { vertical-align: middle; }
 
 /* Créer une catégorie : le champ prend la place, le bouton juste la sienne.
    `min-width: 0` sur le champ — sans lui, la base `auto` d'un élément flex
