@@ -154,6 +154,23 @@
               <fieldset class="wpick__day">
                 <legend class="field__label">{{ ('days.' ~ day.value)|trans }}</legend>
 
+                {#
+                  Ce que le service annonce pour ce jour-là, quand une
+                  prévision a été reçue.
+
+                  Elle ne s'impose pas : le bouton radio en dessous reste ce
+                  qui pilote le plan. Elle est là pour qu'on choisisse en
+                  connaissance de cause — et pour qu'un écart saute aux yeux
+                  avant qu'on ne lise les chiffres du tableau qui suit.
+                #}
+                {% set annonce = forecastByDay[day.value] ?? null %}
+                {% if annonce %}
+                  <p class="wpick__hint{{ annonce == dayWeathers[day.value] ? '' : ' wpick__hint--differs' }}">
+                    {{ ui.icon(annonce.icon) }}
+                    <span>{{ 'admin.parMatrix.forecast'|trans }}</span>
+                  </p>
+                {% endif %}
+
                 <div class="wpick__row">
                   {% for temps in weatherKinds %}
                     {% set nom = ('admin.parMatrix.weathers.' ~ temps.value)|trans %}
@@ -213,6 +230,14 @@
             <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
           </div>
         </form>
+
+        {# Le lien vers l'onglet Météo, et non un bouton « Appliquer » ici :
+           appliquer relève de l'écran qui montre la semaine entière, avec ses
+           températures et sa date de réception. Ici, on ne fait que signaler
+           qu'une prévision existe. #}
+        <p class="field__hint">
+          <a href="{{ path('admin_weather') }}">{{ 'admin.parMatrix.weatherLink'|trans }}</a>
+        </p>
       </section>
 
       {% if composedProducts is empty %}

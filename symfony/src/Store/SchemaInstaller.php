@@ -351,6 +351,58 @@ final class SchemaInstaller
             $t->setPrimaryKey(['id']);
         }
 
+        /*
+          Clé météo et coordonnées de la boutique, saisies en administration.
+
+          Une seule ligne : une installation regarde le ciel d'un seul endroit.
+
+          La clé est CHIFFRÉE, comme le secret de la caisse et pour la même
+          raison — elle est facturée à l'appel. Les coordonnées n'en sont pas
+          une : elles ne servent à rien sans elle, et elles doivent rester
+          relisibles pour qu'on puisse vérifier qu'on regarde la bonne ville.
+        */
+        if (!\in_array('inv_weather_credential', $existing, true)) {
+            $t = $schema->createTable('inv_weather_credential');
+            $t->addColumn('id', 'smallint');
+            $t->addColumn('api_key', 'text', ['notnull' => false]);
+            $t->addColumn('latitude', 'float', ['default' => 0]);
+            $t->addColumn('longitude', 'float', ['default' => 0]);
+            $t->addColumn('place', 'string', ['length' => 190, 'default' => '']);
+            $t->addColumn('auto_apply', 'boolean', ['default' => false]);
+            $t->addColumn('updated_at', 'string', ['length' => 32, 'default' => '']);
+            $t->setPrimaryKey(['id']);
+        }
+
+        /*
+          La prévision reçue, gardée telle quelle.
+
+          En base, et non en mémoire : le service météo est FACTURÉ à l'appel.
+          Un écran qui l'aurait interrogé à chaque affichage aurait consommé le
+          quota d'une boutique en une matinée de mise au point. Les écrans
+          lisent donc cette table ; seuls un clic explicite et la tâche
+          planifiée vont chercher chez l'hôte.
+
+          La DATE est la clé, et non le jour de semaine : la prévision porte
+          des dates, et c'est ce qui permet de reconnaître qu'une ligne est
+          périmée. La conversion vers la semaine type se fait à la lecture.
+
+          Rien n'y est mis à jour au fil de l'eau : chaque rafraîchissement
+          efface et réécrit. Une réponse est un tout — mélanger deux réponses
+          aurait donné une semaine dont on ne saurait plus dater les morceaux.
+        */
+        if (!\in_array('inv_weather_forecast', $existing, true)) {
+            $t = $schema->createTable('inv_weather_forecast');
+            $t->addColumn('date', 'string', ['length' => 10]);
+            $t->addColumn('day_of_week', 'string', ['length' => 3]);
+            $t->addColumn('kind', 'string', ['length' => 16, 'default' => 'CLOUDY']);
+            $t->addColumn('temp_min', 'float', ['notnull' => false]);
+            $t->addColumn('temp_max', 'float', ['notnull' => false]);
+            $t->addColumn('rain_chance', 'integer', ['default' => 0]);
+            $t->addColumn('summary', 'string', ['length' => 190, 'default' => '']);
+            $t->addColumn('fetched_at', 'string', ['length' => 32, 'default' => '']);
+            $t->setPrimaryKey(['date']);
+        }
+
         if (!\in_array('inv_material_movement', $existing, true)) {
             $t = $schema->createTable('inv_material_movement');
             $t->addColumn('id', 'string', ['length' => 64]);

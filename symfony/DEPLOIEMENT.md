@@ -278,6 +278,40 @@ peut pas obtenir de certificat reconnu.
       Ce qui part : des noms de produits, des ingrédients, des allergènes et
       des consignes du jour. Jamais de comptages, de codes PIN ni d'identités.
       Une traduction déjà écrite n'est **jamais** remplacée.
+- [ ] **Météo de la semaine (facultatif).** Le minimum d'une composition est
+      corrigé par le temps attendu, qui se saisit à la main dans
+      _Admin ▸ Seuils_. _Admin ▸ Météo_ peut le faire venir d'OpenWeatherMap.
+
+      ⚠️ **Chaque appel est facturé** (offre _One Call by Call_ : mille par jour
+      offerts, puis à l'appel), et **One Call 3.0 se souscrit séparément** du
+      reste d'OpenWeatherMap — une clé valable ailleurs y répond 401.
+
+      Le plus simple est de saisir la clé et les coordonnées dans
+      _Admin ▸ Météo_ : la clé y est chiffrée en base et n'est jamais
+      réaffichée. Sinon, dans `.env.local` :
+
+      ```dotenv
+      OPENWEATHER_API_KEY=…
+      OPENWEATHER_LAT=52.2297
+      OPENWEATHER_LON=21.0122
+      OPENWEATHER_PLACE="Varsovie"
+      ```
+
+      Aucun écran n'interroge le service : ils lisent la prévision gardée en
+      base. Pour qu'elle se renouvelle seule, une tâche quotidienne suffit —
+      une prévision à sept jours ne change pas d'heure en heure :
+
+      ```cron
+      0 5 * * *  cd /var/www/merisu-src/symfony && php bin/console merisu:meteo
+      ```
+
+      La prévision **ne s'applique pas d'office** : elle s'affiche à côté du
+      choix manuel, et un bouton la recopie dans la semaine. Cocher _appliquer
+      automatiquement_ change cela — la tâche écrira alors dans la semaine type
+      chaque nuit, sous l'auteur `merisu:meteo` dans l'historique.
+
+      Sans clé, rien ne casse : le temps attendu se saisit à la main, comme
+      avant, et aucun appel ne part.
 - [ ] Ajuster le limiteur de tentatives (`config/packages/rate_limiter.yaml`)
       selon le nombre de postes partageant l'adresse IP publique du site.
 - [ ] Remplacer les 8 produits et la matrice de seuils fictifs par les vraies

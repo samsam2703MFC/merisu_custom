@@ -21,12 +21,23 @@
 #                       n'apparaît jamais dans le journal (GitHub la masque, et
 #                       elle transite par l'entrée standard, pas par `ps`).
 #
+#   OPENWEATHER_API_KEY clé One Call 3.0 pour la prévision de la semaine, posée
+#                       de la même façon. Absente, le temps attendu se saisit à
+#                       la main dans Seuils, comme avant. Elle peut aussi se
+#                       saisir dans Admin ▸ Météo, où elle est chiffrée en base.
+#
 # Variables facultatives (Settings ▸ Secrets and variables ▸ Actions ▸ Variables) :
 #
 #   DEPLOY_PORT         port SSH si différent de 22
 #   DEPLOY_PHP_BIN      binaire PHP, ex. php8.3 (défaut : php)
 #   DEPLOY_HEALTH_URL   URL testée après déploiement, ex. http://127.0.0.1/merisu/connexion
 #   MERISU_AI_MODEL     modèle de traduction (défaut : claude-opus-5)
+#   OPENWEATHER_LAT     latitude de la boutique, ex. 52.2297
+#   OPENWEATHER_LON     longitude de la boutique, ex. 21.0122
+#   OPENWEATHER_PLACE   nom affiché à l'écran, ex. Varsovie. N'entre dans aucun
+#                       appel : il sert à relire le lieu plutôt qu'un couple de
+#                       nombres. Ce ne sont pas des secrets — d'où des
+#                       variables, relisibles et corrigeables.
 #
 # DEPLOY_KNOWN_HOSTS mérite un mot : sans lui, le runner accepterait n'importe
 # quel serveur se présentant à cette adresse, et lui livrerait la clé privée.
@@ -241,6 +252,81 @@ jobs:
 
           printf '%s\n' "$CLE" | ssh -i ~/.ssh/id_deploiement -p "$PORT" -o BatchMode=yes \
               "$USER@$HOST" bash -euo pipefail -c "$DISTANT" -- "$APP_PATH" "$MODELE"
+
+      # Même dispositif pour la clé météo, et pour les mêmes raisons : pas de
+      # `if:` au niveau de l'étape, la clé par l'entrée standard.
+      #
+      # Les coordonnées, elles, ne sont pas des secrets — ce sont celles d'une
+      # boutique dont l'adresse est publique. Elles passent donc par des
+      # VARIABLES de dépôt, où on peut les relire et les corriger sans avoir à
+      # redevenir administrateur des secrets.
+      #
+      # La clé peut aussi se saisir dans Admin ▸ Météo, où elle est chiffrée en
+      # base ; cette étape existe pour les installations qui préfèrent que rien
+      # de sensible ne vive dans la base applicative.
+      - name: Poser la clé météo
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          APP_PATH: ${{ secrets.DEPLOY_PATH }}
+          PORT: ${{ vars.DEPLOY_PORT || '22' }}
+          CLE: ${{ secrets.OPENWEATHER_API_KEY }}
+          LAT: ${{ vars.OPENWEATHER_LAT }}
+          LON: ${{ vars.OPENWEATHER_LON }}
+          LIEU: ${{ vars.OPENWEATHER_PLACE }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${CLE:-}" ]; then
+            echo "→ Aucun secret OPENWEATHER_API_KEY : météo non configurée."
+            echo "  Rien de cassé — le temps attendu se saisit à la main dans Seuils,"
+            echo "  et la clé peut aussi se poser dans Admin ▸ Météo."
+            exit 0
+          fi
+
+          if [ -z "${LAT:-}" ] || [ -z "${LON:-}" ]; then
+            # Une clé sans coordonnées ne rend rien. Le dire ici évite de
+            # chercher côté serveur pourquoi l'écran reste muet.
+            echo "→ Clé météo posée sans OPENWEATHER_LAT / OPENWEATHER_LON."
+            echo "  Renseignez-les en variables de dépôt, ou dans Admin ▸ Météo."
+          fi
+
+          APP_PATH="${APP_PATH//$'\r'/}"
+          APP_PATH="${APP_PATH#"${APP_PATH%%[![:space:]]*}"}"
+          APP_PATH="${APP_PATH%"${APP_PATH##*[![:space:]]}"}"
+
+          DISTANT='
+            set -euo pipefail
+            cd "$1/symfony"
+
+            IFS= read -r CLE || true
+            [ -n "$CLE" ] || { echo "✗ clé vide" >&2; exit 1; }
+
+            LAT="$2"; LON="$3"; LIEU="$4"
+
+            if [ ! -f .env.local ]; then
+              echo "✗ .env.local absent : le déploiement a-t-il abouti ?" >&2
+              exit 1
+            fi
+
+            TMP="$(mktemp)"
+            grep -v -e "^OPENWEATHER_API_KEY=" -e "^OPENWEATHER_LAT=" \
+                    -e "^OPENWEATHER_LON=" -e "^OPENWEATHER_PLACE=" .env.local > "$TMP" || true
+            printf "OPENWEATHER_API_KEY=%s\n" "$CLE" >> "$TMP"
+            [ -z "$LAT" ]  || printf "OPENWEATHER_LAT=%s\n" "$LAT" >> "$TMP"
+            [ -z "$LON" ]  || printf "OPENWEATHER_LON=%s\n" "$LON" >> "$TMP"
+            [ -z "$LIEU" ] || printf "OPENWEATHER_PLACE=\"%s\"\n" "$LIEU" >> "$TMP"
+
+            # `cat >` et non `mv` : le fichier garde son inode, son
+            # propriétaire et ses droits.
+            cat "$TMP" > .env.local
+            rm -f "$TMP"
+
+            echo "✓ Météo configurée${LIEU:+ ($LIEU)}"
+          '
+
+          printf '%s\n' "$CLE" | ssh -i ~/.ssh/id_deploiement -p "$PORT" -o BatchMode=yes \
+              "$USER@$HOST" bash -euo pipefail -c "$DISTANT" -- "$APP_PATH" "$LAT" "$LON" "$LIEU"
 
       - name: Vérifier que le site répond
         if: ${{ vars.DEPLOY_HEALTH_URL != '' }}

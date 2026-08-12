@@ -143,6 +143,8 @@ Tout se saisit dans l'interface, **rien n'est à coder** :
 | Facteur de perte, pas et mode d'arrondi        | Admin ▸ Produits               |
 | Référence recette (`recipeRef`)                | Admin ▸ Produits               |
 | Matrice des seuils (pièces requises par jour)  | Admin ▸ Seuils                 |
+| Temps attendu et correction par temps          | Admin ▸ Seuils                 |
+| Clé météo, coordonnées de la boutique          | Admin ▸ Météo                  |
 | Horaires 08:00 / 22:00, fuseau                 | Admin ▸ Paramètres             |
 | Langue par défaut                              | Admin ▸ Paramètres             |
 | Politique photo (obligatoire ? par produit ?)  | Admin ▸ Paramètres             |
@@ -183,6 +185,42 @@ vide le champ dans la langue concernée — le geste est explicite.
 Il demande une clé d'API (`ANTHROPIC_API_KEY`, voir `DEPLOIEMENT.md` §7).
 Sans elle, la fonction reste éteinte et les écrans ne proposent pas le bouton :
 rien ne casse, et aucun libellé ne sort de la boutique.
+
+### La météo de la semaine, si on la branche
+
+Le minimum d'une composition part de ce qui s'est écoulé les six derniers mêmes
+jours de semaine, **corrigé du temps attendu**. Ce temps se choisit à la main,
+jour par jour, dans _Admin ▸ Seuils_ ; il peut aussi venir d'OpenWeatherMap
+(offre _One Call by Call_), dans _Admin ▸ Météo_.
+
+Trois choses valent d'être sues avant de brancher :
+
+- **chaque appel est facturé** — mille par jour offerts, puis à l'appel. Aucun
+  écran n'interroge le service : ils lisent la prévision gardée en base. Seuls
+  le bouton _Actualiser_ et la tâche planifiée la renouvellent ;
+- **la prévision ne s'impose pas.** Elle s'affiche à côté du choix manuel, qui
+  reste ce qui pilote le plan, et un bouton la recopie dans la semaine. Une case
+  _appliquer automatiquement_ existe, décochée par défaut : la semaine type est
+  une décision, elle ne s'écrase pas toute seule ;
+- **One Call 3.0 se souscrit séparément** du reste d'OpenWeatherMap. Une clé
+  parfaitement valable ailleurs y répond 401 — l'écran affiche alors le mot du
+  service, qui le dit.
+
+La clé se saisit dans _Admin ▸ Météo_, où elle est chiffrée en base et jamais
+réaffichée, ou se pose au déploiement (`OPENWEATHER_API_KEY` + les variables
+`OPENWEATHER_LAT` / `OPENWEATHER_LON`). Sans clé, rien ne change : le temps
+attendu se saisit à la main, comme avant.
+
+Pour que la semaine se mette à jour seule, une tâche planifiée quotidienne
+suffit — une prévision à sept jours ne change pas d'heure en heure :
+
+```cron
+0 5 * * *  cd /chemin/merisu-src/symfony && php bin/console merisu:meteo
+```
+
+Elle range la prévision en base et s'arrête là, sauf si _appliquer
+automatiquement_ est coché (ou `--appliquer` passé). Ce qu'elle change est
+inscrit à l'historique sous l'auteur `merisu:meteo`.
 
 ### Questions restées ouvertes (§10 du cahier des charges)
 

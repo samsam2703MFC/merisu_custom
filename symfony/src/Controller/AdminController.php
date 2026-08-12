@@ -29,6 +29,7 @@ use Merisu\Inventory\Domain\ShopRanking;
 use Merisu\Inventory\Domain\SupplierSource;
 use Merisu\Inventory\Domain\WeatherKind;
 use Merisu\Inventory\Security\CurrentUser;
+use Merisu\Inventory\Service\ForecastService;
 use Merisu\Inventory\Service\InventoryService;
 use Merisu\Inventory\Service\MinimumStockService;
 use Merisu\Inventory\Service\ReportService;
@@ -53,6 +54,7 @@ final class AdminController extends AbstractController
         private readonly ConsultantServiceInterface $consultants,
         private readonly ShopRankingServiceInterface $ranking,
         private readonly MinimumStockService $minimums,
+        private readonly ForecastService $forecast,
         private readonly TranslationService $translations,
         // Le traducteur de l'INTERFACE, pas celui des libellés : il ne sert
         // qu'à nommer les langues dans les messages de compte rendu
@@ -923,6 +925,11 @@ final class AdminController extends AbstractController
             'dayWeathers' => $this->store->dayWeathers(),
             'weatherKinds' => WeatherKind::all(),
             'weatherRatios' => $this->store->weatherRatios(),
+            // Ce que le service météo annonce, quand il a été interrogé. Lu en
+            // base : cet écran n'appelle jamais l'hôte, dont chaque appel est
+            // facturé. La prévision ne s'impose pas — elle s'affiche à côté du
+            // choix manuel, qui reste ce qui pilote le plan.
+            'forecastByDay' => $this->forecast->cached($this->inventory->today())->byDayOfWeek(),
         ]);
     }
 

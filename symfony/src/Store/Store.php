@@ -18,6 +18,7 @@ use Merisu\Inventory\Domain\CountPhoto;
 use Merisu\Inventory\Domain\CountSchedule;
 use Merisu\Inventory\Domain\DayNote;
 use Merisu\Inventory\Domain\DayOfWeek;
+use Merisu\Inventory\Domain\ForecastDay;
 use Merisu\Inventory\Domain\GeneralSettings;
 use Merisu\Inventory\Domain\InventoryCount;
 use Merisu\Inventory\Domain\Locale;
@@ -35,6 +36,7 @@ use Merisu\Inventory\Domain\RoundingMode;
 use Merisu\Inventory\Domain\SupplierSource;
 use Merisu\Inventory\Domain\SyncKind;
 use Merisu\Inventory\Domain\SyncStatus;
+use Merisu\Inventory\Domain\WeatherForecast;
 use Merisu\Inventory\Domain\WeatherKind;
 
 /**
@@ -1232,6 +1234,86 @@ final class Store
         if ($this->db->update('inv_weather_ratio', ['percent' => $percent], ['kind' => $kind->value]) === 0) {
             $this->db->insert('inv_weather_ratio', ['kind' => $kind->value, 'percent' => $percent]);
         }
+    }
+
+    // ── Prévision reçue du service météo ────────────────────────────────────
+
+    /**
+     * La prévision gardée en base, réduite à ce qui est encore à venir.
+     *
+     * Les journées passées sont ÉCARTÉES à la lecture, pas effacées : une
+     * prévision de mardi dernier relue le jeudi suivant se poserait sur mardi
+     * prochain, et une prévision périmée est pire qu'une prévision absente
+     * parce qu'elle a l'air d'une prévision.
+     *
+     * @param string $today date du jour de la boutique (Y-m-d)
+     */
+    public function weatherForecast(string $today): WeatherForecast
+    {
+        $jours = [];
+
+        $lignes = $this->db->fetchAllAssociative(
+            'SELECT * FROM inv_weather_forecast WHERE date >= ? ORDER BY date ASC',
+            [$today],
+        );
+
+        foreach ($lignes as $r) {
+            $jour = DayOfWeek::tryFrom((string) $r['day_of_week']);
+
+            if ($jour === null) {
+                continue;
+            }
+
+            $jours[] = ForecastDay::of(
+                (string) $r['date'],
+                $jour,
+                WeatherKind::fromLoose($r['kind']),
+                $r['temp_min'] === null ? null : (float) $r['temp_min'],
+                $r['temp_max'] === null ? null : (float) $r['temp_max'],
+                (int) ($r['rain_chance'] ?? 0),
+                (string) ($r['summary'] ?? ''),
+            );
+        }
+
+        return WeatherForecast::of($jours);
+    }
+
+    /** Quand la prévision en base a été reçue, ou null si la table est vide. */
+    public function weatherFetchedAt(): ?string
+    {
+        $valeur = $this->db->fetchOne('SELECT MAX(fetched_at) FROM inv_weather_forecast');
+
+        return $valeur === false || $valeur === null || (string) $valeur === '' ? null : (string) $valeur;
+    }
+
+    /**
+     * Remplace la prévision en base par celle qui vient d'être reçue.
+     *
+     * Efface TOUT avant d'écrire : une réponse est un tout. Mettre à jour ligne
+     * à ligne aurait laissé cohabiter des journées venues de deux appels — une
+     * semaine dont on ne saurait plus dater les morceaux, et dont la fin
+     * pourrait contredire le début.
+     */
+    public function saveWeatherForecast(WeatherForecast $forecast): void
+    {
+        $recu = self::now();
+
+        $this->db->transactional(function () use ($forecast, $recu): void {
+            $this->db->executeStatement('DELETE FROM inv_weather_forecast');
+
+            foreach ($forecast->days as $jour) {
+                $this->db->insert('inv_weather_forecast', [
+                    'date' => $jour->date,
+                    'day_of_week' => $jour->dayOfWeek->value,
+                    'kind' => $jour->kind->value,
+                    'temp_min' => $jour->tempMin,
+                    'temp_max' => $jour->tempMax,
+                    'rain_chance' => $jour->rainChance,
+                    'summary' => mb_substr($jour->summary, 0, 190),
+                    'fetched_at' => $recu,
+                ]);
+            }
+        });
     }
 
     // ── File d'envoi vers le système hôte ───────────────────────────────────

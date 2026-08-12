@@ -2373,6 +2373,65 @@ body { overflow-x: hidden; }
   .wpick__radio:not(:checked) ~ .wpick__box:hover { border-color: var(--plum); color: var(--coffee); }
 }
 
+/* Ce que le service météo annonce pour ce jour-là, au-dessus du choix manuel.
+
+   Discret par défaut : c'est une information, pas une commande — le bouton
+   radio en dessous reste ce qui pilote le plan. Il ne passe en prune que
+   lorsqu'il CONTREDIT la saisie : c'est le seul cas où il faut décider quelque
+   chose, et il doit alors se voir sans qu'on le cherche. */
+.wpick__hint {
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+  margin: var(--space-1) 0 0;
+  font-size: .75rem;
+  color: var(--text-muted);
+}
+.wpick__hint .icon { width: 15px; height: 15px; }
+.wpick__hint--differs { color: var(--plum); font-weight: 600; }
+
+/* La semaine annoncée : une carte par jour, qui défile horizontalement plutôt
+   que de comprimer sept colonnes sur un téléphone de 320 px. */
+.wcast {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(7.5rem, 1fr);
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0 0 var(--space-2);
+  list-style: none;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  /* Le défilement se fait DANS la bande, pas dans la page. Sans ces deux
+     lignes, sept cartes de 7,5 rem élargissaient le document entier sur un
+     téléphone de 390 px : la barre de navigation et le pied de page se
+     décalaient avec elles, et l'on faisait glisser tout l'écran pour lire
+     dimanche. Même remède que `.table-scroll`, pour la même raison. */
+  min-width: 0;
+  max-width: 100%;
+}
+/* Le jour qui CONTREDIT la saisie porte la teinte d'attention — la même que
+   son étiquette « Diffère », et jamais celle du vert « tout va bien » : un
+   écart peint en vert se lit comme une confirmation, et l'on passe devant sans
+   s'arrêter. Le jour conforme, lui, n'appelle aucune décision et s'efface. */
+.wcast__day {
+  padding: var(--space-2);
+  border: 1px solid var(--warn);
+  border-radius: 12px;
+  text-align: center;
+  background: var(--warn-bg);
+}
+.wcast__day--same { background: transparent; border-color: var(--cream-outline); }
+.wcast__day p { margin: 0; }
+.wcast__name { font-weight: 700; }
+.wcast__icon { display: block; margin: var(--space-1) 0; color: var(--plum); }
+.wcast__icon .icon { width: 30px; height: 30px; }
+.wcast__temp { font-variant-numeric: tabular-nums; font-weight: 600; }
+.wcast__rain, .wcast__summary { font-size: .75rem; color: var(--text-muted); }
+.wcast__current { margin-top: var(--space-1); }
+.wcast__was { display: inline-flex; vertical-align: middle; color: var(--text-muted); }
+.wcast__was .icon { width: 16px; height: 16px; }
+
 /* La légende des corrections : quatre repères sur une ligne, qui passent à la
    suivante plutôt que de déborder. */
 .wlegend { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); align-items: center; }

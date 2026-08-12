@@ -113,6 +113,33 @@ services:
     Merisu\Inventory\Adapter\PosServiceInterface:
         alias: Merisu\Inventory\Adapter\GoPosService
 
+    # ── Météo de la semaine ─────────────────────────────────────────────────
+    # Le stock minimum d'une composition part de ce qui s'est écoulé les six
+    # dernières semaines, corrigé du temps attendu. Ce temps se saisissait à la
+    # main, jour par jour ; il peut désormais venir d'OpenWeatherMap.
+    #
+    # ⚠️ CHAQUE APPEL EST FACTURÉ (offre « One Call by Call », mille par jour
+    # offerts). Aucun écran n'interroge l'hôte : ils lisent la prévision gardée
+    # en base. Seuls le bouton « Actualiser » et la tâche `merisu:meteo` la
+    # renouvellent.
+    #
+    # La clé et les coordonnées se saisissent dans Admin ▸ Météo ; ce qui suit
+    # n'est qu'un repli pour un déploiement automatisé. Sans elles, le service
+    # se déclare non configuré et l'écran ne propose aucun appel.
+    #
+    # Pour couper la fonction même en présence d'une clé, remplacer l'alias
+    # par `NullWeatherService` — aucun appel facturé ne sortira alors.
+    Merisu\Inventory\Adapter\OpenWeatherService:
+        arguments:
+            $envApiKey: '%env(OPENWEATHER_API_KEY)%'
+            $envLatitude: '%env(OPENWEATHER_LAT)%'
+            $envLongitude: '%env(OPENWEATHER_LON)%'
+            $envPlace: '%env(OPENWEATHER_PLACE)%'
+            $envBaseUrl: '%env(OPENWEATHER_BASE_URL)%'
+
+    Merisu\Inventory\Adapter\WeatherServiceInterface:
+        alias: Merisu\Inventory\Adapter\OpenWeatherService
+
     # ── Traduction assistée des LIBELLÉS ────────────────────────────────────
     # Pas de l'interface : les chaînes d'écran vivent dans translations/ et
     # sont écrites à la main. Ici, ce sont les données de la boutique — noms de

@@ -1,0 +1,211 @@
+{#
+  Admin ▸ Météo — la semaine qui vient.
+
+  L'écran ne va RIEN chercher tout seul : chaque appel est facturé. Il lit ce
+  qui est gardé en base ; le bouton « Actualiser » — ou la tâche planifiée —
+  interroge l'hôte.
+
+  Et il montre côte à côte DEUX choses qu'on confond vite : ce que le service
+  annonce, et ce qui pilote réellement le plan de production. Tant qu'on n'a
+  pas appliqué, c'est la seconde colonne qui commande.
+#}
+{% extends 'admin/_layout.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'admin.weather.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block admin_content %}
+
+  {{ ui.page_header('admin.weather.title'|trans, 'admin.weather.subtitle'|trans) }}
+
+  <section class="card">
+    <div class="field">
+      <span class="field__label">{{ 'admin.weather.state'|trans }}</span>
+
+      {% if configured %}
+        {{ ui.badge('ok', 'admin.weather.configured'|trans) }}
+        {% if credentials.place %}<span class="muted">· {{ credentials.place }}</span>{% endif %}
+      {% else %}
+        {{ ui.badge('warn', 'admin.weather.notConfiguredShort'|trans) }}
+      {% endif %}
+
+      <p class="field__hint">{{ 'admin.weather.stateHint'|trans }}</p>
+
+      {% if configured %}
+        <p class="field__hint">
+          {{ (fromScreen ? 'admin.weather.fromScreen' : 'admin.weather.fromServer')|trans }}
+        </p>
+      {% endif %}
+    </div>
+
+    {#
+      Le rafraîchissement est un POST, pas un lien : un lien se recharge d'un
+      coup de F5 et se fait précharger par le navigateur — une centaine
+      d'appels facturés seraient partis sans que personne ne clique.
+    #}
+    {% if configured %}
+      <form method="post" action="{{ path('admin_weather_refresh') }}" class="form">
+        <div class="form-actions">
+          <button type="submit" class="button button--secondary">{{ 'admin.weather.refresh'|trans }}</button>
+        </div>
+        <p class="field__hint">
+          {% if fetchedAt %}
+            {{ 'admin.weather.fetchedAt'|trans({ '%datetime%': fetchedAt|datetime_short }) }}
+          {% else %}
+            {{ 'admin.weather.neverFetched'|trans }}
+          {% endif %}
+        </p>
+      </form>
+    {% endif %}
+  </section>
+
+  {# ── La semaine annoncée ─────────────────────────────────────────────────── #}
+
+  {% if forecast.isEmpty %}
+    {{ ui.banner('info', (configured ? 'admin.weather.noForecast' : 'admin.weather.notConfigured')|trans) }}
+  {% else %}
+    <section class="card">
+      <h2 class="card__title">{{ 'admin.weather.upcoming'|trans }}</h2>
+
+      <ul class="wcast">
+        {% for jour in forecast.days %}
+          {#
+            La prévision, ET le temps en vigueur juste en dessous. Sans cette
+            seconde ligne, on lirait « pluie » en croyant que le plan en tient
+            compte — alors qu'il ne le fera qu'après un clic sur « Appliquer ».
+          #}
+          {% set enVigueur = dayWeathers[jour.dayOfWeek.value] %}
+          <li class="wcast__day{{ enVigueur == jour.kind ? ' wcast__day--same' : '' }}">
+            <p class="wcast__name">
+              {{ ('daysShort.' ~ jour.dayOfWeek.value)|trans }}
+              {% if jour.date == today %}<span class="muted">· {{ 'produce.shortcutToday'|trans }}</span>{% endif %}
+            </p>
+
+            <span class="wcast__icon" title="{{ ('admin.parMatrix.weathers.' ~ jour.kind.value)|trans }}">
+              {{ ui.icon(jour.kind.icon) }}
+            </span>
+
+            <p class="wcast__temp">
+              {% if jour.tempMax is not null %}{{ jour.tempMax|round }}°{% endif %}
+              {% if jour.tempMin is not null %}<span class="muted">{{ jour.tempMin|round }}°</span>{% endif %}
+            </p>
+
+            <p class="wcast__rain">{{ 'admin.weather.rainChance'|trans({ '%pct%': jour.rainChance }) }}</p>
+
+            {% if jour.summary %}<p class="wcast__summary muted">{{ jour.summary }}</p>{% endif %}
+
+            <p class="wcast__current">
+              {% if enVigueur == jour.kind %}
+                {{ ui.badge('ok', 'admin.weather.matches'|trans) }}
+              {% else %}
+                <span class="wcast__was" title="{{ 'admin.weather.currentTitle'|trans }}">
+                  {{ ui.icon(enVigueur.icon) }}
+                  <span class="visually-hidden">
+                    {{ ('admin.parMatrix.weathers.' ~ enVigueur.value)|trans }}
+                  </span>
+                </span>
+                {{ ui.badge('warn', 'admin.weather.differs'|trans) }}
+              {% endif %}
+            </p>
+          </li>
+        {% endfor %}
+      </ul>
+
+      <form method="post" action="{{ path('admin_weather_apply') }}" class="form">
+        <div class="form-actions">
+          <button type="submit" class="button button--primary">{{ 'admin.weather.apply'|trans }}</button>
+        </div>
+        <p class="field__hint">{{ 'admin.weather.applyHint'|trans }}</p>
+      </form>
+    </section>
+  {% endif %}
+
+  {# ── La clé et l'endroit ─────────────────────────────────────────────────── #}
+
+  <details class="card admin-new" {{ configured ? '' : 'open' }}>
+    <summary class="admin-new__summary">
+      {{ ui.icon('sliders') }}
+      <span>{{ 'admin.weather.settings'|trans }}</span>
+    </summary>
+
+    {% if not canStore %}
+      {{ ui.banner('danger', 'admin.weather.errorNoCrypto'|trans) }}
+    {% else %}
+      <form method="post" action="{{ path('admin_weather_settings') }}" class="form">
+        {#
+          La clé : ÉCRITURE SEULE. Elle est facturée à l'appel — la réafficher,
+          même tronquée, aurait suffi à confirmer à qui l'a volée qu'elle tient
+          la bonne. Laissée vide, elle n'est pas effacée : sans cette règle,
+          corriger une latitude aurait effacé une clé irrécupérable.
+        #}
+        <div class="field">
+          <label class="field__label" for="ow-key">{{ 'admin.weather.apiKey'|trans }}</label>
+          <input class="field__input" type="password" id="ow-key" name="apiKey"
+                 autocomplete="new-password"
+                 placeholder="{{ (credentials.hasKey ? 'admin.weather.keyKeep' : 'admin.weather.keyEmpty')|trans }}">
+          <p class="field__hint">
+            {% if credentials.hasKey %}{{ ui.badge('ok', 'admin.weather.keySet'|trans) }}{% endif %}
+            {{ 'admin.weather.keyHint'|trans }}
+          </p>
+        </div>
+
+        {#
+          Les coordonnées, et non un nom de ville : One Call ne connaît pas les
+          boutiques, il connaît des points. Le libellé qui suit n'entre dans
+          aucun appel — il sert à relire « Varsovie » plutôt que « 52,23 ».
+        #}
+        <div class="field-grid">
+          <div class="field">
+            <label class="field__label" for="ow-lat">{{ 'admin.weather.latitude'|trans }}</label>
+            <input class="field__input" type="text" inputmode="decimal" id="ow-lat" name="latitude"
+                   value="{{ credentials.latitude }}" placeholder="52.2297">
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="ow-lon">{{ 'admin.weather.longitude'|trans }}</label>
+            <input class="field__input" type="text" inputmode="decimal" id="ow-lon" name="longitude"
+                   value="{{ credentials.longitude }}" placeholder="21.0122">
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="ow-place">{{ 'admin.weather.place'|trans }}</label>
+          <input class="field__input" type="text" id="ow-place" name="place" maxlength="190"
+                 value="{{ credentials.place }}">
+          <p class="field__hint">{{ 'admin.weather.placeHint'|trans }}</p>
+        </div>
+
+        {#
+          Appliquer d'office : décoché par défaut. La semaine type est une
+          SAISIE — quelqu'un a regardé et décidé. L'écraser chaque nuit sans
+          l'avoir demandé aurait défait ce choix en silence.
+        #}
+        <div class="checkbox-row">
+          <input type="checkbox" id="ow-auto" name="autoApply" value="1"
+                 {{ credentials.autoApply ? 'checked' : '' }}>
+          <label for="ow-auto">{{ 'admin.weather.autoApply'|trans }}</label>
+        </div>
+        <p class="field__hint">{{ 'admin.weather.autoApplyHint'|trans }}</p>
+
+        <div class="form-actions">
+          <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
+        </div>
+      </form>
+
+      {# Hors du formulaire principal : imbriquer deux formulaires est interdit
+         en HTML, et le navigateur en ignorerait un sans rien dire. #}
+      {% if fromScreen %}
+        <form method="post" action="{{ path('admin_weather_settings_clear') }}" class="form">
+          <div class="form-actions">
+            <button type="submit" class="button button--ghost"
+                    data-confirm="{{ 'admin.weather.confirmClear'|trans }}">
+              {{ 'admin.weather.clearSettings'|trans }}
+            </button>
+          </div>
+          <p class="field__hint">{{ 'admin.weather.clearHint'|trans }}</p>
+        </form>
+      {% endif %}
+    {% endif %}
+  </details>
+
+{% endblock %}
