@@ -333,6 +333,7 @@ admin:
         errorLevelMismatch: 'Ce niveau n''appartient pas à ce poste.'
     pos:
         tokenRefused: 'La caisse a refusé la demande de jeton. Vérifiez le Client ID, le Client secret et l’Organization ID — puis, s’ils sont bons, la ligne ci-dessous : c’est la caisse qui parle.'
+        badClient: 'La caisse ne reconnaît pas ce Client ID et ce Client secret. Elle vérifie la paire AVANT tout le reste : l''Organization ID n''est pas en cause à ce stade, inutile de le revoir. Vérifiez que les identifiants viennent bien de l''environnement GoPOS visé par l''adresse de l''API ci-dessous — ceux d''un environnement d''essai sont refusés en production, et l''inverse.'
         accessRefused: 'Jeton obtenu, mais l’accès à cette organisation est refusé. Les identifiants sont donc bons ; c’est l’Organization ID, ou le droit qui lui est attaché, qu’il faut revoir.'
         hostSaid: 'Réponse de la caisse : %detail%'
         credentials: 'Identifiants de la caisse'

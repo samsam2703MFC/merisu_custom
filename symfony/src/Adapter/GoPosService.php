@@ -226,6 +226,18 @@ final class GoPosService implements PosServiceInterface
      * puis la chaîne de requête si la caisse a refusé. Deviner une fois coûte
      * un aller-retour ; se tromper définitivement aurait coûté une intégration.
      *
+     * ── Ce que la caisse a depuis répondu
+     *
+     * Interrogée avec des identifiants factices, `app.gopos.io` accepte les
+     * DEUX formes et rend la même erreur OAuth. Le corps de formulaire est
+     * donc bel et bien lu — un corps JSON, lui, ne l'est pas : il rend un
+     * « Unauthorized » nu, sans `error`, signe qu'aucun identifiant n'y a été
+     * trouvé.
+     *
+     * Le repli est donc devenu inutile. Il est gardé : il ne coûte un appel de
+     * plus que sur le chemin d'échec, et rien ne dit qu'une installation
+     * GoPOS sur un autre hôte se comporte comme celle-ci.
+     *
      * @throws PosUnavailable
      */
     private function token(): string
@@ -278,7 +290,31 @@ final class GoPosService implements PosServiceInterface
             $dernierDetail = self::detail($statut, $corpsBrut);
         }
 
-        throw new PosUnavailable('admin.pos.tokenRefused', $dernierDetail);
+        throw new PosUnavailable(self::tokenReason($dernierDetail), $dernierDetail);
+    }
+
+    /**
+     * Quel message afficher, selon ce que la caisse a répondu.
+     *
+     * ── Ce que `invalid_client` dit, et ce qu'il ne dit pas
+     *
+     * GoPOS valide le CLIENT avant tout le reste. Constaté sur
+     * `app.gopos.io` : avec un client inconnu, la réponse est la même
+     * — 401 `invalid_client` / « Bad client credentials » — que
+     * l'`organization_id` soit juste, faux ou absent, et que le `grant_type`
+     * soit celui attendu ou n'importe quoi d'autre.
+     *
+     * Autrement dit, quand la caisse dit `invalid_client`, elle n'a PAS encore
+     * regardé l'Organization ID. Envoyer l'administrateur le vérifier,
+     * c'était le faire chercher une faute là où la caisse n'a
+     * rien reproché — et passer à côté de la seule
+     * paire en cause.
+     */
+    private static function tokenReason(string $detail): string
+    {
+        return str_contains($detail, 'invalid_client')
+            ? 'admin.pos.badClient'
+            : 'admin.pos.tokenRefused';
     }
 
     /**

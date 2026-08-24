@@ -330,6 +330,7 @@ admin:
         errorLevelMismatch: 'Questo livello non appartiene a questo ruolo.'
     pos:
         tokenRefused: 'La cassa ha rifiutato la richiesta del token. Verifica Client ID, Client secret e Organization ID — e se sono corretti, leggi la riga qui sotto: è la cassa che parla.'
+        badClient: 'La cassa non riconosce questo Client ID e questo Client secret. Verifica la coppia PRIMA di tutto il resto: l''Organization ID non è in causa a questo punto, inutile rivederlo. Verifica che le credenziali provengano dall''ambiente GoPOS indicato dall''indirizzo dell''API qui sotto — quelle di un ambiente di prova sono rifiutate in produzione, e viceversa.'
         accessRefused: 'Token ottenuto, ma l’accesso a questa organizzazione è rifiutato. Le credenziali sono quindi corrette; resta da rivedere l’Organization ID, o il diritto che vi è associato.'
         hostSaid: 'Risposta della cassa: %detail%'
         credentials: 'Credenziali della cassa'

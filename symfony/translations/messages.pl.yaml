@@ -330,6 +330,7 @@ admin:
         errorLevelMismatch: 'Ten poziom nie należy do tego stanowiska.'
     pos:
         tokenRefused: 'Kasa odrzuciła żądanie tokenu. Sprawdź Client ID, Client secret i Organization ID — a jeśli są poprawne, przeczytaj poniższą linię: to mówi kasa.'
+        badClient: 'Kasa nie rozpoznaje tego Client ID i Client secret. Sprawdza tę parę PRZED wszystkim innym: Organization ID nie jest tu winne, nie ma potrzeby go poprawiać. Upewnij się, że dane pochodzą ze środowiska GoPOS wskazanego przez adres API poniżej — dane ze środowiska testowego są odrzucane na produkcji i odwrotnie.'
         accessRefused: 'Token uzyskany, ale dostęp do tej organizacji jest odmówiony. Dane dostępowe są więc poprawne; do sprawdzenia pozostaje Organization ID lub przypisane mu uprawnienia.'
         hostSaid: 'Odpowiedź kasy: %detail%'
         credentials: 'Dane dostępowe kasy'
