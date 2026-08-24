@@ -21,6 +21,11 @@
 #                       n'apparaît jamais dans le journal (GitHub la masque, et
 #                       elle transite par l'entrée standard, pas par `ps`).
 #
+#   GOPOS_CLIENT_ID     identifiant de l'application GoPOS, et
+#   GOPOS_CLIENT_SECRET son secret. Absents, la caisse reste non configurée et
+#                       l'écran ne propose aucun import — rien ne casse. Les
+#                       deux se saisissent aussi dans Admin ▸ Caisse.
+#
 #   OPENWEATHER_API_KEY clé One Call 3.0 pour la prévision de la semaine, posée
 #                       de la même façon. Absente, le temps attendu se saisit à
 #                       la main dans Seuils, comme avant. Elle peut aussi se
@@ -32,6 +37,13 @@
 #   DEPLOY_PHP_BIN      binaire PHP, ex. php8.3 (défaut : php)
 #   DEPLOY_HEALTH_URL   URL testée après déploiement, ex. http://127.0.0.1/merisu/connexion
 #   MERISU_AI_MODEL     modèle de traduction (défaut : claude-opus-5)
+#   GOPOS_ORGANIZATION_ID  numéro de la boutique, en chiffres nus (ex. 13232).
+#                       Pas un secret : c'est un numéro, et c'est la valeur
+#                       qu'on se trompe le plus souvent en saisissant — la
+#                       voir en clair aide. Le préfixe « go_ » du panneau
+#                       GoPOS ne s'y met PAS : c'est le numéro de client.
+#   GOPOS_BASE_URL      adresse de l'API, si ce n'est pas app.gopos.io
+#
 #   OPENWEATHER_LAT     latitude de la boutique, ex. 52.2297
 #   OPENWEATHER_LON     longitude de la boutique, ex. 21.0122
 #   OPENWEATHER_PLACE   nom affiché à l'écran, ex. Varsovie. N'entre dans aucun
@@ -264,6 +276,81 @@ jobs:
       # La clé peut aussi se saisir dans Admin ▸ Météo, où elle est chiffrée en
       # base ; cette étape existe pour les installations qui préfèrent que rien
       # de sensible ne vive dans la base applicative.
+      # Les identifiants de caisse, posés comme les autres secrets : pas de
+      # `if:` au niveau de l'étape, la valeur par l'entrée standard.
+      #
+      # L'Organization ID n'est pas un secret — c'est un numéro de boutique.
+      # Il passe donc par une VARIABLE de dépôt, relisible et corrigeable sans
+      # redevenir administrateur des secrets. C'est aussi la valeur qu'on se
+      # trompe le plus souvent en saisissant : la voir en clair aide.
+      #
+      # Les trois se saisissent aussi dans Admin ▸ Caisse, où le secret est
+      # chiffré en base ; cette étape sert aux installations qui préfèrent que
+      # rien de sensible ne vive dans la base applicative.
+      - name: Poser les identifiants de caisse
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          APP_PATH: ${{ secrets.DEPLOY_PATH }}
+          PORT: ${{ vars.DEPLOY_PORT || '22' }}
+          CLIENT: ${{ secrets.GOPOS_CLIENT_ID }}
+          SECRET: ${{ secrets.GOPOS_CLIENT_SECRET }}
+          ORG: ${{ vars.GOPOS_ORGANIZATION_ID }}
+          BASE: ${{ vars.GOPOS_BASE_URL }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${CLIENT:-}" ] || [ -z "${SECRET:-}" ]; then
+            echo "→ Aucun secret GOPOS_CLIENT_ID / GOPOS_CLIENT_SECRET : caisse non configurée."
+            echo "  Rien de cassé — les identifiants peuvent aussi se saisir dans Admin ▸ Caisse."
+            exit 0
+          fi
+
+          if [ -z "${ORG:-}" ]; then
+            # Une paire sans numéro d'organisation n'obtient aucun jeton, et la
+            # caisse ne sait pas lister les boutiques d'abord. Le dire ici évite
+            # de chercher côté serveur pourquoi l'écran reste muet.
+            echo "→ Identifiants posés sans GOPOS_ORGANIZATION_ID (variable de dépôt)."
+            echo "  La caisse refusera le jeton tant qu'il manquera."
+          fi
+
+          APP_PATH="${APP_PATH//$'\r'/}"
+          APP_PATH="${APP_PATH#"${APP_PATH%%[![:space:]]*}"}"
+          APP_PATH="${APP_PATH%"${APP_PATH##*[![:space:]]}"}"
+
+          DISTANT='
+            set -euo pipefail
+            cd "$1/symfony"
+
+            IFS= read -r SECRET || true
+            [ -n "$SECRET" ] || { echo "✗ secret vide" >&2; exit 1; }
+
+            CLIENT="$2"; ORG="$3"; BASE="$4"
+
+            if [ ! -f .env.local ]; then
+              echo "✗ .env.local absent : le déploiement a-t-il abouti ?" >&2
+              exit 1
+            fi
+
+            TMP="$(mktemp)"
+            grep -v -e "^GOPOS_CLIENT_ID=" -e "^GOPOS_CLIENT_SECRET=" \
+                    -e "^GOPOS_ORGANIZATION_ID=" -e "^GOPOS_BASE_URL=" .env.local > "$TMP" || true
+            printf "GOPOS_CLIENT_ID=%s\n" "$CLIENT" >> "$TMP"
+            printf "GOPOS_CLIENT_SECRET=%s\n" "$SECRET" >> "$TMP"
+            [ -z "$ORG" ]  || printf "GOPOS_ORGANIZATION_ID=%s\n" "$ORG" >> "$TMP"
+            [ -z "$BASE" ] || printf "GOPOS_BASE_URL=%s\n" "$BASE" >> "$TMP"
+
+            # `cat >` et non `mv` : le fichier garde son inode, son
+            # propriétaire et ses droits.
+            cat "$TMP" > .env.local
+            rm -f "$TMP"
+
+            echo "✓ Caisse configurée${ORG:+ (organisation $ORG)}"
+          '
+
+          printf '%s\n' "$SECRET" | ssh -i ~/.ssh/id_deploiement -p "$PORT" -o BatchMode=yes \
+              "$USER@$HOST" bash -euo pipefail -c "$DISTANT" -- "$APP_PATH" "$CLIENT" "$ORG" "$BASE"
+
       - name: Poser la clé météo
         env:
           HOST: ${{ secrets.DEPLOY_HOST }}

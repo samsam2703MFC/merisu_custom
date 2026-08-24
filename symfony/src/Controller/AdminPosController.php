@@ -6,9 +6,8 @@ namespace Merisu\Inventory\Controller;
 
 use Merisu\Inventory\Adapter\PosServiceInterface;
 use Merisu\Inventory\Adapter\PosUnavailable;
-use Merisu\Inventory\Domain\ProductCategory;
-use Merisu\Inventory\Domain\ProductNature;
 use Merisu\Inventory\Security\CurrentUser;
+use Merisu\Inventory\Service\PosImportService;
 use Merisu\Inventory\Service\SecretBox;
 use Merisu\Inventory\Store\PosCredentialStore;
 use Merisu\Inventory\Store\Store;
@@ -44,6 +43,7 @@ final class AdminPosController extends AbstractController
         private readonly PosServiceInterface $pos,
         private readonly Store $store,
         private readonly PosCredentialStore $credentials,
+        private readonly PosImportService $import,
         private readonly SecretBox $box,
     ) {
     }
@@ -177,9 +177,9 @@ final class AdminPosController extends AbstractController
     /**
      * Reprend les catégories de la caisse dans Admin ▸ Catégories.
      *
-     * Les nouvelles seulement : une catégorie déjà présente porte peut-être
-     * une nature réglée à la main (matière première, emballage), et la
-     * réécrire l'aurait remise en « produit en vente ».
+     * La règle vit dans `PosImportService`, partagée avec `merisu:caisse` :
+     * un import de quarante articles se fait aussi bien par SSH, et deux
+     * copies de la règle auraient divergé au premier ajustement.
      */
     #[Route('/categories', name: 'admin_cash_import_categories', methods: ['POST'])]
     public function importCategories(): Response
@@ -187,36 +187,10 @@ final class AdminPosController extends AbstractController
         $admin = $this->currentUser->requireAdmin();
 
         try {
-            $distantes = $this->pos->categories();
+            $this->import->importCategories($admin->id, $admin->role->value);
         } catch (PosUnavailable $e) {
-            $this->addFlash('error', ['key' => $e->getMessage(), 'params' => []]);
-
-            if ($e->detail !== '') {
-                $this->addFlash('error', ['key' => 'admin.pos.hostSaid', 'params' => ['%detail%' => $e->detail]]);
-            }
-
-            return $this->redirectToRoute('admin_cash');
+            return $this->echec($e);
         }
-
-        $connues = array_flip($this->store->categoryOrder());
-        $ajoutees = 0;
-
-        foreach ($distantes as $categorie) {
-            $nom = ProductCategory::clean($categorie->name);
-
-            if ($nom === '' || isset($connues[$nom])) {
-                continue;
-            }
-
-            $this->store->addCategory($nom, ProductNature::Sale);
-            $connues[$nom] = true;
-            ++$ajoutees;
-        }
-
-        $this->store->audit($admin->id, $admin->role->value, 'POS_CATEGORIES_IMPORTED', null, null, [
-            'seen' => count($distantes),
-            'added' => $ajoutees,
-        ]);
 
         $this->addFlash('success', 'admin.pos.categoriesImported');
 
@@ -226,15 +200,10 @@ final class AdminPosController extends AbstractController
     /**
      * Rattache les fiches produits aux articles de la caisse.
      *
-     * ── Ce que l'import fait, et ce qu'il ne fait pas
-     *
-     * Il RATTACHE : la fiche locale reçoit la référence de l'article
-     * (`recipeRef`), qui est le seul lien durable entre les deux — un nom se
-     * retape, un identifiant non. Et il crée les fiches absentes.
-     *
-     * Il ne touche à RIEN d'autre : unité, facteur de perte, arrondi, rythme
-     * de comptage, traductions restent tels quels. Ce sont des réglages
-     * d'inventaire, que la caisse ne connaît pas.
+     * Voir `PosImportService` : l'import AJOUTE, il n'écrase pas. Unité,
+     * facteur de perte, arrondi, rythme de comptage et traductions restent
+     * tels quels — ce sont des réglages d'inventaire, que la caisse ne
+     * connaît pas.
      */
     #[Route('/produits', name: 'admin_cash_import_items', methods: ['POST'])]
     public function importItems(): Response
@@ -242,83 +211,32 @@ final class AdminPosController extends AbstractController
         $admin = $this->currentUser->requireAdmin();
 
         try {
-            $articles = $this->pos->items();
+            $this->import->importItems($admin->id, $admin->role->value);
         } catch (PosUnavailable $e) {
-            $this->addFlash('error', ['key' => $e->getMessage(), 'params' => []]);
-
-            if ($e->detail !== '') {
-                $this->addFlash('error', ['key' => 'admin.pos.hostSaid', 'params' => ['%detail%' => $e->detail]]);
-            }
-
-            return $this->redirectToRoute('admin_cash');
+            return $this->echec($e);
         }
-
-        $parReference = [];
-        $parNom = [];
-
-        foreach ($this->store->products() as $produit) {
-            if (($produit->recipeRef ?? '') !== '') {
-                $parReference[(string) $produit->recipeRef] = $produit;
-            }
-
-            foreach ($produit->name as $libelle) {
-                $parNom[mb_strtolower(trim($libelle))] = $produit;
-            }
-        }
-
-        $crees = 0;
-        $rattaches = 0;
-
-        foreach ($articles as $article) {
-            if (isset($parReference[$article->externalId])) {
-                continue;
-            }
-
-            // Rattachement par le NOM, faute de référence : c'est le seul
-            // repère disponible au premier import, et il évite de créer un
-            // doublon de chaque produit déjà saisi à la main. Une fois
-            // rattachée, la fiche ne dépend plus de son nom.
-            $existante = $parNom[mb_strtolower($article->name)] ?? null;
-
-            if ($existante !== null) {
-                $this->store->saveProduct($existante->with(recipeRef: $article->externalId));
-                $parReference[$article->externalId] = $existante;
-                ++$rattaches;
-
-                continue;
-            }
-
-            $slot = $this->store->nextProductSlot();
-
-            $this->store->saveProduct(new \Merisu\Inventory\Domain\Product(
-                $slot['id'],
-                $slot['code'],
-                // Le nom part dans la langue par défaut : la caisse n'en donne
-                // qu'un. Les trois autres se complètent au bouton « Traduire »
-                // d'Admin ▸ Produits.
-                [$this->store->settings()->defaultLocale->value => $article->name],
-                'pcs',
-                $article->enabled,
-                0.0,
-                1.0,
-                \Merisu\Inventory\Domain\RoundingMode::Ceil,
-                $article->externalId,
-                $slot['sortOrder'],
-                category: ProductCategory::clean($article->categoryName ?? ''),
-            ));
-
-            ++$crees;
-        }
-
-        $this->store->audit($admin->id, $admin->role->value, 'POS_ITEMS_IMPORTED', null, null, [
-            'seen' => count($articles),
-            'created' => $crees,
-            'linked' => $rattaches,
-        ]);
 
         $this->addFlash('success', 'admin.pos.itemsImported');
 
         return $this->redirectToRoute('admin_cash', ['tester' => 1]);
+    }
+
+    /**
+     * Le refus de la caisse, porté à l'écran — avec ce qu'elle a DIT.
+     *
+     * Deux bandeaux et non un seul : le premier nomme le geste qui répare, le
+     * second cite la caisse mot pour mot. Sans le second, on ne saurait pas
+     * distinguer un identifiant erroné d'une organisation non accordée.
+     */
+    private function echec(PosUnavailable $e): Response
+    {
+        $this->addFlash('error', ['key' => $e->getMessage(), 'params' => []]);
+
+        if ($e->detail !== '') {
+            $this->addFlash('error', ['key' => 'admin.pos.hostSaid', 'params' => ['%detail%' => $e->detail]]);
+        }
+
+        return $this->redirectToRoute('admin_cash');
     }
 
     /**
