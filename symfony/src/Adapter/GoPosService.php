@@ -41,6 +41,23 @@ final class GoPosService implements PosServiceInterface
     private const PAGE_SIZE = 100;
 
     /**
+     * La première page porte le numéro ZÉRO.
+     *
+     * Vérifié sur `app.gopos.io`, catalogue de cinquante articles :
+     * `page=0&size=100` rend les cinquante, `page=1&size=100` rend une liste
+     * VIDE, `page=0&size=10` et `page=1&size=10` rendent dix lignes chacun,
+     * mais pas les mêmes.
+     *
+     * Commencer à un — le réflexe, et ce que faisait ce code — demandait donc
+     * la DEUXIÈME page dès le premier appel. Avec cent lignes par page et une
+     * pâtisserie qui en a cinquante, la caisse répondait « aucun article »
+     * sans la moindre erreur : identifiants bons, jeton obtenu, HTTP 200,
+     * catalogue vide. L'écran concluait que la boutique n'avait rien à
+     * importer, et rien dans la réponse ne permettait de le contredire.
+     */
+    private const FIRST_PAGE = 0;
+
+    /**
      * Garde-fou contre une pagination qui ne se termine pas.
      *
      * Cent pages font dix mille articles — bien au-delà d'une pâtisserie. Si
@@ -93,21 +110,46 @@ final class GoPosService implements PosServiceInterface
 
     public function ping(): string
     {
-        // Les réglages de l'organisation : le plus petit appel authentifié qui
-        // prouve à la fois que le jeton est valide ET que l'organisation
-        // existe. Un simple /oauth/token n'aurait prouvé que la première.
-        $reglages = $this->get('/settings');
-        $donnees = is_array($reglages['data'] ?? null) ? $reglages['data'] : $reglages;
+        /*
+          `/api/v3/me` — la liste des organisations ouvertes à ce client.
 
-        foreach (['name', 'organization_name', 'company_name'] as $champ) {
-            if (is_string($donnees[$champ] ?? null) && trim($donnees[$champ]) !== '') {
-                return trim($donnees[$champ]);
+          `/settings` était le choix précédent, et il prouvait la même chose :
+          jeton valide ET organisation existante. Mais il ne porte AUCUN nom —
+          sa réponse est une liste de réglages de caisse (`SALE_QUICK_BUTTON`
+          et consorts). La recherche de `name` n'y trouvait donc rien et
+          l'écran retombait sur le numéro : « Organisation : 13232 ». Or c'est
+          précisément la question qu'on pose ici — QUELLE boutique répond — et
+          un numéro n'y répond pas. `/me` rend « Merisù ».
+        */
+        $reponse = $this->get('/me', organizationScoped: false);
+        $lignes = is_array($reponse['data'] ?? null) ? $reponse['data'] : [];
+
+        $attendue = trim($this->credentials()->organizationId);
+        $premierNom = null;
+
+        foreach ($lignes as $ligne) {
+            if (!is_array($ligne)) {
+                continue;
             }
+
+            $nom = is_string($ligne['name'] ?? null) ? trim($ligne['name']) : '';
+
+            if ($nom === '') {
+                continue;
+            }
+
+            // Celle qu'on a demandée, si la caisse en cite plusieurs : rendre
+            // la première venue aurait affiché le nom d'une boutique voisine.
+            if (is_scalar($ligne['id'] ?? null) && (string) $ligne['id'] === $attendue) {
+                return $nom;
+            }
+
+            $premierNom ??= $nom;
         }
 
         // La caisse n'a pas donné de nom : on rend l'identifiant plutôt qu'un
         // « connexion réussie » qui ne dirait pas QUELLE boutique répond.
-        return $this->credentials()->organizationId;
+        return $premierNom ?? $attendue;
     }
 
     public function categories(): array
@@ -127,14 +169,36 @@ final class GoPosService implements PosServiceInterface
 
     public function items(): array
     {
+        /*
+          Le nom des catégories est RAPPORTÉ depuis `/categories`.
+
+          `/items` ne porte qu'un `category_id` — un nombre. Il ne porte
+          d'objet `category` imbriqué que dans la documentation ; la caisse
+          réelle n'en met pas. Sans ce rapprochement, les cinquante articles
+          entraient tous « sans catégorie » : l'écran d'import n'affichait plus
+          qu'une colonne vide, et le filtre par catégorie de la liste de
+          production, lui, ne servait plus à rien.
+
+          Un appel de plus, une fois, contre un catalogue rangé.
+        */
+        $nomsParId = [];
+
+        foreach ($this->categories() as $categorie) {
+            $nomsParId[$categorie->externalId] = $categorie->name;
+        }
+
         $articles = [];
 
         foreach ($this->pages('/items') as $ligne) {
             $article = PosItem::fromHost($ligne);
 
-            if ($article !== null) {
-                $articles[] = $article;
+            if ($article === null) {
+                continue;
             }
+
+            $articles[] = $article->categoryName === null && $article->categoryId !== null
+                ? $article->withCategoryName($nomsParId[$article->categoryId] ?? null)
+                : $article;
         }
 
         return $articles;
@@ -149,7 +213,7 @@ final class GoPosService implements PosServiceInterface
      */
     private function pages(string $chemin): \Generator
     {
-        $page = 1;
+        $page = self::FIRST_PAGE;
         $vues = 0;
 
         do {
@@ -175,15 +239,18 @@ final class GoPosService implements PosServiceInterface
      *
      * @return array<string, mixed>
      */
-    private function get(string $chemin, array $query = []): array
+    private function get(string $chemin, array $query = [], bool $organizationScoped = true): array
     {
         if (!$this->isConfigured()) {
             throw new PosUnavailable('admin.pos.notConfigured');
         }
 
         $identifiants = $this->credentials();
-        $url = rtrim($identifiants->baseUrl, '/') . '/api/v3/'
-            . rawurlencode($identifiants->organizationId) . $chemin;
+        // `/me` vit à la racine de l'API, les collections sous l'organisation.
+        $prefixe = $organizationScoped
+            ? '/api/v3/' . rawurlencode($identifiants->organizationId)
+            : '/api/v3';
+        $url = rtrim($identifiants->baseUrl, '/') . $prefixe . $chemin;
 
         try {
             $reponse = $this->client()->request('GET', $url, [
@@ -312,9 +379,17 @@ final class GoPosService implements PosServiceInterface
      */
     private static function tokenReason(string $detail): string
     {
-        return str_contains($detail, 'invalid_client')
-            ? 'admin.pos.badClient'
-            : 'admin.pos.tokenRefused';
+        return match (true) {
+            // La paire client n'est pas reconnue. Jugée AVANT tout le reste :
+            // l'Organization ID n'a pas encore été regardé.
+            str_contains($detail, 'invalid_client') => 'admin.pos.badClient',
+            // La paire est bonne, mais elle n'ouvre PAS cette boutique-là.
+            str_contains($detail, 'invalid_grant') => 'admin.pos.noGrant',
+            // « go_13410 » : le numéro se donne nu, sans le préfixe du panneau.
+            str_contains($detail, 'organization_id has invalid format') => 'admin.pos.badOrganizationFormat',
+            str_contains($detail, 'organization_id parameter must be given') => 'admin.pos.noOrganization',
+            default => 'admin.pos.tokenRefused',
+        };
     }
 
     /**

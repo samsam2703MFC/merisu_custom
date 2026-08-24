@@ -331,6 +331,9 @@ admin:
     pos:
         tokenRefused: 'Kasa odrzuciła żądanie tokenu. Sprawdź Client ID, Client secret i Organization ID — a jeśli są poprawne, przeczytaj poniższą linię: to mówi kasa.'
         badClient: 'Kasa nie rozpoznaje tego Client ID i Client secret. Sprawdza tę parę PRZED wszystkim innym: Organization ID nie jest tu winne, nie ma potrzeby go poprawiać. Upewnij się, że dane pochodzą ze środowiska GoPOS wskazanego przez adres API poniżej — dane ze środowiska testowego są odrzucane na produkcji i odwrotnie.'
+        noGrant: 'Para Client ID / Client secret jest DOBRA, ale nie otwiera tej lokalizacji: kasa nie przyznała jej tego Organization ID. Popraw numer albo wygeneruj nowe dane w Ustawieniach WŁAŚCIWEJ lokalizacji — każda para jest powiązana z organizacją, w której powstała.'
+        badOrganizationFormat: 'Organization ID podaje się jako same cyfry. Panel GoPOS pokazuje czasem „go_13410”: to identyfikator klienta, nie organizacji. Usuń przedrostek.'
+        noOrganization: 'Organization ID jest pusty. Kasa nie wyda tokenu bez niego — nie ma sposobu, by najpierw wylistować lokalizacje.'
         accessRefused: 'Token uzyskany, ale dostęp do tej organizacji jest odmówiony. Dane dostępowe są więc poprawne; do sprawdzenia pozostaje Organization ID lub przypisane mu uprawnienia.'
         hostSaid: 'Odpowiedź kasy: %detail%'
         credentials: 'Dane dostępowe kasy'

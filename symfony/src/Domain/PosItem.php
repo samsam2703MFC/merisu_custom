@@ -65,6 +65,27 @@ final readonly class PosItem
         );
     }
 
+    /**
+     * Le même article, avec le nom de sa catégorie.
+     *
+     * `/items` ne rend qu'un `category_id` ; le nom se trouve dans
+     * `/categories`. Le rapprochement se fait dans l'adaptateur, qui a les
+     * deux listes sous la main — pas ici, où l'on ne voit qu'une ligne.
+     */
+    public function withCategoryName(?string $name): self
+    {
+        $propre = $name === null ? null : trim($name);
+
+        return new self(
+            $this->externalId,
+            $this->name,
+            $this->sku,
+            $this->categoryId,
+            $propre === '' ? null : $propre,
+            $this->enabled,
+        );
+    }
+
     private static function texteOuNull(mixed $value): ?string
     {
         if (!is_scalar($value)) {

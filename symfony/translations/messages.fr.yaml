@@ -334,6 +334,9 @@ admin:
     pos:
         tokenRefused: 'La caisse a refusé la demande de jeton. Vérifiez le Client ID, le Client secret et l’Organization ID — puis, s’ils sont bons, la ligne ci-dessous : c’est la caisse qui parle.'
         badClient: 'La caisse ne reconnaît pas ce Client ID et ce Client secret. Elle vérifie la paire AVANT tout le reste : l''Organization ID n''est pas en cause à ce stade, inutile de le revoir. Vérifiez que les identifiants viennent bien de l''environnement GoPOS visé par l''adresse de l''API ci-dessous — ceux d''un environnement d''essai sont refusés en production, et l''inverse.'
+        noGrant: 'La paire Client ID / Client secret est BONNE, mais elle n''ouvre pas cette boutique-là : la caisse ne lui a pas accordé cet Organization ID. Corrigez le numéro, ou générez de nouveaux identifiants depuis les Réglages de la BONNE boutique — chaque paire est liée à l''organisation où elle a été créée.'
+        badOrganizationFormat: 'L''Organization ID se donne en chiffres nus. Le panneau GoPOS affiche parfois « go_13410 » : c''est l''identifiant du client, pas celui de l''organisation. Retirez le préfixe.'
+        noOrganization: 'L''Organization ID est vide. La caisse ne délivre aucun jeton sans lui — il n''existe pas de moyen de la faire lister les boutiques d''abord.'
         accessRefused: 'Jeton obtenu, mais l’accès à cette organisation est refusé. Les identifiants sont donc bons ; c’est l’Organization ID, ou le droit qui lui est attaché, qu’il faut revoir.'
         hostSaid: 'Réponse de la caisse : %detail%'
         credentials: 'Identifiants de la caisse'
