@@ -20,6 +20,93 @@
   <div class="banner banner--info">{{ 'admin.compositions.intro'|trans }}</div>
 
   {#
+    ── Modèles de composition ──────────────────────────────────────────────
+
+    Une gamme se décline en tailles, et la recette ne change qu'en quantité :
+    même crème, mêmes biscuits, même café, seules les grammes bougent. Neuf
+    parfums en trois tailles font vingt-sept fiches ; à quatre matières
+    chacune, cent huit champs à saisir. La règle, elle, tient en trois lignes
+    de quatre.
+
+    Le modèle vise par un FRAGMENT de nom — « Regular » — parce que rien dans
+    la fiche produit ne dit la taille. C'est grossier, et c'est pourquoi
+    l'écran affiche toujours les produits visés avant qu'on applique.
+  #}
+  {% if components is not empty and assembled is not empty %}
+    <section class="card">
+      <h2 class="card__title">{{ 'admin.compositions.templates'|trans }}</h2>
+      <p class="field__hint">{{ 'admin.compositions.templatesHint'|trans }}</p>
+
+      {% for modele in templates %}
+        {% set vises = templateTargets[modele.id] ?? [] %}
+
+        <details class="admin-item" {{ modele.id == openTemplate ? 'open' : '' }}>
+          <summary class="admin-item__summary">
+            <span class="admin-item__head">
+              <span class="admin-item__name">{{ modele.name }}</span>
+            </span>
+            <span class="admin-item__tags">
+              {% if modele.lines is empty %}
+                {{ ui.badge('warn', 'admin.compositions.empty'|trans) }}
+              {% else %}
+                {{ ui.badge('neutral', 'admin.compositions.count'|trans({ '%count%': modele.lines|length })) }}
+              {% endif %}
+              {{ ui.badge(vises is empty ? 'warn' : 'ok',
+                          'admin.compositions.targets'|trans({ '%count%': vises|length })) }}
+            </span>
+          </summary>
+
+          {{ _self.template_form(modele, components, false) }}
+
+          {#
+            Les produits visés, nommés un par un. C'est le contrepoids du
+            rattachement par fragment : on voit ce qu'on s'apprête à écrire.
+          #}
+          {% if vises is not empty %}
+            <p class="field__label">{{ 'admin.compositions.targetsTitle'|trans }}</p>
+            <ul class="rcp-targets">
+              {% for produit in vises %}
+                <li>{{ product_label(produit) }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+
+          {# Hors du formulaire principal : imbriquer deux formulaires est
+             interdit en HTML, et le navigateur en ignorerait un sans rien dire. #}
+          <div class="rcp-template__actions">
+            <form method="post" action="{{ path('admin_recipe_template_apply', { id: modele.id }) }}" class="form">
+              <div class="form-actions">
+                <button type="submit" class="button button--primary"
+                        {{ vises is empty or modele.lines is empty ? 'disabled' : '' }}>
+                  {{ 'admin.compositions.apply'|trans }}
+                </button>
+              </div>
+              <p class="field__hint">{{ 'admin.compositions.applyHint'|trans }}</p>
+            </form>
+
+            <form method="post" action="{{ path('admin_recipe_template_delete', { id: modele.id }) }}" class="form">
+              <div class="form-actions">
+                <button type="submit" class="button button--ghost"
+                        data-confirm="{{ 'admin.compositions.confirmDeleteTemplate'|trans }}">
+                  {{ 'common.delete'|trans }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </details>
+      {% endfor %}
+
+      <details class="admin-new" {{ templates is empty ? 'open' : '' }}>
+        <summary class="admin-new__summary">
+          {{ ui.icon('plus') }}
+          <span>{{ 'admin.compositions.newTemplate'|trans }}</span>
+        </summary>
+        {{ _self.template_form(blankTemplate, components, true) }}
+      </details>
+    </section>
+  {% endif %}
+
+  {#
     Sans matière première déclarée, il n'y a rien à mettre dans une recette.
     Le dire ici évite de chercher pourquoi les fiches sont vides.
   #}
@@ -149,3 +236,82 @@
   {% endif %}
 
 {% endblock %}
+
+{#
+  Le formulaire d'un modèle — le MÊME à la création et à la modification.
+
+  Deux formulaires distincts auraient divergé au premier champ ajouté, et l'on
+  aurait créé un modèle auquel il manque ce que l'édition sait régler.
+#}
+{% macro template_form(modele, components, estNouveau) %}
+  {% import 'components/_macros.html.twig' as ui %}
+
+  <form method="post" action="{{ path('admin_recipe_template_save', { id: modele.id }) }}" class="form">
+    <div class="field-grid">
+      <div class="field">
+        <label class="field__label" for="tn-{{ modele.id }}">{{ 'admin.compositions.templateName'|trans }}</label>
+        <input class="field__input" type="text" id="tn-{{ modele.id }}" name="name"
+               maxlength="190" value="{{ modele.name }}">
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="tm-{{ modele.id }}">{{ 'admin.compositions.templateMatch'|trans }}</label>
+        <input class="field__input" type="text" id="tm-{{ modele.id }}" name="match"
+               maxlength="190" value="{{ modele.match }}" required>
+        <p class="field__hint">{{ 'admin.compositions.templateMatchHint'|trans }}</p>
+      </div>
+    </div>
+
+    {# Le rendement, comme sur une fiche : l'atelier pense en fournées. Ce qui
+       est ENREGISTRÉ est toujours par unité. #}
+    <div class="field">
+      <label class="field__label" for="ty-{{ modele.id }}">{{ 'admin.compositions.yield'|trans }}</label>
+      <input class="field__input rcp__yield" type="number" min="0.001" step="any"
+             id="ty-{{ modele.id }}" name="yield" value="1">
+    </div>
+
+    <div class="table-scroll">
+      <table class="table rcp">
+        <thead>
+          <tr>
+            <th scope="col">{{ 'admin.compositions.material'|trans }}</th>
+            <th scope="col">{{ 'common.quantity'|trans }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for material in components %}
+            {% if loop.first or material.nature != components[loop.index0 - 1].nature %}
+              <tr class="rcp__group">
+                <th colspan="2" scope="colgroup">
+                  {{ ui.icon(material.nature.icon) }}
+                  {{ ('admin.products.natures.' ~ material.nature.value)|trans }}
+                </th>
+              </tr>
+            {% endif %}
+
+            {% set qty = modele.lines[material.id] ?? null %}
+            <tr>
+              <th scope="row" class="rcp__name">
+                <label for="tq-{{ modele.id }}-{{ material.id }}">{{ product_label(material) }}</label>
+              </th>
+              <td class="rcp__qty">
+                <input class="field__input" type="number" min="0" step="any" inputmode="decimal"
+                       id="tq-{{ modele.id }}-{{ material.id }}"
+                       name="qty[{{ material.id }}]"
+                       value="{{ qty is null ? '' : qty }}"
+                       placeholder="—">
+                <span class="rcp__unit muted">{{ material.unit }}</span>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="button {{ estNouveau ? 'button--primary' : 'button--secondary' }}">
+        {{ estNouveau ? 'admin.compositions.createTemplate'|trans : 'common.save'|trans }}
+      </button>
+    </div>
+  </form>
+{% endmacro %}

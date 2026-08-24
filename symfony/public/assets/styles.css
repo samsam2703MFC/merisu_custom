@@ -2432,6 +2432,39 @@ body { overflow-x: hidden; }
 .wcast__was { display: inline-flex; vertical-align: middle; color: var(--text-muted); }
 .wcast__was .icon { width: 16px; height: 16px; }
 
+/* Les produits qu'un modèle de composition viserait.
+
+   Nommés un par un, et non comptés : c'est le contrepoids d'un rattachement
+   par fragment de nom. Un modèle qui attrape un produit de trop se voit ici,
+   avant qu'on applique — un compteur seul aurait dit « 28 » et laissé
+   découvrir le vingt-huitième une semaine plus tard. */
+.rcp-targets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  list-style: none;
+  font-size: .85rem;
+  color: var(--text-muted);
+}
+.rcp-targets li {
+  padding: 2px var(--space-2);
+  background: var(--cream-outline);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* Appliquer et supprimer : deux formulaires distincts — imbriquer deux
+   formulaires est interdit en HTML — mais une seule ligne à l'écran. */
+.rcp-template__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+.rcp-template__actions .form { flex: 1 1 14rem; }
+
 /* La légende des corrections : quatre repères sur une ligne, qui passent à la
    suivante plutôt que de déborder. */
 .wlegend { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); align-items: center; }

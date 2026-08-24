@@ -32,6 +32,7 @@ use Merisu\Inventory\Domain\ProductionEntry;
 use Merisu\Inventory\Domain\ProductionPlanRow;
 use Merisu\Inventory\Domain\ProductionPlanStatus;
 use Merisu\Inventory\Domain\RecipeLine;
+use Merisu\Inventory\Domain\RecipeTemplate;
 use Merisu\Inventory\Domain\RoundingMode;
 use Merisu\Inventory\Domain\SupplierSource;
 use Merisu\Inventory\Domain\SyncKind;
@@ -1206,6 +1207,111 @@ final class Store
                 ]);
             }
         });
+    }
+
+    // ── Modèles de composition ──────────────────────────────────────────────
+
+    /** @return list<RecipeTemplate> */
+    public function recipeTemplates(): array
+    {
+        $lignes = [];
+        foreach ($this->db->fetchAllAssociative(
+            'SELECT * FROM inv_recipe_template_line ORDER BY template_id, material_id',
+        ) as $r) {
+            $lignes[(string) $r['template_id']][(string) $r['material_id']] = (float) $r['qty_per_unit'];
+        }
+
+        return array_map(
+            static fn (array $r): RecipeTemplate => new RecipeTemplate(
+                (string) $r['id'],
+                (string) $r['name'],
+                (string) $r['match_text'],
+                $lignes[(string) $r['id']] ?? [],
+                (int) $r['sort_order'],
+            ),
+            $this->db->fetchAllAssociative('SELECT * FROM inv_recipe_template ORDER BY sort_order, name'),
+        );
+    }
+
+    public function recipeTemplate(string $id): ?RecipeTemplate
+    {
+        foreach ($this->recipeTemplates() as $modele) {
+            if ($modele->id === $id) {
+                return $modele;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Enregistre le modèle et SES lignes, d'un bloc.
+     *
+     * Par remplacement complet plutôt que ligne à ligne : l'écran montre le
+     * modèle entier, et enregistrer doit donner exactement ce qu'on voit — y
+     * compris les matières dont on vient de vider la quantité.
+     *
+     * @param array<string, float> $lines
+     */
+    public function saveRecipeTemplate(RecipeTemplate $template, array $lines): void
+    {
+        $this->db->transactional(function () use ($template, $lines): void {
+            $data = [
+                'name' => $template->name,
+                'match_text' => RecipeTemplate::cleanMatch($template->match),
+                'sort_order' => $template->sortOrder,
+            ];
+
+            if ($this->db->update('inv_recipe_template', $data, ['id' => $template->id]) === 0) {
+                $this->db->insert('inv_recipe_template', $data + ['id' => $template->id]);
+            }
+
+            $this->db->delete('inv_recipe_template_line', ['template_id' => $template->id]);
+
+            foreach ($lines as $materialId => $qty) {
+                // Une ligne à zéro ne dit rien : c'est l'ABSENCE de ligne qui
+                // dit « ce modèle ne pose pas cette matière ».
+                if ($qty <= 0) {
+                    continue;
+                }
+
+                $this->db->insert('inv_recipe_template_line', [
+                    'template_id' => $template->id,
+                    'material_id' => (string) $materialId,
+                    'qty_per_unit' => $qty,
+                ]);
+            }
+        });
+    }
+
+    public function deleteRecipeTemplate(string $id): void
+    {
+        $this->db->transactional(function () use ($id): void {
+            $this->db->delete('inv_recipe_template_line', ['template_id' => $id]);
+            $this->db->delete('inv_recipe_template', ['id' => $id]);
+        });
+    }
+
+    /**
+     * Prochain identifiant libre pour un modèle.
+     *
+     * @return array{id: string, sortOrder: int}
+     */
+    public function nextTemplateSlot(): array
+    {
+        $pris = [];
+        foreach ($this->db->fetchAllAssociative('SELECT id FROM inv_recipe_template') as $r) {
+            $pris[(string) $r['id']] = true;
+        }
+
+        $rang = 1;
+        while (isset($pris['modele-' . $rang])) {
+            ++$rang;
+        }
+
+        $dernier = (int) $this->db->fetchOne('SELECT MAX(sort_order) FROM inv_recipe_template');
+
+        return ['id' => 'modele-' . $rang, 'sortOrder' => $dernier + 1];
     }
 
     // ── Correction météo du stock minimum ───────────────────────────────────

@@ -514,6 +514,44 @@ final class SchemaInstaller
         }
 
         /*
+          Modèles de composition — une recette écrite une fois, posée sur
+          plusieurs produits.
+
+          Une gamme se décline en tailles, et la recette ne change qu'en
+          quantité. Neuf parfums en trois tailles font vingt-sept fiches ; à
+          quatre matières chacune, cent huit champs à saisir. La règle, elle,
+          tient en trois lignes de quatre.
+
+          `match_text` est un fragment de libellé — « Regular » — parce que
+          rien dans la fiche produit ne dit la taille : la caisse n'expose pas
+          de variante, et les tailles vivent dans le nom. C'est grossier, et
+          l'écran montre toujours les produits visés avant d'écrire.
+        */
+        if (!\in_array('inv_recipe_template', $existing, true)) {
+            $t = $schema->createTable('inv_recipe_template');
+            $t->addColumn('id', 'string', ['length' => 64]);
+            $t->addColumn('name', 'string', ['length' => 190, 'default' => '']);
+            $t->addColumn('match_text', 'string', ['length' => 190, 'default' => '']);
+            $t->addColumn('sort_order', 'integer', ['default' => 0]);
+            $t->setPrimaryKey(['id']);
+        }
+
+        /*
+          Les lignes d'un modèle : la même forme qu'une nomenclature, et pour
+          la même raison — toujours PAR UNITÉ, jamais par fournée.
+
+          Le couple (modèle, matière) EST la clé : une matière citée deux fois
+          dans le même modèle n'aurait aucun sens.
+        */
+        if (!\in_array('inv_recipe_template_line', $existing, true)) {
+            $t = $schema->createTable('inv_recipe_template_line');
+            $t->addColumn('template_id', 'string', ['length' => 64]);
+            $t->addColumn('material_id', 'string', ['length' => 64]);
+            $t->addColumn('qty_per_unit', 'float', ['default' => 0]);
+            $t->setPrimaryKey(['template_id', 'material_id']);
+        }
+
+        /*
           Temps ATTENDU pour chaque jour de la semaine.
 
           Par jour, et non un réglage unique : la météo change d'un jour à
