@@ -32,6 +32,7 @@ use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Service\ForecastService;
 use Merisu\Inventory\Service\InventoryService;
 use Merisu\Inventory\Service\MinimumStockService;
+use Merisu\Inventory\Service\PosImportService;
 use Merisu\Inventory\Service\ReportService;
 use Merisu\Inventory\Service\TranslationService;
 use Merisu\Inventory\Store\Store;
@@ -55,6 +56,7 @@ final class AdminController extends AbstractController
         private readonly ShopRankingServiceInterface $ranking,
         private readonly MinimumStockService $minimums,
         private readonly ForecastService $forecast,
+        private readonly PosImportService $posImport,
         private readonly TranslationService $translations,
         // Le traducteur de l'INTERFACE, pas celui des libellés : il ne sert
         // qu'à nommer les langues dans les messages de compte rendu
@@ -102,6 +104,25 @@ final class AdminController extends AbstractController
     }
 
     // ── §7.6 Produits ───────────────────────────────────────────────────────
+
+    /**
+     * Range le catalogue : chaque produit auprès des siens.
+     *
+     * La règle vit dans `CatalogueOrder`, et l'import l'applique déjà tout
+     * seul. Ce bouton sert après coup — un rayon renommé, une catégorie
+     * déplacée dans Admin ▸ Catégories, des fiches saisies à la main.
+     */
+    #[Route('/produits/ranger', name: 'admin_products_arrange', methods: ['POST'])]
+    public function arrangeProducts(): Response
+    {
+        $admin = $this->currentUser->requireAdmin();
+
+        $deplaces = $this->posImport->arrange($admin->id, $admin->role->value);
+
+        $this->addFlash('success', ['key' => 'admin.products.arranged', 'params' => ['%count%' => $deplaces]]);
+
+        return $this->redirectToRoute('admin_products');
+    }
 
     #[Route('/produits', name: 'admin_products', methods: ['GET'])]
     public function products(Request $request): Response

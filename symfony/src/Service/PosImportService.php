@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Merisu\Inventory\Service;
 
 use Merisu\Inventory\Adapter\PosServiceInterface;
+use Merisu\Inventory\Domain\CatalogueOrder;
 use Merisu\Inventory\Domain\Product;
 use Merisu\Inventory\Domain\ProductCategory;
 use Merisu\Inventory\Domain\ProductNature;
@@ -85,7 +86,7 @@ final readonly class PosImportService
      * (`recipeRef`), seul lien durable entre les deux — un nom se retape, un
      * identifiant non. Et il crée les fiches absentes.
      *
-     * @return array{seen: int, created: int, linked: int}
+     * @return array{seen: int, created: int, linked: int, moved: int}
      *
      * @throws \Merisu\Inventory\Adapter\PosUnavailable
      */
@@ -150,12 +151,43 @@ final readonly class PosImportService
             ++$crees;
         }
 
-        $bilan = ['seen' => count($articles), 'created' => $crees, 'linked' => $rattaches];
+        // Rangé dans la foulée : la caisse rend ses articles par ordre
+        // alphabétique, et repris tels quels les rayons s'entremêlent. Laisser
+        // le catalogue en l'état aurait obligé à cliquer « Ranger » derrière
+        // chaque import, et l'on ne l'aurait pas fait.
+        $bilan = [
+            'seen' => count($articles),
+            'created' => $crees,
+            'linked' => $rattaches,
+            'moved' => $this->arrange(),
+        ];
 
         if ($actorId !== null && $actorRole !== null) {
             $this->store->audit($actorId, $actorRole, 'POS_ITEMS_IMPORTED', null, null, $bilan);
         }
 
         return $bilan;
+    }
+
+    /**
+     * Range le catalogue : chaque produit auprès des siens.
+     *
+     * Voir `CatalogueOrder` pour la règle. Aucune catégorie n'est
+     * réattribuée — ranger, c'est déplacer les fiches, pas décider à quel
+     * rayon elles appartiennent.
+     *
+     * @return int le nombre de fiches déplacées
+     */
+    public function arrange(?string $actorId = null, ?string $actorRole = null): int
+    {
+        $deplaces = $this->store->saveProductOrder(
+            CatalogueOrder::of($this->store->products(), $this->store->categoryOrder()),
+        );
+
+        if ($deplaces > 0 && $actorId !== null && $actorRole !== null) {
+            $this->store->audit($actorId, $actorRole, 'CATALOGUE_ARRANGED', null, null, ['moved' => $deplaces]);
+        }
+
+        return $deplaces;
     }
 }

@@ -147,6 +147,55 @@ final class Store
         return ['id' => 'product-' . $rang, 'code' => 'PRODUIT_' . $rang, 'sortOrder' => $dernier + 1];
     }
 
+    /**
+     * Repose les produits dans l'ordre donné.
+     *
+     * Une seule transaction : un rangement à demi appliqué laisserait deux
+     * fiches au même rang, et l'écran de comptage afficherait un ordre que
+     * personne n'a demandé.
+     *
+     * Les identifiants inconnus sont ignorés plutôt que de faire échouer le
+     * tout — un produit supprimé entre le calcul et l'écriture ne doit pas
+     * empêcher les quarante autres de se ranger.
+     *
+     * @param list<string> $idsInOrder
+     *
+     * @return int le nombre de fiches effectivement déplacées
+     */
+    public function saveProductOrder(array $idsInOrder): int
+    {
+        $actuels = [];
+        foreach ($this->db->fetchAllAssociative('SELECT id, sort_order FROM inv_product') as $r) {
+            $actuels[(string) $r['id']] = (int) $r['sort_order'];
+        }
+
+        $deplaces = 0;
+
+        $this->db->transactional(function () use ($idsInOrder, $actuels, &$deplaces): void {
+            $rang = 0;
+
+            foreach ($idsInOrder as $id) {
+                $id = (string) $id;
+
+                if (!isset($actuels[$id])) {
+                    continue;
+                }
+
+                ++$rang;
+
+                // Seules les fiches qui bougent sont réécrites : sans cela, un
+                // rangement sans effet aurait touché quarante lignes et fait
+                // croire à un changement.
+                if ($actuels[$id] !== $rang) {
+                    $this->db->update('inv_product', ['sort_order' => $rang], ['id' => $id]);
+                    ++$deplaces;
+                }
+            }
+        });
+
+        return $deplaces;
+    }
+
     public function saveProduct(Product $product): void
     {
         $data = [

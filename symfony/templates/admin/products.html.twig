@@ -11,6 +11,24 @@
   <div class="banner banner--warn">{{ 'admin.products.placeholderWarning'|trans }}</div>
 
   {#
+    Ranger le catalogue.
+
+    Un import reprend les articles dans l'ordre où la caisse les rend —
+    l'alphabet — et les rayons s'entremêlent : « Berries Extra » (Premium),
+    puis « CaffeMisù » (Coffee). Ce bouton les regroupe par rayon, dans
+    l'ordre d'Admin ▸ Catégories.
+
+    En POST et non en lien : il DÉPLACE quarante fiches, et un lien se
+    recharge d'un coup de F5.
+  #}
+  <form method="post" action="{{ path('admin_products_arrange') }}" class="form">
+    <div class="form-actions">
+      <button type="submit" class="button button--secondary">{{ 'admin.products.arrange'|trans }}</button>
+    </div>
+    <p class="field__hint">{{ 'admin.products.arrangeHint'|trans }}</p>
+  </form>
+
+  {#
     Une fiche par produit, repliée par défaut.
 
     Onze champs par produit et huit produits : la page dépliée faisait plus de

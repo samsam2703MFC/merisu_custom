@@ -502,6 +502,9 @@ admin:
         supplierName: 'Dostawca'
         supplierNameHint: 'Przydaje się tylko przy dostawcy własnym: w centrali to sieć.'
         placeholderWarning: 'Nazwy tymczasowe: zastąp je prawdziwymi nazwami produktów.'
+        arrange: 'Uporządkuj według kategorii'
+        arrangeHint: 'Grupuje produkty według działu, w kolejności z Admin ▸ Kategorie, i przywraca każdej gamie kolejność rozmiarów. Żadna kategoria nie jest zmieniana.'
+        arranged: 'Przeniesiono kart: %count%.'
     roundingMode:
         CEIL: 'W górę do wielokrotności'
         FLOOR: 'W dół do wielokrotności'
