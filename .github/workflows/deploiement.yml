@@ -281,8 +281,19 @@ jobs:
             echo "✓ Traduction assistée configurée${MODELE:+ (modèle $MODELE)}"
           '
 
+          # ssh RECOLLE ses arguments en UNE chaîne, que le shell distant
+          # reparse. Un script multiligne passé tel quel s'y désagrège : `-c`
+          # perd son argument, et les lignes suivantes s'exécutent comme autant
+          # de commandes — « bash: -c: option requires an argument ». Il part
+          # donc en un SEUL mot, protégé par des apostrophes.
+          #
+          # Le déploiement, lui, envoie son script par l'entrée standard ; ici
+          # l'entrée standard porte déjà le secret, d'où ce détour.
+          citer() { printf "'%s'" "$(printf '%s' "$1" | sed "s/'/'\\''/g")"; }
+
           printf '%s\n' "$CLE" | ssh -i ~/.ssh/id_deploiement -p "$PORT" -o BatchMode=yes \
-              "$USER@$HOST" bash -euo pipefail -c "$DISTANT" -- "$APP_PATH" "$MODELE"
+              "$USER@$HOST" \
+              "bash -euo pipefail -c $(citer "$DISTANT") -- $(citer "$APP_PATH") $(citer "$MODELE")"
 
       # Même dispositif pour la clé météo, et pour les mêmes raisons : pas de
       # `if:` au niveau de l'étape, la clé par l'entrée standard.
@@ -367,8 +378,13 @@ jobs:
             echo "✓ Caisse configurée${ORG:+ (organisation $ORG)}"
           '
 
+          # Le script part en un seul mot protégé : voir « Poser la clé de
+          # traduction assistée » pour le pourquoi.
+          citer() { printf "'%s'" "$(printf '%s' "$1" | sed "s/'/'\\''/g")"; }
+
           printf '%s\n' "$SECRET" | ssh -i ~/.ssh/id_deploiement -p "$PORT" -o BatchMode=yes \
-              "$USER@$HOST" bash -euo pipefail -c "$DISTANT" -- "$APP_PATH" "$CLIENT" "$ORG" "$BASE"
+              "$USER@$HOST" \
+              "bash -euo pipefail -c $(citer "$DISTANT") -- $(citer "$APP_PATH") $(citer "$CLIENT") $(citer "$ORG") $(citer "$BASE")"
 
       - name: Poser la clé météo
         env:
@@ -431,8 +447,13 @@ jobs:
             echo "✓ Météo configurée${LIEU:+ ($LIEU)}"
           '
 
+          # Le script part en un seul mot protégé : voir « Poser la clé de
+          # traduction assistée » pour le pourquoi.
+          citer() { printf "'%s'" "$(printf '%s' "$1" | sed "s/'/'\\''/g")"; }
+
           printf '%s\n' "$CLE" | ssh -i ~/.ssh/id_deploiement -p "$PORT" -o BatchMode=yes \
-              "$USER@$HOST" bash -euo pipefail -c "$DISTANT" -- "$APP_PATH" "$LAT" "$LON" "$LIEU"
+              "$USER@$HOST" \
+              "bash -euo pipefail -c $(citer "$DISTANT") -- $(citer "$APP_PATH") $(citer "$LAT") $(citer "$LON") $(citer "$LIEU")"
 
       # ── Les tâches planifiées, posées à chaque déploiement ────────────────
       #
@@ -454,28 +475,31 @@ jobs:
           APP_PATH="${APP_PATH#"${APP_PATH%%[![:space:]]*}"}"
           APP_PATH="${APP_PATH%"${APP_PATH##*[![:space:]]}"}"
 
-          DISTANT='
-            set -euo pipefail
-            CIBLE="$1/symfony"
-            PHP="$2"
-
-            # Le marqueur permet de retirer NOS lignes sans toucher aux
-            # autres : un crontab appartient à la machine, pas à ce dépôt.
-            MARQUE="# merisu"
-            ACTUEL="$(crontab -l 2>/dev/null | grep -v "$MARQUE" || true)"
-
-            {
-              printf "%s\n" "$ACTUEL"
-              printf "0 5 * * * cd %s && %s bin/console merisu:meteo >/dev/null 2>&1 %s\n" "$CIBLE" "$PHP" "$MARQUE"
-              printf "30 2 * * * cd %s && %s bin/console merisu:ventes >/dev/null 2>&1 %s\n" "$CIBLE" "$PHP" "$MARQUE"
-            } | crontab -
-
-            echo "✓ Tâches planifiées posées :"
-            crontab -l | grep "$MARQUE"
-          '
-
+          # Le script part par l'ENTRÉE STANDARD (`-s`), comme au déploiement :
+          # rien de secret à y faire passer ici, et un script multiligne ne
+          # survit pas au voyage en argument.
+          SORTIE=0
           ssh -i ~/.ssh/id_deploiement -p "$PORT" -o BatchMode=yes \
-              "$USER@$HOST" bash -euo pipefail -c "$DISTANT" -- "$APP_PATH" "$PHP_BIN" \
+              "$USER@$HOST" bash -euo pipefail -s -- "$APP_PATH" "$PHP_BIN" <<'DISTANT' || SORTIE=$?
+          CIBLE="$1/symfony"
+          PHP="$2"
+
+          # Le marqueur permet de retirer NOS lignes sans toucher aux
+          # autres : un crontab appartient à la machine, pas à ce dépôt.
+          MARQUE="# merisu"
+          ACTUEL="$(crontab -l 2>/dev/null | grep -v "$MARQUE" || true)"
+
+          {
+            printf "%s\n" "$ACTUEL"
+            printf "0 5 * * * cd %s && %s bin/console merisu:meteo >/dev/null 2>&1 %s\n" "$CIBLE" "$PHP" "$MARQUE"
+            printf "30 2 * * * cd %s && %s bin/console merisu:ventes >/dev/null 2>&1 %s\n" "$CIBLE" "$PHP" "$MARQUE"
+          } | crontab -
+
+          echo "✓ Tâches planifiées posées :"
+          crontab -l | grep "$MARQUE"
+          DISTANT
+
+          [ "$SORTIE" -eq 0 ] \
             || echo "::warning::Tâches planifiées non posées (crontab indisponible sur ce serveur ?)"
 
       # ── Un rattrapage de données, à la demande ────────────────────────────
@@ -508,24 +532,22 @@ jobs:
           APP_PATH="${APP_PATH#"${APP_PATH%%[![:space:]]*}"}"
           APP_PATH="${APP_PATH%"${APP_PATH##*[![:space:]]}"}"
 
-          DISTANT='
-            set -euo pipefail
-            cd "$1/symfony"
-            PHP="$2"; QUOI="$3"; DEPUIS="$4"
-
-            if [ "$QUOI" = "ventes-tout" ] || [ "$QUOI" = "ventes-et-meteo" ]; then
-              echo "── Historique des ventes ──"
-              "$PHP" bin/console merisu:ventes --tout
-            fi
-
-            if [ "$QUOI" = "meteo-historique" ] || [ "$QUOI" = "ventes-et-meteo" ]; then
-              echo "── Rattrapage météo depuis $DEPUIS ──"
-              "$PHP" bin/console merisu:meteo --historique="$DEPUIS"
-            fi
-          '
-
           ssh -i ~/.ssh/id_deploiement -p "$PORT" -o BatchMode=yes \
-              "$USER@$HOST" bash -euo pipefail -c "$DISTANT" -- "$APP_PATH" "$PHP_BIN" "$QUOI" "$DEPUIS"
+              "$USER@$HOST" bash -euo pipefail -s -- \
+              "$APP_PATH" "$PHP_BIN" "$QUOI" "$DEPUIS" <<'DISTANT'
+          cd "$1/symfony"
+          PHP="$2"; QUOI="$3"; DEPUIS="$4"
+
+          if [ "$QUOI" = "ventes-tout" ] || [ "$QUOI" = "ventes-et-meteo" ]; then
+            echo "── Historique des ventes ──"
+            "$PHP" bin/console merisu:ventes --tout
+          fi
+
+          if [ "$QUOI" = "meteo-historique" ] || [ "$QUOI" = "ventes-et-meteo" ]; then
+            echo "── Rattrapage météo depuis $DEPUIS ──"
+            "$PHP" bin/console merisu:meteo --historique="$DEPUIS"
+          fi
+          DISTANT
 
       - name: Vérifier que le site répond
         if: ${{ vars.DEPLOY_HEALTH_URL != '' }}
