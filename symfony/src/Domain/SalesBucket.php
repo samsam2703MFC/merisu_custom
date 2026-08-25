@@ -30,14 +30,20 @@ final readonly class SalesBucket
     ) {
     }
 
-    /** Ce qui se vend un jour ordinaire de cette case. */
+    /**
+     * Ce qui se vend un jour ordinaire de cette case.
+     *
+     * Arrondi au DIXIÈME : « 185,667 tiramisus par lundi » annonce une
+     * précision que six lundis ne portent pas. Le dixième suffit à comparer
+     * deux jours, et c'est tout ce qu'on demande à ce chiffre.
+     */
     public function averagePerDay(): float
     {
-        return $this->days > 0 ? Rounding::clean($this->quantity / $this->days) : 0.0;
+        return $this->days > 0 ? round($this->quantity / $this->days, 1) : 0.0;
     }
 
     public function averageRevenuePerDay(): float
     {
-        return $this->days > 0 ? Rounding::clean($this->revenue / $this->days) : 0.0;
+        return $this->days > 0 ? round($this->revenue / $this->days, 2) : 0.0;
     }
 }

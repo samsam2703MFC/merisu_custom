@@ -1,0 +1,129 @@
+{#
+  Graphiques de ventes — tracés PAR LE SERVEUR, en SVG.
+
+  Aucun script : l'atelier travaille hors ligne, et un graphique qui attend une
+  bibliothèque à charger n'aurait rien montré au poste, un matin, sans réseau.
+  Le SVG sort du serveur déjà dessiné ; la géométrie vient de `SalesChart`, où
+  elle se teste.
+
+  UNE seule série partout, donc aucune légende : il n'y a qu'une couleur, et le
+  titre de la carte dit déjà ce qui est tracé. Une boîte à un seul carré aurait
+  répété le titre en occupant de la place.
+
+  Les valeurs ne sont jamais enfermées dans le dessin : le tableau qui suit
+  chaque graphique porte les mêmes chiffres. L'infobulle aide, elle ne garde
+  rien pour elle.
+#}
+
+{#
+  Des colonnes — pour quelques cases nommées.
+
+  La valeur se pose SUR le chapeau plutôt qu'à l'intérieur : dans une colonne
+  courte, un nombre à l'intérieur déborde ou se fait rogner, et une étiquette
+  rognée est pire que pas d'étiquette.
+#}
+{% macro columns(chart, labels, unit) %}
+  <div class="chart">
+    {# Le rapport de forme est CONSERVÉ : « none » aurait étiré les libellés
+       et aplati les chapeaux arrondis. Sur un écran étroit, c'est la bande qui
+       défile — comme un tableau large — plutôt que le texte qui rapetisse. #}
+    <svg class="chart__svg" viewBox="0 0 720 260" role="img"
+         aria-label="{{ 'admin.sales.chartLabel'|trans }}">
+
+      {# Les graduations : traits pleins d'un pas au-dessus du fond, jamais
+         pointillés — le pointillé se lit comme un seuil ou une projection. #}
+      {% for tick in chart.ticks %}
+        <line class="chart__grid" x1="0" x2="720" y1="{{ tick.y }}" y2="{{ tick.y }}"/>
+      {% endfor %}
+
+      {% for barre in chart.columns %}
+        {% set etiquette = labels[barre.key] ?? barre.key %}
+        <g>
+          {# L'infobulle native : elle ne demande aucun script et survit au
+             mode hors ligne. #}
+          <title>{{ etiquette }} — {{ barre.value|qty }} {{ unit }}</title>
+
+          {# Le chapeau arrondi, le pied carré : la barre pousse depuis une
+             ligne de base, elle ne flotte pas. #}
+          <rect class="chart__bar" x="{{ barre.x }}" y="{{ barre.y }}"
+                width="{{ barre.width }}" height="{{ barre.height }}"
+                rx="4" ry="4"/>
+          <rect class="chart__bar" x="{{ barre.x }}" y="{{ barre.y + barre.height - 4 }}"
+                width="{{ barre.width }}" height="4"/>
+
+          <text class="chart__value" x="{{ barre.center }}" y="{{ barre.y - 6 }}">
+            {{ barre.value|round }}
+          </text>
+          <text class="chart__axis" x="{{ barre.center }}" y="248">{{ etiquette }}</text>
+        </g>
+      {% endfor %}
+    </svg>
+  </div>
+{% endmacro %}
+
+{#
+  Une courbe et son aplat — pour une série dense.
+
+  Quarante-deux jours en colonnes feraient huit pixels de large sur un
+  téléphone. La ligne montre la FORME de la période, ce que des colonnes trop
+  fines ne montrent plus.
+
+  Pas de nombre sur chaque point : seuls le sommet et le dernier jour portent
+  une étiquette. Une valeur à côté de chaque point est un fouillis que
+  personne ne lit.
+#}
+{% macro area(chart, labels, unit) %}
+  <div class="chart">
+    {# Le rapport de forme est CONSERVÉ : « none » aurait étiré les libellés
+       et aplati les chapeaux arrondis. Sur un écran étroit, c'est la bande qui
+       défile — comme un tableau large — plutôt que le texte qui rapetisse. #}
+    <svg class="chart__svg" viewBox="0 0 720 260" role="img"
+         aria-label="{{ 'admin.sales.chartLabel'|trans }}">
+
+      {% for tick in chart.ticks %}
+        <line class="chart__grid" x1="0" x2="720" y1="{{ tick.y }}" y2="{{ tick.y }}"/>
+        {# Les graduations portent les valeurs qu'on n'a pas étiquetées. #}
+        <text class="chart__tick" x="2" y="{{ tick.y - 4 }}">{{ tick.value|round }}</text>
+      {% endfor %}
+
+      <path class="chart__area" d="{{ chart.area.area }}"/>
+      <polyline class="chart__line" points="{{ chart.area.line }}"/>
+
+      {% for point in chart.area.points %}
+        {% set etiquette = labels[point.key] ?? point.key %}
+
+        {#
+          Une zone de survol plus large que le point.
+
+          Un disque de huit pixels qu'il faut viser au centre n'est pas une
+          cible : la bande couvre toute la hauteur et la moitié de l'écart
+          entre deux jours.
+        #}
+        <rect class="chart__hit" x="{{ point.x - 8 }}" y="0" width="16" height="216">
+          <title>{{ etiquette }} — {{ point.value|qty }} {{ unit }}</title>
+        </rect>
+
+        {% if point.key == chart.peakKey or loop.last %}
+          {# L'anneau de surface garde le point lisible là où il croise la
+             ligne. #}
+          <circle class="chart__dot" cx="{{ point.x }}" cy="{{ point.y }}" r="4"/>
+          <text class="chart__value{{ loop.last ? ' chart__value--end' : '' }}"
+                x="{{ point.x }}" y="{{ point.y - 10 }}">
+            {{ point.value|round }}
+          </text>
+        {% endif %}
+      {% endfor %}
+
+      {# Trois repères de date seulement : début, milieu, fin. Quarante-deux
+         libellés se chevaucheraient en une bouillie grise. #}
+      {% for point in chart.area.points %}
+        {% if loop.first or loop.last or loop.index0 == (chart.area.points|length // 2) %}
+          <text class="chart__axis{{ loop.first ? ' chart__axis--start' : (loop.last ? ' chart__axis--end' : '') }}"
+                x="{{ point.x }}" y="248">
+            {{ labels[point.key] ?? point.key }}
+          </text>
+        {% endif %}
+      {% endfor %}
+    </svg>
+  </div>
+{% endmacro %}

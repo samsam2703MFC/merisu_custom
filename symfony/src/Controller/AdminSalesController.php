@@ -9,7 +9,9 @@ use Merisu\Inventory\Adapter\PosUnavailable;
 use Merisu\Inventory\Domain\BusinessDate;
 use Merisu\Inventory\Domain\Product;
 use Merisu\Inventory\Domain\SalesBreakdown;
+use Merisu\Inventory\Domain\SalesChart;
 use Merisu\Inventory\Domain\SalesPeriod;
+use Merisu\Inventory\Domain\SalesTrend;
 use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Service\InventoryService;
 use Merisu\Inventory\Store\Store;
@@ -17,6 +19,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Contracts\Translation\TranslatorInterface as SymfonyTranslator;
 
 /**
  * Admin ▸ Ventes — ce qui s'est vendu, et quand.
@@ -47,6 +50,7 @@ final class AdminSalesController extends AbstractController
         private readonly PosServiceInterface $pos,
         private readonly Store $store,
         private readonly InventoryService $inventory,
+        private readonly SymfonyTranslator $i18n,
     ) {
     }
 
@@ -71,9 +75,43 @@ final class AdminSalesController extends AbstractController
         }
 
         $decoupes = [];
+        $graphiques = [];
+        $etiquettes = [];
+
         foreach (SalesPeriod::all() as $periode) {
-            $decoupes[$periode->value] = SalesBreakdown::of($ventes, $periode);
+            $cases = SalesBreakdown::of($ventes, $periode);
+            $decoupes[$periode->value] = $cases;
+            $graphiques[$periode->value] = self::chart($cases, $periode);
+
+            /*
+              Les libellés d'axe, construits ICI.
+
+              Ils l'étaient dans une boucle Twig, avec `merge` — et `merge`
+              RENUMÉROTE les clés numériques, comme `array_merge`. Les jours de
+              semaine sont numérotés de 1 à 7 : la table repartait de zéro, et
+              chaque colonne portait le nom du jour suivant. Lundi s'affichait
+              « Mardi », et dimanche n'avait plus de nom du tout.
+            */
+            foreach ($cases as $case) {
+                $etiquettes[$periode->value][$case->key] = $periode === SalesPeriod::Weekday
+                    ? $this->i18n->trans('daysLong.' . $case->key)
+                    : $case->key;
+            }
         }
+
+        /*
+          La tendance : la même durée, juste avant.
+
+          « 12 594 unités » ne dit ni si c'est bien ni si ça monte. Comparé aux
+          six semaines précédentes, le chiffre devient une nouvelle. Comparer à
+          un mois complet un mois entamé aurait annoncé une chute tous les
+          premiers du mois, et l'on aurait cessé de regarder l'indicateur.
+        */
+        $avant = SalesTrend::previous($from, $to);
+        $ventesAvant = $this->store->sales($avant['from'], $avant['to']);
+
+        $total = array_sum(array_map(static fn ($v): float => $v->quantity, $ventes));
+        $recette = array_sum(array_map(static fn ($v): float => $v->revenue, $ventes));
 
         return $this->render('admin/sales.html.twig', [
             'from' => $from,
@@ -81,11 +119,22 @@ final class AdminSalesController extends AbstractController
             'configured' => $this->pos->isConfigured(),
             'periods' => SalesPeriod::all(),
             'breakdowns' => $decoupes,
+            'charts' => $graphiques,
+            'chartLabels' => $etiquettes,
             'products' => SalesBreakdown::byProduct($ventes),
             'known' => $parReference,
             'range' => $this->store->salesRange(),
-            'total' => array_sum(array_map(static fn ($v): float => $v->quantity, $ventes)),
-            'revenue' => array_sum(array_map(static fn ($v): float => $v->revenue, $ventes)),
+            'total' => $total,
+            'revenue' => $recette,
+            'previous' => $avant,
+            'trendQty' => SalesTrend::change(
+                $total,
+                array_sum(array_map(static fn ($v): float => $v->quantity, $ventesAvant)),
+            ),
+            'trendRevenue' => SalesTrend::change(
+                $recette,
+                array_sum(array_map(static fn ($v): float => $v->revenue, $ventesAvant)),
+            ),
         ]);
     }
 
@@ -124,6 +173,69 @@ final class AdminSalesController extends AbstractController
         $this->addFlash('success', ['key' => 'admin.sales.fetched', 'params' => ['%count%' => $ecrites]]);
 
         return $this->redirectToRoute('admin_sales', ['from' => $from, 'to' => $to]);
+    }
+
+    /**
+     * Le dessin qui convient à cette découpe.
+     *
+     * ── Colonnes ou courbe : la densité décide
+     *
+     * Sept jours de semaine, six semaines, deux mois : des cases nommées, donc
+     * des COLONNES, avec leur valeur sur le chapeau. Quarante-deux journées :
+     * en colonnes, elles feraient huit pixels de large sur un téléphone — c'est
+     * une COURBE qu'il faut, qui montre la forme de la période.
+     *
+     * ── Ce qu'on trace est TOUJOURS la moyenne par jour
+     *
+     * Une hauteur de barre est une affirmation. Comparer des totaux suppose des
+     * cases de même durée, et elles ne le sont jamais : l'intervalle demandé
+     * coupe la première et la dernière semaine, le mois en cours est entamé, et
+     * les six dimanches d'une période n'ont pas le même compte que ses cinq
+     * lundis.
+     *
+     * Le tracé mentait, et de façon vérifiable : sur juillet–août, la colonne
+     * d'août écrasait celle de juillet — 7 223 contre 5 384 — alors que juillet
+     * vendait DAVANTAGE chaque jour, 316,7 contre 288,9. Vingt-cinq journées
+     * relevées contre dix-sept, et le graphique disait le contraire de son
+     * propre tableau.
+     *
+     * La moyenne par jour, elle, se compare toujours. Les totaux restent dans
+     * le tableau, à côté, où le nombre de journées est écrit.
+     *
+     * @param list<\Merisu\Inventory\Domain\SalesBucket> $buckets
+     *
+     * @return array{form: string, average: bool, ticks: list<array{value: float, y: float}>, columns: list<array<string, mixed>>, area: array<string, mixed>, peakKey: string}
+     */
+    private static function chart(array $buckets, SalesPeriod $period): array
+    {
+        $moyenne = true;
+        $courbe = $period === SalesPeriod::Day;
+
+        $sommet = 0.0;
+        $cleDuSommet = '';
+
+        foreach ($buckets as $case) {
+            $valeur = $moyenne ? $case->averagePerDay() : $case->quantity;
+
+            if ($valeur > $sommet) {
+                $sommet = $valeur;
+                $cleDuSommet = $case->key;
+            }
+        }
+
+        // Les journées se lisent de gauche à droite, du plus ancien au plus
+        // récent : une courbe qui remonte le temps se lit à l'envers. Les
+        // tableaux, eux, gardent le plus récent en tête.
+        $pourLaCourbe = array_reverse($buckets);
+
+        return [
+            'form' => $courbe ? 'area' : 'columns',
+            'average' => $moyenne,
+            'ticks' => SalesChart::ticks($sommet),
+            'columns' => $courbe ? [] : SalesChart::columns($buckets, $moyenne),
+            'area' => $courbe ? SalesChart::area($pourLaCourbe, $moyenne) : ['line' => '', 'area' => '', 'points' => []],
+            'peakKey' => $cleDuSommet,
+        ];
     }
 
     /**

@@ -12,6 +12,7 @@
 #}
 {% extends 'admin/_layout.html.twig' %}
 {% import 'components/_macros.html.twig' as ui %}
+{% import 'components/_chart.html.twig' as chart %}
 
 {% block title %}{{ 'admin.sales.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
 
@@ -40,10 +41,12 @@
       <div class="stat">
         <p class="stat__label">{{ 'admin.sales.totalQty'|trans }}</p>
         <p class="stat__value">{{ total|qty }}</p>
+        {{ _self.trend(trendQty, previous) }}
       </div>
       <div class="stat">
         <p class="stat__label">{{ 'admin.sales.totalRevenue'|trans }}</p>
         <p class="stat__value stat__value--sm">{{ revenue|qty }}</p>
+        {{ _self.trend(trendRevenue, previous) }}
       </div>
       <div class="stat">
         <p class="stat__label">{{ 'admin.sales.products'|trans }}</p>
@@ -101,6 +104,26 @@
         {% for periode in periods %}
           <section class="tabs__panel">
             <p class="field__hint">{{ ('admin.sales.periodHints.' ~ periode.value)|trans }}</p>
+
+            {#
+              Les libellés d'axe viennent du contrôleur : `merge` RENUMÉROTE
+              les clés numériques, et les jours de semaine sont numérotés de 1
+              à 7 — chaque colonne portait le nom du jour suivant.
+            #}
+            {% set etiquettes = chartLabels[periode.value] ?? {} %}
+
+            {% if breakdowns[periode.value] is not empty %}
+              {% if charts[periode.value].form == 'area' %}
+                {{ chart.area(charts[periode.value], etiquettes, 'admin.sales.qty'|trans) }}
+              {% else %}
+                {{ chart.columns(charts[periode.value], etiquettes, 'admin.sales.qty'|trans) }}
+              {% endif %}
+
+              {# Ce que le graphique trace, dit en toutes lettres. Une hauteur
+                 de barre est une affirmation : si le lecteur croit lire un
+                 total là où on trace une moyenne, le dessin ment. #}
+              <p class="field__hint">{{ 'admin.sales.chartAverage'|trans }}</p>
+            {% endif %}
 
             <div class="table-scroll">
               <table class="table">
@@ -177,7 +200,7 @@
                 </th>
                 <td class="mins__cell"><strong>{{ ligne.quantity|qty }}</strong></td>
                 <td class="mins__cell muted">{{ ligne.days }}</td>
-                <td class="mins__cell">{{ (ligne.days > 0 ? ligne.quantity / ligne.days : 0)|qty }}</td>
+                <td class="mins__cell">{{ (ligne.days > 0 ? (ligne.quantity / ligne.days)|round(1) : 0)|qty }}</td>
                 <td class="mins__cell muted">{{ ligne.revenue|qty }}</td>
               </tr>
             {% endfor %}
@@ -188,3 +211,25 @@
   {% endif %}
 
 {% endblock %}
+
+{#
+  La variation d'une période à l'autre.
+
+  Le SENS porte la couleur, et le SIGNE le redit : qui ne distingue pas le vert
+  de l'ambre lit quand même « +14 % ». La couleur seule n'a jamais suffi.
+
+  Rien ne s'affiche quand la période de référence est vide : on ne peut pas
+  dire de combien de pour cent on a progressé depuis rien, et « +100 % » le
+  lendemain de l'installation aurait annoncé une envolée imaginaire.
+#}
+{% macro trend(variation, previous) %}
+  {% if variation is not null %}
+    {% set sens = variation > 0.5 ? 'up' : (variation < -0.5 ? 'down' : 'flat') %}
+    <p class="trend trend--{{ sens }}">
+      {{ variation > 0 ? '+' : '' }}{{ variation|round(1) }} %
+      <span class="trend__since">
+        {{ 'admin.sales.versus'|trans({ '%from%': previous.from, '%to%': previous.to }) }}
+      </span>
+    </p>
+  {% endif %}
+{% endmacro %}

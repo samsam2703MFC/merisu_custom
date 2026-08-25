@@ -278,6 +278,9 @@ admin:
         days: 'Dni'
         perDay: 'Śr./dzień'
         notLinked: 'Niepowiązany'
+        chartLabel: 'Wykres sprzedaży'
+        chartAverage: 'Wykres pokazuje ŚREDNIĄ DZIENNĄ, nigdy sumę: okresy nie mają tej samej liczby dni — rozpoczęty miesiąc, tydzień ucięty zakresem — a porównywanie sum kazałoby rysunkowi mówić coś przeciwnego niż tabela. Sumy są w tabeli, wraz z liczbą dni.'
+        versus: 'vs %from% → %to%'
         periods:
             DAY: 'Dziennie'
             WEEKDAY: 'Wg dnia tygodnia'

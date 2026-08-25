@@ -281,6 +281,9 @@ admin:
         days: 'Jours'
         perDay: 'Moy./jour'
         notLinked: 'Non rattaché'
+        chartLabel: 'Graphique des ventes'
+        chartAverage: 'Le graphique trace la MOYENNE PAR JOUR, jamais le total : les périodes n''ont pas toutes le même nombre de journées — un mois entamé, une semaine coupée par l''intervalle — et comparer des totaux ferait dire au dessin le contraire du tableau. Les totaux sont dans le tableau, avec le compte des journées.'
+        versus: 'vs %from% → %to%'
         periods:
             DAY: 'Par jour'
             WEEKDAY: 'Par jour de semaine'

@@ -278,6 +278,9 @@ admin:
         days: 'Días'
         perDay: 'Media/día'
         notLinked: 'Sin vincular'
+        chartLabel: 'Gráfico de ventas'
+        chartAverage: 'El gráfico traza la MEDIA POR DÍA, nunca el total: los periodos no tienen todos el mismo número de jornadas — un mes empezado, una semana cortada por el intervalo — y comparar totales haría que el dibujo dijera lo contrario que la tabla. Los totales están en la tabla, con el recuento de jornadas.'
+        versus: 'vs %from% → %to%'
         periods:
             DAY: 'Por día'
             WEEKDAY: 'Por día de la semana'

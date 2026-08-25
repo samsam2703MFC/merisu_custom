@@ -2453,6 +2453,73 @@ body { overflow-x: hidden; }
 .wcast__was { display: inline-flex; vertical-align: middle; color: var(--text-muted); }
 .wcast__was .icon { width: 16px; height: 16px; }
 
+/* ── Graphiques de ventes ──────────────────────────────────────────────────
+   Tracés par le serveur, en SVG, sans une ligne de script : l'atelier
+   travaille hors ligne. Une seule série, donc une seule couleur et aucune
+   légende — le titre de la carte dit ce qui est tracé. */
+
+/* La bande défile DANS sa boîte sur un écran étroit, comme un tableau large.
+   Laisser le SVG rapetisser aurait ramené les libellés à cinq pixels. */
+.chart {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  min-width: 0;
+  max-width: 100%;
+  margin-bottom: var(--space-3);
+}
+.chart__svg { display: block; width: 100%; min-width: 30rem; height: auto; }
+
+/* Grille et axes : un pas au-dessus du fond, pleins, en retrait. Le pointillé
+   se lit comme un seuil ou une projection alors que ce n'est qu'une grille. */
+.chart__grid { stroke: var(--border-soft); stroke-width: 1; }
+
+/* Les marques portent la couleur ; le texte garde l'encre. Un libellé en
+   framboise sur fond blanc se lit moins bien qu'en brun, et la couleur ne
+   véhicule ici aucune information de plus. */
+.chart__bar { fill: var(--brand); }
+.chart__line { fill: none; stroke: var(--brand); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+/* L'aplat est un voile, jamais un bloc saturé. */
+.chart__area { fill: var(--brand); opacity: .1; }
+/* L'anneau de surface garde le point lisible là où il croise la ligne. */
+.chart__dot { fill: var(--brand); stroke: var(--surface); stroke-width: 2; }
+
+.chart__value {
+  fill: var(--coffee);
+  font-size: 12px;
+  font-weight: 700;
+  text-anchor: middle;
+  font-variant-numeric: tabular-nums;
+}
+.chart__axis, .chart__tick {
+  fill: var(--text-muted);
+  font-size: 11px;
+  text-anchor: middle;
+  font-variant-numeric: tabular-nums;
+}
+/* L'ancrage se règle par CLASSE, jamais par l'attribut `text-anchor`.
+
+   En SVG, une propriété CSS l'emporte sur l'attribut de présentation de même
+   nom : la règle ci-dessus centrait TOUS les libellés, y compris ceux à qui le
+   gabarit demandait « début » ou « fin ». Le premier repère de date se
+   centrait donc sur l'abscisse zéro et débordait du cadre de moitié. */
+.chart__tick { text-anchor: start; }
+.chart__axis--start, .chart__value--start { text-anchor: start; }
+.chart__axis--end, .chart__value--end { text-anchor: end; }
+
+/* Cible de survol : plus large que la marque, sur toute la hauteur du tracé.
+   Un disque de huit pixels qu'il faut viser au centre n'est pas une cible. */
+.chart__hit { fill: transparent; }
+.chart__hit:hover { fill: var(--brand); opacity: .06; }
+
+/* La variation d'une période à l'autre. Le SENS porte la couleur — vert en
+   hausse, ambre en baisse — et le signe la redit, pour qui ne distingue pas
+   les deux. */
+.trend { display: inline-flex; align-items: center; gap: .2rem; font-size: .85rem; font-weight: 700; }
+.trend--up { color: var(--ok); }
+.trend--down { color: var(--warn); }
+.trend--flat { color: var(--text-muted); }
+.trend__since { font-weight: 400; color: var(--text-muted); }
+
 /* Les produits qu'un modèle de composition viserait.
 
    Nommés un par un, et non comptés : c'est le contrepoids d'un rattachement
