@@ -200,7 +200,7 @@ admin:
         partial: 'Etykiety zapisane w językach: %written%. Nadal brakuje: %missing%.'
         nothing: 'Nie ma czego tłumaczyć: z wyświetlanego języka nie ma czego uzupełnić.'
         notConfigured: 'Tłumaczenie automatyczne niedostępne: brak klucza API.'
-        badKey: 'Klucz API odrzucony: nic nie zostało przetłumaczone.'
+        badKey: 'Serwis odrzucił klucz. Sprawdź najpierw, czy wybrana poniżej WERSJA odpowiada Twojej subskrypcji: abonament „One Call API 4.0” NIE obejmuje 3.0 i odwrotnie — to najczęstsza przyczyna tej odmowy. Następnie upewnij się, że subskrypcja „One Call by Call” jest aktywna; wykupuje się ją osobno, a klucz działający gdzie indziej jest tutaj odrzucany.'
         hostRefused: 'Usługa tłumaczenia odrzuciła żądanie: nic nie zostało przetłumaczone.'
         unreachable: 'Usługa tłumaczenia niedostępna: nic nie zostało przetłumaczone.'
         badAnswer: 'Nieczytelna odpowiedź usługi tłumaczenia: nic nie zostało zapisane.'

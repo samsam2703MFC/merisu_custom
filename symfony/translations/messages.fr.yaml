@@ -203,7 +203,7 @@ admin:
         partial: 'Libellés écrits en %written%. Toujours manquant : %missing%.'
         nothing: 'Rien à traduire : à partir de la langue affichée, il n''y a rien à compléter.'
         notConfigured: 'Traduction assistée indisponible : aucune clé d''API n''est en place.'
-        badKey: 'Clé d''API refusée : rien n''a été traduit.'
+        badKey: 'Le service a refusé la clé. Vérifiez d''abord que la VERSION choisie ci-dessous est bien celle à laquelle vous êtes abonné : un abonnement « One Call API 4.0 » ne couvre PAS la 3.0, et inversement — c''est la cause la plus fréquente de ce refus. Vérifiez ensuite que l''abonnement « One Call by Call » est actif ; il se souscrit séparément, et une clé valable ailleurs est refusée ici.'
         hostRefused: 'Le service de traduction a refusé la demande : rien n''a été traduit.'
         unreachable: 'Service de traduction injoignable : rien n''a été traduit.'
         badAnswer: 'Réponse illisible du service de traduction : rien n''a été écrit.'

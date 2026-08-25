@@ -200,7 +200,7 @@ admin:
         partial: 'Diciture scritte in %written%. Ancora mancanti: %missing%.'
         nothing: 'Niente da tradurre: a partire dalla lingua visualizzata non c''è nulla da completare.'
         notConfigured: 'Traduzione assistita non disponibile: nessuna chiave API configurata.'
-        badKey: 'Chiave API rifiutata: non è stato tradotto nulla.'
+        badKey: 'Il servizio ha rifiutato la chiave. Verifica anzitutto che la VERSIONE scelta qui sotto sia quella a cui sei abbonato: un abbonamento « One Call API 4.0 » NON copre la 3.0, e viceversa — è la causa più frequente di questo rifiuto. Verifica poi che l''abbonamento « One Call by Call » sia attivo; si sottoscrive separatamente, e una chiave valida altrove viene rifiutata qui.'
         hostRefused: 'Il servizio di traduzione ha rifiutato la richiesta: non è stato tradotto nulla.'
         unreachable: 'Servizio di traduzione irraggiungibile: non è stato tradotto nulla.'
         badAnswer: 'Risposta illeggibile dal servizio di traduzione: non è stato scritto nulla.'

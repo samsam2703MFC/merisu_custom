@@ -200,7 +200,7 @@ admin:
         partial: 'Rótulos escritos en %written%. Siguen faltando: %missing%.'
         nothing: 'Nada que traducir: a partir del idioma mostrado no hay nada que completar.'
         notConfigured: 'Traducción asistida no disponible: no hay ninguna clave de API configurada.'
-        badKey: 'Clave de API rechazada: no se ha traducido nada.'
+        badKey: 'El servicio rechazó la clave. Compruebe primero que la VERSIÓN elegida abajo es aquella a la que está suscrito: una suscripción « One Call API 4.0 » NO cubre la 3.0, y viceversa — es la causa más frecuente de este rechazo. Compruebe después que la suscripción « One Call by Call » está activa; se contrata aparte, y una clave válida en otros sitios se rechaza aquí.'
         hostRefused: 'El servicio de traducción ha rechazado la petición: no se ha traducido nada.'
         unreachable: 'Servicio de traducción inaccesible: no se ha traducido nada.'
         badAnswer: 'Respuesta ilegible del servicio de traducción: no se ha escrito nada.'
