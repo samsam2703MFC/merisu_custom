@@ -66,6 +66,25 @@ on:
       - '**.md'
       - '.gitignore'
   workflow_dispatch:
+    inputs:
+      # Une LISTE FERMÉE, et non un champ libre. Ce texte finit dans une
+      # commande shell sur le serveur : un champ libre serait une porte
+      # d'exécution ouverte à quiconque peut déclencher le workflow.
+      maintenance:
+        description: "Commande de maintenance à lancer après le déploiement"
+        required: false
+        default: 'aucune'
+        type: choice
+        options:
+          - aucune
+          - 'ventes-tout'
+          - 'meteo-historique'
+          - 'ventes-et-meteo'
+      depuis:
+        description: "Date de début du rattrapage météo (AAAA-MM-JJ)"
+        required: false
+        default: '2026-04-20'
+        type: string
 
 # Deux déploiements simultanés se marcheraient dessus pendant le cache:clear.
 concurrency:
@@ -414,6 +433,99 @@ jobs:
 
           printf '%s\n' "$CLE" | ssh -i ~/.ssh/id_deploiement -p "$PORT" -o BatchMode=yes \
               "$USER@$HOST" bash -euo pipefail -c "$DISTANT" -- "$APP_PATH" "$LAT" "$LON" "$LIEU"
+
+      # ── Les tâches planifiées, posées à chaque déploiement ────────────────
+      #
+      # Sans elles, la prévision ne se renouvelle pas et le journal météo ne se
+      # remplit jamais : la corrélation ventes × temps resterait à jamais sans
+      # matière. Idempotent — les lignes sont retirées puis réécrites, jamais
+      # empilées.
+      - name: Poser les tâches planifiées
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          APP_PATH: ${{ secrets.DEPLOY_PATH }}
+          PORT: ${{ vars.DEPLOY_PORT || '22' }}
+          PHP_BIN: ${{ vars.DEPLOY_PHP_BIN || 'php' }}
+        run: |
+          set -euo pipefail
+
+          APP_PATH="${APP_PATH//$'\r'/}"
+          APP_PATH="${APP_PATH#"${APP_PATH%%[![:space:]]*}"}"
+          APP_PATH="${APP_PATH%"${APP_PATH##*[![:space:]]}"}"
+
+          DISTANT='
+            set -euo pipefail
+            CIBLE="$1/symfony"
+            PHP="$2"
+
+            # Le marqueur permet de retirer NOS lignes sans toucher aux
+            # autres : un crontab appartient à la machine, pas à ce dépôt.
+            MARQUE="# merisu"
+            ACTUEL="$(crontab -l 2>/dev/null | grep -v "$MARQUE" || true)"
+
+            {
+              printf "%s\n" "$ACTUEL"
+              printf "0 5 * * * cd %s && %s bin/console merisu:meteo >/dev/null 2>&1 %s\n" "$CIBLE" "$PHP" "$MARQUE"
+              printf "30 2 * * * cd %s && %s bin/console merisu:ventes >/dev/null 2>&1 %s\n" "$CIBLE" "$PHP" "$MARQUE"
+            } | crontab -
+
+            echo "✓ Tâches planifiées posées :"
+            crontab -l | grep "$MARQUE"
+          '
+
+          ssh -i ~/.ssh/id_deploiement -p "$PORT" -o BatchMode=yes \
+              "$USER@$HOST" bash -euo pipefail -c "$DISTANT" -- "$APP_PATH" "$PHP_BIN" \
+            || echo "::warning::Tâches planifiées non posées (crontab indisponible sur ce serveur ?)"
+
+      # ── Un rattrapage de données, à la demande ────────────────────────────
+      #
+      # Ne tourne QUE si on l'a demandé au déclenchement. `merisu:ventes --tout`
+      # ne coûte que du temps ; `merisu:meteo --historique` coûte des appels
+      # FACTURÉS chez OpenWeather — environ cinq pour quatre mois. Ni l'un ni
+      # l'autre ne doit partir à chaque poussée de code.
+      - name: Rattraper les données
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.maintenance != 'aucune' }}
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          APP_PATH: ${{ secrets.DEPLOY_PATH }}
+          PORT: ${{ vars.DEPLOY_PORT || '22' }}
+          PHP_BIN: ${{ vars.DEPLOY_PHP_BIN || 'php' }}
+          QUOI: ${{ inputs.maintenance }}
+          DEPUIS: ${{ inputs.depuis }}
+        run: |
+          set -euo pipefail
+
+          # La date est REVALIDÉE ici : elle vient d'un champ libre, et elle
+          # entre dans une commande distante.
+          if ! printf '%s' "$DEPUIS" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then
+            echo "::error::Date de rattrapage illisible : attendu AAAA-MM-JJ."
+            exit 1
+          fi
+
+          APP_PATH="${APP_PATH//$'\r'/}"
+          APP_PATH="${APP_PATH#"${APP_PATH%%[![:space:]]*}"}"
+          APP_PATH="${APP_PATH%"${APP_PATH##*[![:space:]]}"}"
+
+          DISTANT='
+            set -euo pipefail
+            cd "$1/symfony"
+            PHP="$2"; QUOI="$3"; DEPUIS="$4"
+
+            if [ "$QUOI" = "ventes-tout" ] || [ "$QUOI" = "ventes-et-meteo" ]; then
+              echo "── Historique des ventes ──"
+              "$PHP" bin/console merisu:ventes --tout
+            fi
+
+            if [ "$QUOI" = "meteo-historique" ] || [ "$QUOI" = "ventes-et-meteo" ]; then
+              echo "── Rattrapage météo depuis $DEPUIS ──"
+              "$PHP" bin/console merisu:meteo --historique="$DEPUIS"
+            fi
+          '
+
+          ssh -i ~/.ssh/id_deploiement -p "$PORT" -o BatchMode=yes \
+              "$USER@$HOST" bash -euo pipefail -c "$DISTANT" -- "$APP_PATH" "$PHP_BIN" "$QUOI" "$DEPUIS"
 
       - name: Vérifier que le site répond
         if: ${{ vars.DEPLOY_HEALTH_URL != '' }}

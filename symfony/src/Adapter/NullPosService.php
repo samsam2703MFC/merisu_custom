@@ -30,6 +30,17 @@ final class NullPosService implements PosServiceInterface
         throw new PosUnavailable('admin.pos.notConfigured');
     }
 
+    public function organizations(): array
+    {
+        throw new PosUnavailable('admin.pos.notConfigured');
+    }
+
+    public function withCredentials(\Merisu\Inventory\Domain\PosCredentials $credentials): self
+    {
+        // Elle ne parle à personne, quels que soient les identifiants.
+        return $this;
+    }
+
     public function categories(): array
     {
         throw new PosUnavailable('admin.pos.notConfigured');

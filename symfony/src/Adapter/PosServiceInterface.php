@@ -55,6 +55,30 @@ interface PosServiceInterface
     public function ping(): string;
 
     /**
+     * Les organisations que ces identifiants ouvrent.
+     *
+     * Une paire peut en porter PLUSIEURS : c'est ce qui permet de tenir tout un
+     * réseau avec un seul secret, chaque boutique n'apportant que son numéro.
+     * Personne ne peut le deviner d'avance — seule la caisse le dit.
+     *
+     * @return list<\Merisu\Inventory\Domain\PosOrganization>
+     *
+     * @throws PosUnavailable
+     */
+    public function organizations(): array;
+
+    /**
+     * Le même service, avec d'AUTRES identifiants.
+     *
+     * C'est ainsi qu'une boutique interroge SA caisse : on part des
+     * identifiants du réseau, on y pose le numéro d'organisation de la
+     * boutique, et l'on obtient un service qui ne parle qu'à elle. Sans cela,
+     * il aurait fallu un service par boutique dans le conteneur — et les
+     * boutiques se créent à l'écran, pas au déploiement.
+     */
+    public function withCredentials(\Merisu\Inventory\Domain\PosCredentials $credentials): self;
+
+    /**
      * @return list<PosCategory>
      *
      * @throws PosUnavailable

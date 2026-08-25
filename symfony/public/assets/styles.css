@@ -306,7 +306,10 @@ p { margin: 0 0 var(--space-2); }
     font-weight: 700;
     letter-spacing: .1em;
     text-transform: uppercase;
-    color: var(--latte);
+    /* La couleur de la maison, pas le brun de repli : les têtes de section
+       structurent le rail, et en brun clair elles se confondaient avec les
+       liens qu'elles annoncent. */
+    color: var(--brand);
   }
   .admin-nav__title:first-child { margin-top: 0; }
 

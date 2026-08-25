@@ -145,6 +145,48 @@
     </div>
   {% endif %}
 
+  {#
+    ── Par boutique, ou pour plusieurs ? ────────────────────────────────────
+
+    Les identifiants GoPOS sont liés à une organisation au moment où on les
+    génère, ce qui laisse croire qu'il faut une paire par boutique. Mais la
+    caisse rend une LISTE d'organisations : une même paire peut en ouvrir
+    plusieurs. Les deux montages tiennent donc, et cet écran dit lequel est en
+    place — c'est la seule façon de le savoir, personne ne peut le deviner.
+  #}
+  {% if shops is not empty %}
+    <section class="card">
+      <h2 class="card__title">{{ 'admin.pos.perShop'|trans }}</h2>
+      <p class="field__hint">{{ 'admin.pos.perShopHint'|trans }}</p>
+
+      <ul class="pos-list">
+        {% for ligne in shops %}
+          <li class="pos">
+            <span class="pos__name">
+              {{ ligne.shop.name }}
+              {% if ligne.shop.posOrganizationId %}
+                <span class="pos__meta muted">{{ ligne.shop.posOrganizationId }}</span>
+              {% endif %}
+            </span>
+
+            {#
+              D'où viennent les identifiants employés. Quelqu'un qui change le
+              secret du réseau et voit une boutique continuer comme avant doit
+              comprendre qu'elle a le sien.
+            #}
+            {% if ligne.source == 'SHOP' %}
+              {{ ui.badge('ok', 'admin.pos.fromShop'|trans) }}
+            {% elseif ligne.source == 'NETWORK' %}
+              {{ ui.badge('neutral', 'admin.pos.fromNetwork'|trans) }}
+            {% else %}
+              {{ ui.badge('warn', 'admin.shops.noPos'|trans) }}
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
   {% if probed and not error %}
     {# QUELLE boutique répond. « Connexion réussie » n'aurait pas dit laquelle,
        et l'on peut très bien avoir branché l'organisation du voisin. #}
@@ -164,6 +206,46 @@
         </div>
       </div>
     </section>
+
+    {#
+      Ce que la paire ouvre RÉELLEMENT.
+
+      Une seule organisation : il faudra une paire par boutique. Plusieurs :
+      un secret unique peut tenir le réseau, chaque boutique n'apportant que
+      son numéro. La réponse ne s'invente pas — elle se lit ici.
+    #}
+    {% if organizations is not empty %}
+      <section class="card">
+        <h2 class="card__title">{{ 'admin.pos.organizations'|trans }}</h2>
+        <p class="field__hint">
+          {{ (organizations|length > 1 ? 'admin.pos.manyOrganizations' : 'admin.pos.oneOrganization')|trans({
+            '%count%': organizations|length,
+          }) }}
+        </p>
+
+        <ul class="pos-list">
+          {% for organisation in organizations %}
+            <li class="pos">
+              <span class="pos__name">
+                {{ organisation.name }}
+                <span class="pos__meta muted">{{ organisation.id }}</span>
+              </span>
+              {% if not organisation.enabled %}
+                {{ ui.badge('warn', 'admin.pos.disabled'|trans) }}
+              {% endif %}
+              {#
+                Une organisation ouverte mais qu'aucune boutique ne réclame :
+                il manque une fiche, ou un numéro sur une fiche existante.
+              #}
+              {# `filter`, et non `for … if` : Twig 3 a retiré la seconde forme. #}
+              {% if shops|filter(l => l.shop.posOrganizationId == organisation.id) is empty %}
+                {{ ui.badge('neutral', 'admin.pos.noShopForIt'|trans) }}
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      </section>
+    {% endif %}
 
     {# ── Catégories ──────────────────────────────────────────────────────── #}
 

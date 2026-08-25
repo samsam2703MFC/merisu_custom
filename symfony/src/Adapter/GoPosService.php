@@ -7,6 +7,7 @@ namespace Merisu\Inventory\Adapter;
 use Merisu\Inventory\Domain\PosCategory;
 use Merisu\Inventory\Domain\PosCredentials;
 use Merisu\Inventory\Domain\PosItem;
+use Merisu\Inventory\Domain\PosOrganization;
 use Merisu\Inventory\Domain\PosSale;
 use Merisu\Inventory\Store\PosCredentialStore;
 use Symfony\Component\HttpClient\Exception\TransportException;
@@ -83,6 +84,14 @@ final class GoPosService implements PosServiceInterface
 
     private ?string $token = null;
 
+    /**
+     * Identifiants imposés, qui court-circuitent écran et serveur.
+     *
+     * Vides d'ordinaire. Renseignés, ils font de ce service celui d'UNE
+     * boutique — voir `withCredentials`.
+     */
+    private ?PosCredentials $override = null;
+
     public function __construct(
         private readonly PosCredentialStore $credentialStore,
         #[\SensitiveParameter]
@@ -112,8 +121,53 @@ final class GoPosService implements PosServiceInterface
      * s'appliquent. Une variable d'environnement qui les aurait silencieusement
      * recouvertes aurait donné un écran où l'on saisit sans effet.
      */
+    /**
+     * Le même service, braqué sur d'autres identifiants.
+     *
+     * Un CLONE, et non une mutation : deux boutiques interrogées dans la même
+     * requête ne doivent pas se voler leur jeton. Celui-ci est remis à zéro,
+     * faute de quoi la seconde boutique aurait parlé avec le jeton de la
+     * première — et lu le catalogue du voisin sans qu'aucune erreur ne le
+     * signale.
+     */
+    public function withCredentials(PosCredentials $credentials): self
+    {
+        $copie = clone $this;
+        $copie->override = $credentials;
+        $copie->token = null;
+
+        return $copie;
+    }
+
+    /**
+     * Les organisations que ces identifiants ouvrent.
+     *
+     * @return list<PosOrganization>
+     */
+    public function organizations(): array
+    {
+        $reponse = $this->get('/me', organizationScoped: false);
+        $lignes = is_array($reponse['data'] ?? null) ? $reponse['data'] : [];
+
+        $organisations = [];
+
+        foreach ($lignes as $ligne) {
+            $organisation = is_array($ligne) ? PosOrganization::fromHost($ligne) : null;
+
+            if ($organisation !== null) {
+                $organisations[] = $organisation;
+            }
+        }
+
+        return $organisations;
+    }
+
     public function credentials(): PosCredentials
     {
+        if ($this->override !== null) {
+            return $this->override;
+        }
+
         return $this->credentialStore->effective(new PosCredentials(
             $this->envClientId,
             $this->envClientSecret,

@@ -9,7 +9,9 @@ use Merisu\Inventory\Adapter\PosUnavailable;
 use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Service\PosImportService;
 use Merisu\Inventory\Service\SecretBox;
+use Merisu\Inventory\Service\ShopPos;
 use Merisu\Inventory\Store\PosCredentialStore;
+use Merisu\Inventory\Store\ShopStore;
 use Merisu\Inventory\Store\Store;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -45,6 +47,8 @@ final class AdminPosController extends AbstractController
         private readonly PosCredentialStore $credentials,
         private readonly PosImportService $import,
         private readonly SecretBox $box,
+        private readonly ShopStore $shops,
+        private readonly ShopPos $shopPos,
     ) {
     }
 
@@ -56,6 +60,11 @@ final class AdminPosController extends AbstractController
         $vue = [
             'configured' => $this->pos->isConfigured(),
             'shopName' => null,
+            // Les organisations que la paire ouvre RÉELLEMENT. C'est la seule
+            // façon de savoir si un secret unique peut tenir tout le réseau :
+            // les identifiants sont liés à une organisation à leur création,
+            // mais `/api/v3/me` en rend une LISTE.
+            'organizations' => [],
             'categories' => [],
             'items' => [],
             'error' => null,
@@ -70,6 +79,7 @@ final class AdminPosController extends AbstractController
         if ($vue['configured'] && $vue['probed']) {
             try {
                 $vue['shopName'] = $this->pos->ping();
+                $vue['organizations'] = $this->pos->organizations();
                 $vue['categories'] = $this->pos->categories();
                 $vue['items'] = $this->pos->items();
             } catch (PosUnavailable $e) {
@@ -90,6 +100,9 @@ final class AdminPosController extends AbstractController
             'fromScreen' => $identifiants->fromScreen,
             'canStore' => $this->box->isAvailable(),
             'defaultBaseUrl' => \Merisu\Inventory\Adapter\GoPosService::DEFAULT_BASE_URL,
+            // Les boutiques enregistrées, et d'où chacune tire ses
+            // identifiants : les siens, ou ceux du réseau.
+            'shops' => $this->shopSummaries(),
         ]);
     }
 
@@ -237,6 +250,22 @@ final class AdminPosController extends AbstractController
         }
 
         return $this->redirectToRoute('admin_cash');
+    }
+
+    /**
+     * Chaque boutique, et d'où elle tire ses identifiants de caisse.
+     *
+     * @return list<array{shop: \Merisu\Inventory\Domain\Shop, source: string}>
+     */
+    private function shopSummaries(): array
+    {
+        return array_map(
+            fn (\Merisu\Inventory\Domain\Shop $b): array => [
+                'shop' => $b,
+                'source' => $this->shopPos->sourceFor($b),
+            ],
+            $this->shops->all(),
+        );
     }
 
     /**
