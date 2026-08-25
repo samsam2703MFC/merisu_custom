@@ -691,6 +691,8 @@ admin:
         codeHint: 'Code interne : %code%. Il se fabrique et ne se saisit pas — c''est lui que portent les comptages, et un code saisi deux fois aurait fait partager leurs relevés à deux boutiques.'
         coordinatesHint: 'C''est la météo qui les demande : le service ne connaît pas les boutiques, il connaît des points. Deux boutiques à trois cents kilomètres n''ont pas la même semaine.'
         posHint: 'Chaque paire d''identifiants GoPOS est liée à une organisation au moment où on la génère : une boutique, une organisation.'
+        posSection: 'Caisse de cette boutique'
+        opsSection: 'Exploitation'
         nameRequired: 'Le nom est obligatoire : le code ne se montre pas au vendeur, et « BOUTIQUE_3 » dans une liste de trois n''aide personne.'
         confirmDelete: 'Retirer cette boutique de la liste ?'
         deleteHint: 'La fiche disparaît, pas ce qu''elle a produit : comptages, plans et historique gardent son code.'

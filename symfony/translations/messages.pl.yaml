@@ -688,6 +688,8 @@ admin:
         codeHint: 'Kod wewnętrzny: %code%. Powstaje automatycznie i nie wpisuje się go — to on jest zapisywany w liczeniach, a kod wpisany dwa razy sprawiłby, że dwa sklepy dzieliłyby swoje odczyty.'
         coordinatesHint: 'Wymaga ich pogoda: serwis nie zna sklepów, zna punkty. Dwa sklepy oddalone o trzysta kilometrów nie mają tego samego tygodnia.'
         posHint: 'Każda para danych GoPOS jest powiązana z organizacją w chwili wygenerowania: jeden sklep, jedna organizacja.'
+        posSection: 'Kasa tego sklepu'
+        opsSection: 'Eksploatacja'
         nameRequired: 'Nazwa jest obowiązkowa: kod nie jest pokazywany sprzedawcy, a „BOUTIQUE_3” na liście trzech nikomu nie pomaga.'
         confirmDelete: 'Usunąć ten sklep z listy?'
         deleteHint: 'Karta znika, ale nie to, co sklep wytworzył: liczenia, plany i historia zachowują jego kod.'

@@ -29,7 +29,7 @@
     </summary>
 
     <form method="post" action="{{ path('admin_shop_create') }}" class="form">
-      {{ _self.fields(blank, true) }}
+      {{ _self.fields(blank, canStoreSecret, timezones) }}
       <div class="form-actions">
         <button type="submit" class="button button--primary">{{ 'common.add'|trans }}</button>
       </div>
@@ -55,13 +55,13 @@
             #}
             {% if not shop.active %}{{ ui.badge('warn', 'admin.shops.inactive'|trans) }}{% endif %}
             {% if not shop.hasCoordinates %}{{ ui.badge('warn', 'admin.shops.noCoordinates'|trans) }}{% endif %}
-            {% if shop.posOrganizationId is empty %}{{ ui.badge('neutral', 'admin.shops.noPos'|trans) }}{% endif %}
+            {% if not shop.hasPos %}{{ ui.badge('neutral', 'admin.shops.noPos'|trans) }}{% endif %}
             {% if shop.addressLine %}<span class="muted">{{ shop.addressLine }}</span>{% endif %}
           </span>
         </summary>
 
         <form method="post" action="{{ path('admin_shop_save', { id: shop.id }) }}" class="form">
-          {{ _self.fields(shop, false) }}
+          {{ _self.fields(shop, canStoreSecret, timezones) }}
           <div class="form-actions">
             <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
           </div>
@@ -90,7 +90,7 @@
   Deux formulaires distincts auraient divergé au premier champ ajouté, et l'on
   aurait créé une boutique à qui il manque ce que l'édition sait régler.
 #}
-{% macro fields(shop, estNouvelle) %}
+{% macro fields(shop, canStoreSecret, timezones) %}
   {% import 'components/_macros.html.twig' as ui %}
 
   <div class="checkbox-row">
@@ -148,13 +148,103 @@
   <p class="field__hint">{{ 'admin.shops.coordinatesHint'|trans }}</p>
 
   {#
-    L'organisation de caisse : chaque paire d'identifiants GoPOS est liée à une
-    organisation au moment où on la génère. Une boutique, une organisation.
+    ── La caisse de CETTE boutique ─────────────────────────────────────────
+
+    Chaque paire d'identifiants GoPOS est liée à une organisation au moment où
+    on la génère : une boutique, une organisation. Les trois valeurs vivent
+    donc ici, avec l'adresse, et non dans un réglage unique pour le réseau.
   #}
+  <p class="field__label mt">{{ 'admin.shops.posSection'|trans }}</p>
+
+  {% if not canStoreSecret %}
+    {{ ui.banner('danger', 'admin.pos.errorNoCrypto'|trans) }}
+  {% else %}
+    <div class="field-grid">
+      <div class="field">
+        <label class="field__label" for="sh-pos-{{ shop.id }}">{{ 'admin.pos.organizationIdLabel'|trans }}</label>
+        <input class="field__input" type="text" id="sh-pos-{{ shop.id }}" name="posOrganizationId"
+               maxlength="64" value="{{ shop.posOrganizationId }}" autocomplete="off" placeholder="13232">
+      </div>
+      <div class="field">
+        <label class="field__label" for="sh-cid-{{ shop.id }}">{{ 'admin.pos.clientId'|trans }}</label>
+        <input class="field__input" type="text" id="sh-cid-{{ shop.id }}" name="posClientId"
+               maxlength="190" value="{{ shop.posClientId }}" autocomplete="off">
+      </div>
+    </div>
+
+    {#
+      Le secret : ÉCRITURE SEULE. Jamais réaffiché, pas même tronqué —
+      « …4f2a » suffit à confirmer à qui l'a volé qu'il tient le bon. Laissé
+      vide, il n'est pas effacé : corriger une adresse ne doit pas coûter un
+      secret que personne ne peut retaper.
+    #}
+    <div class="field">
+      <label class="field__label" for="sh-sec-{{ shop.id }}">{{ 'admin.pos.clientSecret'|trans }}</label>
+      <input class="field__input" type="password" id="sh-sec-{{ shop.id }}" name="posClientSecret"
+             autocomplete="new-password"
+             placeholder="{{ (shop.hasPosSecret ? 'admin.pos.secretKeep' : 'admin.pos.secretEmpty')|trans }}">
+      <p class="field__hint">
+        {% if shop.hasPosSecret %}{{ ui.badge('ok', 'admin.pos.secretSet'|trans) }}{% endif %}
+        {{ 'admin.shops.posHint'|trans }}
+      </p>
+    </div>
+  {% endif %}
+
+  {#
+    ── L'exploitation : ce que CETTE boutique décide ───────────────────────
+
+    Horaires, politique photo, tolérance du delta, objectif du mois. Ce ne sont
+    pas des réglages d'installation : Wrocław ouvre à 8 h et Kraków à 9 h.
+    Tenus une seule fois pour tout le réseau, ils obligeaient la deuxième
+    boutique à vivre avec les horaires de la première.
+  #}
+  <p class="field__label mt">{{ 'admin.shops.opsSection'|trans }}</p>
+
+  <div class="field-grid">
+    <div class="field">
+      <label class="field__label" for="sh-open-{{ shop.id }}">{{ 'admin.settings.openingTime'|trans }}</label>
+      <input class="field__input" type="time" id="sh-open-{{ shop.id }}" name="openingTime"
+             value="{{ shop.openingTime }}">
+    </div>
+    <div class="field">
+      <label class="field__label" for="sh-close-{{ shop.id }}">{{ 'admin.settings.closingTime'|trans }}</label>
+      <input class="field__input" type="time" id="sh-close-{{ shop.id }}" name="closingTime"
+             value="{{ shop.closingTime }}">
+    </div>
+  </div>
+
   <div class="field">
-    <label class="field__label" for="sh-pos-{{ shop.id }}">{{ 'admin.pos.organizationIdLabel'|trans }}</label>
-    <input class="field__input" type="text" id="sh-pos-{{ shop.id }}" name="posOrganizationId"
-           maxlength="64" value="{{ shop.posOrganizationId }}" autocomplete="off" placeholder="13232">
-    <p class="field__hint">{{ 'admin.shops.posHint'|trans }}</p>
+    <label class="field__label" for="sh-tz-{{ shop.id }}">{{ 'admin.settings.timezone'|trans }}</label>
+    <select class="field__input" id="sh-tz-{{ shop.id }}" name="timezone">
+      {% for tz in timezones %}
+        <option value="{{ tz }}" {{ tz == shop.timezone ? 'selected' : '' }}>{{ tz }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="checkbox-row">
+    <input type="checkbox" id="sh-photo-{{ shop.id }}" name="photoRequired" value="1"
+           {{ shop.photoRequired ? 'checked' : '' }}>
+    <label for="sh-photo-{{ shop.id }}">{{ 'admin.settings.photoRequired'|trans }}</label>
+  </div>
+  <div class="checkbox-row">
+    <input type="checkbox" id="sh-photop-{{ shop.id }}" name="photoPerProduct" value="1"
+           {{ shop.photoPerProduct ? 'checked' : '' }}>
+    <label for="sh-photop-{{ shop.id }}">{{ 'admin.settings.photoPerProduct'|trans }}</label>
+  </div>
+
+  <div class="field-grid">
+    <div class="field">
+      <label class="field__label" for="sh-delta-{{ shop.id }}">{{ 'admin.settings.deltaTolerance'|trans }}</label>
+      <input class="field__input" type="number" step="0.01" min="0" max="1"
+             id="sh-delta-{{ shop.id }}" name="deltaTolerance" value="{{ shop.deltaTolerance }}">
+      <p class="field__hint">{{ 'admin.settings.deltaToleranceHint'|trans }}</p>
+    </div>
+    <div class="field">
+      <label class="field__label" for="sh-target-{{ shop.id }}">{{ 'admin.settings.monthlyTiramisuTarget'|trans }}</label>
+      <input class="field__input" type="number" step="1" min="0"
+             id="sh-target-{{ shop.id }}" name="monthlyTarget" value="{{ shop.monthlyTarget }}">
+      <p class="field__hint">{{ 'admin.settings.monthlyTiramisuTargetHint'|trans }}</p>
+    </div>
   </div>
 {% endmacro %}

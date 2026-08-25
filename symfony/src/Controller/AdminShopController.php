@@ -6,6 +6,8 @@ namespace Merisu\Inventory\Controller;
 
 use Merisu\Inventory\Domain\Shop;
 use Merisu\Inventory\Security\CurrentUser;
+use Merisu\Inventory\Service\SecretBox;
+use Merisu\Inventory\Store\ShopStore;
 use Merisu\Inventory\Store\Store;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -37,7 +39,9 @@ final class AdminShopController extends AbstractController
 {
     public function __construct(
         private readonly Store $store,
+        private readonly ShopStore $shops,
         private readonly CurrentUser $currentUser,
+        private readonly SecretBox $box,
     ) {
     }
 
@@ -46,12 +50,17 @@ final class AdminShopController extends AbstractController
     {
         $this->currentUser->requireAdmin();
 
-        $slot = $this->store->nextShopSlot();
+        $slot = $this->shops->nextSlot();
 
         return $this->render('admin/shops.html.twig', [
-            'shops' => $this->store->shops(),
+            'shops' => $this->shops->all(),
             'blank' => new Shop($slot['id'], $slot['code'], '', sortOrder: $slot['sortOrder']),
             'open' => (string) $request->query->get('ouvrir', ''),
+            // Sans chiffrement, on n'accepte pas de secret de caisse : mieux
+            // vaut un écran qui refuse et l'explique qu'un secret posé en clair
+            // dans une base qu'on sauvegarde toutes les nuits.
+            'canStoreSecret' => $this->box->isAvailable(),
+            'timezones' => self::TIMEZONES,
         ]);
     }
 
@@ -60,7 +69,7 @@ final class AdminShopController extends AbstractController
     {
         $admin = $this->currentUser->requireAdmin();
 
-        $slot = $this->store->nextShopSlot();
+        $slot = $this->shops->nextSlot();
         $boutique = $this->read($request, new Shop($slot['id'], $slot['code'], '', sortOrder: $slot['sortOrder']));
 
         // Sans nom, la fiche n'est identifiable par personne : le code ne se
@@ -72,7 +81,7 @@ final class AdminShopController extends AbstractController
             return $this->redirectToRoute('admin_shops');
         }
 
-        $this->store->saveShop($boutique);
+        $this->shops->save($boutique);
         $this->store->audit($admin->id, $admin->role->value, 'SHOP_CREATED', null, null, [
             'shopId' => $boutique->id,
             'code' => $boutique->code,
@@ -88,7 +97,7 @@ final class AdminShopController extends AbstractController
     {
         $admin = $this->currentUser->requireAdmin();
 
-        $boutique = $this->store->shop($id) ?? throw $this->createNotFoundException('SHOP_NOT_FOUND');
+        $boutique = $this->shops->find($id) ?? throw $this->createNotFoundException('SHOP_NOT_FOUND');
         $modifiee = $this->read($request, $boutique);
 
         if (trim($modifiee->name) === '') {
@@ -97,7 +106,7 @@ final class AdminShopController extends AbstractController
             return $this->redirectToRoute('admin_shops', ['ouvrir' => $id]);
         }
 
-        $this->store->saveShop($modifiee);
+        $this->shops->save($modifiee);
         $this->store->audit($admin->id, $admin->role->value, 'SHOP_UPDATED', null, null, [
             'shopId' => $id,
             'code' => $modifiee->code,
@@ -113,9 +122,9 @@ final class AdminShopController extends AbstractController
     {
         $admin = $this->currentUser->requireAdmin();
 
-        $boutique = $this->store->shop($id) ?? throw $this->createNotFoundException('SHOP_NOT_FOUND');
+        $boutique = $this->shops->find($id) ?? throw $this->createNotFoundException('SHOP_NOT_FOUND');
 
-        $this->store->deleteShop($id);
+        $this->shops->delete($id);
         $this->store->audit($admin->id, $admin->role->value, 'SHOP_DELETED', null, null, [
             'shopId' => $id,
             'code' => $boutique->code,
@@ -128,6 +137,20 @@ final class AdminShopController extends AbstractController
         return $this->redirectToRoute('admin_shops');
     }
 
+    /**
+     * Les fuseaux proposés.
+     *
+     * Une liste courte plutôt que les quelque six cents identifiants IANA :
+     * une enseigne ouvre dans quelques pays, et dérouler six cents lignes pour
+     * en trouver un est un obstacle, pas un choix. La saisie reste libre côté
+     * base — c'est l'écran qui est court, pas le domaine.
+     */
+    private const TIMEZONES = [
+        'Europe/Warsaw', 'Europe/Paris', 'Europe/Rome', 'Europe/Madrid',
+        'Europe/Berlin', 'Europe/Brussels', 'Europe/Lisbon', 'Europe/London',
+        'Europe/Prague', 'Europe/Vienna', 'Europe/Zurich', 'UTC',
+    ];
+
     /** Lit le formulaire par-dessus une fiche existante. */
     private function read(Request $request, Shop $base): Shop
     {
@@ -139,8 +162,41 @@ final class AdminShopController extends AbstractController
             latitude: self::coordinate($request->request->get('latitude')),
             longitude: self::coordinate($request->request->get('longitude')),
             posOrganizationId: mb_substr(trim((string) $request->request->get('posOrganizationId', '')), 0, 64),
+            posClientId: mb_substr(trim((string) $request->request->get('posClientId', '')), 0, 190),
+            // Vide = on GARDE celui qui est posé. Le secret ne se relit pas ;
+            // l'effacer parce qu'on a corrigé une adresse serait sans retour.
+            posClientSecret: trim((string) $request->request->get('posClientSecret', '')) !== ''
+                ? (string) $request->request->get('posClientSecret')
+                : null,
+            openingTime: self::time($request->request->get('openingTime'), $base->openingTime),
+            closingTime: self::time($request->request->get('closingTime'), $base->closingTime),
+            timezone: in_array($request->request->get('timezone'), self::TIMEZONES, true)
+                ? (string) $request->request->get('timezone')
+                : $base->timezone,
+            photoRequired: $request->request->getBoolean('photoRequired'),
+            photoPerProduct: $request->request->getBoolean('photoPerProduct'),
+            // Bornée : au-delà de 100 % de tolérance, le delta ne signale plus
+            // rien, et une valeur négative signalerait tout.
+            deltaTolerance: max(0.0, min(1.0, (float) str_replace(
+                ',', '.', (string) $request->request->get('deltaTolerance', '0.05'),
+            ))),
+            monthlyTarget: max(0, (int) $request->request->get('monthlyTarget', 0)),
             active: $request->request->getBoolean('active'),
         );
+    }
+
+    /**
+     * Une heure au format HH:MM, ou celle qui était là.
+     *
+     * Refuser en silence vaut mieux qu'enregistrer « 25:99 » : l'heure décide
+     * de quel comptage s'ouvre, et une valeur impossible aurait fermé la
+     * saisie du matin sans que rien ne l'explique.
+     */
+    private static function time(mixed $value, string $fallback): string
+    {
+        $texte = is_scalar($value) ? trim((string) $value) : '';
+
+        return preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $texte) === 1 ? $texte : $fallback;
     }
 
     /**

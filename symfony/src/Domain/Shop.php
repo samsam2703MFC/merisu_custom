@@ -55,9 +55,60 @@ final readonly class Shop
          * vit donc ici, à côté de l'adresse, et non dans un réglage unique.
          */
         public string $posOrganizationId = '',
+        /**
+         * Les identifiants de caisse de cette boutique.
+         *
+         * Le secret est CHIFFRÉ en base et n'est jamais réaffiché — même règle
+         * que partout ailleurs : « …4f2a » suffit à confirmer à qui l'a volé
+         * qu'il tient le bon.
+         */
+        #[\SensitiveParameter]
+        public string $posClientId = '',
+        #[\SensitiveParameter]
+        public string $posClientSecret = '',
+        /*
+          ── Les paramètres d'EXPLOITATION, par boutique
+
+          Les horaires, la politique photo, la tolérance du delta et l'objectif
+          du mois ne sont pas des réglages d'installation : ce sont des
+          décisions de boutique. Wrocław ouvre à 8 h et Kraków à 9 h ; l'une
+          exige une photo par produit, l'autre non.
+
+          Tenus une seule fois pour tout le réseau, ils obligeaient la deuxième
+          boutique à vivre avec les horaires de la première.
+        */
+        public string $openingTime = '08:00',
+        public string $closingTime = '22:00',
+        /** Fuseau IANA. Deux boutiques d'un même réseau peuvent en changer. */
+        public string $timezone = 'Europe/Warsaw',
+        public bool $photoRequired = false,
+        public bool $photoPerProduct = false,
+        /** Tolérance du delta technique : 0.05 = 5 %. */
+        public float $deltaTolerance = 0.05,
+        /** Objectif de tiramisu du mois. 0 = aucun objectif, pas de jauge. */
+        public int $monthlyTarget = 0,
         public bool $active = true,
         public int $sortOrder = 0,
     ) {
+    }
+
+    /**
+     * Ce que l'écran a le droit de montrer.
+     *
+     * Le secret de caisse n'en fait PAS partie, jamais, même tronqué. On dit
+     * seulement qu'il est posé.
+     */
+    public function hasPosSecret(): bool
+    {
+        return trim($this->posClientSecret) !== '';
+    }
+
+    /** La caisse de cette boutique est-elle réglée de bout en bout ? */
+    public function hasPos(): bool
+    {
+        return trim($this->posOrganizationId) !== ''
+            && trim($this->posClientId) !== ''
+            && $this->hasPosSecret();
     }
 
     /**
@@ -111,6 +162,15 @@ final readonly class Shop
         ?float $latitude = null,
         ?float $longitude = null,
         ?string $posOrganizationId = null,
+        ?string $posClientId = null,
+        ?string $posClientSecret = null,
+        ?string $openingTime = null,
+        ?string $closingTime = null,
+        ?string $timezone = null,
+        ?bool $photoRequired = null,
+        ?bool $photoPerProduct = null,
+        ?float $deltaTolerance = null,
+        ?int $monthlyTarget = null,
         ?bool $active = null,
         ?int $sortOrder = null,
     ): self {
@@ -124,6 +184,19 @@ final readonly class Shop
             $latitude ?? $this->latitude,
             $longitude ?? $this->longitude,
             $posOrganizationId ?? $this->posOrganizationId,
+            $posClientId ?? $this->posClientId,
+            // Le secret n'est REMPLACÉ que si l'on en donne un : laissé vide,
+            // il reste. C'est la contrepartie d'un champ qu'on n'affiche
+            // jamais — sans cette règle, corriger une adresse aurait effacé un
+            // secret que personne ne peut relire pour le retaper.
+            $posClientSecret ?? $this->posClientSecret,
+            $openingTime ?? $this->openingTime,
+            $closingTime ?? $this->closingTime,
+            $timezone ?? $this->timezone,
+            $photoRequired ?? $this->photoRequired,
+            $photoPerProduct ?? $this->photoPerProduct,
+            $deltaTolerance ?? $this->deltaTolerance,
+            $monthlyTarget ?? $this->monthlyTarget,
             $active ?? $this->active,
             $sortOrder ?? $this->sortOrder,
         );

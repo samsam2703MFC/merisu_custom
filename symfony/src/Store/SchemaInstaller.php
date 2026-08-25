@@ -145,6 +145,20 @@ final class SchemaInstaller
             $t->addColumn('latitude', 'float', ['default' => 0]);
             $t->addColumn('longitude', 'float', ['default' => 0]);
             $t->addColumn('pos_organization_id', 'string', ['length' => 64, 'default' => '']);
+            $t->addColumn('pos_client_id', 'string', ['length' => 190, 'default' => '']);
+            // CHIFFRÉ, avec la clé dérivée d'APP_SECRET : une base dérobée
+            // seule ne livre pas de quoi appeler la caisse.
+            $t->addColumn('pos_client_secret', 'text', ['notnull' => false]);
+            // Les paramètres d'EXPLOITATION : ce sont des décisions de
+            // boutique, pas des réglages d'installation. Wrocław ouvre à 8 h
+            // et Kraków à 9 h.
+            $t->addColumn('opening_time', 'string', ['length' => 5, 'default' => '08:00']);
+            $t->addColumn('closing_time', 'string', ['length' => 5, 'default' => '22:00']);
+            $t->addColumn('timezone', 'string', ['length' => 64, 'default' => 'Europe/Warsaw']);
+            $t->addColumn('photo_required', 'boolean', ['default' => false]);
+            $t->addColumn('photo_per_product', 'boolean', ['default' => false]);
+            $t->addColumn('delta_tolerance', 'float', ['default' => 0.05]);
+            $t->addColumn('monthly_target', 'integer', ['default' => 0]);
             $t->addColumn('active', 'boolean', ['default' => true]);
             $t->addColumn('sort_order', 'integer', ['default' => 0]);
             $t->setPrimaryKey(['id']);
@@ -737,6 +751,20 @@ final class SchemaInstaller
                 // 0 par défaut : aucun objectif, donc aucune jauge — jamais
                 // une barre pleine inventée pour les bases déjà en service.
                 'monthly_tiramisu_target' => 'INTEGER DEFAULT 0 NOT NULL',
+            ],
+            'inv_shop' => [
+                // Ajoutées après coup : une boutique créée avant que la fiche
+                // ne porte ses propres paramètres doit continuer de tourner
+                // sur ceux de l'installation.
+                'pos_client_id' => "VARCHAR(190) DEFAULT '' NOT NULL",
+                'pos_client_secret' => 'TEXT',
+                'opening_time' => "VARCHAR(5) DEFAULT '08:00' NOT NULL",
+                'closing_time' => "VARCHAR(5) DEFAULT '22:00' NOT NULL",
+                'timezone' => "VARCHAR(64) DEFAULT 'Europe/Warsaw' NOT NULL",
+                'photo_required' => 'BOOLEAN DEFAULT 0 NOT NULL',
+                'photo_per_product' => 'BOOLEAN DEFAULT 0 NOT NULL',
+                'delta_tolerance' => 'FLOAT DEFAULT 0.05 NOT NULL',
+                'monthly_target' => 'INTEGER DEFAULT 0 NOT NULL',
             ],
             'inv_weather_credential' => [
                 // Ajoutée avec One Call 4.0 : une base installée avant ne l'a

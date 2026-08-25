@@ -688,6 +688,8 @@ admin:
         codeHint: 'Codice interno: %code%. Si fabbrica e non si inserisce — è quello che portano i conteggi, e un codice inserito due volte avrebbe fatto condividere le rilevazioni a due negozi.'
         coordinatesHint: 'Le chiede il meteo: il servizio non conosce i negozi, conosce dei punti. Due negozi a trecento chilometri non hanno la stessa settimana.'
         posHint: 'Ogni coppia di credenziali GoPOS è legata a un''organizzazione al momento in cui la si genera: un negozio, un''organizzazione.'
+        posSection: 'Cassa di questo negozio'
+        opsSection: 'Gestione'
         nameRequired: 'Il nome è obbligatorio: il codice non si mostra al venditore, e « BOUTIQUE_3 » in un elenco di tre non aiuta nessuno.'
         confirmDelete: 'Togliere questo negozio dall''elenco?'
         deleteHint: 'La scheda sparisce, non ciò che ha prodotto: conteggi, piani e storico conservano il suo codice.'
