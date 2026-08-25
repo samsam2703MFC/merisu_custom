@@ -14,11 +14,21 @@
 
   Une SEULE liste dans le HTML, deux mises en forme. La dupliquer aurait fait
   diverger les deux au premier onglet ajouté.
+
+  ── Pourquoi ce préfixe « nav » sur les variables
+
+  Ce `set` vit dans le bloc `content`, et le `admin_content` de l'écran est
+  rendu DEDANS : tout ce qu'on nomme ici masque la variable de même nom venue
+  du contrôleur. Nommée `sections`, cette liste a fait rendre à l'écran de
+  check-list les familles du menu à la place de ses trois volets — « Key
+  "value" ... with keys "title, links" », une page 500 qu'aucun test de
+  gabarit ne voyait. Le préfixe met ces variables hors d'atteinte des noms
+  qu'un contrôleur choisit naturellement.
 #}
 {% extends 'base.html.twig' %}
 
 {% block content %}
-  {%- set sections = [
+  {%- set navGroupes = [
     { title: 'nav.groups.shop', links: [
       { route: 'admin_shops',      label: 'nav.shops' },
       { route: 'admin_team',       label: 'nav.team' },
@@ -51,17 +61,17 @@
 
   <div class="admin-shell">
     <nav class="admin-nav" aria-label="{{ 'nav.sections'|trans }}">
-      {% for section in sections %}
+      {% for navGroupe in navGroupes %}
         {#
           L'intertitre est MASQUÉ sur téléphone, jamais retiré : un lecteur
           d'écran l'annonce dans les deux formes, et c'est lui qui dit à quelle
           famille appartient le lien qu'on vient d'atteindre au clavier.
         #}
-        <p class="admin-nav__title">{{ section.title|trans }}</p>
+        <p class="admin-nav__title">{{ navGroupe.title|trans }}</p>
 
-        {% for entree in section.links %}
-          <a class="admin-nav__link {{ app.request.attributes.get('_route') starts with entree.route ? 'is-active' : '' }}"
-             href="{{ path(entree.route) }}">{{ entree.label|trans }}</a>
+        {% for navEntree in navGroupe.links %}
+          <a class="admin-nav__link {{ app.request.attributes.get('_route') starts with navEntree.route ? 'is-active' : '' }}"
+             href="{{ path(navEntree.route) }}">{{ navEntree.label|trans }}</a>
         {% endfor %}
       {% endfor %}
     </nav>

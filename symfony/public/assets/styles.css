@@ -463,7 +463,19 @@ select, textarea {
 input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-color: var(--brand); }
 
 .checkbox-row { display: flex; align-items: center; gap: var(--space-2); min-height: var(--touch); }
-.checkbox-row label { font-size: 1rem; color: var(--text); margin: 0; }
+/* L'étiquette PORTE la cible : la case native ne fait que 19 px de large, et
+   c'est le texte à côté qu'on touche. Sans cette hauteur, la rangée mesure
+   bien ses 44 px mais seule la ligne de texte — 25 px — réagit au doigt ; les
+   19 px restants ressemblent à une cible et n'en sont pas. Au poste, gants ou
+   mains humides, ce sont ces 19 px qui font recommencer le geste. */
+.checkbox-row label {
+  display: flex;
+  align-items: center;
+  min-height: var(--touch);
+  font-size: 1rem;
+  color: var(--text);
+  margin: 0;
+}
 
 .field-grid { display: grid; gap: var(--space-3); grid-template-columns: 1fr; }
 
@@ -2578,6 +2590,16 @@ body { overflow-x: hidden; }
   color: var(--cream-outline);
   line-height: 1;
 }
+/* Le rang est posé en ABSOLU : il ne pousse rien devant lui. C'est donc au
+   titre de lui réserver sa place, faute de quoi un nom long passe DESSOUS le
+   chiffre. Invisible tant que les boutiques s'appellent « Kraków », flagrant
+   au premier « Warszawa Nowy Świat » — et c'est le nom de la boutique, la
+   seule chose qui identifie la carte, qui devient illisible.
+   Trois chiffres de large : un réseau peut passer la centaine, et le jour où
+   il y arrive personne ne repensera à cette règle. */
+.shop-card > .card__title,
+.shop-card > .muted { padding-right: 3.25rem; }
+
 /* Chiffres proportionnels sur une grande valeur : `tabular-nums` donne à
    chaque chiffre la largeur d'un zéro, et « 121 » paraît alors distendu. */
 .shop-card__value {
