@@ -97,6 +97,13 @@ adminLogin:
     backToSeller: 'Torna al login della postazione'
 
 nav:
+    sections: 'Sezioni'
+    groups:
+        shop: 'Negozio'
+        catalogue: 'Catalogo'
+        sales: 'Vendite'
+        production: 'Produzione'
+        system: 'Sistema'
     checklist: 'Check-list'
     dayNote: 'Nota del giorno'
     morning: Mattina

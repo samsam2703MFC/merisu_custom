@@ -200,7 +200,26 @@ p { margin: 0 0 var(--space-2); }
 
 .app--centered .app-main { display: grid; place-items: center; padding-bottom: 1rem; }
 
+/* ── Navigation de l'administration : deux formes, une seule liste ────────
+
+   Sur téléphone, des pastilles qui s'enroulent. Sur ordinateur, un rail
+   vertical groupé en sections : seize pastilles à plat faisaient quatre lignes
+   de capitales en haut de chaque écran, qu'il fallait relire à chaque visite
+   et qui repoussaient le contenu d'autant. */
 .admin-nav { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-4); }
+
+/* L'intertitre est MASQUÉ ici, jamais retiré : un lecteur d'écran l'annonce
+   dans les deux formes, et c'est lui qui dit à quelle famille appartient le
+   lien qu'on vient d'atteindre au clavier. */
+.admin-nav__title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  margin: 0;
+}
 
 /* Pilules Merisù : crème par défaut, framboise = section active. */
 .admin-nav__link {
@@ -227,6 +246,71 @@ p { margin: 0 0 var(--space-2); }
   border-color: transparent;
   color: #fff;
   box-shadow: var(--shadow-accent);
+}
+
+/* ── Le rail, sur ORDINATEUR seulement ────────────────────────────────────
+
+   1024 px : la largeur à partir de laquelle quinze rem de rail ne prennent
+   plus rien au contenu. En dessous — téléphone, tablette en portrait — les
+   pastilles restent, parce qu'une colonne de navigation y mangerait la moitié
+   de l'écran de saisie. */
+@media (min-width: 1024px) {
+  .admin-shell {
+    display: grid;
+    grid-template-columns: 15rem minmax(0, 1fr);
+    gap: var(--space-5);
+    align-items: start;
+  }
+
+  /* Le rail SUIT le défilement : les écrans d'administration font parfois
+     quarante-neuf fiches de long, et remonter en haut pour changer de section
+     était un aller-retour à chaque fois. */
+  .admin-nav {
+    position: sticky;
+    top: var(--space-4);
+    display: block;
+    margin-bottom: 0;
+    /* Une liste plus haute que la fenêtre défile DANS le rail, sans emporter
+       la page avec elle. */
+    max-height: calc(100vh - var(--space-6));
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+
+  .admin-nav__title {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+    margin: var(--space-4) 0 var(--space-1);
+    padding: 0 var(--space-3);
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--latte);
+  }
+  .admin-nav__title:first-child { margin-top: 0; }
+
+  /* Des lignes, plus des pastilles : dans une colonne, la pilule crème
+     redessine seize fois le même contour et le regard n'y trouve plus le
+     titre. Le fond ne se pose que sur la section ouverte. */
+  .admin-nav__link {
+    display: flex;
+    width: 100%;
+    min-height: 2.4rem;
+    margin-bottom: 2px;
+    padding: .4rem var(--space-3);
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    background: transparent;
+    font-size: .78rem;
+    letter-spacing: .04em;
+    text-transform: none;
+  }
+  .admin-nav__link:hover { background: var(--cream-outline); }
+  .admin-nav__link.is-active { background: var(--brand); border-color: transparent; }
 }
 
 /* Ligne d'identité : le seul nom du vendeur, désormais. Le poste de travail

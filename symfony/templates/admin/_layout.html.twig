@@ -1,30 +1,71 @@
-{# Gabarit commun aux écrans d'administration : ajoute la barre de sections. #}
+{#
+  Gabarit commun aux écrans d'administration : ajoute la barre de sections.
+
+  ── Deux formes pour une seule liste
+
+  Sur téléphone, seize pastilles qui s'enroulent : c'est compact, et l'on n'a
+  de toute façon pas la largeur pour autre chose.
+
+  Sur ordinateur, un RAIL vertical, groupé en sections. Seize pastilles à plat
+  faisaient quatre lignes en haut de chaque écran — un mur d'étiquettes en
+  capitales qu'il fallait relire à chaque visite, et qui repoussait le contenu
+  d'autant. Groupées, elles se cherchent par famille : ce qui touche à
+  l'équipe, ce qui touche au catalogue, ce qui touche à la production.
+
+  Une SEULE liste dans le HTML, deux mises en forme. La dupliquer aurait fait
+  diverger les deux au premier onglet ajouté.
+#}
 {% extends 'base.html.twig' %}
 
 {% block content %}
-  <nav class="admin-nav">
-    {% for section in [
+  {%- set sections = [
+    { title: 'nav.groups.shop', links: [
       { route: 'admin_team',       label: 'nav.team' },
       { route: 'admin_positions',  label: 'nav.positions' },
-      { route: 'admin_targets',    label: 'nav.targets' },
+      { route: 'admin_targets',    label: 'nav.targets' }
+    ] },
+    { title: 'nav.groups.catalogue', links: [
       { route: 'admin_products',   label: 'nav.products' },
-      { route: 'admin_cash',       label: 'nav.pos' },
-      { route: 'admin_sales',      label: 'nav.sales' },
       { route: 'admin_categories', label: 'nav.categories' },
+      { route: 'admin_compositions', label: 'nav.compositions' }
+    ] },
+    { title: 'nav.groups.sales', links: [
+      { route: 'admin_cash',       label: 'nav.pos' },
+      { route: 'admin_sales',      label: 'nav.sales' }
+    ] },
+    { title: 'nav.groups.production', links: [
       { route: 'admin_par_matrix', label: 'nav.parMatrix' },
       { route: 'admin_weather',    label: 'nav.weather' },
-      { route: 'admin_compositions',    label: 'nav.compositions' },
       { route: 'admin_checklist',  label: 'nav.checklist' },
-      { route: 'admin_day_note',   label: 'nav.dayNote' },
+      { route: 'admin_day_note',   label: 'nav.dayNote' }
+    ] },
+    { title: 'nav.groups.system', links: [
       { route: 'admin_settings',   label: 'nav.settings' },
       { route: 'admin_delta',      label: 'nav.delta' },
       { route: 'admin_sync',       label: 'nav.sync' },
       { route: 'admin_audit',      label: 'nav.audit' }
-    ] %}
-      <a class="admin-nav__link {{ app.request.attributes.get('_route') starts with section.route ? 'is-active' : '' }}"
-         href="{{ path(section.route) }}">{{ section.label|trans }}</a>
-    {% endfor %}
-  </nav>
+    ] }
+  ] -%}
 
-  {% block admin_content %}{% endblock %}
+  <div class="admin-shell">
+    <nav class="admin-nav" aria-label="{{ 'nav.sections'|trans }}">
+      {% for section in sections %}
+        {#
+          L'intertitre est MASQUÉ sur téléphone, jamais retiré : un lecteur
+          d'écran l'annonce dans les deux formes, et c'est lui qui dit à quelle
+          famille appartient le lien qu'on vient d'atteindre au clavier.
+        #}
+        <p class="admin-nav__title">{{ section.title|trans }}</p>
+
+        {% for entree in section.links %}
+          <a class="admin-nav__link {{ app.request.attributes.get('_route') starts with entree.route ? 'is-active' : '' }}"
+             href="{{ path(entree.route) }}">{{ entree.label|trans }}</a>
+        {% endfor %}
+      {% endfor %}
+    </nav>
+
+    <div class="admin-main">
+      {% block admin_content %}{% endblock %}
+    </div>
+  </div>
 {% endblock %}

@@ -97,6 +97,13 @@ adminLogin:
     backToSeller: 'Powrót do logowania stanowiska'
 
 nav:
+    sections: 'Sekcje'
+    groups:
+        shop: 'Sklep'
+        catalogue: 'Katalog'
+        sales: 'Sprzedaż'
+        production: 'Produkcja'
+        system: 'System'
     checklist: 'Lista kontrolna'
     dayNote: 'Notatka dnia'
     morning: Rano

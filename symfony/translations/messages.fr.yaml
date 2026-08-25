@@ -100,6 +100,13 @@ adminLogin:
     backToSeller: 'Retour à la connexion du poste'
 
 nav:
+    sections: 'Sections'
+    groups:
+        shop: 'Boutique'
+        catalogue: 'Catalogue'
+        sales: 'Ventes'
+        production: 'Production'
+        system: 'Système'
     checklist: 'Check-list'
     dayNote: 'Note du jour'
     morning: Matin
