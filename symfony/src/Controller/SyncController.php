@@ -6,6 +6,8 @@ namespace Merisu\Inventory\Controller;
 
 use Merisu\Inventory\Domain\BusinessDate;
 use Merisu\Inventory\Domain\CountMoment;
+use Merisu\Inventory\Domain\TaskAccess;
+use Merisu\Inventory\Domain\TaskTile;
 use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Service\InventoryService;
 use Merisu\Inventory\Service\PhotoStorage;
@@ -55,6 +57,24 @@ final class SyncController extends AbstractController
 
         if ($moment === null || !BusinessDate::isValid($date)) {
             return new JsonResponse(['error' => 'INVALID_PAYLOAD'], 400);
+        }
+
+        /*
+          La TUILE, comme à l'écran.
+
+          Cette route rejoue exactement les écritures de la saisie ; la garder
+          derrière la seule session en aurait fait le chemin de contournement
+          du contrôle par tuile. Vérifié APRÈS avoir lu le moment, puisque
+          c'est lui qui désigne la tuile — matin ou soir.
+
+          Refus en 403 JSON et non par exception : le client hors-ligne doit
+          pouvoir distinguer « reconnecte-toi » (401) de « cette file ne te
+          revient pas » (403), et cesser de rejouer dans le second cas.
+        */
+        $tuile = $moment->isEvening() ? TaskTile::Evening : TaskTile::Morning;
+
+        if (!TaskAccess::allows($consultant->tiles, $tuile, $consultant->role)) {
+            return new JsonResponse(['error' => 'TILE_NOT_ALLOWED'], 403);
         }
 
         try {

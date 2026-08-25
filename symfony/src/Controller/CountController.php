@@ -196,8 +196,16 @@ final class CountController extends AbstractController
     #[Route('/saisie/{moment}/enregistrer', name: 'count_save', methods: ['POST'])]
     public function save(Request $request, string $moment): Response
     {
-        $consultant = $this->currentUser->requireConsultant();
         $countMoment = $this->parseMoment($moment);
+
+        // La TUILE, et pas seulement la session. L'écran de saisie était
+        // protégé par `requireTile`, l'enregistrement ne l'était pas : un
+        // compte dont la tuile est fermée se voyait refuser la page, mais un
+        // envoi direct sur cette route passait. Le menu ne protège rien — il
+        // ne fait que ne pas proposer une porte fermée.
+        $consultant = $this->currentUser->requireTile(
+            $countMoment->isEvening() ? TaskTile::Evening : TaskTile::Morning,
+        );
 
         $date = $this->resolveDate($request);
         $workstationId = $this->currentUser->resolveWorkstation($request->request->get('workstationId'));
@@ -226,7 +234,9 @@ final class CountController extends AbstractController
     #[Route('/saisie/{moment}/valider', name: 'count_validate', methods: ['POST'])]
     public function validate(Request $request, string $moment): Response
     {
-        $consultant = $this->currentUser->requireConsultant();
+        $consultant = $this->currentUser->requireTile(
+            $this->parseMoment($moment)->isEvening() ? TaskTile::Evening : TaskTile::Morning,
+        );
         $countMoment = $this->parseMoment($moment);
 
         $date = $this->resolveDate($request);
@@ -273,7 +283,9 @@ final class CountController extends AbstractController
     #[Route('/saisie/{moment}/photo', name: 'count_photo', methods: ['POST'])]
     public function photo(Request $request, string $moment): Response
     {
-        $consultant = $this->currentUser->requireConsultant();
+        $consultant = $this->currentUser->requireTile(
+            $this->parseMoment($moment)->isEvening() ? TaskTile::Evening : TaskTile::Morning,
+        );
         $countMoment = $this->parseMoment($moment);
 
         $date = $this->resolveDate($request);
