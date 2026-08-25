@@ -2917,6 +2917,31 @@ body { overflow-x: hidden; }
    bouton « Imprimer » collait à la première carte de la liste. */
 .form-actions:not(:last-child) { margin-bottom: var(--space-4); }
 
+/*
+  ── Ce qui précède quelque chose doit respirer
+
+  La règle ci-dessus existait pour la barre de boutons seule ; ses voisins ne
+  l'avaient pas. Un formulaire suivi d'un bloc de chiffres les collait donc
+  l'un à l'autre — zéro pixel — et l'écran donnait à lire un seul bloc là où
+  il y en a deux. Signalé sur capture, sur Réseau, entre le bouton « Afficher »
+  et « Pièces vendues ».
+
+  `:not(:last-child)` et non une marge inconditionnelle : le dernier bloc
+  d'une carte ne doit pas creuser un vide sous lui, c'est le rembourrage de la
+  carte qui s'en charge.
+*/
+.form:not(:last-child),
+.filters:not(:last-child),
+.stats:not(:last-child),
+.table-scroll:not(:last-child) { margin-bottom: var(--space-4); }
+
+/*
+  L'aide sous un champ n'a de marge qu'EN HAUT — elle appartient au champ
+  qu'elle explique. Quand elle précède autre chose, il lui en faut une en bas,
+  sinon le bloc suivant vient se coller au texte.
+*/
+.field__hint:not(:last-child) { margin-bottom: var(--space-3); }
+
 .form-actions--sticky {
   position: sticky;
   bottom: 0;
@@ -3814,7 +3839,22 @@ select:disabled, select.field__input:disabled { background-image: url("data:imag
 .ck-bar__fill--part { background: var(--gold); }
 .ck-bar__fill--none { background: var(--border); }
 
-.stats--compact { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+/*
+  Trois colonnes DÈS QU'IL Y A LA PLACE, et pas avant.
+
+  Imposées sans condition, elles donnaient 92 px par tuile sur un téléphone de
+  360 px : « 7 256 » se coupait en deux lignes — « 7 » puis « 256 ». Un nombre
+  qui passe à la ligne cesse d'être un nombre, on le relit deux fois pour
+  vérifier qu'on ne lit pas deux chiffres.
+
+  `auto-fit` retombe donc à deux colonnes, puis à une, selon la largeur
+  disponible.
+*/
+.stats--compact { grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); }
+
+/* Le chiffre ne se coupe jamais : c'est la tuile qui s'élargit, ou la grille
+   qui perd une colonne. */
+.stat__value { white-space: nowrap; }
 .stat__value--ok { color: var(--ok); }
 .stat__value--todo { color: var(--brand); }
 
