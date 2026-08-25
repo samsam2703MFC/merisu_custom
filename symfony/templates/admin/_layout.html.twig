@@ -20,6 +20,7 @@
 {% block content %}
   {%- set sections = [
     { title: 'nav.groups.shop', links: [
+      { route: 'admin_shops',      label: 'nav.shops' },
       { route: 'admin_team',       label: 'nav.team' },
       { route: 'admin_positions',  label: 'nav.positions' },
       { route: 'admin_targets',    label: 'nav.targets' }
@@ -30,7 +31,6 @@
       { route: 'admin_compositions', label: 'nav.compositions' }
     ] },
     { title: 'nav.groups.sales', links: [
-      { route: 'admin_cash',       label: 'nav.pos' },
       { route: 'admin_sales',      label: 'nav.sales' }
     ] },
     { title: 'nav.groups.production', links: [
@@ -41,6 +41,7 @@
     ] },
     { title: 'nav.groups.system', links: [
       { route: 'admin_settings',   label: 'nav.settings' },
+      { route: 'admin_cash',       label: 'nav.pos' },
       { route: 'admin_delta',      label: 'nav.delta' },
       { route: 'admin_sync',       label: 'nav.sync' },
       { route: 'admin_audit',      label: 'nav.audit' }

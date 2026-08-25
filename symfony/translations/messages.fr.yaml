@@ -113,6 +113,7 @@ nav:
     evening: Soir
     toProduce: 'À produire'
     admin: Administration
+    shops: 'Boutiques'
     team: 'Équipe'
     positions: 'Postes & compétences'
     targets: 'Objectifs'
@@ -672,6 +673,28 @@ admin:
         unreachable: 'Service météo injoignable.'
         badAnswer: 'Le service a répondu quelque chose d''inexploitable.'
         hostSaid: 'Réponse du service : %detail%'
+    shops:
+        title: 'Boutiques'
+        subtitle: 'Le réseau, boutique par boutique.'
+        intro: 'Ce qui est PROPRE à une boutique : son adresse, ses coordonnées, son organisation de caisse, ses équipes, ses comptages et ses seuils. Ce qui est COMMUN : le catalogue et les compositions — une enseigne vend la même gamme partout, et un catalogue par boutique obligerait à saisir trois fois le même tiramisu.'
+        create: 'Ajouter une boutique'
+        empty: 'Aucune boutique déclarée.'
+        name: 'Nom de la boutique'
+        address: 'Adresse'
+        postalCode: 'Code postal'
+        city: 'Ville'
+        active: 'Boutique ouverte'
+        activeHint: 'Décochée, elle reste dans l''historique mais ne se propose plus nulle part.'
+        inactive: 'Fermée'
+        noCoordinates: 'Sans coordonnées'
+        noPos: 'Sans caisse'
+        codeHint: 'Code interne : %code%. Il se fabrique et ne se saisit pas — c''est lui que portent les comptages, et un code saisi deux fois aurait fait partager leurs relevés à deux boutiques.'
+        coordinatesHint: 'C''est la météo qui les demande : le service ne connaît pas les boutiques, il connaît des points. Deux boutiques à trois cents kilomètres n''ont pas la même semaine.'
+        posHint: 'Chaque paire d''identifiants GoPOS est liée à une organisation au moment où on la génère : une boutique, une organisation.'
+        nameRequired: 'Le nom est obligatoire : le code ne se montre pas au vendeur, et « BOUTIQUE_3 » dans une liste de trois n''aide personne.'
+        confirmDelete: 'Retirer cette boutique de la liste ?'
+        deleteHint: 'La fiche disparaît, pas ce qu''elle a produit : comptages, plans et historique gardent son code.'
+        deleted: 'Boutique retirée. Ses comptages et son historique sont conservés.'
     settings:
         title: 'Paramètres généraux'
         subtitle: "Horaires, fuseau, langue, politique photo et tolérance du delta."

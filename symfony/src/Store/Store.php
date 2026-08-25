@@ -35,6 +35,7 @@ use Merisu\Inventory\Domain\ProductionPlanStatus;
 use Merisu\Inventory\Domain\RecipeLine;
 use Merisu\Inventory\Domain\RecipeTemplate;
 use Merisu\Inventory\Domain\RoundingMode;
+use Merisu\Inventory\Domain\Shop;
 use Merisu\Inventory\Domain\SupplierSource;
 use Merisu\Inventory\Domain\SyncKind;
 use Merisu\Inventory\Domain\SyncStatus;
@@ -96,6 +97,102 @@ final class Store
             'delta_tolerance' => $settings->deltaTolerance,
             'monthly_tiramisu_target' => $settings->monthlyTiramisuTarget,
         ], ['id' => 1]);
+    }
+
+    // ── Boutiques ───────────────────────────────────────────────────────────
+
+    /** @return list<Shop> */
+    public function shops(bool $activeOnly = false): array
+    {
+        $sql = 'SELECT * FROM inv_shop' . ($activeOnly ? ' WHERE active = 1' : '') . ' ORDER BY sort_order, code';
+
+        return array_map(self::hydrateShop(...), $this->db->fetchAllAssociative($sql));
+    }
+
+    public function shop(string $id): ?Shop
+    {
+        $row = $this->db->fetchAssociative('SELECT * FROM inv_shop WHERE id = ?', [$id]);
+
+        return $row === false ? null : self::hydrateShop($row);
+    }
+
+    /**
+     * Réserve un emplacement libre pour une boutique.
+     *
+     * Même dispositif que les produits : l'identifiant et le code se
+     * fabriquent, ils ne se demandent pas. Un administrateur pressé aurait
+     * saisi deux fois le même code, et deux boutiques auraient partagé leurs
+     * comptages.
+     *
+     * @return array{id: string, code: string, sortOrder: int}
+     */
+    public function nextShopSlot(): array
+    {
+        $pris = [];
+        foreach ($this->db->fetchAllAssociative('SELECT id, code FROM inv_shop') as $r) {
+            $pris[(string) $r['id']] = true;
+            $pris[(string) $r['code']] = true;
+        }
+
+        $rang = 1;
+        while (isset($pris['shop-' . $rang]) || isset($pris['BOUTIQUE_' . $rang])) {
+            ++$rang;
+        }
+
+        $dernier = (int) $this->db->fetchOne('SELECT MAX(sort_order) FROM inv_shop');
+
+        return ['id' => 'shop-' . $rang, 'code' => 'BOUTIQUE_' . $rang, 'sortOrder' => $dernier + 1];
+    }
+
+    public function saveShop(Shop $shop): void
+    {
+        $data = [
+            'code' => $shop->code,
+            'name' => $shop->name,
+            'address' => $shop->address,
+            'postal_code' => $shop->postalCode,
+            'city' => $shop->city,
+            'latitude' => $shop->latitude,
+            'longitude' => $shop->longitude,
+            'pos_organization_id' => $shop->posOrganizationId,
+            'active' => $shop->active ? 1 : 0,
+            'sort_order' => $shop->sortOrder,
+        ];
+
+        if ($this->db->update('inv_shop', $data, ['id' => $shop->id]) === 0) {
+            $this->db->insert('inv_shop', $data + ['id' => $shop->id]);
+        }
+    }
+
+    /**
+     * Retire une boutique de la liste.
+     *
+     * La fiche disparaît, PAS ce qu'elle a produit : comptages, plans et
+     * historique gardent son code. Effacer en cascade aurait fait disparaître
+     * la preuve qu'un inventaire réel a eu lieu — et c'est précisément ce que
+     * l'audit doit pouvoir montrer trois ans plus tard.
+     */
+    public function deleteShop(string $id): void
+    {
+        $this->db->delete('inv_shop', ['id' => $id]);
+    }
+
+    /** @param array<string, mixed> $row */
+    private static function hydrateShop(array $row): Shop
+    {
+        return new Shop(
+            (string) $row['id'],
+            (string) $row['code'],
+            (string) ($row['name'] ?? ''),
+            (string) ($row['address'] ?? ''),
+            (string) ($row['postal_code'] ?? ''),
+            (string) ($row['city'] ?? ''),
+            (float) ($row['latitude'] ?? 0),
+            (float) ($row['longitude'] ?? 0),
+            (string) ($row['pos_organization_id'] ?? ''),
+            (bool) ($row['active'] ?? true),
+            (int) ($row['sort_order'] ?? 0),
+        );
     }
 
     // ── Produits ────────────────────────────────────────────────────────────

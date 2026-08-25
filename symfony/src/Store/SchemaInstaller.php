@@ -118,6 +118,40 @@ final class SchemaInstaller
         }
 
         /*
+          Les boutiques du réseau.
+
+          Propre à chacune : l'adresse, les coordonnées — deux boutiques à
+          trois cents kilomètres n'ont pas la même semaine —, l'organisation de
+          caisse, les équipes, les comptages, les seuils.
+
+          Commun à toutes : le catalogue et les compositions. Une enseigne vend
+          la même gamme partout ; un catalogue par boutique aurait obligé à
+          saisir trois fois le même tiramisu, et le premier renommage en aurait
+          laissé deux en arrière. Là où les boutiques diffèrent, c'est sur les
+          QUANTITÉS, et celles-là sont déjà par boutique.
+
+          Le CODE est la clé stable. Le nom se retape — « Rynek » devient
+          « Wrocław Rynek » le jour où l'on ouvre la deuxième — et un comptage
+          rattaché à un nom aurait changé de boutique à la première correction.
+        */
+        if (!\in_array('inv_shop', $existing, true)) {
+            $t = $schema->createTable('inv_shop');
+            $t->addColumn('id', 'string', ['length' => 64]);
+            $t->addColumn('code', 'string', ['length' => 32]);
+            $t->addColumn('name', 'string', ['length' => 190, 'default' => '']);
+            $t->addColumn('address', 'string', ['length' => 190, 'default' => '']);
+            $t->addColumn('postal_code', 'string', ['length' => 16, 'default' => '']);
+            $t->addColumn('city', 'string', ['length' => 120, 'default' => '']);
+            $t->addColumn('latitude', 'float', ['default' => 0]);
+            $t->addColumn('longitude', 'float', ['default' => 0]);
+            $t->addColumn('pos_organization_id', 'string', ['length' => 64, 'default' => '']);
+            $t->addColumn('active', 'boolean', ['default' => true]);
+            $t->addColumn('sort_order', 'integer', ['default' => 0]);
+            $t->setPrimaryKey(['id']);
+            $t->addUniqueIndex(['code'], 'inv_shop_code');
+        }
+
+        /*
           Liste et ORDRE des catégories de production.
 
           La catégorie reste portée par le produit, sous forme de texte : c'est

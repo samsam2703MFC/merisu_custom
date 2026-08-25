@@ -1,0 +1,160 @@
+{#
+  Admin ▸ Boutiques — le réseau, boutique par boutique.
+
+  Ce qui est PROPRE à une boutique : l'adresse, les coordonnées, l'organisation
+  de caisse, les équipes, les comptages, les seuils. Ce qui est COMMUN : le
+  catalogue et les compositions — une enseigne vend la même gamme partout, et
+  un catalogue par boutique aurait obligé à saisir trois fois le même tiramisu.
+
+  Une fiche repliée par boutique, comme les produits : le même geste, la même
+  forme, rien de nouveau à apprendre.
+#}
+{% extends 'admin/_layout.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'admin.shops.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block admin_content %}
+
+  {{ ui.page_header('admin.shops.title'|trans, 'admin.shops.subtitle'|trans) }}
+
+  <div class="banner banner--info">{{ 'admin.shops.intro'|trans }}</div>
+
+  {# Créer, en tête : c'est le seul geste de la page qui ne modifie rien
+     d'existant, et le chercher sous trois fiches repliées n'aide personne. #}
+  <details class="card admin-new" {{ shops is empty ? 'open' : '' }}>
+    <summary class="admin-new__summary">
+      {{ ui.icon('plus') }}
+      <span>{{ 'admin.shops.create'|trans }}</span>
+    </summary>
+
+    <form method="post" action="{{ path('admin_shop_create') }}" class="form">
+      {{ _self.fields(blank, true) }}
+      <div class="form-actions">
+        <button type="submit" class="button button--primary">{{ 'common.add'|trans }}</button>
+      </div>
+    </form>
+  </details>
+
+  {% if shops is empty %}
+    {{ ui.banner('warn', 'admin.shops.empty'|trans) }}
+  {% else %}
+    {% for shop in shops %}
+      <details class="card admin-item" {{ shop.id == open ? 'open' : '' }}>
+        <summary class="admin-item__summary">
+          <span class="admin-item__head">
+            {{ ui.badge('neutral', shop.code) }}
+            <span class="admin-item__name">{{ shop.name }}</span>
+          </span>
+
+          <span class="admin-item__tags">
+            {#
+              Ce qu'on cherche du regard dans une liste de boutiques : celle à
+              qui il manque encore quelque chose. Sans coordonnées, pas de
+              météo ; sans organisation, pas de caisse.
+            #}
+            {% if not shop.active %}{{ ui.badge('warn', 'admin.shops.inactive'|trans) }}{% endif %}
+            {% if not shop.hasCoordinates %}{{ ui.badge('warn', 'admin.shops.noCoordinates'|trans) }}{% endif %}
+            {% if shop.posOrganizationId is empty %}{{ ui.badge('neutral', 'admin.shops.noPos'|trans) }}{% endif %}
+            {% if shop.addressLine %}<span class="muted">{{ shop.addressLine }}</span>{% endif %}
+          </span>
+        </summary>
+
+        <form method="post" action="{{ path('admin_shop_save', { id: shop.id }) }}" class="form">
+          {{ _self.fields(shop, false) }}
+          <div class="form-actions">
+            <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
+          </div>
+        </form>
+
+        {# Hors du formulaire principal : imbriquer deux formulaires est
+           interdit en HTML, et le navigateur en ignorerait un sans rien dire. #}
+        <form method="post" action="{{ path('admin_shop_delete', { id: shop.id }) }}" class="form">
+          <div class="form-actions">
+            <button type="submit" class="button button--ghost"
+                    data-confirm="{{ 'admin.shops.confirmDelete'|trans }}">
+              {{ 'common.delete'|trans }}
+            </button>
+          </div>
+          <p class="field__hint">{{ 'admin.shops.deleteHint'|trans }}</p>
+        </form>
+      </details>
+    {% endfor %}
+  {% endif %}
+
+{% endblock %}
+
+{#
+  Le MÊME formulaire à la création et à la modification.
+
+  Deux formulaires distincts auraient divergé au premier champ ajouté, et l'on
+  aurait créé une boutique à qui il manque ce que l'édition sait régler.
+#}
+{% macro fields(shop, estNouvelle) %}
+  {% import 'components/_macros.html.twig' as ui %}
+
+  <div class="checkbox-row">
+    <input type="checkbox" id="sh-active-{{ shop.id }}" name="active" value="1"
+           {{ shop.active ? 'checked' : '' }}>
+    <label for="sh-active-{{ shop.id }}">{{ 'admin.shops.active'|trans }}</label>
+  </div>
+  <p class="field__hint">{{ 'admin.shops.activeHint'|trans }}</p>
+
+  <div class="field">
+    <label class="field__label" for="sh-name-{{ shop.id }}">{{ 'admin.shops.name'|trans }}</label>
+    <input class="field__input" type="text" id="sh-name-{{ shop.id }}" name="name"
+           maxlength="190" value="{{ shop.name }}" required>
+    {# Le code se FABRIQUE : un administrateur pressé aurait saisi deux fois le
+       même, et deux boutiques auraient partagé leurs comptages. #}
+    <p class="field__hint">{{ 'admin.shops.codeHint'|trans({ '%code%': shop.code }) }}</p>
+  </div>
+
+  <div class="field">
+    <label class="field__label" for="sh-address-{{ shop.id }}">{{ 'admin.shops.address'|trans }}</label>
+    <input class="field__input" type="text" id="sh-address-{{ shop.id }}" name="address"
+           maxlength="190" value="{{ shop.address }}" autocomplete="street-address">
+  </div>
+
+  <div class="field-grid">
+    <div class="field">
+      <label class="field__label" for="sh-zip-{{ shop.id }}">{{ 'admin.shops.postalCode'|trans }}</label>
+      <input class="field__input" type="text" id="sh-zip-{{ shop.id }}" name="postalCode"
+             maxlength="16" value="{{ shop.postalCode }}" autocomplete="postal-code">
+    </div>
+    <div class="field">
+      <label class="field__label" for="sh-city-{{ shop.id }}">{{ 'admin.shops.city'|trans }}</label>
+      <input class="field__input" type="text" id="sh-city-{{ shop.id }}" name="city"
+             maxlength="120" value="{{ shop.city }}" autocomplete="address-level2">
+    </div>
+  </div>
+
+  {#
+    Les coordonnées : c'est la MÉTÉO qui les demande. One Call ne connaît pas
+    les boutiques, il connaît des points — et deux boutiques à trois cents
+    kilomètres n'ont pas la même semaine.
+  #}
+  <div class="field-grid">
+    <div class="field">
+      <label class="field__label" for="sh-lat-{{ shop.id }}">{{ 'admin.weather.latitude'|trans }}</label>
+      <input class="field__input" type="text" inputmode="decimal" id="sh-lat-{{ shop.id }}"
+             name="latitude" value="{{ shop.latitude ?: '' }}" placeholder="51.1097">
+    </div>
+    <div class="field">
+      <label class="field__label" for="sh-lon-{{ shop.id }}">{{ 'admin.weather.longitude'|trans }}</label>
+      <input class="field__input" type="text" inputmode="decimal" id="sh-lon-{{ shop.id }}"
+             name="longitude" value="{{ shop.longitude ?: '' }}" placeholder="17.0325">
+    </div>
+  </div>
+  <p class="field__hint">{{ 'admin.shops.coordinatesHint'|trans }}</p>
+
+  {#
+    L'organisation de caisse : chaque paire d'identifiants GoPOS est liée à une
+    organisation au moment où on la génère. Une boutique, une organisation.
+  #}
+  <div class="field">
+    <label class="field__label" for="sh-pos-{{ shop.id }}">{{ 'admin.pos.organizationIdLabel'|trans }}</label>
+    <input class="field__input" type="text" id="sh-pos-{{ shop.id }}" name="posOrganizationId"
+           maxlength="64" value="{{ shop.posOrganizationId }}" autocomplete="off" placeholder="13232">
+    <p class="field__hint">{{ 'admin.shops.posHint'|trans }}</p>
+  </div>
+{% endmacro %}

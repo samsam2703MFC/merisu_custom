@@ -255,6 +255,23 @@ p { margin: 0 0 var(--space-2); }
    pastilles restent, parce qu'une colonne de navigation y mangerait la moitié
    de l'écran de saisie. */
 @media (min-width: 1024px) {
+  /*
+    Les écrans d'administration prennent TOUTE la largeur.
+
+    Le contenu est plafonné à 1200 px partout ailleurs, et c'est juste : une
+    ligne de texte plus large se lit mal, et les écrans de comptage sont faits
+    de cartes étroites. Mais l'administration montre des TABLEAUX — quarante et
+    un produits sur cinq colonnes, sept jours sur quarante-neuf lignes, la
+    matrice des seuils. Sur un écran de 1440 px, le rail leur prenait deux cent
+    quarante pixels sur les mille deux cents, et la matrice se remettait à
+    défiler de travers alors que la place était là, à droite, inutilisée.
+
+    Ciblé par `:has()` : le plafond ne bouge que là où un rail existe. Un
+    navigateur qui l'ignore garde les 1200 px — le tableau défile, comme avant,
+    et rien ne casse.
+  */
+  .app-main:has(.admin-shell) { max-width: 1720px; }
+
   .admin-shell {
     display: grid;
     grid-template-columns: 15rem minmax(0, 1fr);
