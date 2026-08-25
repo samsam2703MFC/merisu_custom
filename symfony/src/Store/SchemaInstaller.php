@@ -161,6 +161,9 @@ final class SchemaInstaller
             $t->addColumn('monthly_target', 'integer', ['default' => 0]);
             $t->addColumn('active', 'boolean', ['default' => true]);
             $t->addColumn('sort_order', 'integer', ['default' => 0]);
+            // L'icône montrée à la connexion. Vide = l'écran retombe sur
+            // l'initiale du nom.
+            $t->addColumn('logo_path', 'string', ['length' => 190, 'default' => '']);
             $t->setPrimaryKey(['id']);
             $t->addUniqueIndex(['code'], 'inv_shop_code');
         }
@@ -808,6 +811,10 @@ final class SchemaInstaller
                 'photo_per_product' => 'BOOLEAN DEFAULT 0 NOT NULL',
                 'delta_tolerance' => 'FLOAT DEFAULT 0.05 NOT NULL',
                 'monthly_target' => 'INTEGER DEFAULT 0 NOT NULL',
+                // Ajoutée avec le sélecteur de boutique de l'écran de
+                // connexion. Vide sur une base déjà en service : l'écran
+                // montre l'initiale du nom, et rien n'est à ressaisir.
+                'logo_path' => "VARCHAR(190) DEFAULT '' NOT NULL",
             ],
             'inv_weather_credential' => [
                 // Ajoutée avec One Call 4.0 : une base installée avant ne l'a

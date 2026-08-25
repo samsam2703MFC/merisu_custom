@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Merisu\Inventory\Controller;
 
 use Merisu\Inventory\Domain\Shop;
+use Merisu\Inventory\Service\PhotoStorage;
 use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Service\SecretBox;
 use Merisu\Inventory\Store\ShopStore;
 use Merisu\Inventory\Store\Store;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -42,6 +44,7 @@ final class AdminShopController extends AbstractController
         private readonly ShopStore $shops,
         private readonly CurrentUser $currentUser,
         private readonly SecretBox $box,
+        private readonly PhotoStorage $photos,
     ) {
     }
 
@@ -182,7 +185,44 @@ final class AdminShopController extends AbstractController
             ))),
             monthlyTarget: max(0, (int) $request->request->get('monthlyTarget', 0)),
             active: $request->request->getBoolean('active'),
+            logoPath: $this->readLogo($request, $base),
         );
+    }
+
+    /**
+     * L'icône de la boutique, telle qu'elle paraît à la connexion.
+     *
+     * Trois issues, et une seule enregistre quelque chose : un fichier déposé
+     * remplace l'icône ; la case « retirer » la vide ; sinon on rend `null`,
+     * c'est-à-dire « ne touche à rien ». Cette dernière est le cas ordinaire —
+     * un formulaire ne renvoie pas le fichier déjà en place, et sans cette
+     * règle, corriger un horaire aurait effacé l'image.
+     *
+     * Un type d'image refusé n'interrompt PAS l'enregistrement : le reste de
+     * la fiche est valable, et rejeter une adresse corrigée parce qu'un PDF a
+     * été déposé par mégarde serait une punition sans rapport. L'icône reste
+     * alors celle d'avant.
+     */
+    private function readLogo(Request $request, Shop $base): ?string
+    {
+        if ($request->request->getBoolean('logoRemove')) {
+            return '';
+        }
+
+        $fichier = $request->files->get('logo');
+
+        if (!$fichier instanceof UploadedFile || !$fichier->isValid()) {
+            return null;
+        }
+
+        try {
+            return $this->photos->store($fichier);
+        } catch (\RuntimeException) {
+            // Type refusé : le reste de la fiche est valable, et rejeter une
+            // adresse corrigée parce qu'un PDF a été déposé par mégarde serait
+            // une punition sans rapport. L'icône reste celle d'avant.
+            return null;
+        }
     }
 
     /**

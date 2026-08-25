@@ -1,10 +1,22 @@
 {#
   §7.1 — Connexion au poste.
 
-  Un seul geste : le code à six chiffres. Le poste de travail n'est PAS demandé
-  ici — il vient de la fiche du consultant, tenue en administration. Le faire
-  choisir au vendeur, c'était lui laisser se tromper de poste et fausser des
-  comptages qu'aucun écran ne signalerait.
+  Deux gestes : la boutique, puis le code à six chiffres.
+
+  Le POSTE DE TRAVAIL, lui, n'est pas demandé — il vient de la fiche du
+  consultant, tenue en administration. Le faire choisir au vendeur, c'était lui
+  laisser se tromper de poste et fausser des comptages qu'aucun écran ne
+  signalerait.
+
+  La BOUTIQUE se choisit, elle, et la différence tient à ce qu'on demande. Le
+  poste est une propriété de la PERSONNE, que l'administration connaît. La
+  boutique est une propriété de la TABLETTE : elle est posée dans une salle, et
+  personne d'autre que celui qui la tient ne sait laquelle. Le vendeur venu en
+  renfort à Kraków compte le stock de Kraków, quelle que soit sa fiche.
+
+  Le choix est mémorisé sur l'appareil et présélectionné : sur une tablette qui
+  ne bouge pas, c'est un geste qu'on ne refait jamais. Une seule boutique au
+  réseau, et la question ne se pose pas — l'écran ne la pose pas non plus.
 #}
 {% extends 'base.html.twig' %}
 {% import 'components/_macros.html.twig' as ui %}
@@ -24,6 +36,46 @@
     {% endif %}
 
     <form method="post" action="{{ path('login') }}" class="form">
+      {% if shops|length > 1 %}
+        {#
+          Des boutons radio, pas une liste déroulante : les trois boutiques
+          tiennent à l'écran, et une liste déroulante demanderait deux gestes —
+          ouvrir, choisir — pour montrer ce qui peut se voir d'emblée. Elle
+          cacherait aussi les icônes, qui sont justement ce qu'on reconnaît.
+
+          Le rendu ne doit rien à JavaScript : c'est `:checked + label` qui
+          marque la carte choisie, et six coupes plus bas suivent la même règle.
+        #}
+        <fieldset class="shop-pick">
+          <legend class="shop-pick__legend">{{ 'login.shop'|trans }}</legend>
+
+          {% for boutique in shops %}
+            <input type="radio" class="shop-pick__input visually-hidden"
+                   name="shopId" id="shop-{{ boutique.id }}" value="{{ boutique.id }}"
+                   {{ boutique.id == selectedShop or (selectedShop is null and loop.first) ? 'checked' : '' }}>
+            <label class="shop-pick__card" for="shop-{{ boutique.id }}">
+              {% if boutique.hasLogo %}
+                <img class="shop-pick__icon" src="{{ asset(boutique.logoPath) }}" alt="">
+              {% else %}
+                {# À défaut d'image, l'initiale — jamais un cadre vide, qui se
+                   lit comme une image qui n'a pas fini de charger. #}
+                <span class="shop-pick__icon shop-pick__icon--letter" aria-hidden="true">{{ boutique.initial }}</span>
+              {% endif %}
+              <span class="shop-pick__name">{{ boutique.name }}</span>
+            </label>
+          {% endfor %}
+        </fieldset>
+      {% elseif shops|length == 1 %}
+        {# Une seule boutique : on la NOMME sans rien demander. Un choix unique
+           n'est pas un choix, mais savoir où l'on compte reste utile. #}
+        <p class="shop-pick__single">
+          {% if shops[0].hasLogo %}
+            <img class="shop-pick__icon" src="{{ asset(shops[0].logoPath) }}" alt="">
+          {% endif %}
+          <span class="shop-pick__name">{{ shops[0].name }}</span>
+        </p>
+      {% endif %}
+
       {{ ui.pin_field('login.pincode'|trans, true) }}
 
       <button type="submit" class="button button--primary button--block button--large">

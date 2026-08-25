@@ -108,6 +108,7 @@ final readonly class ShopStore
             'monthly_target' => $shop->monthlyTarget,
             'active' => $shop->active ? 1 : 0,
             'sort_order' => $shop->sortOrder,
+            'logo_path' => $shop->logoPath,
         ];
 
         if ($ancien === false) {
@@ -161,6 +162,7 @@ final readonly class ShopStore
             (int) ($row['monthly_target'] ?? 0),
             (bool) ($row['active'] ?? true),
             (int) ($row['sort_order'] ?? 0),
+            (string) ($row['logo_path'] ?? ''),
         );
     }
 }

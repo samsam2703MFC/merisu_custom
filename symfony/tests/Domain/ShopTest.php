@@ -113,4 +113,55 @@ final class ShopTest extends TestCase
     {
         self::assertTrue((new Shop('s', 'S', 'X'))->active);
     }
+
+    /**
+     * L'INITIALE de repli, quand aucune icône n'est posée.
+     *
+     * `mb_` et non `strtoupper` : la première boutique à s'appeler « Łódź »
+     * aurait perdu son Ł, et l'initiale serait devenue le défaut le plus
+     * visible de l'écran de connexion.
+     */
+    #[DataProvider('initiales')]
+    public function testLInitialeTientLesAlphabets(string $nom, string $attendue): void
+    {
+        self::assertSame($attendue, (new Shop('s', 'S', $nom))->initial());
+    }
+
+    /** @return iterable<string, array{string, string}> */
+    public static function initiales(): iterable
+    {
+        yield 'latin' => ['Wrocław Rynek', 'W'];
+        yield 'polonais' => ['Łódź Manufaktura', 'Ł'];
+        yield 'déjà en capitale' => ['Kraków', 'K'];
+        yield 'espace en tête' => ['  Warszawa', 'W'];
+        // Une fiche neuve n'a pas encore de nom : un carré vide se lirait
+        // comme une image qui n'a pas fini de charger.
+        yield 'sans nom' => ['', '?'];
+    }
+
+    public function testUneBoutiqueSansIconeLeDit(): void
+    {
+        self::assertFalse((new Shop('s', 'S', 'X'))->hasLogo());
+        self::assertTrue((new Shop('s', 'S', 'X', logoPath: '/uploads/a.png'))->hasLogo());
+        // Des espaces ne font pas une image.
+        self::assertFalse((new Shop('s', 'S', 'X', logoPath: '   '))->hasLogo());
+    }
+
+    /**
+     * Enregistrer autre chose ne doit pas emporter l'icône.
+     *
+     * Le formulaire ne renvoie pas le fichier déjà en place : sans cette
+     * règle, corriger un horaire l'aurait effacée, et il aurait fallu la
+     * redéposer sans que rien ne l'annonce.
+     */
+    public function testCorrigerUnChampNEffacePasLIcone(): void
+    {
+        $avec = new Shop('s', 'S', 'Wrocław', logoPath: '/uploads/a.png');
+
+        self::assertSame('/uploads/a.png', $avec->with(city: 'Wrocław')->logoPath);
+        self::assertSame('/uploads/b.png', $avec->with(logoPath: '/uploads/b.png')->logoPath);
+        // Vide EXPLICITE : c'est la case « retirer l'icône », et elle doit
+        // pouvoir vider, sans quoi une image posée serait définitive.
+        self::assertSame('', $avec->with(logoPath: '')->logoPath);
+    }
 }

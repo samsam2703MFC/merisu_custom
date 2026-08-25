@@ -7,10 +7,20 @@ namespace Merisu\Inventory\Service;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 /**
- * Stockage des photos de comptage.
+ * Stockage des images déposées : photos de contrôle, icônes de boutique.
  *
- * Le type MIME est vérifié en liste blanche, et l'extension est déduite de ce
- * type : on n'écrit jamais un contenu arbitraire sous un nom choisi par le client.
+ * Le type est lu DANS LES OCTETS, jamais dans le nom ni dans l'en-tête envoyé
+ * par le client — l'un comme l'autre se choisissent librement. L'extension est
+ * ensuite déduite du type reconnu : on n'écrit jamais un contenu arbitraire
+ * sous un nom dicté par le navigateur.
+ *
+ * `getimagesize` plutôt que `getMimeType()` : cette dernière réclame
+ * `symfony/mime`, absent de cette installation, et lève une `LogicException`
+ * quand il manque. Le dépôt échouait donc à tous les coups — sans message,
+ * l'écran se rechargeant simplement sans l'image. `getimagesize` fait mieux
+ * que combler ce trou : il ne devine pas un type, il DÉCODE l'en-tête de
+ * l'image, et rejette du même coup le fichier qui se contente d'en porter le
+ * nom.
  */
 final class PhotoStorage
 {
@@ -26,10 +36,10 @@ final class PhotoStorage
     ) {
     }
 
-    /** @return string URL publique de la photo enregistrée */
+    /** @return string URL publique de l'image enregistrée */
     public function store(UploadedFile $file): string
     {
-        $extension = self::ALLOWED[$file->getMimeType() ?? ''] ?? null;
+        $extension = self::ALLOWED[self::imageType($file->getPathname())] ?? null;
 
         if ($extension === null) {
             throw new \RuntimeException('UNSUPPORTED_IMAGE_TYPE');
@@ -43,6 +53,32 @@ final class PhotoStorage
         $file->move($this->uploadDir, $name);
 
         return $this->publicPath . '/' . $name;
+    }
+
+    /**
+     * Les dimensions de l'image, ou null si le fichier n'en est pas une.
+     *
+     * L'appelant s'en sert pour DIRE ce qu'il va faire — « 480×200, recadrée
+     * au centre » — plutôt que de recadrer en silence et laisser découvrir la
+     * coupe à la connexion.
+     *
+     * @return array{int, int}|null largeur, hauteur
+     */
+    public static function dimensions(string $path): ?array
+    {
+        $taille = @getimagesize($path);
+
+        return $taille === false ? null : [(int) $taille[0], (int) $taille[1]];
+    }
+
+    /** Le type de l'image tel que ses octets le déclarent, ou '' si ce n'en est pas une. */
+    private static function imageType(string $path): string
+    {
+        // Le silence est voulu : un fichier qui n'est pas une image n'est pas
+        // une anomalie du serveur, c'est une saisie à refuser proprement.
+        $taille = @getimagesize($path);
+
+        return $taille === false ? '' : (string) ($taille['mime'] ?? '');
     }
 
     /** Enregistre une image transmise en base64 (file d'attente hors-ligne). */

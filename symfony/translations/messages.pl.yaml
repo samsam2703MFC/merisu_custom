@@ -44,6 +44,7 @@ status:
 
 login:
     pincode: 'Kod PIN (6 cyfr)'
+    shop: 'Sklep'
     title: Logowanie
     subtitle: 'Zaloguj się, aby policzyć stan magazynowy swojego stanowiska.'
     identifier: Identyfikator
@@ -696,6 +697,9 @@ admin:
         noCoordinates: 'Bez współrzędnych'
         noPos: 'Bez kasy'
         codeHint: 'Kod wewnętrzny: %code%. Powstaje automatycznie i nie wpisuje się go — to on jest zapisywany w liczeniach, a kod wpisany dwa razy sprawiłby, że dwa sklepy dzieliłyby swoje odczyty.'
+        logo: 'Ikona sklepu'
+        logoHint: 'Widoczna przy logowaniu, obok nazwy: przy stanowisku rozpoznaje się ją, zanim się przeczyta. Każdy obraz się nada — zostanie przycięty do kwadratu od środka. Bez obrazu: pierwsza litera nazwy.'
+        logoRemove: 'Usuń ikonę'
         coordinatesHint: 'Wymaga ich pogoda: serwis nie zna sklepów, zna punkty. Dwa sklepy oddalone o trzysta kilometrów nie mają tego samego tygodnia.'
         posHint: 'Każda para danych GoPOS jest powiązana z organizacją w chwili wygenerowania: jeden sklep, jedna organizacja.'
         posSection: 'Kasa tego sklepu'
@@ -822,6 +826,7 @@ errors:
     UNKNOWN_WORKSTATION: 'Nieznane stanowisko.'
     MISSING_WORKSTATION: 'Wybierz stanowisko.'
     NO_WORKSTATION_ASSIGNED: 'Do tego konta nie przypisano stanowiska.'
+    SHOP_REQUIRED: 'Wybierz sklep, w którym pracujesz.'
     WORKSTATION_NOT_ALLOWED: 'Możesz wprowadzać dane tylko na swoim stanowisku.'
     ROLE_NOT_ALLOWED: 'Dostęp tylko dla administratora.'
     ADMIN_ONLY: 'Dostęp tylko dla administratora.'

@@ -89,7 +89,39 @@ final readonly class Shop
         public int $monthlyTarget = 0,
         public bool $active = true,
         public int $sortOrder = 0,
+        /**
+         * L'icône de la boutique, telle qu'elle paraît à la connexion.
+         *
+         * C'est ce que le vendeur reconnaît en premier : au poste, on ouvre
+         * l'application les mains prises, on ne lit pas trois noms qui
+         * commencent tous par « Merisù ». L'image se choisit en
+         * administration — une boutique n'a pas à en changer depuis la
+         * tablette de la salle.
+         *
+         * Chemin public, vide tant qu'aucune image n'est posée : l'écran
+         * retombe alors sur l'initiale du nom, jamais sur un cadre vide.
+         */
+        public string $logoPath = '',
     ) {
+    }
+
+    public function hasLogo(): bool
+    {
+        return trim($this->logoPath) !== '';
+    }
+
+    /**
+     * L'initiale montrée à défaut d'image.
+     *
+     * Première lettre du nom, en capitale. `mb_` et non `strtoupper` : la
+     * première boutique à s'appeler « Łódź » aurait perdu son Ł, et l'initiale
+     * de repli serait devenue le défaut le plus visible de l'écran.
+     */
+    public function initial(): string
+    {
+        $nom = trim($this->name);
+
+        return $nom === '' ? '?' : mb_strtoupper(mb_substr($nom, 0, 1));
     }
 
     /**
@@ -173,6 +205,7 @@ final readonly class Shop
         ?int $monthlyTarget = null,
         ?bool $active = null,
         ?int $sortOrder = null,
+        ?string $logoPath = null,
     ): self {
         return new self(
             $this->id,
@@ -199,6 +232,10 @@ final readonly class Shop
             $monthlyTarget ?? $this->monthlyTarget,
             $active ?? $this->active,
             $sortOrder ?? $this->sortOrder,
+            // Comme le secret de caisse : rien n'est envoyé, rien ne change.
+            // Enregistrer une adresse ne doit pas effacer l'icône, que le
+            // formulaire ne renvoie pas quand on ne touche pas au champ.
+            $logoPath ?? $this->logoPath,
         );
     }
 }

@@ -4076,3 +4076,109 @@ select:disabled, select.field__input:disabled { background-image: url("data:imag
   overflow-wrap: anywhere;
   opacity: .85;
 }
+
+/* ── Sélecteur de boutique, à la connexion ───────────────────────────────── */
+
+/*
+  La boutique se choisit AVANT le code : c'est la première question que pose
+  une tablette posée dans une salle. Trois cartes côte à côte plutôt qu'une
+  liste déroulante — les icônes sont justement ce qu'on reconnaît, et une liste
+  déroulante les cacherait derrière un geste.
+
+  Aucune de ces règles ne demande JavaScript : `:checked + label` fait le
+  marquage, comme les six coupes du code juste en dessous.
+*/
+.shop-pick {
+  border: 0;
+  padding: 0;
+  margin: 0 0 var(--space-4);
+  display: grid;
+  /* Trois par ligne dès qu'elles tiennent, deux sinon. `auto-fit` et non
+     `auto-fill` : à deux boutiques, les cartes occupent la largeur au lieu de
+     laisser une colonne fantôme. */
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+  gap: var(--space-2);
+}
+
+.shop-pick__legend {
+  padding: 0;
+  margin-bottom: var(--space-2);
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.shop-pick__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  /* La carte ENTIÈRE est la cible, pas le nom : au poste on vise une image,
+     pas une ligne de texte. */
+  min-height: var(--touch);
+  padding: var(--space-3) var(--space-2);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+
+/*
+  L'ICÔNE EST CARRÉE, quoi qu'on ait téléversé.
+
+  `aspect-ratio` fixe le cadre et `object-fit: cover` recadre au centre : une
+  photo en 16/9 déposée en administration n'étire donc jamais son voisin, et
+  les trois cartes gardent la même hauteur. Contraindre le fichier à l'envoi
+  aurait fait refuser des images parfaitement utilisables, à charge pour
+  l'administrateur de les recouper lui-même.
+*/
+.shop-pick__icon {
+  width: 56px;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: var(--radius);
+  background: var(--cream-outline);
+}
+
+.shop-pick__icon--letter {
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.shop-pick__name {
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+/* Le lien radio → carte : c'est lui qui rend le choix visible sans script. */
+.shop-pick__input:checked + .shop-pick__card {
+  border-color: var(--brand);
+  background: var(--cream-outline);
+}
+
+.shop-pick__input:focus-visible + .shop-pick__card {
+  outline: 3px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* Une seule boutique : on la nomme, on ne la fait pas choisir. */
+.shop-pick__single {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-4);
+}
+
+/* L'icône et ses commandes côte à côte : la vignette montre ce que le vendeur
+   verra, le champ la remplace. Séparés, on ne saurait pas laquelle on change. */
+.shop-logo-field { display: flex; align-items: flex-start; gap: var(--space-3); }
+.shop-logo-field__controls { flex: 1; min-width: 0; display: grid; gap: var(--space-2); }

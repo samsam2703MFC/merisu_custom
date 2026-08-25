@@ -44,6 +44,7 @@ status:
 
 login:
     pincode: 'Código PIN (6 dígitos)'
+    shop: 'Tienda'
     title: 'Iniciar sesión'
     subtitle: 'Identifícate para contar el stock de tu puesto.'
     identifier: Identificador
@@ -696,6 +697,9 @@ admin:
         noCoordinates: 'Sin coordenadas'
         noPos: 'Sin caja'
         codeHint: 'Código interno: %code%. Se fabrica y no se introduce — es el que llevan los recuentos, y un código introducido dos veces habría hecho que dos tiendas compartieran sus registros.'
+        logo: 'Icono de la tienda'
+        logoHint: 'Se muestra al iniciar sesión, junto al nombre: en el puesto se reconoce antes de leerse. Vale cualquier imagen — se recorta centrada, en cuadrado. Sin imagen, la inicial del nombre.'
+        logoRemove: 'Quitar el icono'
         coordinatesHint: 'Las pide la meteorología: el servicio no conoce las tiendas, conoce puntos. Dos tiendas a trescientos kilómetros no tienen la misma semana.'
         posHint: 'Cada par de credenciales GoPOS queda ligado a una organización en el momento de generarlo: una tienda, una organización.'
         posSection: 'Caja de esta tienda'
@@ -822,6 +826,7 @@ errors:
     UNKNOWN_WORKSTATION: 'Puesto de trabajo desconocido.'
     MISSING_WORKSTATION: 'Selecciona un puesto de trabajo.'
     NO_WORKSTATION_ASSIGNED: 'Esta cuenta no tiene puesto asignado.'
+    SHOP_REQUIRED: 'Elige la tienda en la que trabajas.'
     WORKSTATION_NOT_ALLOWED: 'Solo puedes registrar en tu puesto.'
     ROLE_NOT_ALLOWED: 'Acceso reservado al administrador.'
     ADMIN_ONLY: 'Acceso reservado al administrador.'

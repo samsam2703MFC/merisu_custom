@@ -25,6 +25,7 @@ final class CurrentUser
 {
     private const SESSION_KEY = 'merisu.consultant_id';
     private const WORKSTATION_KEY = 'merisu.workstation_id';
+    private const SHOP_KEY = 'merisu.shop_id';
 
     public function __construct(
         private readonly RequestStack $requestStack,
@@ -32,7 +33,7 @@ final class CurrentUser
     ) {
     }
 
-    public function login(Consultant $consultant, ?string $workstationId): void
+    public function login(Consultant $consultant, ?string $workstationId, ?string $shopId = null): void
     {
         $session = $this->requestStack->getSession();
         // Nouvel identifiant de session à la connexion : parade classique à la
@@ -40,6 +41,14 @@ final class CurrentUser
         $session->migrate(true);
         $session->set(self::SESSION_KEY, $consultant->id);
         $session->set(self::WORKSTATION_KEY, $workstationId ?? $consultant->defaultWorkstationId);
+
+        // La boutique est celle de la TABLETTE, pas celle de la personne : le
+        // vendeur qui vient en renfort à Kraków compte le stock de Kraków. Le
+        // poste, lui, reste attaché à la fiche — deux notions distinctes qu'un
+        // seul champ aurait confondues.
+        if ($shopId !== null && $shopId !== '') {
+            $session->set(self::SHOP_KEY, $shopId);
+        }
     }
 
     public function logout(): void
@@ -80,6 +89,19 @@ final class CurrentUser
     public function selectWorkstation(string $workstationId): void
     {
         $this->requestStack->getSession()->set(self::WORKSTATION_KEY, $workstationId);
+    }
+
+    /** La boutique où l'on travaille, ou null si le réseau n'en compte qu'une. */
+    public function shopId(): ?string
+    {
+        $value = $this->requestStack->getSession()->get(self::SHOP_KEY);
+
+        return \is_string($value) && $value !== '' ? $value : null;
+    }
+
+    public function selectShop(string $shopId): void
+    {
+        $this->requestStack->getSession()->set(self::SHOP_KEY, $shopId);
     }
 
     /** @throws AccessDeniedHttpException si personne n'est connecté */

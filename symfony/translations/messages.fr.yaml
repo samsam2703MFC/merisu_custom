@@ -47,6 +47,7 @@ status:
 
 login:
     pincode: 'Code PIN (6 chiffres)'
+    shop: 'Boutique'
     title: Connexion
     subtitle: 'Identifiez-vous pour compter le stock de votre poste.'
     identifier: Identifiant
@@ -699,6 +700,9 @@ admin:
         noCoordinates: 'Sans coordonnées'
         noPos: 'Sans caisse'
         codeHint: 'Code interne : %code%. Il se fabrique et ne se saisit pas — c''est lui que portent les comptages, et un code saisi deux fois aurait fait partager leurs relevés à deux boutiques.'
+        logo: 'Icône de la boutique'
+        logoHint: 'Montrée à la connexion, à côté du nom : au poste, c''est elle qu''on reconnaît avant de lire. Toute image convient — elle est recadrée au centre, en carré. Sans image, l''initiale du nom.'
+        logoRemove: 'Retirer l''icône'
         coordinatesHint: 'C''est la météo qui les demande : le service ne connaît pas les boutiques, il connaît des points. Deux boutiques à trois cents kilomètres n''ont pas la même semaine.'
         posHint: 'Chaque paire d''identifiants GoPOS est liée à une organisation au moment où on la génère : une boutique, une organisation.'
         posSection: 'Caisse de cette boutique'
@@ -825,6 +829,7 @@ errors:
     UNKNOWN_WORKSTATION: 'Poste de travail inconnu.'
     MISSING_WORKSTATION: 'Sélectionnez un poste de travail.'
     NO_WORKSTATION_ASSIGNED: 'Aucun poste affecté à ce compte.'
+    SHOP_REQUIRED: 'Choisissez la boutique où vous travaillez.'
     WORKSTATION_NOT_ALLOWED: 'Vous ne pouvez saisir que sur votre poste.'
     ROLE_NOT_ALLOWED: "Accès réservé à l'administrateur."
     ADMIN_ONLY: "Accès réservé à l'administrateur."

@@ -44,6 +44,7 @@ status:
 
 login:
     pincode: 'Codice PIN (6 cifre)'
+    shop: 'Punto vendita'
     title: Accesso
     subtitle: 'Accedi per contare le scorte della tua postazione.'
     identifier: Identificativo
@@ -696,6 +697,9 @@ admin:
         noCoordinates: 'Senza coordinate'
         noPos: 'Senza cassa'
         codeHint: 'Codice interno: %code%. Si fabbrica e non si inserisce — è quello che portano i conteggi, e un codice inserito due volte avrebbe fatto condividere le rilevazioni a due negozi.'
+        logo: 'Icona del punto vendita'
+        logoHint: 'Mostrata all''accesso, accanto al nome: alla postazione la si riconosce prima di leggere. Va bene qualsiasi immagine — viene ritagliata al centro, in quadrato. Senza immagine, l''iniziale del nome.'
+        logoRemove: 'Rimuovi l''icona'
         coordinatesHint: 'Le chiede il meteo: il servizio non conosce i negozi, conosce dei punti. Due negozi a trecento chilometri non hanno la stessa settimana.'
         posHint: 'Ogni coppia di credenziali GoPOS è legata a un''organizzazione al momento in cui la si genera: un negozio, un''organizzazione.'
         posSection: 'Cassa di questo negozio'
@@ -822,6 +826,7 @@ errors:
     UNKNOWN_WORKSTATION: 'Postazione sconosciuta.'
     MISSING_WORKSTATION: 'Seleziona una postazione.'
     NO_WORKSTATION_ASSIGNED: 'Nessuna postazione assegnata a questo account.'
+    SHOP_REQUIRED: 'Scegli il punto vendita in cui lavori.'
     WORKSTATION_NOT_ALLOWED: 'Puoi inserire dati solo sulla tua postazione.'
     ROLE_NOT_ALLOWED: "Accesso riservato all'amministratore."
     ADMIN_ONLY: "Accesso riservato all'amministratore."

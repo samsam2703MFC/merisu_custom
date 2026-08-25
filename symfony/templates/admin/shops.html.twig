@@ -28,7 +28,7 @@
       <span>{{ 'admin.shops.create'|trans }}</span>
     </summary>
 
-    <form method="post" action="{{ path('admin_shop_create') }}" class="form">
+    <form method="post" action="{{ path('admin_shop_create') }}" class="form" enctype="multipart/form-data">
       {{ _self.fields(blank, canStoreSecret, timezones) }}
       <div class="form-actions">
         <button type="submit" class="button button--primary">{{ 'common.add'|trans }}</button>
@@ -60,7 +60,7 @@
           </span>
         </summary>
 
-        <form method="post" action="{{ path('admin_shop_save', { id: shop.id }) }}" class="form">
+        <form method="post" action="{{ path('admin_shop_save', { id: shop.id }) }}" class="form" enctype="multipart/form-data">
           {{ _self.fields(shop, canStoreSecret, timezones) }}
           <div class="form-actions">
             <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
@@ -107,6 +107,41 @@
     {# Le code se FABRIQUE : un administrateur pressé aurait saisi deux fois le
        même, et deux boutiques auraient partagé leurs comptages. #}
     <p class="field__hint">{{ 'admin.shops.codeHint'|trans({ '%code%': shop.code }) }}</p>
+  </div>
+
+  {#
+    L'icône de la boutique, montrée à la connexion à côté du nom.
+
+    Elle est PRÉSENTÉE ici en 1:1, exactement comme à la connexion : c'est le
+    seul endroit où l'administrateur peut voir ce que le vendeur verra, et une
+    vignette au format d'origine lui aurait laissé croire à un cadrage qui
+    n'existe pas. Toute image est acceptée et recadrée au centre — refuser un
+    fichier non carré aurait obligé à sortir d'ici pour le recouper.
+  #}
+  <div class="field">
+    <label class="field__label" for="sh-logo-{{ shop.id }}">{{ 'admin.shops.logo'|trans }}</label>
+
+    <div class="shop-logo-field">
+      {% if shop.hasLogo %}
+        <img class="shop-pick__icon" src="{{ asset(shop.logoPath) }}" alt="">
+      {% else %}
+        <span class="shop-pick__icon shop-pick__icon--letter" aria-hidden="true">{{ shop.initial }}</span>
+      {% endif %}
+
+      <div class="shop-logo-field__controls">
+        <input class="field__input" type="file" id="sh-logo-{{ shop.id }}" name="logo"
+               accept="image/jpeg,image/png,image/webp">
+
+        {% if shop.hasLogo %}
+          <div class="checkbox-row">
+            <input type="checkbox" id="sh-logo-rm-{{ shop.id }}" name="logoRemove" value="1">
+            <label for="sh-logo-rm-{{ shop.id }}">{{ 'admin.shops.logoRemove'|trans }}</label>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <p class="field__hint">{{ 'admin.shops.logoHint'|trans }}</p>
   </div>
 
   <div class="field">
