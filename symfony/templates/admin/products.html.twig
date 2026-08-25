@@ -73,7 +73,43 @@
     </form>
   </details>
 
+  {#
+    ── Bascule rayons / liste ───────────────────────────────────────────────
+
+    Deux LIENS et non des onglets en CSS : les onglets exigent que les deux
+    vues soient dans la page, et une fiche produit porte quinze champs. Avec
+    quarante-neuf produits, les écrire deux fois aurait doublé une page déjà
+    lourde pour une bascule qu'on actionne trois fois par mois.
+
+    Le rendu est donc choisi au serveur, et chaque vue ne coûte que ce qu'elle
+    montre.
+  #}
+  <div class="tabs__bar">
+    <a class="tabs__tab tabs__tab--link {{ byCategory ? 'is-active' : '' }}"
+       href="{{ path('admin_products', { vue: 'rayons' }) }}">
+      {{ 'admin.products.byCategory'|trans }}
+    </a>
+    <a class="tabs__tab tabs__tab--link {{ byCategory ? '' : 'is-active' }}"
+       href="{{ path('admin_products', { vue: 'liste' }) }}">
+      {{ 'admin.products.byProduct'|trans }} <span class="muted">({{ products|length }})</span>
+    </a>
+  </div>
+
   {% for product in products %}
+    {#
+      L'intertitre de rayon, en vue « rayons ».
+
+      Comparé au produit PRÉCÉDENT, et non à une variable accumulée : un `set`
+      posé dans une boucle Twig ne survit pas à l'itération, et l'intertitre se
+      répéterait à chaque ligne.
+    #}
+    {% if byCategory and (loop.first or product.category != products[loop.index0 - 1].category) %}
+      <h2 class="prod-group">
+        {{ product.category ?: 'produce.uncategorised'|trans }}
+        <span class="muted">({{ categoryCounts[product.category] ?? 0 }})</span>
+      </h2>
+    {% endif %}
+
     {# Fiche dépliée d'emblée : celle qu'on vient de créer, pour finir de la
        régler sans la chercher au bas de la liste. #}
     <details class="card admin-item" {{ product.id == open ? 'open' : '' }}>

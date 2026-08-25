@@ -504,6 +504,8 @@ admin:
         placeholderWarning: 'Denominazioni provvisorie: da sostituire con i nomi reali dei prodotti.'
         arrange: 'Ordina per categoria'
         arrangeHint: 'Raggruppa i prodotti per reparto, nell''ordine di Admin ▸ Categorie, e rimette ogni gamma nel suo ordine di formato. Nessuna categoria viene riassegnata.'
+        byCategory: 'Per reparto'
+        byProduct: 'Tutti i prodotti'
         arranged: '%count% scheda/e spostata/e.'
     roundingMode:
         CEIL: 'Al multiplo superiore'

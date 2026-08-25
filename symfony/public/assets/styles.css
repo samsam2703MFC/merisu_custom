@@ -2224,6 +2224,27 @@ body { overflow-x: hidden; }
   transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 
+/* La bascule rendue en LIENS et non en onglets CSS.
+
+   Les onglets exigent que les deux vues soient dans la page ; une fiche
+   produit porte quinze champs, et avec quarante-neuf produits les écrire deux
+   fois aurait doublé une page déjà lourde. L'état actif vient donc du serveur,
+   pas d'un `:checked`. */
+.tabs__tab--link { text-decoration: none; color: var(--text-muted); }
+.tabs__tab--link.is-active { color: var(--brand); border-bottom-color: var(--brand); }
+
+/* L'intertitre d'un rayon dans la liste des produits. Discret : c'est un
+   repère de parcours, pas un titre de page — les fiches restent le sujet. */
+.prod-group {
+  margin: var(--space-4) 0 var(--space-2);
+  font-size: .8rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--latte);
+}
+.prod-group:first-of-type { margin-top: var(--space-2); }
+
 .tabs__panel { display: none; }
 
 /* Cinq rangs, écrits un par un : `nth-of-type` ne sait pas compter en

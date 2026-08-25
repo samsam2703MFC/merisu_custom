@@ -9,6 +9,7 @@ use Merisu\Inventory\Adapter\RecipeServiceInterface;
 use Merisu\Inventory\Adapter\ShopRankingServiceInterface;
 use Merisu\Inventory\Adapter\TranslationUnavailable;
 use Merisu\Inventory\Domain\BusinessDate;
+use Merisu\Inventory\Domain\CatalogueOrder;
 use Merisu\Inventory\Domain\ChecklistItem;
 use Merisu\Inventory\Domain\ChecklistSection;
 use Merisu\Inventory\Domain\ContainerType;
@@ -129,8 +130,40 @@ final class AdminController extends AbstractController
     {
         $this->currentUser->requireAdmin();
 
+        /*
+          Vue par RAYONS ou liste simple.
+
+          Par rayons par défaut : la boutique a quarante-neuf fiches, et une
+          liste à plat oblige à connaître l'ordre de rangement pour trouver une
+          crème. Regroupée, on descend jusqu'au rayon puis on lit trois lignes.
+
+          Le tri de la vue « rayons » est CALCULÉ ici et n'écrit rien : c'est un
+          affichage. Le rangement durable, celui qui décide de l'ordre du
+          comptage, se demande explicitement par le bouton « Ranger ».
+        */
+        $parRayons = $request->query->get('vue', 'rayons') !== 'liste';
+        $produits = $this->store->products();
+
+        if ($parRayons) {
+            $ordre = array_flip(CatalogueOrder::of($produits, $this->store->categoryOrder()));
+            usort(
+                $produits,
+                static fn (Product $a, Product $b): int => ($ordre[$a->id] ?? PHP_INT_MAX)
+                    <=> ($ordre[$b->id] ?? PHP_INT_MAX),
+            );
+        }
+
+        // Le compte par rayon, pour l'intertitre : « Premium (9) » dit tout de
+        // suite s'il manque une taille.
+        $comptes = [];
+        foreach ($produits as $produit) {
+            $comptes[$produit->category] = ($comptes[$produit->category] ?? 0) + 1;
+        }
+
         return $this->render('admin/products.html.twig', [
-            'products' => $this->store->products(),
+            'products' => $produits,
+            'byCategory' => $parRayons,
+            'categoryCounts' => $comptes,
             // La liste tenue en Admin ▸ Catégories, dans SON ordre — celui du
             // parcours de la boutique. La fiche produit y choisit, elle n'en
             // invente plus : en saisie libre, « Tiramisu » et « tiramisus »

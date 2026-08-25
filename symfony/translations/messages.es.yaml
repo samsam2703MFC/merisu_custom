@@ -504,6 +504,8 @@ admin:
         placeholderWarning: 'Denominaciones provisionales: sustitúyelas por los nombres reales.'
         arrange: 'Ordenar por categoría'
         arrangeHint: 'Agrupa los productos por sección, en el orden de Admin ▸ Categorías, y devuelve cada gama a su orden de tamaño. No se reasigna ninguna categoría.'
+        byCategory: 'Por sección'
+        byProduct: 'Todos los productos'
         arranged: '%count% ficha(s) desplazada(s).'
     roundingMode:
         CEIL: 'Al múltiplo superior'

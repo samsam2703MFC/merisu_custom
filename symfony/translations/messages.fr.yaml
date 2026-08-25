@@ -507,6 +507,8 @@ admin:
         placeholderWarning: 'Libellés provisoires : à remplacer par les vrais noms de produits.'
         arrange: 'Ranger par catégorie'
         arrangeHint: 'Regroupe les produits par rayon, dans l''ordre d''Admin ▸ Catégories, et remet chaque gamme dans son ordre de taille. Aucune catégorie n''est réattribuée.'
+        byCategory: 'Par rayon'
+        byProduct: 'Tous les produits'
         arranged: '%count% fiche(s) déplacée(s).'
     roundingMode:
         CEIL: 'Au multiple supérieur'

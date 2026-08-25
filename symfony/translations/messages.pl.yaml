@@ -504,6 +504,8 @@ admin:
         placeholderWarning: 'Nazwy tymczasowe: zastąp je prawdziwymi nazwami produktów.'
         arrange: 'Uporządkuj według kategorii'
         arrangeHint: 'Grupuje produkty według działu, w kolejności z Admin ▸ Kategorie, i przywraca każdej gamie kolejność rozmiarów. Żadna kategoria nie jest zmieniana.'
+        byCategory: 'Według działu'
+        byProduct: 'Wszystkie produkty'
         arranged: 'Przeniesiono kart: %count%.'
     roundingMode:
         CEIL: 'W górę do wielokrotności'
