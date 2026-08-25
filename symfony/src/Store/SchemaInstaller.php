@@ -498,6 +498,28 @@ final class SchemaInstaller
         }
 
         /*
+          Correction du stock minimum par TRANCHE DE TEMPÉRATURE.
+
+          Le ciel ne suffit pas : « soleil » ne dit pas la même chose en
+          février et en août. Un dimanche ensoleillé à 4 °C et un dimanche
+          ensoleillé à 32 °C ne vident pas le même rayon.
+
+          Les BORNES ne sont pas en base, seuls les pourcentages le sont. Une
+          borne mobile changerait le sens de tout l'historique : « la tranche
+          18–25 » ne voudrait plus dire la même chose d'une saison à l'autre,
+          et l'on comparerait des pourcentages qui ne parlent plus du même
+          temps.
+
+          La tranche EST la clé : deux lignes « 18–25 » n'auraient aucun sens.
+        */
+        if (!\in_array('inv_temperature_ratio', $existing, true)) {
+            $t = $schema->createTable('inv_temperature_ratio');
+            $t->addColumn('band', 'string', ['length' => 16]);
+            $t->addColumn('percent', 'float', ['default' => 0]);
+            $t->setPrimaryKey(['band']);
+        }
+
+        /*
           Nomenclatures : ce qu'une unité de produit consomme.
 
           La quantité est TOUJOURS ramenée à l'unité, jamais gardée « pour une

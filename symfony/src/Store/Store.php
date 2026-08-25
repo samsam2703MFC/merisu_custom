@@ -38,6 +38,7 @@ use Merisu\Inventory\Domain\RoundingMode;
 use Merisu\Inventory\Domain\SupplierSource;
 use Merisu\Inventory\Domain\SyncKind;
 use Merisu\Inventory\Domain\SyncStatus;
+use Merisu\Inventory\Domain\TemperatureBand;
 use Merisu\Inventory\Domain\WeatherForecast;
 use Merisu\Inventory\Domain\WeatherKind;
 
@@ -1426,6 +1427,51 @@ final class Store
         }
 
         return $sortie;
+    }
+
+    /**
+     * Le pourcentage par tranche de température, complété au besoin.
+     *
+     * Une tranche absente de la table y est INSCRITE à sa valeur de départ —
+     * zéro — plutôt que rendue au vol : sans cela, l'écran afficherait un
+     * réglage que la base ne porte pas, et le premier enregistrement en aurait
+     * fait apparaître un qu'on n'a pas touché.
+     *
+     * @return array<string, float>
+     */
+    public function temperatureRatios(): array
+    {
+        $connus = [];
+        foreach ($this->db->fetchAllAssociative('SELECT band, percent FROM inv_temperature_ratio') as $r) {
+            $connus[(string) $r['band']] = (float) $r['percent'];
+        }
+
+        $sortie = [];
+        foreach (TemperatureBand::all() as $tranche) {
+            if (!isset($connus[$tranche->value])) {
+                $this->db->insert('inv_temperature_ratio', [
+                    'band' => $tranche->value,
+                    'percent' => $tranche->defaultPercent(),
+                ]);
+                $connus[$tranche->value] = $tranche->defaultPercent();
+            }
+
+            $sortie[$tranche->value] = $connus[$tranche->value];
+        }
+
+        return $sortie;
+    }
+
+    public function saveTemperatureRatio(TemperatureBand $band, float $percent): void
+    {
+        // Bornée comme la correction du ciel, et pour la même raison : une
+        // correction sous −100 % viderait le rayon, au-dessus de +500 % un
+        // réglage saisi de travers noierait l'atelier.
+        $percent = max(-100.0, min(500.0, $percent));
+
+        if ($this->db->update('inv_temperature_ratio', ['percent' => $percent], ['band' => $band->value]) === 0) {
+            $this->db->insert('inv_temperature_ratio', ['band' => $band->value, 'percent' => $percent]);
+        }
     }
 
     /**

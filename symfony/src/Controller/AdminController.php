@@ -28,6 +28,7 @@ use Merisu\Inventory\Domain\RoundingMode;
 use Merisu\Inventory\Domain\SalesSummary;
 use Merisu\Inventory\Domain\ShopRanking;
 use Merisu\Inventory\Domain\SupplierSource;
+use Merisu\Inventory\Domain\TemperatureBand;
 use Merisu\Inventory\Domain\WeatherKind;
 use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Service\ForecastService;
@@ -979,6 +980,10 @@ final class AdminController extends AbstractController
             'dayWeathers' => $this->store->dayWeathers(),
             'weatherKinds' => WeatherKind::all(),
             'weatherRatios' => $this->store->weatherRatios(),
+            // La température : l'autre moitié du temps qu'il fait. Les bornes
+            // viennent du code, les pourcentages de la base.
+            'temperatureBands' => TemperatureBand::all(),
+            'temperatureRatios' => $this->store->temperatureRatios(),
             // Ce que le service météo annonce, quand il a été interrogé. Lu en
             // base : cet écran n'appelle jamais l'hôte, dont chaque appel est
             // facturé. La prévision ne s'impose pas — elle s'affiche à côté du
@@ -1011,6 +1016,19 @@ final class AdminController extends AbstractController
             $pct = (float) str_replace(',', '.', (string) $saisis[$temps->value]);
             $this->store->saveWeatherRatio($temps, $pct);
             $modifies[$temps->value] = $pct;
+        }
+
+        /** @var array<string,mixed> $temperatures */
+        $temperatures = $request->request->all('temperature');
+
+        foreach (TemperatureBand::all() as $tranche) {
+            if (!\array_key_exists($tranche->value, $temperatures)) {
+                continue;
+            }
+
+            $pct = (float) str_replace(',', '.', (string) $temperatures[$tranche->value]);
+            $this->store->saveTemperatureRatio($tranche, $pct);
+            $modifies['temp.' . $tranche->value] = $pct;
         }
 
         /** @var array<string,mixed> $prevus */

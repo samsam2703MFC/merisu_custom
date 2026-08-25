@@ -226,6 +226,79 @@
             <p class="field__hint">{{ 'admin.parMatrix.weatherEditHint'|trans }}</p>
           </details>
 
+          {#
+            ── La TEMPÉRATURE, l'autre moitié du temps qu'il fait ────────────
+
+            « Soleil » ne dit pas la même chose en février et en août : un
+            dimanche ensoleillé à 4 °C et un dimanche ensoleillé à 32 °C ne
+            vident pas le même rayon.
+
+            Les bornes ne se règlent pas, seuls les pourcentages : une borne
+            mobile changerait le sens de tout l'historique — « la tranche
+            18–25 » ne voudrait plus dire la même chose d'une saison à l'autre.
+          #}
+          <details class="mt">
+            <summary class="admin-new__summary">
+              {{ ui.icon('sliders') }}
+              <span>{{ 'admin.parMatrix.temperature'|trans }}</span>
+            </summary>
+
+            <p class="field__hint">{{ 'admin.parMatrix.temperatureHint'|trans }}</p>
+
+            <div class="field-grid field-grid--tight">
+              {% for tranche in temperatureBands %}
+                <div class="field">
+                  <label class="field__label" for="t-{{ tranche.value }}">
+                    {{ ('admin.parMatrix.bands.' ~ tranche.value)|trans }}
+                    <span class="muted">
+                      {% if tranche.lowerBound is null %}&lt; {{ tranche.upperBound }} °C
+                      {% elseif tranche.upperBound is null %}≥ {{ tranche.lowerBound }} °C
+                      {% else %}{{ tranche.lowerBound }} – {{ tranche.upperBound }} °C{% endif %}
+                    </span>
+                  </label>
+                  <input class="field__input" type="number" step="0.1" min="-100" max="500"
+                         id="t-{{ tranche.value }}" name="temperature[{{ tranche.value }}]"
+                         value="{{ temperatureRatios[tranche.value] }}">
+                </div>
+              {% endfor %}
+            </div>
+
+            {#
+              TOUTES les combinaisons, et le total de chacune.
+
+              Vingt-quatre cases à saisir seraient vingt-quatre chiffres que
+              personne ne tiendrait à jour. Dix suffisent — quatre ciels, six
+              tranches — et la table montre ce qu'elles produisent ensemble.
+              Ce qui se règle reste court ; ce qui s'applique reste visible.
+            #}
+            <div class="table-scroll mt">
+              <table class="table">
+                <caption class="field__hint">{{ 'admin.parMatrix.matrixHint'|trans }}</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">{{ 'admin.parMatrix.temperatureShort'|trans }}</th>
+                    {% for temps in weatherKinds %}
+                      <th scope="col">{{ ('admin.parMatrix.weathers.' ~ temps.value)|trans }}</th>
+                    {% endfor %}
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for tranche in temperatureBands %}
+                    <tr>
+                      <th scope="row">{{ ('admin.parMatrix.bands.' ~ tranche.value)|trans }}</th>
+                      {% for temps in weatherKinds %}
+                        {% set total = weatherRatios[temps.value] + temperatureRatios[tranche.value] %}
+                        <td class="mins__cell">
+                          <strong>{{ total > 0 ? '+' : '' }}{{ total|round(1) }} %</strong>
+                        </td>
+                      {% endfor %}
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </details>
+
           <div class="form-actions">
             <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
           </div>
