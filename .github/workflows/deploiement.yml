@@ -80,6 +80,10 @@ on:
           - 'ventes-tout'
           - 'meteo-historique'
           - 'ventes-et-meteo'
+          # DESTRUCTIF : efface toutes les lignes de composition. Les fiches
+          # produit restent. Placé en dernier pour qu'on ne le choisisse pas
+          # d'un glissement de souris depuis « aucune ».
+          - 'compositions-vider'
       depuis:
         description: "Date de début du rattrapage météo (AAAA-MM-JJ)"
         required: false
@@ -546,6 +550,15 @@ jobs:
           if [ "$QUOI" = "meteo-historique" ] || [ "$QUOI" = "ventes-et-meteo" ]; then
             echo "── Rattrapage météo depuis $DEPUIS ──"
             "$PHP" bin/console merisu:meteo --historique="$DEPUIS"
+          fi
+
+          # La confirmation est écrite ICI, pas passée au déclenchement : un
+          # champ libre valant « VIDER » se remplirait par habitude, et la
+          # commande n'aurait plus de garde-fou du tout. Il faut choisir cette
+          # option-là, explicitement, pour que l'effacement parte.
+          if [ "$QUOI" = "compositions-vider" ]; then
+            echo "── Compositions : effacement de toutes les lignes ──"
+            "$PHP" bin/console merisu:compositions --confirmer=VIDER
           fi
           DISTANT
 
