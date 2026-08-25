@@ -1182,6 +1182,55 @@ final class Store
     }
 
     /**
+     * Ce produit a-t-il laissé une TRACE qu'une suppression rendrait orpheline ?
+     *
+     * Les comptages et les productions faites sont de l'HISTOIRE : ils disent
+     * ce qui s'est passé un jour donné, et la fiche est ce qui donne un sens à
+     * la ligne. Retirer la fiche laisserait des relevés rattachés à un
+     * identifiant que plus rien ne nomme — un écran d'historique affichant des
+     * quantités sans produit.
+     *
+     * Les seuils et les plans, eux, ne comptent pas : ce sont des réglages et
+     * des calculs, refaits à chaque fois, et ils partent avec la fiche.
+     */
+    public function productHasHistory(string $productId): bool
+    {
+        foreach (['inv_count', 'inv_production_done'] as $table) {
+            $trouve = $this->db->fetchOne(
+                'SELECT 1 FROM ' . $table . ' WHERE product_id = ? LIMIT 1',
+                [$productId],
+            );
+
+            if ($trouve !== false && $trouve !== null) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Retire une fiche produit et ce qui ne vit que par elle.
+     *
+     * En une transaction : une fiche retirée dont les seuils resteraient
+     * ferait ressurgir des quantités le jour où un nouveau produit hériterait
+     * de son identifiant.
+     *
+     * N'examine PAS l'historique — c'est à l'appelant de le faire, par
+     * `productHasHistory()`, et de le dire à l'écran plutôt que d'échouer ici
+     * sans que personne ne sache pourquoi.
+     */
+    public function deleteProduct(string $productId): void
+    {
+        $this->db->transactional(function () use ($productId): void {
+            $this->db->delete('inv_recipe_line', ['product_id' => $productId]);
+            $this->db->delete('inv_par_matrix', ['product_id' => $productId]);
+            $this->db->delete('inv_production_plan', ['product_id' => $productId]);
+            $this->db->delete('inv_product', ['id' => $productId]);
+        });
+    }
+
+    /**
      * Remplace la nomenclature d'UN produit, d'un bloc.
      *
      * En une transaction, et par remplacement complet : une nomenclature à

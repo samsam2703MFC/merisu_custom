@@ -32,6 +32,45 @@
     la fiche produit ne dit la taille. C'est grossier, et c'est pourquoi
     l'écran affiche toujours les produits visés avant qu'on applique.
   #}
+  {#
+    Créer une composition, c'est créer une RECETTE : les deux mots désignent la
+    même chose vue de deux côtés — la recette est la fiche, la composition est
+    ce qu'elle contient.
+
+    En tête, comme sur Boutiques : c'est le seul geste de la page qui ne
+    modifie rien d'existant, et le chercher sous trente fiches repliées
+    n'aiderait personne.
+
+    Un produit en VENTE ne se crée pas ici : il a un prix, un mode de comptage,
+    une étiquette — tout un attirail qui appartient à Produits. Deux endroits
+    pour créer la même chose auraient fini par en créer deux versions.
+  #}
+  <details class="card admin-new" {{ assembled is empty ? 'open' : '' }}>
+    <summary class="admin-new__summary">
+      {{ ui.icon('plus') }}
+      <span>{{ 'admin.compositions.create'|trans }}</span>
+    </summary>
+
+    <form method="post" action="{{ path('admin_composition_create') }}" class="form">
+      <div class="field">
+        <label class="field__label" for="rcp-new-name">{{ 'admin.compositions.newName'|trans }}</label>
+        <input class="field__input" type="text" id="rcp-new-name" name="name"
+               maxlength="190" required placeholder="{{ 'admin.compositions.newNamePlaceholder'|trans }}">
+        <p class="field__hint">{{ 'admin.compositions.newNameHint'|trans }}</p>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="rcp-new-unit">{{ 'admin.products.unit'|trans }}</label>
+        <input class="field__input" type="text" id="rcp-new-unit" name="unit"
+               maxlength="16" value="pcs">
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="button button--primary">{{ 'common.add'|trans }}</button>
+      </div>
+    </form>
+  </details>
+
   {% if components is not empty and assembled is not empty %}
     <section class="card">
       <h2 class="card__title">{{ 'admin.compositions.templates'|trans }}</h2>
@@ -47,7 +86,7 @@
             </span>
             <span class="admin-item__tags">
               {% if modele.lines is empty %}
-                {{ ui.badge('warn', 'admin.compositions.empty'|trans) }}
+                {{ ui.badge('warn', 'admin.compositions.clear'|trans) }}
               {% else %}
                 {{ ui.badge('neutral', 'admin.compositions.count'|trans({ '%count%': modele.lines|length })) }}
               {% endif %}
@@ -140,7 +179,7 @@
               jamais été saisie, et dont le delta technique ne dira rien.
             #}
             {% if recette is empty %}
-              {{ ui.badge('warn', 'admin.compositions.empty'|trans) }}
+              {{ ui.badge('warn', 'admin.compositions.clear'|trans) }}
             {% else %}
               {{ ui.badge('neutral', 'admin.compositions.count'|trans({ '%count%': recette|length })) }}
             {% endif %}
@@ -230,6 +269,35 @@
           <div class="form-actions">
             <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
           </div>
+        </form>
+
+        {#
+          HORS du formulaire d'enregistrement : deux formulaires imbriqués ne
+          sont pas du HTML valable, et le bouton du dedans se met à envoyer
+          celui du dehors.
+
+          Le même bouton porte deux gestes, selon ce qu'on a sous les yeux. Sur
+          une RECETTE, la fiche entière s'en va — elle n'existe que pour porter
+          une composition. Sur un produit en VENTE, seules les lignes sont
+          effacées : le tiramisu se vend toujours, on refait sa recette. Le
+          supprimer d'ici l'aurait retiré du catalogue.
+        #}
+        <form method="post" action="{{ path('admin_composition_delete', { id: product.id }) }}" class="form">
+          <div class="form-actions">
+            <button type="submit" class="button button--ghost"
+                    data-confirm="{{ (product.nature.value == 'RECIPE'
+                      ? 'admin.compositions.deleteConfirm'
+                      : 'admin.compositions.clearConfirm')|trans }}">
+              {{ (product.nature.value == 'RECIPE'
+                ? 'admin.compositions.delete'
+                : 'admin.compositions.clear')|trans }}
+            </button>
+          </div>
+          <p class="field__hint">
+            {{ (product.nature.value == 'RECIPE'
+              ? 'admin.compositions.deleteHint'
+              : 'admin.compositions.clearHint')|trans }}
+          </p>
         </form>
       </details>
     {% endfor %}

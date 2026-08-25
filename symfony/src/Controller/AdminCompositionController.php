@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Merisu\Inventory\Controller;
 
+use Merisu\Inventory\Domain\Locale;
 use Merisu\Inventory\Domain\Product;
 use Merisu\Inventory\Domain\ProductNature;
 use Merisu\Inventory\Domain\RecipeLine;
 use Merisu\Inventory\Domain\RecipeTemplate;
+use Merisu\Inventory\Domain\RoundingMode;
 use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Service\RecipeTemplateService;
 use Merisu\Inventory\Store\Store;
@@ -234,6 +236,159 @@ final class AdminCompositionController extends AbstractController
         $this->addFlash('success', 'admin.compositions.templateDeleted');
 
         return $this->redirectToRoute('admin_compositions');
+    }
+
+
+    /**
+     * Crée une composition — c'est-à-dire une RECETTE.
+     *
+     * Une composition et une recette sont la même chose vue de deux côtés : la
+     * recette est la fiche, la composition est ce qu'elle contient. L'écran
+     * n'en fabrique donc pas d'autre sorte. Un produit en VENTE, lui, se crée
+     * dans Produits : il a un prix, un mode de comptage, une étiquette — tout
+     * un attirail qui n'a rien à faire ici, et le dupliquer aurait fait deux
+     * endroits où créer la même chose.
+     *
+     * La fiche naît VIDE et s'ouvre aussitôt : on vient de la nommer, l'étape
+     * suivante est d'y mettre des lignes.
+     */
+    #[Route('/nouvelle', name: 'admin_composition_create', methods: ['POST'], priority: 10)]
+    public function create(Request $request): Response
+    {
+        $admin = $this->currentUser->requireAdmin();
+
+        $nom = trim((string) $request->request->get('name', ''));
+
+        // Sans nom, la fiche n'est identifiable par personne : le code ne se
+        // montre nulle part, et « PRODUIT_12 » dans une liste de recettes
+        // n'aide en rien.
+        if ($nom === '') {
+            $this->addFlash('error', 'admin.compositions.createEmpty');
+
+            return $this->redirectToRoute('admin_compositions');
+        }
+
+        $slot = $this->store->nextProductSlot();
+
+        $recette = new Product(
+            $slot['id'],
+            $slot['code'],
+            // Le même libellé dans les quatre langues : une recette est un nom
+            // d'atelier, et laisser trois langues vides aurait affiché des
+            // lignes blanches dans la composition d'un produit. Il se traduit
+            // ensuite dans Produits, où l'on traduit déjà.
+            array_fill_keys(array_map(
+                static fn (Locale $l): string => $l->value,
+                Locale::all(),
+            ), mb_substr($nom, 0, 190)),
+            mb_substr(trim((string) $request->request->get('unit', 'pcs')), 0, 16) ?: 'pcs',
+            true,
+            0.0,
+            1.0,
+            RoundingMode::Ceil,
+            null,
+            $slot['sortOrder'],
+            nature: ProductNature::Recipe,
+        );
+
+        $this->store->saveProduct($recette);
+        $this->store->audit($admin->id, $admin->role->value, 'RECIPE_CREATED', null, null, [
+            'productId' => $slot['id'],
+            'code' => $slot['code'],
+        ]);
+
+        $this->addFlash('success', 'common.saved');
+
+        return $this->redirectToRoute('admin_compositions', ['ouvrir' => $slot['id']]);
+    }
+
+    /**
+     * Supprime une composition.
+     *
+     * Deux gestes portent le même mot, et la différence tient à ce qu'on a
+     * sous les yeux.
+     *
+     * Sur une RECETTE, la fiche entière s'en va : elle n'existe que pour porter
+     * une composition, et une recette sans lignes ne décrit rien.
+     *
+     * Sur un produit en VENTE, seules les LIGNES sont effacées. Le produit se
+     * vend toujours ; il ne se fabrique simplement plus à partir de rien de
+     * décrit. Le supprimer d'ici aurait retiré du catalogue un tiramisu parce
+     * qu'on voulait refaire sa recette.
+     *
+     * Une recette EMPLOYÉE ailleurs n'est pas supprimée : la composition
+     * parente y perdrait une ligne sans que rien ne l'annonce, et son delta
+     * technique se mettrait à mentir. L'écran nomme alors qui l'emploie —
+     * c'est la seule information qui permet d'agir.
+     */
+    #[Route('/{id}/supprimer', name: 'admin_composition_delete', methods: ['POST'])]
+    public function delete(string $id): Response
+    {
+        $admin = $this->currentUser->requireAdmin();
+
+        $produit = $this->store->product($id);
+        if ($produit === null || !$produit->nature->canHaveRecipe()) {
+            throw $this->createNotFoundException('PRODUCT_NOT_FOUND');
+        }
+
+        if ($produit->nature !== ProductNature::Recipe) {
+            $this->store->replaceRecipe($id, []);
+            $this->store->audit($admin->id, $admin->role->value, 'RECIPE_EMPTIED', null, null, ['productId' => $id]);
+            $this->addFlash('success', 'admin.compositions.cleared');
+
+            return $this->redirectToRoute('admin_compositions', ['ouvrir' => $id]);
+        }
+
+        if ($this->usedBy($id) !== []) {
+            $this->addFlash('error', 'admin.compositions.deleteUsed');
+
+            return $this->redirectToRoute('admin_compositions', ['ouvrir' => $id]);
+        }
+
+        // Une recette déjà comptée, ou déjà produite, a laissé des lignes que
+        // sa fiche est seule à nommer. La retirer aurait laissé un historique
+        // affichant des quantités sans produit.
+        if ($this->store->productHasHistory($id)) {
+            $this->addFlash('error', 'admin.compositions.deleteHistory');
+
+            return $this->redirectToRoute('admin_compositions', ['ouvrir' => $id]);
+        }
+
+        // Les lignes d'abord : une fiche retirée en laissant sa nomenclature
+        // aurait laissé en base des lignes rattachées à rien, que le prochain
+        // produit à hériter de cet identifiant aurait ramassées.
+        $this->store->replaceRecipe($id, []);
+        $this->store->deleteProduct($id);
+
+        $this->store->audit($admin->id, $admin->role->value, 'RECIPE_DELETED', null, null, [
+            'productId' => $id,
+            'code' => $produit->code,
+        ]);
+
+        $this->addFlash('success', 'admin.compositions.deleted');
+
+        return $this->redirectToRoute('admin_compositions');
+    }
+
+    /**
+     * Les compositions où ce produit ENTRE comme composant.
+     *
+     * @return list<Product>
+     */
+    private function usedBy(string $id): array
+    {
+        $employeurs = [];
+
+        foreach ($this->store->recipeLines() as $ligne) {
+            if ($ligne->materialId === $id) {
+                $employeurs[$ligne->productId] = true;
+            }
+        }
+
+        return array_values(array_filter(array_map(
+            fn (string $productId): ?Product => $this->store->product($productId),
+            array_keys($employeurs),
+        )));
     }
 
     /**
