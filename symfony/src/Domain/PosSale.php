@@ -33,6 +33,15 @@ final readonly class PosSale
         public string $name,
         public float $quantity,
         public float $revenue,
+        /**
+         * Le code de la boutique d'où vient la vente.
+         *
+         * Vide pour un réseau d'une seule boutique, et pour les relevés faits
+         * avant que le réseau n'existe : c'est une valeur légitime, pas un
+         * trou. La confondre avec « toutes boutiques » aurait fait disparaître
+         * l'historique du jour où la deuxième a ouvert.
+         */
+        public string $shopCode = '',
     ) {
     }
 
@@ -51,6 +60,7 @@ final readonly class PosSale
         string $externalId,
         string $name,
         string $timezone,
+        string $shopCode = '',
     ): ?self {
         $valeur = $row['group_by_value']['name'] ?? null;
 
@@ -78,6 +88,7 @@ final readonly class PosSale
             trim($name),
             $quantite,
             self::montant($ventes['total_money'] ?? null),
+            $shopCode,
         );
     }
 

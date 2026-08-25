@@ -296,7 +296,7 @@ final class GoPosService implements PosServiceInterface
      *
      * @throws PosUnavailable
      */
-    public function sales(string $from, string $to): array
+    public function sales(string $from, string $to, string $shopCode = ''): array
     {
         if (!$this->isConfigured()) {
             throw new PosUnavailable('admin.pos.notConfigured');
@@ -353,7 +353,7 @@ final class GoPosService implements PosServiceInterface
             $referenceParNom[self::fold($article->name)] = $article->externalId;
         }
 
-        return $this->readSales($this->decode($corps), $referenceParNom);
+        return $this->readSales($this->decode($corps), $referenceParNom, $shopCode);
     }
 
     /** Un nom réduit à ce qui le rend comparable. */
@@ -370,7 +370,7 @@ final class GoPosService implements PosServiceInterface
      *
      * @return list<PosSale>
      */
-    private function readSales(array $payload, array $referenceParNom): array
+    private function readSales(array $payload, array $referenceParNom, string $shopCode): array
     {
         $fuseau = $this->timezone;
         $ventes = [];
@@ -407,7 +407,7 @@ final class GoPosService implements PosServiceInterface
 
                 foreach (is_array($produit['sub_report'] ?? null) ? $produit['sub_report'] : [] as $journee) {
                     $vente = is_array($journee)
-                        ? PosSale::fromReport($journee, $reference, $nom, $fuseau)
+                        ? PosSale::fromReport($journee, $reference, $nom, $fuseau, $shopCode)
                         : null;
 
                     if ($vente !== null) {

@@ -117,6 +117,7 @@ nav:
     products: Productos
     pos: 'Caja'
     sales: 'Ventas'
+    network: 'Red'
     categories: 'Categorías'
     parMatrix: Umbrales
     weather: 'Meteorología'
@@ -703,6 +704,19 @@ admin:
         confirmDelete: '¿Retirar esta tienda de la lista?'
         deleteHint: 'La ficha desaparece, no lo que produjo: recuentos, planes e histórico conservan su código.'
         deleted: 'Tienda retirada. Sus recuentos y su histórico se conservan.'
+    network:
+        title: 'Red'
+        subtitle: 'Cada tienda, y dónde está respecto a su objetivo.'
+        networkQty: 'Piezas vendidas'
+        covered: 'Tiendas con registro'
+        pieces: 'piezas vendidas'
+        prorata: 'El objetivo es mensual: para el periodo mostrado se reduce al %pct% %. Sin esa proporción, un indicador a mitad de mes se leería como un retraso cuando es el ritmo esperado.'
+        targetLine: '%pct% % del objetivo del periodo (%target% de %month% al mes)'
+        noTarget: 'Ningún objetivo fijado para esta tienda — el indicador no tiene nada que mostrar. Se ajusta en su ficha.'
+        noReading: 'Sin registro'
+        progress: '%pct% % del objetivo'
+        noShops: 'Ninguna tienda declarada: nada que comparar. Empiece por Admin ▸ Tiendas.'
+        orphans: '%qty% pieza(s) registradas en %days% jornada(s) no están vinculadas a ninguna tienda — registros anteriores a la red, o caja única. Cuentan en el total.'
     settings:
         title: 'Ajustes generales'
         subtitle: 'Horarios, zona horaria, idioma, política de fotos y tolerancia del delta.'

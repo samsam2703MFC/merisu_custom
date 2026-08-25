@@ -1218,8 +1218,19 @@ final class Store
      *
      * @return list<PosSale>
      */
-    public function sales(string $from, string $to): array
+    public function sales(string $from, string $to, ?string $shopCode = null): array
     {
+        $sql = 'SELECT * FROM inv_sales_daily WHERE date >= ? AND date <= ?';
+        $params = [$from, $to];
+
+        // Null = TOUTES les boutiques. Une chaîne vide en est une valeur
+        // légitime : c'est celle des relevés faits avant que le réseau
+        // n'existe, et les confondre aurait fait disparaître l'historique.
+        if ($shopCode !== null) {
+            $sql .= ' AND shop_code = ?';
+            $params[] = $shopCode;
+        }
+
         return array_map(
             static fn (array $r): PosSale => new PosSale(
                 (string) $r['date'],
@@ -1227,12 +1238,34 @@ final class Store
                 (string) $r['product_name'],
                 (float) $r['quantity'],
                 (float) $r['revenue'],
+                (string) ($r['shop_code'] ?? ''),
             ),
-            $this->db->fetchAllAssociative(
-                'SELECT * FROM inv_sales_daily WHERE date >= ? AND date <= ? ORDER BY date, product_ref',
-                [$from, $to],
-            ),
+            $this->db->fetchAllAssociative($sql . ' ORDER BY date, product_ref', $params),
         );
+    }
+
+    /**
+     * Ce que chaque boutique a vendu sur l'intervalle.
+     *
+     * @return array<string, array{quantity: float, revenue: float, days: int}>
+     */
+    public function salesByShop(string $from, string $to): array
+    {
+        $sortie = [];
+
+        foreach ($this->db->fetchAllAssociative(
+            'SELECT shop_code, SUM(quantity) AS q, SUM(revenue) AS ca, COUNT(DISTINCT date) AS j'
+            . ' FROM inv_sales_daily WHERE date >= ? AND date <= ? GROUP BY shop_code',
+            [$from, $to],
+        ) as $r) {
+            $sortie[(string) $r['shop_code']] = [
+                'quantity' => (float) $r['q'],
+                'revenue' => (float) $r['ca'],
+                'days' => (int) $r['j'],
+            ];
+        }
+
+        return $sortie;
     }
 
     /** Le premier et le dernier jour relevés, ou null si rien ne l'a été. */
@@ -1278,7 +1311,11 @@ final class Store
                     'revenue' => $vente->revenue,
                     'fetched_at' => $recu,
                 ];
-                $cle = ['date' => $vente->date, 'product_ref' => $vente->externalId];
+                $cle = [
+                    'date' => $vente->date,
+                    'product_ref' => $vente->externalId,
+                    'shop_code' => $vente->shopCode,
+                ];
 
                 if ($this->db->update('inv_sales_daily', $data, $cle) === 0) {
                     $this->db->insert('inv_sales_daily', $data + $cle);

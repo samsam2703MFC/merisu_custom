@@ -107,5 +107,5 @@ interface PosServiceInterface
      *
      * @throws PosUnavailable
      */
-    public function sales(string $from, string $to): array;
+    public function sales(string $from, string $to, string $shopCode = ''): array;
 }

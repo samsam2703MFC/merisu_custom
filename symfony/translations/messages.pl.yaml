@@ -117,6 +117,7 @@ nav:
     products: Produkty
     pos: 'Kasa'
     sales: 'Sprzedaż'
+    network: 'Sieć'
     categories: 'Kategorie'
     parMatrix: Progi
     weather: 'Pogoda'
@@ -703,6 +704,19 @@ admin:
         confirmDelete: 'Usunąć ten sklep z listy?'
         deleteHint: 'Karta znika, ale nie to, co sklep wytworzył: liczenia, plany i historia zachowują jego kod.'
         deleted: 'Sklep usunięty. Jego liczenia i historia są zachowane.'
+    network:
+        title: 'Sieć'
+        subtitle: 'Każdy sklep i jego postęp względem celu.'
+        networkQty: 'Sprzedane sztuki'
+        covered: 'Sklepy z odczytem'
+        pieces: 'sprzedanych sztuk'
+        prorata: 'Cel jest miesięczny: dla wyświetlanego okresu sprowadzono go do %pct% %. Bez tej proporcji wskaźnik w połowie miesiąca wyglądałby na opóźnienie, choć to oczekiwane tempo.'
+        targetLine: '%pct% % celu okresu (%target% z %month% miesięcznie)'
+        noTarget: 'Brak celu dla tego sklepu — wskaźnik nie ma czego pokazać. Ustawia się go na jego karcie.'
+        noReading: 'Brak odczytu'
+        progress: '%pct% % celu'
+        noShops: 'Nie zadeklarowano żadnego sklepu: nie ma czego porównywać. Zacznij od Admin ▸ Sklepy.'
+        orphans: '%qty% szt. z %days% dni nie jest przypisanych do żadnego sklepu — odczyty sprzed sieci lub pojedyncza kasa. Liczą się w sumie.'
     settings:
         title: 'Ustawienia ogólne'
         subtitle: 'Godziny, strefa czasowa, język, zdjęcia i tolerancja delty.'

@@ -1,0 +1,136 @@
+{#
+  Admin ▸ Réseau — chaque boutique, et où elle en est de son objectif.
+
+  Les chiffres viennent des RELEVÉS de caisse, boutique par boutique, et non
+  d'une démonstration : c'est `inv_sales_daily` qu'on lit.
+
+  L'objectif est mensuel ; la période affichée ne l'est pas forcément. Il est
+  donc ramené au prorata des journées — comparer dix jours de ventes à un
+  objectif de mois annoncerait un retard tous les 10 du mois.
+#}
+{% extends 'admin/_layout.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'admin.network.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block admin_content %}
+
+  {{ ui.page_header('admin.network.title'|trans, 'admin.network.subtitle'|trans) }}
+
+  <section class="card">
+    <form method="get" action="{{ path('admin_network') }}" class="form">
+      <div class="field-grid">
+        <div class="field">
+          <label class="field__label" for="from">{{ 'admin.sales.from'|trans }}</label>
+          <input class="field__input" type="date" id="from" name="from" value="{{ from }}">
+        </div>
+        <div class="field">
+          <label class="field__label" for="to">{{ 'admin.sales.to'|trans }}</label>
+          <input class="field__input" type="date" id="to" name="to" value="{{ to }}">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="button button--secondary">{{ 'admin.sales.show'|trans }}</button>
+      </div>
+    </form>
+
+    <div class="stats stats--compact">
+      <div class="stat">
+        <p class="stat__label">{{ 'admin.network.networkQty'|trans }}</p>
+        <p class="stat__value">{{ total|qty }}</p>
+      </div>
+      <div class="stat">
+        <p class="stat__label">{{ 'admin.sales.totalRevenue'|trans }}</p>
+        <p class="stat__value stat__value--sm">{{ totalRevenue|qty }}</p>
+      </div>
+      <div class="stat">
+        <p class="stat__label">{{ 'admin.network.covered'|trans }}</p>
+        <p class="stat__value">{{ covered }} / {{ results|length }}</p>
+      </div>
+    </div>
+
+    {# Le prorata, dit en toutes lettres : sans lui, une jauge à 48 % au milieu
+       du mois se lit comme un retard alors que c'est le rythme attendu. #}
+    <p class="field__hint">{{ 'admin.network.prorata'|trans({ '%pct%': (prorata * 100)|round }) }}</p>
+  </section>
+
+  {% if results is empty %}
+    {{ ui.banner('warn', 'admin.network.noShops'|trans) }}
+  {% else %}
+    <div class="shop-grid">
+      {% for resultat in results %}
+        <section class="card shop-card{{ not resultat.shop.active ? ' shop-card--closed' : '' }}">
+          <p class="shop-card__rank">{{ loop.index }}</p>
+
+          <h2 class="card__title">{{ resultat.shop.name }}</h2>
+          {% if resultat.shop.city %}<p class="muted">{{ resultat.shop.city }}</p>{% endif %}
+
+          <p class="shop-card__value">{{ resultat.quantity|qty }}</p>
+          <p class="stat__label">{{ 'admin.network.pieces'|trans }}</p>
+
+          <div class="stats stats--compact">
+            <div class="stat">
+              <p class="stat__label">{{ 'admin.sales.totalRevenue'|trans }}</p>
+              <p class="stat__value stat__value--sm">{{ resultat.revenue|qty }}</p>
+            </div>
+            <div class="stat">
+              <p class="stat__label">{{ 'admin.sales.perDay'|trans }}</p>
+              <p class="stat__value stat__value--sm">{{ resultat.perDay()|qty }}</p>
+            </div>
+          </div>
+
+          {#
+            La jauge : LE composant maison, la coupe de tiramisu du tableau de
+            bord réseau. En redessiner une ici aurait donné deux barres de
+            progression différentes dans la même application — et, les classes
+            portant les mêmes noms, elles se seraient mélangées.
+
+            Le remplissage ne dépasse jamais le bord ; le CHIFFRE, lui, n'est
+            pas borné — une boutique qui dépasse doit le voir. L'un est un
+            dessin, l'autre une mesure.
+          #}
+          {% if resultat.hasTarget %}
+            {% set avance = resultat.progress() %}
+            <div class="gauge {{ avance >= 100 ? 'gauge--reached' : (avance >= prorata * 100 ? 'gauge--ontrack' : 'gauge--late') }}">
+              <div class="gauge__track" role="img"
+                   aria-label="{{ 'admin.network.progress'|trans({ '%pct%': avance|round }) }}">
+                <div class="gauge__fill" style="--fill: {{ resultat.gauge() }}%"></div>
+              </div>
+            </div>
+            <p class="field__hint">
+              {{ 'admin.network.targetLine'|trans({
+                '%pct%': avance|round,
+                '%target%': resultat.target|round,
+                '%month%': resultat.shop.monthlyTarget,
+              }) }}
+            </p>
+          {% else %}
+            {# Zéro veut dire « aucun objectif fixé », pas « objectif de zéro » :
+               la jauge disparaît plutôt que d'afficher une barre pleine. #}
+            <p class="field__hint">{{ 'admin.network.noTarget'|trans }}</p>
+          {% endif %}
+
+          {% if resultat.days == 0 %}
+            {{ ui.badge('warn', 'admin.network.noReading'|trans) }}
+          {% endif %}
+          {% if not resultat.shop.active %}
+            {{ ui.badge('neutral', 'admin.shops.inactive'|trans) }}
+          {% endif %}
+        </section>
+      {% endfor %}
+    </div>
+
+    {#
+      Les relevés sans boutique — ceux d'avant le réseau, ou d'une installation
+      à caisse unique. Les taire ferait un total de réseau inférieur à la somme
+      des ventes, sans que rien ne l'explique.
+    #}
+    {% if orphans %}
+      {{ ui.banner('info', 'admin.network.orphans'|trans({
+        '%qty%': orphans.quantity|round,
+        '%days%': orphans.days,
+      })) }}
+    {% endif %}
+  {% endif %}
+
+{% endblock %}

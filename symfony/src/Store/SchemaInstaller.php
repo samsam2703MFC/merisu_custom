@@ -643,8 +643,16 @@ final class SchemaInstaller
             $t->addColumn('product_name', 'string', ['length' => 190, 'default' => '']);
             $t->addColumn('quantity', 'float', ['default' => 0]);
             $t->addColumn('revenue', 'float', ['default' => 0]);
+            // La BOUTIQUE d'où vient la vente. Sans elle, trois caisses
+            // versaient dans le même seau et le réseau n'avait qu'un chiffre
+            // global — impossible de dire laquelle tient son objectif.
+            //
+            // Vide pour un réseau d'une seule boutique : la colonne existe,
+            // elle ne gêne pas, et le jour où la deuxième ouvre il n'y a rien
+            // à migrer.
+            $t->addColumn('shop_code', 'string', ['length' => 32, 'default' => '']);
             $t->addColumn('fetched_at', 'string', ['length' => 32, 'default' => '']);
-            $t->setPrimaryKey(['date', 'product_ref']);
+            $t->setPrimaryKey(['date', 'product_ref', 'shop_code']);
         }
 
         /*
@@ -780,6 +788,12 @@ final class SchemaInstaller
                 // 0 par défaut : aucun objectif, donc aucune jauge — jamais
                 // une barre pleine inventée pour les bases déjà en service.
                 'monthly_tiramisu_target' => 'INTEGER DEFAULT 0 NOT NULL',
+            ],
+            'inv_sales_daily' => [
+                // Ajoutée avec le réseau : les relevés faits avant portent une
+                // boutique vide, ce qui les range dans « toutes boutiques » et
+                // n'efface rien.
+                'shop_code' => "VARCHAR(32) DEFAULT '' NOT NULL",
             ],
             'inv_shop' => [
                 // Ajoutées après coup : une boutique créée avant que la fiche

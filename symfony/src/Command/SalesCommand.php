@@ -10,6 +10,8 @@ use Merisu\Inventory\Domain\BusinessDate;
 use Merisu\Inventory\Domain\SalesBreakdown;
 use Merisu\Inventory\Domain\SalesPeriod;
 use Merisu\Inventory\Service\InventoryService;
+use Merisu\Inventory\Service\ShopPos;
+use Merisu\Inventory\Store\ShopStore;
 use Merisu\Inventory\Store\Store;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -67,6 +69,8 @@ final class SalesCommand extends Command
         private readonly PosServiceInterface $pos,
         private readonly Store $store,
         private readonly InventoryService $inventory,
+        private readonly ShopStore $shops,
+        private readonly ShopPos $shopPos,
     ) {
         parent::__construct();
     }
@@ -101,7 +105,7 @@ final class SalesCommand extends Command
             try {
                 $ecrites = $input->getOption('tout')
                     ? $this->toutRemonter($io, $to)
-                    : $this->store->saveSales($this->pos->sales($from, $to));
+                    : $this->releverToutesBoutiques($io, $from, $to);
             } catch (PosUnavailable $e) {
                 $io->error(trim($e->getMessage() . ' — ' . $e->detail, ' —'));
 
@@ -121,6 +125,51 @@ final class SalesCommand extends Command
         }
 
         return $this->montrer($io, $from, $to, (string) $input->getOption('par'));
+    }
+
+    /**
+     * Relève un intervalle, boutique par boutique.
+     *
+     * ── Une caisse par boutique, un seau par boutique
+     *
+     * Trois boutiques versaient dans le même total : le réseau n'avait qu'un
+     * chiffre global, et l'on ne pouvait pas dire laquelle tenait son
+     * objectif. Chaque relevé porte désormais le code de sa boutique.
+     *
+     * Sans aucune boutique enregistrée — une installation d'une seule caisse —
+     * on relève comme avant, sous un code vide. Rien à migrer le jour où la
+     * deuxième ouvre : les anciennes lignes gardent leur code vide, les
+     * nouvelles portent le leur.
+     */
+    private function releverToutesBoutiques(SymfonyStyle $io, string $from, string $to): int
+    {
+        $boutiques = $this->shops->all(activeOnly: true);
+
+        if ($boutiques === []) {
+            return $this->store->saveSales($this->pos->sales($from, $to));
+        }
+
+        $total = 0;
+
+        foreach ($boutiques as $boutique) {
+            $caisse = $this->shopPos->forShop($boutique);
+
+            if ($caisse === null) {
+                // Pas une panne : une boutique dont la caisse n'est pas encore
+                // réglée. Le dire, et passer à la suivante — s'arrêter aurait
+                // privé les autres de leur relevé.
+                $io->writeln(sprintf('  %-24s caisse non réglée', $boutique->name));
+
+                continue;
+            }
+
+            $lignes = $this->store->saveSales($caisse->sales($from, $to, $boutique->code));
+            $total += $lignes;
+
+            $io->writeln(sprintf('  %-24s %d ligne(s)', $boutique->name, $lignes));
+        }
+
+        return $total;
     }
 
     /**
@@ -152,18 +201,11 @@ final class SalesCommand extends Command
 
         for ($fenetre = 0; $fenetre < self::MAX_WINDOWS; ++$fenetre) {
             $debut = BusinessDate::addDays($fin, -self::WINDOW_DAYS + 1);
-            $ventes = $this->pos->sales($debut, $fin);
+            $io->writeln(sprintf('  %s → %s', $debut, $fin));
+            $lignes = $this->releverToutesBoutiques($io, $debut, $fin);
 
-            $io->writeln(sprintf(
-                '  %s → %s : %d ligne(s)%s',
-                $debut,
-                $fin,
-                count($ventes),
-                $ventes === [] ? ' —' : '',
-            ));
-
-            $total += $this->store->saveSales($ventes);
-            $vides = $ventes === [] ? $vides + 1 : 0;
+            $total += $lignes;
+            $vides = $lignes === 0 ? $vides + 1 : 0;
 
             if ($vides >= self::EMPTY_WINDOWS) {
                 break;

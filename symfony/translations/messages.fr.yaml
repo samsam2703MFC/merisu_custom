@@ -120,6 +120,7 @@ nav:
     products: Produits
     pos: 'Caisse'
     sales: 'Ventes'
+    network: 'Réseau'
     categories: 'Catégories'
     parMatrix: Seuils
     weather: 'Météo'
@@ -706,6 +707,19 @@ admin:
         confirmDelete: 'Retirer cette boutique de la liste ?'
         deleteHint: 'La fiche disparaît, pas ce qu''elle a produit : comptages, plans et historique gardent son code.'
         deleted: 'Boutique retirée. Ses comptages et son historique sont conservés.'
+    network:
+        title: 'Réseau'
+        subtitle: 'Chaque boutique, et où elle en est de son objectif.'
+        networkQty: 'Pièces vendues'
+        covered: 'Boutiques relevées'
+        pieces: 'pièces vendues'
+        prorata: 'L''objectif est mensuel : il est ramené à %pct% % pour la période affichée. Sans ce prorata, une jauge à mi-mois se lirait comme un retard alors que c''est le rythme attendu.'
+        targetLine: '%pct% % de l''objectif de la période (%target% sur %month% par mois)'
+        noTarget: 'Aucun objectif fixé pour cette boutique — la jauge n''a rien à montrer. Il se règle sur sa fiche.'
+        noReading: 'Aucun relevé'
+        progress: '%pct% % de l''objectif'
+        noShops: 'Aucune boutique déclarée : rien à comparer. Commencez par Admin ▸ Boutiques.'
+        orphans: '%qty% pièce(s) relevées sur %days% journée(s) ne sont rattachées à aucune boutique — relevés antérieurs au réseau, ou caisse unique. Elles comptent dans le total.'
     settings:
         title: 'Paramètres généraux'
         subtitle: "Horaires, fuseau, langue, politique photo et tolérance du delta."

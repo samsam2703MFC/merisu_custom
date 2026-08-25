@@ -117,6 +117,7 @@ nav:
     products: Prodotti
     pos: 'Cassa'
     sales: 'Vendite'
+    network: 'Rete'
     categories: 'Categorie'
     parMatrix: Soglie
     weather: 'Meteo'
@@ -703,6 +704,19 @@ admin:
         confirmDelete: 'Togliere questo negozio dall''elenco?'
         deleteHint: 'La scheda sparisce, non ciò che ha prodotto: conteggi, piani e storico conservano il suo codice.'
         deleted: 'Negozio rimosso. I suoi conteggi e il suo storico sono conservati.'
+    network:
+        title: 'Rete'
+        subtitle: 'Ogni negozio, e a che punto è del suo obiettivo.'
+        networkQty: 'Pezzi venduti'
+        covered: 'Negozi rilevati'
+        pieces: 'pezzi venduti'
+        prorata: 'L''obiettivo è mensile: per il periodo mostrato è ricondotto al %pct% %. Senza questa proporzione, un indicatore a metà mese si leggerebbe come un ritardo mentre è il ritmo atteso.'
+        targetLine: '%pct% % dell''obiettivo del periodo (%target% su %month% al mese)'
+        noTarget: 'Nessun obiettivo per questo negozio — l''indicatore non ha nulla da mostrare. Si imposta sulla sua scheda.'
+        noReading: 'Nessuna rilevazione'
+        progress: '%pct% % dell''obiettivo'
+        noShops: 'Nessun negozio dichiarato: nulla da confrontare. Inizia da Admin ▸ Negozi.'
+        orphans: '%qty% pezzo/i rilevati su %days% giornata/e non sono legati ad alcun negozio — rilevazioni anteriori alla rete, o cassa unica. Contano nel totale.'
     settings:
         title: 'Impostazioni generali'
         subtitle: 'Orari, fuso, lingua, politica foto e tolleranza del delta.'

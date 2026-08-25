@@ -2557,6 +2557,43 @@ body { overflow-x: hidden; }
 .wcast__was { display: inline-flex; vertical-align: middle; color: var(--text-muted); }
 .wcast__was .icon { width: 16px; height: 16px; }
 
+/* ── Réseau : une carte par boutique ──────────────────────────────────────
+   Une grille qui se replie : trois cartes de front sur un écran large, une
+   seule sur un téléphone. Le rang se lit en gros dans le coin — c'est ce qu'on
+   cherche d'abord dans un classement. */
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: var(--space-4);
+}
+.shop-card { position: relative; margin-bottom: 0; }
+.shop-card--closed { opacity: .6; }
+.shop-card__rank {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--cream-outline);
+  line-height: 1;
+}
+/* Chiffres proportionnels sur une grande valeur : `tabular-nums` donne à
+   chaque chiffre la largeur d'un zéro, et « 121 » paraît alors distendu. */
+.shop-card__value {
+  margin: var(--space-3) 0 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--plum);
+  line-height: 1.1;
+}
+
+/* Pas de jauge ici : l'application en a DÉJÀ une, la coupe de tiramisu du
+   tableau de bord réseau. En redéclarer une sous les mêmes noms de classes ne
+   créait pas un second composant — les deux jeux de règles se mélangeaient, et
+   c'est le dernier du fichier qui gagnait. La carte de boutique reprend donc
+   le composant existant, `.gauge__track` et `.gauge__fill`. */
+
 /* ── Graphiques de ventes ──────────────────────────────────────────────────
    Tracés par le serveur, en SVG, sans une ligne de script : l'atelier
    travaille hors ligne. Une seule série, donc une seule couleur et aucune
