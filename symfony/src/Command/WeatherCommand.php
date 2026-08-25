@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Merisu\Inventory\Command;
 
 use Merisu\Inventory\Adapter\WeatherUnavailable;
+use Merisu\Inventory\Domain\BusinessDate;
 use Merisu\Inventory\Service\ForecastService;
 use Merisu\Inventory\Service\InventoryService;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -65,7 +66,8 @@ final class WeatherCommand extends Command
         $this
             ->addOption('langue', null, InputOption::VALUE_REQUIRED, 'Langue des libellés renvoyés par le service.', 'fr')
             ->addOption('appliquer', null, InputOption::VALUE_NONE, "Écrit la prévision dans la semaine type, même si le réglage automatique est décoché.")
-            ->addOption('etat', null, InputOption::VALUE_NONE, "Affiche la prévision en base, sans appeler le service.");
+            ->addOption('etat', null, InputOption::VALUE_NONE, "Affiche la prévision en base, sans appeler le service.")
+            ->addOption('historique', null, InputOption::VALUE_REQUIRED, "Rattrape le temps passé depuis cette date (AAAA-MM-JJ) et l'inscrit au journal.");
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -75,6 +77,12 @@ final class WeatherCommand extends Command
 
         if ($input->getOption('etat')) {
             return $this->show($io, $aujourdhui);
+        }
+
+        $depuis = (string) ($input->getOption('historique') ?? '');
+
+        if ($depuis !== '') {
+            return $this->rattraper($io, $depuis, $aujourdhui, (string) $input->getOption('langue'));
         }
 
         if (!$this->forecast->isConfigured()) {
@@ -114,6 +122,52 @@ final class WeatherCommand extends Command
             $bilan['days'],
             $bilan['applied'],
         ));
+
+        return Command::SUCCESS;
+    }
+
+    /**
+     * Rattrape le temps passé.
+     *
+     * ⚠️ Chaque fenêtre de trente jours est un appel FACTURÉ : quatre mois
+     * d'historique en coûtent cinq, sur un millier offerts par jour. La
+     * commande le dit avant de partir, et ne se lance pas toute seule.
+     */
+    private function rattraper(SymfonyStyle $io, string $depuis, string $jusqua, string $langue): int
+    {
+        if (!BusinessDate::isValid($depuis)) {
+            $io->error('Date de début illisible : attendu AAAA-MM-JJ.');
+
+            return Command::FAILURE;
+        }
+
+        if (!$this->forecast->isConfigured()) {
+            $io->warning('Aucune clé météo réglée : rien à rattraper. Voir Admin ▸ Météo.');
+
+            return Command::SUCCESS;
+        }
+
+        try {
+            $bilan = $this->forecast->backfill($depuis, $jusqua, $langue);
+        } catch (WeatherUnavailable $e) {
+            $io->error(trim($e->getMessage() . ' — ' . $e->detail, ' —'));
+
+            return Command::FAILURE;
+        }
+
+        if ($bilan['days'] === 0) {
+            $io->warning(sprintf(
+                "Le service n'a rendu aucune journée entre %s et %s. Son offre ne couvre "
+                . 'peut-être pas le passé, ou pas si loin.',
+                $bilan['from'],
+                $bilan['to'],
+            ));
+
+            return Command::SUCCESS;
+        }
+
+        $io->success(sprintf('%d journée(s) inscrite(s) au journal, du %s au %s.',
+            $bilan['days'], $bilan['from'], $bilan['to']));
 
         return Command::SUCCESS;
     }

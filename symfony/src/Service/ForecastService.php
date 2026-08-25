@@ -61,7 +61,7 @@ final readonly class ForecastService
     /**
      * Va chercher la prévision chez l'hôte, la garde, et l'applique si demandé.
      *
-     * @return array{days: int, applied: int, autoApplied: bool}
+     * @return array{days: int, applied: int, autoApplied: bool, journalled: int}
      *
      * @throws \Merisu\Inventory\Adapter\WeatherUnavailable
      */
@@ -81,6 +81,12 @@ final readonly class ForecastService
             $appliques = $this->apply($prevision, $actorId, $actorRole);
         }
 
+        // La journée du jour entre au JOURNAL, qui garde ce qu'il a fait.
+        // Sans cet enregistrement, la prévision se remplace à chaque appel et
+        // rien ne subsiste : quatre mois de ventes à la journée, et rien en
+        // face pour les expliquer.
+        $journalisees = $this->journal($prevision, $today);
+
         if ($actorId !== null && $actorRole !== null) {
             $this->store->audit($actorId, $actorRole, 'WEATHER_FETCHED', null, null, [
                 'days' => count($prevision->days),
@@ -88,7 +94,56 @@ final readonly class ForecastService
             ]);
         }
 
-        return ['days' => count($prevision->days), 'applied' => $appliques, 'autoApplied' => $auto];
+        return [
+            'days' => count($prevision->days),
+            'applied' => $appliques,
+            'autoApplied' => $auto,
+            'journalled' => $journalisees,
+        ];
+    }
+
+    /**
+     * Inscrit au journal les journées ÉCHUES ou en cours.
+     *
+     * Seulement celles-là : demain n'a pas encore eu lieu, et l'inscrire
+     * ferait du journal une prévision de plus. Une journée déjà inscrite n'est
+     * pas réécrite — ce qui a été observé vaut mieux que ce qui avait été
+     * annoncé, et un rafraîchissement ne doit pas repeindre le passé.
+     *
+     * @return int le nombre de journées ajoutées
+     */
+    public function journal(WeatherForecast $forecast, string $today): int
+    {
+        $ajoutees = 0;
+
+        foreach ($forecast->days as $jour) {
+            if ($jour->date <= $today && $this->store->recordWeatherDay($jour, 'FORECAST')) {
+                ++$ajoutees;
+            }
+        }
+
+        return $ajoutees;
+    }
+
+    /**
+     * Rattrape le temps passé auprès du service, et l'inscrit au journal.
+     *
+     * Les lignes d'historique CORRIGENT celles posées par la prévision : un
+     * relevé vaut mieux qu'une annonce faite la veille.
+     *
+     * @return array{days: int, from: string, to: string}
+     *
+     * @throws \Merisu\Inventory\Adapter\WeatherUnavailable
+     */
+    public function backfill(string $from, string $to, string $lang = 'en'): array
+    {
+        $jours = $this->weather->history($from, $to, $lang);
+
+        foreach ($jours as $jour) {
+            $this->store->recordWeatherDay($jour, 'HISTORY');
+        }
+
+        return ['days' => count($jours), 'from' => $from, 'to' => $to];
     }
 
     /**

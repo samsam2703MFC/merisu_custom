@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Merisu\Inventory\Adapter;
 
+use Merisu\Inventory\Domain\ForecastDay;
 use Merisu\Inventory\Domain\WeatherCredentials;
 use Merisu\Inventory\Domain\WeatherForecast;
 use Merisu\Inventory\Store\WeatherCredentialStore;
@@ -74,6 +75,12 @@ final class OpenWeatherService implements WeatherServiceInterface
      * domaine coupe à sept de toute façon.
      */
     private const V4_COUNT = 10;
+
+    /** Journées demandées par fenêtre d'historique. */
+    private const HISTORY_COUNT = 30;
+
+    /** Garde-fou : cinquante fenêtres de trente jours font quatre ans. */
+    private const MAX_HISTORY_WINDOWS = 50;
 
     private const TIMEOUT = 15.0;
 
@@ -177,6 +184,136 @@ final class OpenWeatherService implements WeatherServiceInterface
         }
 
         return $prevision;
+    }
+
+    /**
+     * Le temps qu'il a FAIT, par fenêtres.
+     *
+     * ── Seule la 4.0 sait remonter le temps ici
+     *
+     * Sa série journalière prend un `start` — un horodatage — et un `cnt`, et
+     * rend les journées à partir de là ; ses liens `prev` et `next` disent
+     * assez qu'elle est faite pour ça. La 3.0 a bien un `timemachine`, mais il
+     * rend UNE journée heure par heure, dans une autre forme : le brancher
+     * demanderait un second analyseur pour un chemin que cette maison
+     * n'emprunte pas. On refuse franchement plutôt que de rendre un tableau
+     * vide, qui se serait lu comme « il n'a rien fait ces jours-là ».
+     *
+     * ── Par fenêtres, et facturé à la fenêtre
+     *
+     * Chaque appel compte dans le quota. Trente journées par appel : quatre
+     * mois d'historique coûtent cinq appels, sur un millier offerts par jour.
+     *
+     * @return list<ForecastDay>
+     */
+    public function history(string $from, string $to, string $lang = 'en'): array
+    {
+        $reglages = $this->credentials();
+
+        if (!$reglages->isComplete()) {
+            throw new WeatherUnavailable('admin.weather.notConfigured');
+        }
+
+        if (WeatherCredentials::cleanVersion($reglages->apiVersion) !== WeatherCredentials::VERSION_4) {
+            throw new WeatherUnavailable('admin.weather.noHistory');
+        }
+
+        $jours = [];
+        $curseur = $from;
+
+        for ($fenetre = 0; $fenetre < self::MAX_HISTORY_WINDOWS && $curseur <= $to; ++$fenetre) {
+            $lot = $this->historyWindow($reglages, $curseur, $lang);
+
+            if ($lot === []) {
+                break;
+            }
+
+            $dernier = $curseur;
+
+            foreach ($lot as $jour) {
+                // La fenêtre déborde volontiers de l'intervalle demandé : on
+                // ne garde que ce qu'on a demandé, faute de quoi un relevé
+                // « jusqu'au 30 juin » écrirait aussi juillet.
+                if ($jour->date >= $from && $jour->date <= $to) {
+                    $jours[$jour->date] = $jour;
+                }
+
+                $dernier = max($dernier, $jour->date);
+            }
+
+            // Le lendemain du dernier jour rendu. Sans cette avance, une
+            // fenêtre qui ne rend rien de neuf ferait tourner la boucle sur
+            // place jusqu'au garde-fou, en consommant le quota.
+            $suivant = (new \DateTimeImmutable($dernier))->modify('+1 day')->format('Y-m-d');
+
+            if ($suivant <= $curseur) {
+                break;
+            }
+
+            $curseur = $suivant;
+        }
+
+        ksort($jours);
+
+        return array_values($jours);
+    }
+
+    /**
+     * Une fenêtre d'historique.
+     *
+     * @return list<ForecastDay>
+     */
+    private function historyWindow(WeatherCredentials $reglages, string $depuis, string $lang): array
+    {
+        $url = rtrim(trim($this->envBaseUrl) !== '' ? $this->envBaseUrl : self::DEFAULT_BASE_URL, '/')
+            . self::ENDPOINTS[WeatherCredentials::VERSION_4];
+
+        try {
+            $reponse = $this->client()->request('GET', $url, [
+                'query' => [
+                    'lat' => $reglages->latitude,
+                    'lon' => $reglages->longitude,
+                    'appid' => $reglages->apiKey,
+                    'units' => 'metric',
+                    'lang' => in_array($lang, self::LANGS, true) ? $lang : 'en',
+                    // Midi, et non minuit : une journée demandée à minuit
+                    // tombe la veille dès que le fuseau de la boutique est à
+                    // l'est de Greenwich, et le relevé glisserait d'un jour.
+                    'start' => (new \DateTimeImmutable($depuis . ' 12:00:00', new \DateTimeZone('UTC')))->getTimestamp(),
+                    'cnt' => self::HISTORY_COUNT,
+                ],
+                'headers' => ['Accept' => 'application/json'],
+                'timeout' => self::TIMEOUT,
+            ]);
+
+            $statut = $reponse->getStatusCode();
+            $corps = $reponse->getContent(false);
+        } catch (TransportException | HttpExceptionInterface $e) {
+            throw new WeatherUnavailable('admin.weather.unreachable', $this->redact($e->getMessage()), $e);
+        }
+
+        if ($statut >= 400) {
+            throw new WeatherUnavailable(self::reason($statut), $this->redact(self::detail($statut, $corps)));
+        }
+
+        // `fromHost` borne à sept jours et jette le passé : c'est ce qu'il faut
+        // pour une prévision, jamais pour un historique. On lit donc les
+        // journées directement.
+        $charge = $this->decode($corps);
+        $decalage = is_numeric($charge['timezone_offset'] ?? null) ? (int) $charge['timezone_offset'] : 0;
+        $lignes = is_array($charge['data'] ?? null) ? $charge['data'] : ($charge['daily'] ?? []);
+
+        $jours = [];
+
+        foreach (is_array($lignes) ? $lignes : [] as $ligne) {
+            $jour = is_array($ligne) ? ForecastDay::fromHost($ligne, $decalage) : null;
+
+            if ($jour !== null) {
+                $jours[] = $jour;
+            }
+        }
+
+        return $jours;
     }
 
     /**

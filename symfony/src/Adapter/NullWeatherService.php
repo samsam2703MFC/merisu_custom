@@ -31,4 +31,9 @@ final class NullWeatherService implements WeatherServiceInterface
     {
         throw new WeatherUnavailable('admin.weather.notConfigured');
     }
+
+    public function history(string $from, string $to, string $lang = 'en'): array
+    {
+        throw new WeatherUnavailable('admin.weather.notConfigured');
+    }
 }

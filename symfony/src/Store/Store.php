@@ -1516,6 +1516,88 @@ final class Store
         }
     }
 
+    // ── Journal météo : le temps OBSERVÉ ────────────────────────────────────
+
+    /**
+     * Le temps qu'il a fait, jour par jour.
+     *
+     * @return array<string, ForecastDay> indexé par date
+     */
+    public function weatherJournal(string $from, string $to): array
+    {
+        $jours = [];
+
+        foreach ($this->db->fetchAllAssociative(
+            'SELECT * FROM inv_weather_daily WHERE date >= ? AND date <= ? ORDER BY date',
+            [$from, $to],
+        ) as $r) {
+            $jour = DayOfWeek::tryFrom(strtoupper(gmdate('D', (int) strtotime((string) $r['date']))));
+
+            if ($jour === null) {
+                continue;
+            }
+
+            $jours[(string) $r['date']] = ForecastDay::of(
+                (string) $r['date'],
+                $jour,
+                WeatherKind::fromLoose($r['kind']),
+                $r['temp_min'] === null ? null : (float) $r['temp_min'],
+                $r['temp_max'] === null ? null : (float) $r['temp_max'],
+                (int) ($r['rain_chance'] ?? 0),
+            );
+        }
+
+        return $jours;
+    }
+
+    /** Ce que le journal couvre, ou null s'il est vide. */
+    public function weatherJournalRange(): ?array
+    {
+        $row = $this->db->fetchAssociative(
+            'SELECT MIN(date) AS d1, MAX(date) AS d2, COUNT(*) AS n FROM inv_weather_daily',
+        );
+
+        if ($row === false || $row['d1'] === null) {
+            return null;
+        }
+
+        return ['from' => (string) $row['d1'], 'to' => (string) $row['d2'], 'days' => (int) $row['n']];
+    }
+
+    /**
+     * Inscrit une journée au journal.
+     *
+     * Une journée déjà inscrite n'est PAS réécrite par une prévision : ce qui
+     * a été observé vaut mieux que ce qui avait été annoncé, et un
+     * rafraîchissement de la semaine ne doit pas repeindre le passé. Seul un
+     * relevé d'historique ou une saisie corrigent une ligne existante.
+     */
+    public function recordWeatherDay(ForecastDay $day, string $source): bool
+    {
+        $existante = $this->db->fetchOne('SELECT source FROM inv_weather_daily WHERE date = ?', [$day->date]);
+
+        if ($existante !== false && $source === 'FORECAST') {
+            return false;
+        }
+
+        $data = [
+            'kind' => $day->kind->value,
+            'temp_min' => $day->tempMin,
+            'temp_max' => $day->tempMax,
+            'rain_chance' => $day->rainChance,
+            'source' => $source,
+            'recorded_at' => self::now(),
+        ];
+
+        if ($existante === false) {
+            $this->db->insert('inv_weather_daily', $data + ['date' => $day->date]);
+        } else {
+            $this->db->update('inv_weather_daily', $data, ['date' => $day->date]);
+        }
+
+        return true;
+    }
+
     // ── Prévision reçue du service météo ────────────────────────────────────
 
     /**

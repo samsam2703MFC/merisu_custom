@@ -669,6 +669,7 @@ admin:
         badKey: 'Le service a refusé la clé. Vérifiez-la — et surtout, vérifiez que l''abonnement « One Call by Call » est actif : il se souscrit séparément, et une clé valable ailleurs est refusée ici.'
         quota: 'Quota dépassé pour aujourd''hui. La prévision déjà en base reste utilisable ; réessayez demain.'
         badPlace: 'Le service a refusé les coordonnées. Vérifiez la latitude et la longitude.'
+        noHistory: 'Le rattrapage d''historique demande One Call 4.0 : c''est sa série journalière qui accepte une date de départ. Choisissez la version 4.0 ci-dessous, puis relancez.'
         hostRefused: 'Le service météo a refusé la demande.'
         unreachable: 'Service météo injoignable.'
         badAnswer: 'Le service a répondu quelque chose d''inexploitable.'

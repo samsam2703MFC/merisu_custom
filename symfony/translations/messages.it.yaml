@@ -666,6 +666,7 @@ admin:
         badKey: 'Il servizio ha rifiutato la chiave. Verificala — e soprattutto verifica che l''abbonamento « One Call by Call » sia attivo: si sottoscrive separatamente, e una chiave valida altrove viene rifiutata qui.'
         quota: 'Quota superata per oggi. La previsione già salvata resta utilizzabile; riprova domani.'
         badPlace: 'Il servizio ha rifiutato le coordinate. Verifica latitudine e longitudine.'
+        noHistory: 'Il recupero dello storico richiede One Call 4.0: è la sua serie giornaliera ad accettare una data di partenza. Scegli la versione 4.0 qui sotto, poi riprova.'
         hostRefused: 'Il servizio meteo ha rifiutato la richiesta.'
         unreachable: 'Servizio meteo irraggiungibile.'
         badAnswer: 'Il servizio ha risposto qualcosa di inutilizzabile.'

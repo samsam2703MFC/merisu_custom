@@ -666,6 +666,7 @@ admin:
         badKey: 'Serwis odrzucił klucz. Sprawdź go — a przede wszystkim upewnij się, że subskrypcja „One Call by Call” jest aktywna: wykupuje się ją osobno, a klucz działający gdzie indziej jest tutaj odrzucany.'
         quota: 'Dzienny limit wyczerpany. Prognoza już zapisana w bazie nadal działa; spróbuj jutro.'
         badPlace: 'Serwis odrzucił współrzędne. Sprawdź szerokość i długość geograficzną.'
+        noHistory: 'Uzupełnianie historii wymaga One Call 4.0: to jego seria dzienna przyjmuje datę początkową. Wybierz poniżej wersję 4.0 i spróbuj ponownie.'
         hostRefused: 'Serwis pogodowy odrzucił zapytanie.'
         unreachable: 'Serwis pogodowy nieosiągalny.'
         badAnswer: 'Serwis odpowiedział czymś nieczytelnym.'

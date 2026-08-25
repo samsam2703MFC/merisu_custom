@@ -30,4 +30,22 @@ interface WeatherServiceInterface
      * @throws WeatherUnavailable
      */
     public function forecast(string $today, string $lang = 'en'): WeatherForecast;
+
+    /**
+     * Le temps qu'il a FAIT, sur un intervalle passé.
+     *
+     * La prévision annonce sept jours ; celle-ci relit le passé. C'est la
+     * moitié manquante de toute corrélation entre les ventes et le temps : on
+     * a des mois de ventes à la journée, et rien en face.
+     *
+     * ⚠️ Tous les fournisseurs ne la servent pas, et pas sous le même
+     * abonnement. Une implémentation qui ne sait pas remonter le temps lève
+     * `WeatherUnavailable` avec `admin.weather.noHistory` — elle ne rend PAS un
+     * tableau vide, qui se serait lu comme « il n'a rien fait ces jours-là ».
+     *
+     * @return list<\Merisu\Inventory\Domain\ForecastDay>
+     *
+     * @throws WeatherUnavailable
+     */
+    public function history(string $from, string $to, string $lang = 'en'): array;
 }

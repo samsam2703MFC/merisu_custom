@@ -425,6 +425,35 @@ final class SchemaInstaller
         }
 
         /*
+          Le temps OBSERVÉ, jour par jour — le journal météo.
+
+          À ne pas confondre avec la prévision : celle-ci annonce sept jours et
+          se remplace à chaque appel, celui-là garde ce qu'il a fait, pour
+          toujours. C'est la moitié manquante de toute corrélation entre les
+          ventes et le temps : on a quatre mois de ventes à la journée, et rien
+          en face.
+
+          `source` dit d'où vient la ligne — la prévision du jour même, un
+          rattrapage d'historique, ou une saisie. Une corrélation calculée sur
+          des prévisions et une autre sur des relevés ne valent pas la même
+          chose, et l'écran doit pouvoir le dire.
+
+          La DATE est la clé : deux relevés du même jour n'auraient aucun sens,
+          et le second corrige le premier.
+        */
+        if (!\in_array('inv_weather_daily', $existing, true)) {
+            $t = $schema->createTable('inv_weather_daily');
+            $t->addColumn('date', 'string', ['length' => 10]);
+            $t->addColumn('kind', 'string', ['length' => 16, 'default' => 'CLOUDY']);
+            $t->addColumn('temp_min', 'float', ['notnull' => false]);
+            $t->addColumn('temp_max', 'float', ['notnull' => false]);
+            $t->addColumn('rain_chance', 'integer', ['default' => 0]);
+            $t->addColumn('source', 'string', ['length' => 16, 'default' => 'FORECAST']);
+            $t->addColumn('recorded_at', 'string', ['length' => 32, 'default' => '']);
+            $t->setPrimaryKey(['date']);
+        }
+
+        /*
           La prévision reçue, gardée telle quelle.
 
           En base, et non en mémoire : le service météo est FACTURÉ à l'appel.

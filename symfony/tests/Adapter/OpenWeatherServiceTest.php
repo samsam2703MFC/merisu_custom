@@ -343,6 +343,110 @@ final class OpenWeatherServiceTest extends TestCase
         yield 'One Call 4.0' => ['4.0', '/data/4.0/onecall/timeline/1day', 'cnt'];
     }
 
+    // ── Le rattrapage d'historique ──────────────────────────────────────────
+
+    /**
+     * L'historique se demande par FENÊTRES, et la boucle avance.
+     *
+     * Sans l'avance sur le dernier jour rendu, une fenêtre qui ne rend rien de
+     * neuf ferait tourner la boucle sur place jusqu'au garde-fou — cinquante
+     * appels facturés pour le même mois.
+     */
+    public function testLHistoriqueAvanceDeFenetreEnFenetre(): void
+    {
+        $vus = [];
+
+        $service = $this->serviceV4(function (string $m, string $url) use (&$vus): MockResponse {
+            parse_str((string) parse_url($url, \PHP_URL_QUERY), $q);
+            $depart = (new \DateTimeImmutable('@' . (int) $q['start']))->format('Y-m-d');
+            $vus[] = $depart;
+
+            $jours = [];
+            for ($i = 0; $i < 30; ++$i) {
+                $jours[] = [
+                    'dt' => (int) $q['start'] + $i * 86400,
+                    'temp' => ['min' => 10.0, 'max' => 20.0],
+                    'weather' => [['id' => 800]],
+                    'pop' => 0.1,
+                ];
+            }
+
+            return new MockResponse(json_encode(
+                ['timezone_offset' => 0, 'data' => $jours],
+                \JSON_THROW_ON_ERROR,
+            ));
+        });
+
+        $jours = $service->history('2026-04-20', '2026-06-18');
+
+        // Deux fenêtres de trente journées couvrent l'intervalle.
+        self::assertSame(['2026-04-20', '2026-05-20'], $vus);
+        self::assertCount(60, $jours);
+        self::assertSame('2026-04-20', $jours[0]->date);
+        self::assertSame('2026-06-18', end($jours)->date);
+    }
+
+    /**
+     * Ce qui dépasse l'intervalle demandé est JETÉ.
+     *
+     * La fenêtre rend trente journées d'un bloc : un rattrapage « jusqu'au
+     * 30 juin » aurait sinon écrit aussi juillet, et le journal aurait porté
+     * des prévisions présentées comme des relevés.
+     */
+    public function testCeQuiDepasseLIntervalleEstJete(): void
+    {
+        $service = $this->serviceV4(function (string $m, string $url): MockResponse {
+            parse_str((string) parse_url($url, \PHP_URL_QUERY), $q);
+            $jours = [];
+            for ($i = 0; $i < 30; ++$i) {
+                $jours[] = [
+                    'dt' => (int) $q['start'] + $i * 86400,
+                    'temp' => ['min' => 10.0, 'max' => 20.0],
+                    'weather' => [['id' => 500]],
+                ];
+            }
+
+            return new MockResponse(json_encode(['timezone_offset' => 0, 'data' => $jours], \JSON_THROW_ON_ERROR));
+        });
+
+        $jours = $service->history('2026-04-20', '2026-04-24');
+
+        self::assertCount(5, $jours);
+        self::assertSame('2026-04-24', end($jours)->date);
+    }
+
+    /**
+     * La 3.0 ne sait pas remonter le temps ici, et le DIT.
+     *
+     * Rendre un tableau vide se serait lu comme « il n'a rien fait ces
+     * jours-là », et la corrélation aurait tourné sur un journal fantôme.
+     */
+    public function testLaVersion3RefuseLHistoriqueAuLieuDeRendreLeVide(): void
+    {
+        $service = $this->service(static fn (): MockResponse => throw new \LogicException('aucun appel ne devait partir'));
+
+        $this->expectException(WeatherUnavailable::class);
+        $this->expectExceptionMessage('admin.weather.noHistory');
+        $service->history('2026-04-20', '2026-04-30');
+    }
+
+    /** Un service réglé sur One Call 4.0. */
+    private function serviceV4(callable $reponse): OpenWeatherService
+    {
+        $db = $this->createMock(Connection::class);
+        $db->method('fetchAssociative')->willReturn([
+            'api_key' => null, 'latitude' => 52.2297, 'longitude' => 21.0122,
+            'place' => 'Varsovie', 'auto_apply' => 0, 'api_version' => '4.0',
+        ]);
+
+        return new OpenWeatherService(
+            new WeatherCredentialStore($db, new SecretBox('secret-de-test')),
+            self::CLE, '52.2297', '21.0122', 'Varsovie',
+            'https://exemple.test',
+            new MockHttpClient($reponse),
+        );
+    }
+
     // ── La clé ne fuit pas ──────────────────────────────────────────────────
 
     /**
