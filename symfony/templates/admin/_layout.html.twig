@@ -42,6 +42,7 @@
     { title: 'nav.groups.sales', links: [
       { route: 'admin_network',    label: 'nav.network' },
       { route: 'admin_sales',      label: 'nav.sales' },
+      { route: 'admin_weather_sales', label: 'nav.weatherSales' },
       { route: 'admin_targets',    label: 'nav.targets' }
     ] },
     { title: 'nav.groups.production', links: [
@@ -59,6 +60,25 @@
     ] }
   ] -%}
 
+  {#
+    Quelle entrée est ACTIVE.
+
+    Un simple « commence par » désigne plusieurs entrées à la fois dès qu'un
+    nom de route en prolonge un autre : `admin_weather_sales` commence par
+    `admin_weather`, et Météo s'allumait en même temps que Ventes & météo. Le
+    préfixe reste utile — il fait rester Boutiques allumé pendant l'édition
+    d'une fiche — mais c'est la correspondance la PLUS LONGUE qui gagne.
+
+    Calculé d'un bloc plutôt que dans la boucle : un `set` posé dans une
+    boucle Twig ne survit pas à l'itération, et l'accumulateur repartirait de
+    zéro à chaque tour.
+  #}
+  {%- set navRouteCourante = app.request.attributes.get('_route') -%}
+  {%- set navCandidates = navGroupes
+      |reduce((liste, groupe) => liste|merge(groupe.links|map(lien => lien.route)), [])
+      |filter(route => navRouteCourante == route or navRouteCourante starts with route ~ '_') -%}
+  {%- set navRouteActive = navCandidates|sort((a, b) => a|length <=> b|length)|last|default('') -%}
+
   <div class="admin-shell">
     <nav class="admin-nav" aria-label="{{ 'nav.sections'|trans }}">
       {% for navGroupe in navGroupes %}
@@ -70,7 +90,7 @@
         <p class="admin-nav__title">{{ navGroupe.title|trans }}</p>
 
         {% for navEntree in navGroupe.links %}
-          <a class="admin-nav__link {{ app.request.attributes.get('_route') starts with navEntree.route ? 'is-active' : '' }}"
+          <a class="admin-nav__link {{ navRouteActive == navEntree.route ? 'is-active' : '' }}"
              href="{{ path(navEntree.route) }}">{{ navEntree.label|trans }}</a>
         {% endfor %}
       {% endfor %}

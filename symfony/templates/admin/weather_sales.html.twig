@@ -1,0 +1,204 @@
+{#
+  Admin ▸ Ventes & météo — ce que le temps fait aux ventes.
+
+  Trois tableaux côte à côte, et c'est délibéré. Pris seul, le tableau des
+  températures laisse croire que la chaleur explique tout ; celui des jours de
+  semaine, juste à côté, montre un écart du même ordre entre un mardi et un
+  samedi. De quoi se rappeler qu'aucune de ces colonnes ne mesure une cause.
+#}
+{% extends 'admin/_layout.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'admin.weatherSales.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% macro tableau(analyse, libelles, poses, minDays, portee, from, to, shopCode) %}
+  {% import 'components/_macros.html.twig' as ui %}
+
+  <div class="table-scroll">
+    <table class="table wx">
+      <thead>
+        <tr>
+          <th scope="col">{{ ('admin.weatherSales.scopes.' ~ portee)|trans }}</th>
+          <th scope="col">{{ 'admin.weatherSales.days'|trans }}</th>
+          <th scope="col">{{ 'admin.weatherSales.perDay'|trans }}</th>
+          <th scope="col">{{ 'admin.weatherSales.gap'|trans }}</th>
+          <th scope="col">{{ 'admin.weatherSales.posed'|trans }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ligne in analyse.rows %}
+          <tr class="{{ ligne.days == 0 ? 'wx__row--absent' : (ligne.isReliable ? '' : 'wx__row--thin') }}">
+            <th scope="row">{{ libelles[ligne.key]|default(ligne.key) }}</th>
+
+            <td class="wx__num">{{ ligne.days }}</td>
+
+            <td class="wx__num">
+              {% if ligne.days > 0 %}
+                {{ ligne.averageUnits|number_format(1, ',', ' ') }}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+
+            {#
+              L'écart, et sa raison d'être absent. Une case vide sans
+              explication se lit comme un défaut d'affichage ; ici elle dit
+              « pas assez de journées pour conclure ».
+            #}
+            <td class="wx__gap {{ ligne.deviation is not null and ligne.deviation > 0 ? 'wx__gap--up' : (ligne.deviation is not null and ligne.deviation < 0 ? 'wx__gap--down' : '') }}">
+              {% if ligne.days > 0 and not ligne.isReliable %}
+                <span title="{{ 'admin.weatherSales.tooThin'|trans({ '%min%': minDays, '%days%': ligne.days }) }}">—</span>
+              {% else %}
+                {{ ligne.deviationLabel }}
+              {% endif %}
+            </td>
+
+            <td class="wx__num muted">
+              {% set pose = poses[ligne.key]|default(null) %}
+              {% if pose is not null and pose != 0 %}
+                {{ pose > 0 ? '+' : '−' }}{{ (pose < 0 ? -pose : pose)|number_format(0, ',', ' ') }} %
+              {% else %}
+                —
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if portee != 'weekday' %}
+    <form method="post" action="{{ path('admin_weather_sales_apply') }}" class="form">
+      <input type="hidden" name="scope" value="{{ portee }}">
+      <input type="hidden" name="depuis" value="{{ from }}">
+      <input type="hidden" name="jusqu" value="{{ to }}">
+      <input type="hidden" name="boutique" value="{{ shopCode }}">
+
+      <div class="form-actions">
+        <button type="submit" class="button button--primary"
+                {{ analyse.hasAnythingToApply ? '' : 'disabled' }}
+                data-confirm="{{ 'admin.weatherSales.applyConfirm'|trans }}">
+          {{ 'admin.weatherSales.apply'|trans }}
+        </button>
+      </div>
+      <p class="field__hint">{{ 'admin.weatherSales.applyHint'|trans({ '%min%': minDays }) }}</p>
+    </form>
+  {% endif %}
+{% endmacro %}
+
+{% block admin_content %}
+  {{ ui.page_header('admin.weatherSales.title'|trans, 'admin.weatherSales.intro'|trans) }}
+
+  {#
+    Ce que le croisement PEUT et NE PEUT PAS dire. En bandeau, avant les
+    chiffres : après, il serait lu par ceux qui ont déjà tiré leurs
+    conclusions.
+  #}
+  <div class="banner banner--info">{{ 'admin.weatherSales.caveat'|trans }}</div>
+
+  <section class="card">
+    <h2 class="card__title">{{ 'admin.weatherSales.filter'|trans }}</h2>
+
+    <form method="get" action="{{ path('admin_weather_sales') }}" class="form">
+      <div class="field-grid">
+        <div class="field">
+          <label class="field__label" for="wx-from">{{ 'common.from'|trans }}</label>
+          <input class="field__input" type="date" id="wx-from" name="depuis" value="{{ from }}">
+        </div>
+        <div class="field">
+          <label class="field__label" for="wx-to">{{ 'common.to'|trans }}</label>
+          <input class="field__input" type="date" id="wx-to" name="jusqu" value="{{ to }}">
+        </div>
+      </div>
+
+      {% if shops|length > 1 %}
+        <div class="field">
+          <label class="field__label" for="wx-shop">{{ 'nav.shops'|trans }}</label>
+          <select class="field__input" id="wx-shop" name="boutique">
+            <option value="">{{ 'admin.weatherSales.allShops'|trans }}</option>
+            {% for boutique in shops %}
+              <option value="{{ boutique.code }}" {{ boutique.code == shopCode ? 'selected' : '' }}>
+                {{ boutique.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      {% endif %}
+
+      <div class="form-actions">
+        {# Secondaire : le bouton PRIMAIRE de cette page est celui qui écrit
+           dans les seuils. Deux boutons vifs se disputeraient le geste. #}
+        <button type="submit" class="button button--secondary">{{ 'admin.weatherSales.show'|trans }}</button>
+      </div>
+
+      {#
+        Ce que les deux sources couvrent RÉELLEMENT. Un tableau maigre
+        s'explique presque toujours par là — et sans ces deux lignes, on le
+        mettrait sur le compte du calcul.
+      #}
+      <p class="field__hint">
+        {% if salesRange %}
+          {{ 'admin.weatherSales.salesCover'|trans({ '%from%': salesRange.from, '%to%': salesRange.to }) }}
+        {% else %}
+          {{ 'admin.weatherSales.noSales'|trans }}
+        {% endif %}
+        <br>
+        {% if journalRange %}
+          {{ 'admin.weatherSales.journalCover'|trans({ '%from%': journalRange.from, '%to%': journalRange.to }) }}
+        {% else %}
+          {{ 'admin.weatherSales.noJournal'|trans }}
+        {% endif %}
+      </p>
+    </form>
+  </section>
+
+  {% if temperature.observedDays == 0 %}
+    {{ ui.banner('warn', 'admin.weatherSales.nothing'|trans) }}
+  {% else %}
+    <p class="muted">
+      {{ 'admin.weatherSales.reference'|trans({
+        '%days%': temperature.observedDays,
+        '%units%': temperature.reference|number_format(1, ',', ' '),
+      }) }}
+    </p>
+
+    {% set libellesBandes = {} %}
+    {% for bande in bands %}
+      {% set libellesBandes = libellesBandes|merge({ (bande.value): ('admin.parMatrix.bands.' ~ bande.value)|trans }) %}
+    {% endfor %}
+
+    {% set libellesCiel = {} %}
+    {% for kind in kinds %}
+      {% set libellesCiel = libellesCiel|merge({ (kind.value): ('admin.parMatrix.weathers.' ~ kind.value)|trans }) %}
+    {% endfor %}
+
+    {% set libellesJours = {} %}
+    {% for jour in days %}
+      {% set libellesJours = libellesJours|merge({ (jour.value): ('days.' ~ jour.value)|trans }) %}
+    {% endfor %}
+
+    <section class="card">
+      <h2 class="card__title">{{ 'admin.weatherSales.byTemperature'|trans }}</h2>
+      <p class="field__hint">{{ 'admin.weatherSales.byTemperatureHint'|trans }}</p>
+      {{ _self.tableau(temperature, libellesBandes, currentBands, minDays, 'temperature', from, to, shopCode) }}
+    </section>
+
+    <section class="card">
+      <h2 class="card__title">{{ 'admin.weatherSales.bySky'|trans }}</h2>
+      <p class="field__hint">{{ 'admin.weatherSales.bySkyHint'|trans }}</p>
+      {{ _self.tableau(sky, libellesCiel, currentKinds, minDays, 'sky', from, to, shopCode) }}
+    </section>
+
+    <section class="card">
+      <h2 class="card__title">{{ 'admin.weatherSales.byWeekday'|trans }}</h2>
+      {#
+        Ce tableau ne se reporte NULLE PART, et c'est pour cela qu'il est là :
+        le jour de semaine a déjà ses propres seuils, dans la matrice. Il sert
+        de témoin — un écart mardi/samedi du même ordre que l'écart froid/chaud
+        rappelle que la température n'explique pas tout.
+      #}
+      <p class="field__hint">{{ 'admin.weatherSales.byWeekdayHint'|trans }}</p>
+      {{ _self.tableau(weekday, libellesJours, {}, minDays, 'weekday', from, to, shopCode) }}
+    </section>
+  {% endif %}
+{% endblock %}
