@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Merisu\Inventory\Controller;
 
 use Merisu\Inventory\Domain\BusinessDate;
+use Merisu\Inventory\Domain\NetworkChart;
 use Merisu\Inventory\Domain\Shop;
 use Merisu\Inventory\Domain\ShopResult;
 use Merisu\Inventory\Security\CurrentUser;
@@ -89,7 +90,55 @@ final class AdminNetworkController extends AbstractController
         */
         $orphelines = $ventes[''] ?? null;
 
+        /*
+          Les courbes.
+
+          Le tableau des cartes dit OÙ ON EN EST ; il ne dit pas comment on y
+          est arrivé. Deux boutiques au même total n'ont pas la même allure si
+          l'une a vendu régulièrement et l'autre tout un week-end — et c'est
+          l'allure qui annonce le mois prochain.
+
+          Les ventes sont relues jour par jour, alors que `salesByShop` les
+          rend déjà agrégées : c'est la seule lecture qui porte le temps, et
+          la même requête sert les trois tracés.
+        */
+        $parBoutiqueEtJour = [];
+        $nomDe = [];
+
+        foreach ($this->shops->all() as $boutique) {
+            $nomDe[$boutique->code] = $boutique->name;
+            $parBoutiqueEtJour[$boutique->name] = [];
+        }
+
+        foreach ($this->store->sales($from, $to) as $vente) {
+            // Un relevé d'avant le réseau n'a pas de boutique : il compte dans
+            // le total du réseau, mais ne peut porter aucune courbe.
+            $nom = $nomDe[$vente->shopCode] ?? null;
+
+            if ($nom === null) {
+                continue;
+            }
+
+            $parBoutiqueEtJour[$nom][$vente->date] = ($parBoutiqueEtJour[$nom][$vente->date] ?? 0.0) + $vente->quantity;
+        }
+
+        // Une boutique qui n'a rien vendu sur la période ne porte pas de
+        // courbe plate à zéro : elle encombrerait la légende sans rien dire.
+        $parBoutiqueEtJour = array_filter($parBoutiqueEtJour, static fn (array $j): bool => $j !== []);
+
+        $objectifReseau = 0.0;
+        foreach ($this->shops->all() as $boutique) {
+            $objectifReseau += $boutique->monthlyTarget * $prorata;
+        }
+
+        $chart = NetworkChart::build(
+            BusinessDate::range($from, $to),
+            $parBoutiqueEtJour,
+            $objectifReseau > 0.0 ? $objectifReseau : null,
+        );
+
         return $this->render('admin/network.html.twig', [
+            'chart' => $chart,
             'from' => $from,
             'to' => $to,
             'results' => ShopResult::rank($resultats),

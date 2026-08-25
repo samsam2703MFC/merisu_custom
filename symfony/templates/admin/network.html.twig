@@ -54,6 +54,120 @@
     <p class="field__hint">{{ 'admin.network.prorata'|trans({ '%pct%': (prorata * 100)|round }) }}</p>
   </section>
 
+  {#
+    ── Les courbes ────────────────────────────────────────────────────────
+
+    Le tableau des cartes dit OÙ ON EN EST ; il ne dit pas comment on y est
+    arrivé. Deux boutiques au même total n'ont pas la même allure si l'une a
+    vendu régulièrement et l'autre tout un week-end, et c'est l'allure qui
+    annonce le mois suivant.
+
+    Tracées côté SERVEUR, en SVG : le module se passe de JavaScript, et un
+    poste dont le script n'a pas chargé doit continuer d'afficher ses chiffres.
+    Les info-bulles sont des <title> — le navigateur les rend seul.
+  #}
+  {% if chart.dates is not empty %}
+    <section class="card">
+      <header class="card__header">
+        <h2 class="card__title">{{ 'admin.network.chartCumulative'|trans }}</h2>
+        {% if chart.pace is not null %}
+          {{ ui.badge(chart.pace >= 100 ? 'ok' : 'warn', 'admin.network.pace'|trans({ '%pct%': chart.pace|round })) }}
+        {% endif %}
+      </header>
+      <p class="field__hint">{{ 'admin.network.chartCumulativeHint'|trans }}</p>
+
+      <div class="table-scroll">
+        <svg class="nchart" viewBox="0 0 {{ chart.WIDTH }} {{ chart.HEIGHT }}" role="img"
+             aria-label="{{ 'admin.network.chartCumulative'|trans }}">
+          {# La ligne de base, seul repère tracé : une grille complète ferait
+             concurrence aux courbes qu'elle est censée servir. #}
+          <line class="nchart__base" x1="{{ chart.PAD_X }}" y1="{{ chart.TOP + chart.PLOT }}"
+                x2="{{ chart.WIDTH - chart.PAD_X }}" y2="{{ chart.TOP + chart.PLOT }}"></line>
+
+          {# L'objectif D'ABORD, sous les courbes : c'est un repère, pas une
+             donnée, et il ne doit pas masquer ce qu'on vient lire. #}
+          {% if chart.targetLine %}
+            <polyline class="nchart__target" points="{{ chart.targetLine }}">
+              <title>{{ 'admin.network.targetPace'|trans({ '%n%': chart.target|round }) }}</title>
+            </polyline>
+          {% endif %}
+
+          <polygon class="nchart__area" points="{{ chart.areaPoints }}"></polygon>
+          <polyline class="nchart__total" points="{{ chart.cumulativePoints }}">
+            <title>{{ 'admin.network.networkQty'|trans }} : {{ chart.total|qty }}</title>
+          </polyline>
+
+          {% for nom, points in chart.series %}
+            <polyline class="nchart__shop" points="{{ points }}" style="stroke: {{ chart.colors[nom] }}">
+              <title>{{ nom }}</title>
+            </polyline>
+          {% endfor %}
+
+          {% for i, date in chart.axisLabels %}
+            <text class="nchart__date{{ i == 0 ? ' nchart__date--first' : (i == chart.dates|length - 1 ? ' nchart__date--last' : '') }}"
+                  x="{{ chart.xOf(i) }}" y="{{ chart.TOP + chart.PLOT + 18 }}">{{ date|slice(5) }}</text>
+          {% endfor %}
+        </svg>
+      </div>
+
+      {#
+        La légende est TOUJOURS là dès deux séries : la couleur seule ne doit
+        jamais porter l'identité — un lecteur daltonien, une impression en
+        noir et blanc, et la courbe n'a plus de nom.
+      #}
+      <ul class="nchart-legend">
+        <li class="nchart-legend__item">
+          <span class="nchart-legend__mark nchart-legend__mark--total"></span>
+          {{ 'admin.network.networkQty'|trans }}
+        </li>
+        {% for nom, points in chart.series %}
+          <li class="nchart-legend__item">
+            <span class="nchart-legend__mark" style="background: {{ chart.colors[nom] }}"></span>{{ nom }}
+          </li>
+        {% endfor %}
+        {% if chart.targetLine %}
+          <li class="nchart-legend__item">
+            <span class="nchart-legend__mark nchart-legend__mark--target"></span>
+            {{ 'admin.network.targetPace'|trans({ '%n%': chart.target|round }) }}
+          </li>
+        {% endif %}
+      </ul>
+    </section>
+
+    <section class="card">
+      <header class="card__header">
+        <h2 class="card__title">{{ 'admin.network.chartDaily'|trans }}</h2>
+        {{ ui.badge('neutral', 'admin.network.averageDay'|trans({ '%n%': chart.average|qty })) }}
+      </header>
+      <p class="field__hint">{{ 'admin.network.chartDailyHint'|trans }}</p>
+
+      <div class="table-scroll">
+        <svg class="nchart" viewBox="0 0 {{ chart.WIDTH }} {{ chart.HEIGHT }}" role="img"
+             aria-label="{{ 'admin.network.chartDaily'|trans }}">
+          {% for b in chart.bars %}
+            <rect class="nchart__bar" x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ b.h }}" rx="2">
+              <title>{{ b.date }} — {{ b.value|qty }}</title>
+            </rect>
+          {% endfor %}
+
+          {# La moyenne par-dessus les barres : c'est la ligne qu'on cherche,
+             et sous les barres elle disparaîtrait derrière les plus hautes. #}
+          <polyline class="nchart__average" points="{{ chart.averageLine }}">
+            <title>{{ 'admin.network.averageDay'|trans({ '%n%': chart.average|qty }) }}</title>
+          </polyline>
+
+          <line class="nchart__base" x1="{{ chart.PAD_X }}" y1="{{ chart.TOP + chart.PLOT }}"
+                x2="{{ chart.WIDTH - chart.PAD_X }}" y2="{{ chart.TOP + chart.PLOT }}"></line>
+
+          {% for i, date in chart.axisLabels %}
+            <text class="nchart__date{{ i == 0 ? ' nchart__date--first' : (i == chart.dates|length - 1 ? ' nchart__date--last' : '') }}"
+                  x="{{ chart.xOf(i) }}" y="{{ chart.TOP + chart.PLOT + 18 }}">{{ date|slice(5) }}</text>
+          {% endfor %}
+        </svg>
+      </div>
+    </section>
+  {% endif %}
+
   {% if results is empty %}
     {{ ui.banner('warn', 'admin.network.noShops'|trans) }}
   {% else %}

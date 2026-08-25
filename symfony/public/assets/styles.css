@@ -4202,3 +4202,73 @@ select:disabled, select.field__input:disabled { background-image: url("data:imag
 /* Observée, mais trop peu pour conclure. Le fond dit « lisible, pas
    exploitable » — et le tiret de la colonne écart porte son explication. */
 .wx__row--thin { background: var(--warn-bg); }
+
+/* ── Courbes du réseau ───────────────────────────────────────────────────── */
+
+/*
+  Tracées côté serveur, en SVG : le module se passe de JavaScript. Les
+  info-bulles sont des <title>, que le navigateur rend seul.
+*/
+.nchart { display: block; width: 100%; height: auto; min-width: 480px; overflow: visible; }
+
+/* La ligne de base, seul repère tracé. Une grille complète ferait concurrence
+   aux courbes qu'elle est censée servir. */
+.nchart__base { stroke: var(--border); stroke-width: 1; }
+
+/* Le réseau : trait épais, aire discrète. L'aire donne le volume — la ligne
+   seule paraît flotter au-dessus du cadre. */
+.nchart__total { fill: none; stroke: var(--coffee); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.nchart__area { fill: var(--coffee); opacity: .07; }
+
+/* Une boutique : plus fin que le réseau, pour que le total reste lisible
+   par-dessus le faisceau. */
+.nchart__shop { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; opacity: .9; }
+
+/* L'objectif n'est pas une donnée mais un REPÈRE : pointillé, sans couleur
+   d'action, sous les courbes. */
+.nchart__target { fill: none; stroke: var(--latte); stroke-width: 2; stroke-dasharray: 6 5; }
+
+/* La moyenne, sur le graphique des journées. Framboise : c'est la seule ligne
+   qu'on vient y chercher. */
+.nchart__average { fill: none; stroke: var(--brand); stroke-width: 2; stroke-dasharray: 4 4; }
+
+/*
+  Les barres portent un BRUN, pas la framboise du graphique de Ventes : ici
+  c'est la ligne de moyenne qui est framboise, et deux marques de la même
+  couleur l'auraient fait disparaître dans ses propres barres.
+
+  Le crème d'origine ne tenait que 1,14:1 sur fond blanc — sous le plancher de
+  3:1, les barres s'effaçaient à l'écran d'une tablette vue de biais.
+
+  `--latte` à 80 % en tient 3,15 : mesuré, pas estimé. L'opacité compte, et
+  c'est le piège — la même teinte pleine tient 4,52, mais à 55 % elle retombe
+  à 2,08, sous le plancher, alors que la règle a l'air d'aller de soi.
+*/
+.nchart__bar { fill: var(--latte); opacity: .8; }
+
+/* `text-anchor` en CSS l'emporte sur l'attribut de présentation : les deux
+   bornes se calent donc par une classe, sans quoi la première date pendait à
+   moitié hors du cadre. */
+.nchart__date { fill: var(--text-muted); font-size: 11px; text-anchor: middle; }
+.nchart__date--first { text-anchor: start; }
+.nchart__date--last { text-anchor: end; }
+
+/*
+  La légende accompagne TOUJOURS deux séries ou plus : la couleur seule ne doit
+  jamais porter l'identité — un lecteur daltonien, une impression en noir et
+  blanc, et la courbe n'a plus de nom.
+*/
+.nchart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  font-size: .84rem;
+  color: var(--text-muted);
+}
+.nchart-legend__item { display: flex; align-items: center; gap: var(--space-2); }
+.nchart-legend__mark { display: block; width: 14px; height: 3px; border-radius: 999px; flex: none; }
+.nchart-legend__mark--total { height: 4px; background: var(--coffee); }
+.nchart-legend__mark--target { background: repeating-linear-gradient(90deg, var(--latte) 0 5px, transparent 5px 9px); }

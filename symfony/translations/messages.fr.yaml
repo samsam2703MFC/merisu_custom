@@ -761,6 +761,13 @@ admin:
         deleteHint: 'La fiche disparaît, pas ce qu''elle a produit : comptages, plans et historique gardent son code.'
         deleted: 'Boutique retirée. Ses comptages et son historique sont conservés.'
     network:
+        chartCumulative: 'Cumul de la période'
+        chartCumulativeHint: 'Les ventes du jour sautent trop pour qu''on y lise une tendance. Le cumul, lui, ne redescend jamais et se compare à la droite d''objectif : on voit d''un coup si l''on passe au-dessus, et depuis quand.'
+        chartDaily: 'Ventes de chaque journée'
+        chartDailyHint: 'La forme de la semaine, telle qu''elle est. La ligne framboise est la moyenne de la période.'
+        targetPace: 'Rythme d''objectif — %n% pièces'
+        pace: '%pct% % du rythme'
+        averageDay: 'Moyenne : %n% par jour'
         title: 'Réseau'
         subtitle: 'Chaque boutique, et où elle en est de son objectif.'
         networkQty: 'Pièces vendues'

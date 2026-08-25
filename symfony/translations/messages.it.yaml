@@ -758,6 +758,13 @@ admin:
         deleteHint: 'La scheda sparisce, non ciò che ha prodotto: conteggi, piani e storico conservano il suo codice.'
         deleted: 'Negozio rimosso. I suoi conteggi e il suo storico sono conservati.'
     network:
+        chartCumulative: 'Cumulato del periodo'
+        chartCumulativeHint: 'Le vendite del giorno saltano troppo perché vi si legga una tendenza. Il cumulato non scende mai e si confronta con la retta dell''obiettivo: si vede subito se si è sopra, e da quando.'
+        chartDaily: 'Vendite di ogni giornata'
+        chartDailyHint: 'La forma della settimana, com''è. La linea lampone è la media del periodo.'
+        targetPace: 'Ritmo dell''obiettivo — %n% pezzi'
+        pace: '%pct% % del ritmo'
+        averageDay: 'Media: %n% al giorno'
         title: 'Rete'
         subtitle: 'Ogni negozio, e a che punto è del suo obiettivo.'
         networkQty: 'Pezzi venduti'

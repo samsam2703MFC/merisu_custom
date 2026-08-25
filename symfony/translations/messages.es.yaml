@@ -758,6 +758,13 @@ admin:
         deleteHint: 'La ficha desaparece, no lo que produjo: recuentos, planes e histórico conservan su código.'
         deleted: 'Tienda retirada. Sus recuentos y su histórico se conservan.'
     network:
+        chartCumulative: 'Acumulado del periodo'
+        chartCumulativeHint: 'Las ventas del día saltan demasiado para leer una tendencia. El acumulado nunca baja y se compara con la recta del objetivo: se ve de un vistazo si se está por encima, y desde cuándo.'
+        chartDaily: 'Ventas de cada jornada'
+        chartDailyHint: 'La forma de la semana, tal cual. La línea frambuesa es la media del periodo.'
+        targetPace: 'Ritmo del objetivo — %n% piezas'
+        pace: '%pct% % del ritmo'
+        averageDay: 'Media: %n% al día'
         title: 'Red'
         subtitle: 'Cada tienda, y dónde está respecto a su objetivo.'
         networkQty: 'Piezas vendidas'
