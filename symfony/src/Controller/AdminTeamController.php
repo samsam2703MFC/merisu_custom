@@ -12,6 +12,7 @@ use Merisu\Inventory\Domain\TaskTile;
 use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Service\PinHasher;
 use Merisu\Inventory\Store\ConsultantStore;
+use Merisu\Inventory\Store\ShopStore;
 use Merisu\Inventory\Store\Store;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -40,6 +41,7 @@ final class AdminTeamController extends AbstractController
         private readonly PinHasher $hasher,
         private readonly Store $store,
         private readonly CurrentUser $currentUser,
+        private readonly ShopStore $shops,
     ) {
     }
 
@@ -256,14 +258,24 @@ final class AdminTeamController extends AbstractController
     /** @return list<string> */
     private function boutiquesConnues(): array
     {
+        // Les boutiques ENREGISTRÉES font foi. La liste se déduisait des noms
+        // tapés sur les fiches : « Rynek », « rynek » et « Wrocław Rynek »
+        // cohabitaient et faisaient trois boutiques dans la même suggestion.
         $vues = [];
+
+        foreach ($this->shops->all() as $boutique) {
+            $vues[$boutique->name] = true;
+        }
+
+        // Puis ce qui a déjà été saisi, pour ne pas rendre invisible un
+        // rattachement posé avant qu'Admin ▸ Boutiques n'existe.
         foreach ($this->team->consultants() as $consultant) {
             foreach ($consultant->shops as $boutique) {
                 $vues[$boutique] = true;
             }
         }
 
-        $noms = array_keys($vues);
+        $noms = array_values(array_filter(array_keys($vues), static fn (string $n): bool => trim($n) !== ''));
         sort($noms, \SORT_NATURAL | \SORT_FLAG_CASE);
 
         return $noms;

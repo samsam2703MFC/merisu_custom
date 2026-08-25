@@ -12,6 +12,7 @@ use Merisu\Inventory\Domain\TargetMonth;
 use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Service\InventoryService;
 use Merisu\Inventory\Store\HrStore;
+use Merisu\Inventory\Store\ShopStore;
 use Merisu\Inventory\Store\Store;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -45,6 +46,7 @@ final class AdminTargetController extends AbstractController
         private readonly InventoryService $inventory,
         private readonly ShopRankingServiceInterface $ranking,
         private readonly ConsultantServiceInterface $consultants,
+        private readonly ShopStore $shops,
     ) {
     }
 
@@ -258,15 +260,36 @@ final class AdminTargetController extends AbstractController
      */
     private function boutiques(): array
     {
+        /*
+          Les boutiques ENREGISTRÉES d'abord.
+
+          Cette liste se déduisait des noms tapés sur les fiches consultants :
+          un texte libre, donc « Rynek », « rynek » et « Wrocław Rynek »
+          cohabitaient et faisaient trois boutiques dans le sélecteur. Depuis
+          qu'Admin ▸ Boutiques existe, c'est lui qui fait foi.
+        */
         $vues = [];
 
+        foreach ($this->shops->all() as $boutique) {
+            $vues[$boutique->name] = true;
+        }
+
+        /*
+          Puis les noms déjà EMPLOYÉS, même s'ils ne correspondent à aucune
+          fiche.
+
+          Un objectif posé l'an dernier sur « Merisù Centrum » doit rester
+          atteignable : le retirer du sélecteur ne l'aurait pas effacé, il
+          l'aurait rendu invisible — des chiffres en base que plus aucun écran
+          ne sait afficher.
+        */
         foreach ($this->consultants->consultants() as $consultant) {
             foreach ($consultant->shops as $boutique) {
                 $vues[$boutique] = true;
             }
         }
 
-        $noms = array_keys($vues);
+        $noms = array_keys(array_filter($vues, static fn (bool $v, string $nom): bool => trim($nom) !== '', \ARRAY_FILTER_USE_BOTH));
         sort($noms, \SORT_NATURAL | \SORT_FLAG_CASE);
 
         return $noms;

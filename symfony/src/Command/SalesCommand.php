@@ -48,6 +48,21 @@ final class SalesCommand extends Command
      */
     private const DEFAULT_DAYS = 42;
 
+    /** Largeur d'une fenêtre de rattrapage, en jours. */
+    private const WINDOW_DAYS = 90;
+
+    /**
+     * Fenêtres vides d'affilée avant de conclure qu'on a atteint le début.
+     *
+     * Deux, et non une : une boutique peut avoir fermé un trimestre entier —
+     * travaux, saison — et s'arrêter au premier trou aurait laissé tout ce qui
+     * précède hors de portée.
+     */
+    private const EMPTY_WINDOWS = 2;
+
+    /** Garde-fou : vingt fenêtres de quatre-vingt-dix jours font cinq ans. */
+    private const MAX_WINDOWS = 20;
+
     public function __construct(
         private readonly PosServiceInterface $pos,
         private readonly Store $store,
@@ -61,6 +76,7 @@ final class SalesCommand extends Command
         $this
             ->addOption('jours', null, InputOption::VALUE_REQUIRED, 'Nombre de jours à relever.', (string) self::DEFAULT_DAYS)
             ->addOption('depuis', null, InputOption::VALUE_REQUIRED, 'Date de début (AAAA-MM-JJ), à la place de --jours.')
+            ->addOption('tout', null, InputOption::VALUE_NONE, "Remonte TOUT l'historique que la caisse veut bien rendre.")
             ->addOption('etat', null, InputOption::VALUE_NONE, "Affiche ce qui est en base, sans appeler la caisse.")
             ->addOption('par', null, InputOption::VALUE_REQUIRED, 'Analyse : jour, semaine, mois, jour-de-semaine.', 'jour');
     }
@@ -83,18 +99,82 @@ final class SalesCommand extends Command
             }
 
             try {
-                $ventes = $this->pos->sales($from, $to);
+                $ecrites = $input->getOption('tout')
+                    ? $this->toutRemonter($io, $to)
+                    : $this->store->saveSales($this->pos->sales($from, $to));
             } catch (PosUnavailable $e) {
                 $io->error(trim($e->getMessage() . ' — ' . $e->detail, ' —'));
 
                 return Command::FAILURE;
             }
 
-            $ecrites = $this->store->saveSales($ventes);
-            $io->writeln(sprintf('%s → %s : %d ligne(s) relevée(s).', $from, $to, $ecrites));
+            if (!$input->getOption('tout')) {
+                $io->writeln(sprintf('%s → %s : %d ligne(s) relevée(s).', $from, $to, $ecrites));
+            }
+
+            // L'analyse qui suit doit porter sur ce qu'on vient de relever, et
+            // non sur les six semaines par défaut.
+            if ($input->getOption('tout')) {
+                $etendue = $this->store->salesRange();
+                $from = $etendue['from'] ?? $from;
+            }
         }
 
         return $this->montrer($io, $from, $to, (string) $input->getOption('par'));
+    }
+
+    /**
+     * Remonte tout l'historique, par fenêtres.
+     *
+     * ── Pourquoi par fenêtres, et non d'un seul appel
+     *
+     * Un intervalle de douze mois passe en un appel sur une boutique ouverte
+     * depuis quatre mois — mais rend deux mégaoctets et demi. Sur une boutique
+     * qui tourne depuis trois ans, le même appel demanderait à la caisse
+     * d'agréger un million de lignes et de les rendre d'un bloc : c'est le
+     * genre de requête qui expire à mi-chemin, et qui ne laisse rien.
+     *
+     * Par tranches de trois mois, chaque appel est court, et ce qui est déjà
+     * remonté est déjà en base.
+     *
+     * ── Quand s'arrêter
+     *
+     * La caisse ne dit pas depuis quand elle a des données : elle rend zéro,
+     * simplement. Deux fenêtres vides d'affilée valent donc « on a atteint le
+     * début » — une seule ne suffirait pas, une boutique peut avoir fermé un
+     * trimestre entier.
+     */
+    private function toutRemonter(SymfonyStyle $io, string $to): int
+    {
+        $total = 0;
+        $vides = 0;
+        $fin = $to;
+
+        for ($fenetre = 0; $fenetre < self::MAX_WINDOWS; ++$fenetre) {
+            $debut = BusinessDate::addDays($fin, -self::WINDOW_DAYS + 1);
+            $ventes = $this->pos->sales($debut, $fin);
+
+            $io->writeln(sprintf(
+                '  %s → %s : %d ligne(s)%s',
+                $debut,
+                $fin,
+                count($ventes),
+                $ventes === [] ? ' —' : '',
+            ));
+
+            $total += $this->store->saveSales($ventes);
+            $vides = $ventes === [] ? $vides + 1 : 0;
+
+            if ($vides >= self::EMPTY_WINDOWS) {
+                break;
+            }
+
+            $fin = BusinessDate::addDays($debut, -1);
+        }
+
+        $io->writeln(sprintf('%d ligne(s) relevée(s) au total.', $total));
+
+        return $total;
     }
 
     private function montrer(SymfonyStyle $io, string $from, string $to, string $par): int
