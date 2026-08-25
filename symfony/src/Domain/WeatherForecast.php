@@ -47,7 +47,21 @@ final readonly class WeatherForecast
     public static function fromHost(array $payload, string $today): self
     {
         $decalage = is_numeric($payload['timezone_offset'] ?? null) ? (int) $payload['timezone_offset'] : 0;
-        $lignes = is_array($payload['daily'] ?? null) ? $payload['daily'] : [];
+
+        /*
+          `daily` en One Call 3.0, `data` en 4.0.
+
+          C'est la SEULE différence de forme entre les deux versions : les
+          journées elles-mêmes portent les mêmes champs — `dt`, `temp.min` et
+          `temp.max`, `weather[].id`, `pop` — et le décalage horaire est au même
+          endroit. Accepter les deux noms coûte une ligne et évite deux
+          analyseurs qui auraient divergé au premier ajustement.
+        */
+        $lignes = match (true) {
+            is_array($payload['daily'] ?? null) => $payload['daily'],
+            is_array($payload['data'] ?? null) => $payload['data'],
+            default => [],
+        };
 
         $jours = [];
 

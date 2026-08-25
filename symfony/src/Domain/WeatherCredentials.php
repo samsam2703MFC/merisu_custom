@@ -24,6 +24,21 @@ namespace Merisu\Inventory\Domain;
  */
 final readonly class WeatherCredentials
 {
+    public const VERSION_3 = '3.0';
+
+    public const VERSION_4 = '4.0';
+
+    /**
+     * Une version connue, ou 3.0.
+     *
+     * On ne laisse pas passer une valeur libre : elle décide du chemin appelé,
+     * et une coquille aurait donné un 404 facturé au lieu d'une prévision.
+     */
+    public static function cleanVersion(mixed $value): string
+    {
+        return is_string($value) && trim($value) === self::VERSION_4 ? self::VERSION_4 : self::VERSION_3;
+    }
+
     public function __construct(
         #[\SensitiveParameter]
         public string $apiKey,
@@ -39,6 +54,17 @@ final readonly class WeatherCredentials
          * personne l'ait demandé.
          */
         public bool $autoApply = false,
+        /**
+         * La version de One Call visée — « 3.0 » ou « 4.0 ».
+         *
+         * Les deux existent, et les deux exigent le MÊME abonnement « One Call
+         * by Call » : passer de l'une à l'autre ne fait pas disparaître un
+         * refus, le message de l'hôte est mot pour mot le même. Le choix est
+         * donc un réglage, pas un remède.
+         *
+         * 3.0 par défaut : c'est celle qui est vérifiée de bout en bout.
+         */
+        public string $apiVersion = self::VERSION_3,
         /** Vrai quand ces valeurs viennent de l'écran, faux quand du serveur. */
         public bool $fromScreen = false,
     ) {
@@ -70,7 +96,7 @@ final readonly class WeatherCredentials
      * La clé n'en fait pas partie, pas même tronquée : on dit seulement
      * qu'elle est posée.
      *
-     * @return array{latitude: float, longitude: float, place: string, autoApply: bool, hasKey: bool}
+     * @return array{latitude: float, longitude: float, place: string, autoApply: bool, apiVersion: string, hasKey: bool}
      */
     public function display(): array
     {
@@ -79,6 +105,7 @@ final readonly class WeatherCredentials
             'longitude' => $this->longitude,
             'place' => $this->place,
             'autoApply' => $this->autoApply,
+            'apiVersion' => self::cleanVersion($this->apiVersion),
             'hasKey' => trim($this->apiKey) !== '',
         ];
     }

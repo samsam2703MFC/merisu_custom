@@ -41,7 +41,39 @@ final class OpenWeatherService implements WeatherServiceInterface
 {
     public const DEFAULT_BASE_URL = 'https://api.openweathermap.org';
 
-    private const ENDPOINT = '/data/3.0/onecall';
+    /**
+     * Le chemin, et les paramètres qui vont avec, selon la version.
+     *
+     * ── Ce qui change entre 3.0 et 4.0, et ce qui ne change pas
+     *
+     * 3.0 rend tout d'un coup — actuel, minute, heure, jour — et l'on écarte
+     * le superflu par `exclude`. 4.0 découpe en « timelines » : `15min`, `1h`,
+     * `1day`. C'est `1day` qu'il nous faut, et il se demande par `cnt`, non
+     * par `exclude`.
+     *
+     * Les JOURNÉES, elles, sont identiques : mêmes `dt`, `temp.min`,
+     * `temp.max`, `weather[].id`, `pop`, même `timezone_offset` à la racine.
+     * Seul le nom du tableau diffère — `daily` contre `data` — et
+     * `WeatherForecast::fromHost` accepte les deux.
+     *
+     * ⚠️ Les deux versions exigent le MÊME abonnement « One Call by Call ».
+     * Basculer de l'une à l'autre ne fait pas disparaître un 401 : l'hôte rend
+     * la même phrase, au numéro de version près.
+     */
+    private const ENDPOINTS = [
+        WeatherCredentials::VERSION_3 => '/data/3.0/onecall',
+        WeatherCredentials::VERSION_4 => '/data/4.0/onecall/timeline/1day',
+    ];
+
+    /**
+     * Journées demandées à la 4.0.
+     *
+     * Dix pour sept gardées : `cnt` compte à partir d'aujourd'hui, mais rien
+     * ne dit si la journée en cours entre dans le lot, et une prévision qui
+     * s'arrêterait au sixième jour se remarquerait un dimanche soir. Le
+     * domaine coupe à sept de toute façon.
+     */
+    private const V4_COUNT = 10;
 
     private const TIMEOUT = 15.0;
 
@@ -100,8 +132,9 @@ final class OpenWeatherService implements WeatherServiceInterface
         // caisse : OpenWeatherMap n'a qu'un hôte, et un champ de plus n'aurait
         // servi qu'à le casser. Elle reste réglable par l'environnement, pour
         // qu'un test puisse viser un bouchon local.
+        $version = WeatherCredentials::cleanVersion($reglages->apiVersion);
         $url = rtrim(trim($this->envBaseUrl) !== '' ? $this->envBaseUrl : self::DEFAULT_BASE_URL, '/')
-            . self::ENDPOINT;
+            . self::ENDPOINTS[$version];
 
         try {
             $reponse = $this->client()->request('GET', $url, [
@@ -111,10 +144,15 @@ final class OpenWeatherService implements WeatherServiceInterface
                     'appid' => $reglages->apiKey,
                     // Celsius : la boutique est en Europe, et un seuil relu en
                     // Fahrenheit par erreur ne se remarque pas tout de suite.
+                    // Sans lui, l'hôte rend des KELVIN — 288,16 pour 15 °C.
                     'units' => 'metric',
-                    'exclude' => 'current,minutely,hourly,alerts',
                     'lang' => in_array($lang, self::LANGS, true) ? $lang : 'en',
-                ],
+                ] + ($version === WeatherCredentials::VERSION_4
+                    ? ['cnt' => self::V4_COUNT]
+                    // 3.0 rend tout : la minute par minute sur une heure et
+                    // l'heure par heure sur deux jours, plusieurs centaines de
+                    // lignes dont ce module ne fait rien.
+                    : ['exclude' => 'current,minutely,hourly,alerts']),
                 'headers' => ['Accept' => 'application/json'],
                 'timeout' => self::TIMEOUT,
             ]);

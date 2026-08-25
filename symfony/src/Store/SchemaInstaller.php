@@ -369,6 +369,9 @@ final class SchemaInstaller
             $t->addColumn('longitude', 'float', ['default' => 0]);
             $t->addColumn('place', 'string', ['length' => 190, 'default' => '']);
             $t->addColumn('auto_apply', 'boolean', ['default' => false]);
+            // Version de One Call visée. Les deux exigent le même abonnement ;
+            // c'est un réglage, pas un remède à un refus.
+            $t->addColumn('api_version', 'string', ['length' => 8, 'default' => '3.0']);
             $t->addColumn('updated_at', 'string', ['length' => 32, 'default' => '']);
             $t->setPrimaryKey(['id']);
         }
@@ -678,6 +681,11 @@ final class SchemaInstaller
                 // 0 par défaut : aucun objectif, donc aucune jauge — jamais
                 // une barre pleine inventée pour les bases déjà en service.
                 'monthly_tiramisu_target' => 'INTEGER DEFAULT 0 NOT NULL',
+            ],
+            'inv_weather_credential' => [
+                // Ajoutée avec One Call 4.0 : une base installée avant ne l'a
+                // pas, et sa météo doit continuer d'appeler la 3.0.
+                'api_version' => "VARCHAR(8) DEFAULT '3.0' NOT NULL",
             ],
             'inv_product' => [
                 // Ajoutée avec le comptage par contenant : les bases installées

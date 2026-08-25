@@ -633,6 +633,8 @@ admin:
         placeHint: 'No entra en ninguna llamada: sirve para releer « Varsovia » en vez de « 52,23 ».'
         autoApply: 'Aplicar la previsión automáticamente'
         autoApplyHint: 'Sin marcar: la previsión solo se guarda y usted decide aplicarla. Marcado: sustituye el tiempo previsto en cada recuperación, incluida la de la tarea programada.'
+        apiVersion: 'Versión de la API'
+        apiVersionHint: '3.0 devuelve todo de una vez; 4.0 lo divide en series y pedimos la diaria. Las jornadas son idénticas en ambas. ⚠️ LAS DOS exigen la misma suscripción « One Call by Call »: cambiar de versión no hace desaparecer un rechazo.'
         clearSettings: 'Borrar los ajustes introducidos'
         clearHint: 'La configuración del servidor recupera entonces el mando, si existe.'
         confirmClear: '¿Borrar la clave y las coordenadas introducidas aquí?'

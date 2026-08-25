@@ -633,6 +633,8 @@ admin:
         placeHint: 'Non entra in nessuna chiamata: serve a rileggere « Varsavia » invece di « 52,23 ».'
         autoApply: 'Applica automaticamente la previsione'
         autoApplyHint: 'Deselezionato: la previsione viene solo salvata e sei tu a decidere di applicarla. Selezionato: sostituisce il tempo previsto a ogni recupero, compreso quello dell''attività pianificata.'
+        apiVersion: 'Versione dell''API'
+        apiVersionHint: '3.0 restituisce tutto in una volta; 4.0 divide in serie e chiediamo quella giornaliera. Le giornate sono identiche in entrambe. ⚠️ ENTRAMBE richiedono lo stesso abbonamento « One Call by Call »: cambiare versione non fa sparire un rifiuto.'
         clearSettings: 'Cancella le impostazioni inserite'
         clearHint: 'La configurazione del server riprende allora il comando, se esiste.'
         confirmClear: 'Cancellare la chiave e le coordinate inserite qui?'

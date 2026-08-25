@@ -36,7 +36,28 @@ final readonly class WeatherCredentialStore
     {
         $saisis = $this->stored();
 
-        return $saisis !== null && $saisis->isComplete() ? $saisis : $fallback;
+        if ($saisis !== null && $saisis->isComplete()) {
+            return $saisis;
+        }
+
+        /*
+          La VERSION suit l'écran même quand la clé vient du serveur.
+
+          C'est un réglage, pas un identifiant : elle ne participe pas à la
+          complétude de la fiche. Sans cette règle, choisir « One Call 4.0 » à
+          l'écran restait sans effet dès lors que la clé était posée dans
+          `.env.local` — l'appel repartait en 3.0, et l'écran affichait un
+          réglage que personne n'appliquait.
+        */
+        return $saisis === null ? $fallback : new WeatherCredentials(
+            $fallback->apiKey,
+            $fallback->latitude,
+            $fallback->longitude,
+            $fallback->place,
+            $fallback->autoApply,
+            $saisis->apiVersion,
+            $fallback->fromScreen,
+        );
     }
 
     /** Ce qui a été saisi à l'écran, ou null si rien ne l'a été. */
@@ -58,6 +79,7 @@ final readonly class WeatherCredentialStore
             (float) ($row['longitude'] ?? 0),
             (string) ($row['place'] ?? ''),
             (bool) ($row['auto_apply'] ?? false),
+            WeatherCredentials::cleanVersion($row['api_version'] ?? null),
             fromScreen: true,
         );
     }
@@ -77,6 +99,7 @@ final readonly class WeatherCredentialStore
         float $longitude,
         string $place,
         bool $autoApply,
+        string $apiVersion = WeatherCredentials::VERSION_3,
     ): void {
         $ancien = $this->db->fetchOne('SELECT api_key FROM inv_weather_credential WHERE id = ?', [self::ROW_ID]);
 
@@ -93,6 +116,7 @@ final readonly class WeatherCredentialStore
             'longitude' => $longitude,
             'place' => trim($place),
             'auto_apply' => $autoApply ? 1 : 0,
+            'api_version' => WeatherCredentials::cleanVersion($apiVersion),
             'updated_at' => Store::now(),
         ];
 

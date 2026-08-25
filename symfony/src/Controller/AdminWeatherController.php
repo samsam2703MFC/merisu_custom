@@ -6,6 +6,7 @@ namespace Merisu\Inventory\Controller;
 
 use Merisu\Inventory\Adapter\WeatherServiceInterface;
 use Merisu\Inventory\Adapter\WeatherUnavailable;
+use Merisu\Inventory\Domain\WeatherCredentials;
 use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Service\ForecastService;
 use Merisu\Inventory\Service\InventoryService;
@@ -63,6 +64,7 @@ final class AdminWeatherController extends AbstractController
             'credentials' => $reglages->display(),
             'fromScreen' => $reglages->fromScreen,
             'canStore' => $this->box->isAvailable(),
+            'versions' => [WeatherCredentials::VERSION_3, WeatherCredentials::VERSION_4],
             // La prévision GARDÉE, pas celle de l'hôte : lire est gratuit,
             // demander est facturé.
             'forecast' => $this->forecast->cached($aujourdhui),
@@ -183,6 +185,7 @@ final class AdminWeatherController extends AbstractController
                 $longitude,
                 mb_substr(trim((string) $request->request->get('place', '')), 0, 190),
                 $request->request->getBoolean('autoApply'),
+                WeatherCredentials::cleanVersion($request->request->get('apiVersion')),
             );
         } catch (\RuntimeException) {
             $this->addFlash('error', 'admin.weather.errorNoCrypto');
@@ -196,6 +199,7 @@ final class AdminWeatherController extends AbstractController
             'latitude' => $latitude,
             'longitude' => $longitude,
             'autoApply' => $request->request->getBoolean('autoApply'),
+            'apiVersion' => WeatherCredentials::cleanVersion($request->request->get('apiVersion')),
             'keyChanged' => trim((string) $request->request->get('apiKey', '')) !== '',
         ]);
 

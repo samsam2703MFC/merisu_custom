@@ -50,7 +50,7 @@ final class WeatherCredentialsTest extends TestCase
         $vue = (new WeatherCredentials('cle-secrete-42', 52.2297, 21.0122, 'Varsovie', true))->display();
 
         self::assertSame(
-            ['latitude', 'longitude', 'place', 'autoApply', 'hasKey'],
+            ['latitude', 'longitude', 'place', 'autoApply', 'apiVersion', 'hasKey'],
             array_keys($vue),
         );
         self::assertTrue($vue['hasKey']);

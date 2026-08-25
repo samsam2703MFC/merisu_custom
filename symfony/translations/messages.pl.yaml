@@ -633,6 +633,8 @@ admin:
         placeHint: 'Nie trafia do żadnego zapytania: służy do odczytania „Warszawa” zamiast „52,23”.'
         autoApply: 'Stosuj prognozę automatycznie'
         autoApplyHint: 'Odznaczone: prognoza trafia tylko do bazy, a Ty decydujesz o jej zastosowaniu. Zaznaczone: zastępuje oczekiwaną pogodę przy każdym pobraniu, także tym z zadania cyklicznego.'
+        apiVersion: 'Wersja API'
+        apiVersionHint: '3.0 zwraca wszystko naraz; 4.0 dzieli na serie i pobieramy serię dzienną. Dni są w obu identyczne. ⚠️ OBIE wymagają tej samej subskrypcji „One Call by Call”: zmiana wersji nie usuwa odmowy.'
         clearSettings: 'Usuń wpisane ustawienia'
         clearHint: 'Konfiguracja serwera przejmie wtedy stery, o ile istnieje.'
         confirmClear: 'Usunąć wpisany tutaj klucz i współrzędne?'

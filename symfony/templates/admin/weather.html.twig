@@ -176,6 +176,28 @@
         </div>
 
         {#
+          La version de One Call.
+
+          Les DEUX exigent le même abonnement « One Call by Call » : basculer
+          ne fait pas disparaître un refus, l'hôte rend la même phrase au
+          numéro près. C'est un réglage, pas un remède — et le dire ici évite
+          d'essayer l'autre en croyant contourner le problème.
+        #}
+        <div class="field">
+          <span class="field__label">{{ 'admin.weather.apiVersion'|trans }}</span>
+          <div class="wpick__row">
+            {% for v in versions %}
+              <label class="seg__item">
+                <input class="seg__radio" type="radio" name="apiVersion" value="{{ v }}"
+                       {{ credentials.apiVersion == v ? 'checked' : '' }}>
+                <span class="seg__box"><span class="seg__name">One Call {{ v }}</span></span>
+              </label>
+            {% endfor %}
+          </div>
+          <p class="field__hint">{{ 'admin.weather.apiVersionHint'|trans }}</p>
+        </div>
+
+        {#
           Appliquer d'office : décoché par défaut. La semaine type est une
           SAISIE — quelqu'un a regardé et décidé. L'écraser chaque nuit sans
           l'avoir demandé aurait défait ce choix en silence.

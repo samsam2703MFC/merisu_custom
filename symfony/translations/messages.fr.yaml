@@ -636,6 +636,8 @@ admin:
         placeHint: 'N''entre dans aucun appel : il sert à relire « Varsovie » plutôt que « 52,23 ».'
         autoApply: 'Appliquer la prévision automatiquement'
         autoApplyHint: 'Décoché, la prévision est seulement mise en base et vous décidez de l''appliquer. Coché, elle remplace le temps attendu à chaque récupération, y compris celle de la tâche planifiée.'
+        apiVersion: 'Version de l''API'
+        apiVersionHint: '3.0 rend tout d''un coup ; 4.0 découpe en séries et l''on demande la série journalière. Les journées sont identiques dans les deux. ⚠️ Les DEUX exigent le même abonnement « One Call by Call » : changer de version ne fait pas disparaître un refus.'
         clearSettings: 'Effacer les réglages saisis'
         clearHint: 'La configuration du serveur reprend alors la main, si elle existe.'
         confirmClear: 'Effacer la clé et les coordonnées saisies ici ?'

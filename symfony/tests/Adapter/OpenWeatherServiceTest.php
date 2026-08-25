@@ -250,6 +250,99 @@ final class OpenWeatherServiceTest extends TestCase
         }
     }
 
+    // ── One Call 4.0 ────────────────────────────────────────────────────────
+
+    /**
+     * La 4.0 nomme son tableau `data` là où la 3.0 dit `daily`.
+     *
+     * C'est la SEULE différence de forme : les journées portent les mêmes
+     * champs — `dt`, `temp.min`, `temp.max`, `weather[].id`, `pop` — et le
+     * décalage horaire est au même endroit. L'exemple ci-dessous est celui de
+     * la documentation d'OpenWeather, réduit à ce que ce module lit.
+     */
+    public function testLaReponseDeLaVersion4SeLitCommeCelleDeLa3(): void
+    {
+        $minuit = strtotime('2026-08-03 00:00:00 UTC') - 7200;
+
+        $payload = [
+            'lat' => 51.5,
+            'lon' => -0.1,
+            'timezone' => 'Europe/London',
+            'timezone_offset' => 7200,
+            'data' => [[
+                'dt' => $minuit + 43200,
+                'temp' => ['day' => 18.1, 'min' => 12.7, 'max' => 20.05, 'night' => 15.7],
+                'feels_like' => ['day' => 17.9],
+                'pressure' => 1024,
+                'humidity' => 45,
+                'weather' => [['id' => 800, 'main' => 'Clear', 'description' => 'sky is clear', 'icon' => '01d']],
+                'clouds' => 0,
+                'pop' => 0.3,
+                'uvi' => 4.82,
+            ]],
+            'prev' => 'https://api.openweathermap.org/data/4.0/onecall/timeline/1day?cnt=10',
+            'next' => 'https://api.openweathermap.org/data/4.0/onecall/timeline/1day?cnt=10',
+        ];
+
+        $prevision = \Merisu\Inventory\Domain\WeatherForecast::fromHost($payload, '2026-08-03');
+
+        self::assertCount(1, $prevision->days);
+        self::assertSame('2026-08-03', $prevision->days[0]->date);
+        self::assertSame(WeatherKind::Sunny, $prevision->days[0]->kind);
+        self::assertSame(12.7, $prevision->days[0]->tempMin);
+        self::assertSame(20.05, $prevision->days[0]->tempMax);
+        self::assertSame(30, $prevision->days[0]->rainChance);
+        self::assertSame('Europe/London', $prevision->timezone);
+    }
+
+    /**
+     * Chaque version appelle SON chemin, avec SES paramètres.
+     *
+     * `exclude` n'existe pas en 4.0 — la série journalière se demande par
+     * `cnt`. L'envoyer quand même n'aurait rien cassé, mais viser
+     * `/data/3.0/onecall` avec un abonnement 4.0 aurait rendu un refus qu'on
+     * aurait mis longtemps à comprendre.
+     */
+    #[DataProvider('versions')]
+    public function testChaqueVersionAppelleSonChemin(string $version, string $chemin, string $attendu): void
+    {
+        $vu = '';
+
+        $db = $this->createMock(Connection::class);
+        $db->method('fetchAssociative')->willReturn([
+            'api_key' => null, 'latitude' => 52.2297, 'longitude' => 21.0122,
+            'place' => 'Varsovie', 'auto_apply' => 0, 'api_version' => $version,
+        ]);
+
+        $service = new OpenWeatherService(
+            new WeatherCredentialStore($db, new SecretBox('secret-de-test')),
+            self::CLE,
+            '52.2297',
+            '21.0122',
+            'Varsovie',
+            'https://exemple.test',
+            new MockHttpClient(function (string $m, string $u) use (&$vu): MockResponse {
+                $vu = $u;
+
+                return self::reponseHote([[0, 800]]);
+            }),
+        );
+
+        $service->forecast('2026-08-03', 'fr');
+
+        self::assertStringStartsWith('https://exemple.test' . $chemin . '?', $vu);
+        parse_str((string) parse_url($vu, \PHP_URL_QUERY), $q);
+        self::assertArrayHasKey($attendu, $q);
+        self::assertArrayNotHasKey($attendu === 'cnt' ? 'exclude' : 'cnt', $q);
+    }
+
+    /** @return iterable<string, array{string, string, string}> */
+    public static function versions(): iterable
+    {
+        yield 'One Call 3.0' => ['3.0', '/data/3.0/onecall', 'exclude'];
+        yield 'One Call 4.0' => ['4.0', '/data/4.0/onecall/timeline/1day', 'cnt'];
+    }
+
     // ── La clé ne fuit pas ──────────────────────────────────────────────────
 
     /**
