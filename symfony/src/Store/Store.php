@@ -25,6 +25,7 @@ use Merisu\Inventory\Domain\Locale;
 use Merisu\Inventory\Domain\MaterialMovement;
 use Merisu\Inventory\Domain\OutboxEntry;
 use Merisu\Inventory\Domain\ParMatrixEntry;
+use Merisu\Inventory\Domain\PosSale;
 use Merisu\Inventory\Domain\Product;
 use Merisu\Inventory\Domain\ProductCategory;
 use Merisu\Inventory\Domain\ProductNature;
@@ -1207,6 +1208,84 @@ final class Store
                 ]);
             }
         });
+    }
+
+    // ── Ventes relevées dans la caisse ──────────────────────────────────────
+
+    /**
+     * Les ventes gardées en base, sur un intervalle.
+     *
+     * @return list<PosSale>
+     */
+    public function sales(string $from, string $to): array
+    {
+        return array_map(
+            static fn (array $r): PosSale => new PosSale(
+                (string) $r['date'],
+                (string) $r['product_ref'],
+                (string) $r['product_name'],
+                (float) $r['quantity'],
+                (float) $r['revenue'],
+            ),
+            $this->db->fetchAllAssociative(
+                'SELECT * FROM inv_sales_daily WHERE date >= ? AND date <= ? ORDER BY date, product_ref',
+                [$from, $to],
+            ),
+        );
+    }
+
+    /** Le premier et le dernier jour relevés, ou null si rien ne l'a été. */
+    public function salesRange(): ?array
+    {
+        $row = $this->db->fetchAssociative('SELECT MIN(date) AS d1, MAX(date) AS d2, MAX(fetched_at) AS f FROM inv_sales_daily');
+
+        if ($row === false || $row['d1'] === null) {
+            return null;
+        }
+
+        return ['from' => (string) $row['d1'], 'to' => (string) $row['d2'], 'fetchedAt' => (string) ($row['f'] ?? '')];
+    }
+
+    /**
+     * Enregistre un relevé.
+     *
+     * Un rapport rejoué CORRIGE, il n'additionne pas : chaque couple (date,
+     * référence) est remplacé. Additionner aurait doublé les ventes de la
+     * semaine au premier rafraîchissement.
+     *
+     * Seules les journées effectivement rendues sont touchées : une journée
+     * absente du rapport garde ce qu'elle portait, plutôt que d'être remise à
+     * zéro par un intervalle mal saisi.
+     *
+     * @param list<PosSale> $sales
+     *
+     * @return int le nombre de lignes écrites
+     */
+    public function saveSales(array $sales): int
+    {
+        if ($sales === []) {
+            return 0;
+        }
+
+        $recu = self::now();
+
+        $this->db->transactional(function () use ($sales, $recu): void {
+            foreach ($sales as $vente) {
+                $data = [
+                    'product_name' => mb_substr($vente->name, 0, 190),
+                    'quantity' => $vente->quantity,
+                    'revenue' => $vente->revenue,
+                    'fetched_at' => $recu,
+                ];
+                $cle = ['date' => $vente->date, 'product_ref' => $vente->externalId];
+
+                if ($this->db->update('inv_sales_daily', $data, $cle) === 0) {
+                    $this->db->insert('inv_sales_daily', $data + $cle);
+                }
+            }
+        });
+
+        return count($sales);
     }
 
     // ── Modèles de composition ──────────────────────────────────────────────

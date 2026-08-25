@@ -1,0 +1,190 @@
+{#
+  Admin ▸ Ventes — ce qui s'est vendu, et quand.
+
+  Quatre vues d'une SEULE source : le relevé produit × jour gardé en base. La
+  caisse saurait grouper elle-même, mais quatre appels rendraient quatre
+  vérités, faites à quatre instants sur un jeu de commandes qui bouge. Agrégé
+  ici, le mois est par construction la somme de ses jours.
+
+  L'écran n'interroge pas la caisse : le rapport met plusieurs secondes pour six
+  semaines. C'est le bouton « Actualiser », ou la tâche planifiée, qui va
+  chercher.
+#}
+{% extends 'admin/_layout.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'admin.sales.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block admin_content %}
+
+  {{ ui.page_header('admin.sales.title'|trans, 'admin.sales.subtitle'|trans) }}
+
+  <section class="card">
+    <form method="get" action="{{ path('admin_sales') }}" class="form">
+      <div class="field-grid">
+        <div class="field">
+          <label class="field__label" for="from">{{ 'admin.sales.from'|trans }}</label>
+          <input class="field__input" type="date" id="from" name="from" value="{{ from }}">
+        </div>
+        <div class="field">
+          <label class="field__label" for="to">{{ 'admin.sales.to'|trans }}</label>
+          <input class="field__input" type="date" id="to" name="to" value="{{ to }}">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="button button--secondary">{{ 'admin.sales.show'|trans }}</button>
+      </div>
+    </form>
+
+    <div class="stats stats--compact">
+      <div class="stat">
+        <p class="stat__label">{{ 'admin.sales.totalQty'|trans }}</p>
+        <p class="stat__value">{{ total|qty }}</p>
+      </div>
+      <div class="stat">
+        <p class="stat__label">{{ 'admin.sales.totalRevenue'|trans }}</p>
+        <p class="stat__value stat__value--sm">{{ revenue|qty }}</p>
+      </div>
+      <div class="stat">
+        <p class="stat__label">{{ 'admin.sales.products'|trans }}</p>
+        <p class="stat__value">{{ products|length }}</p>
+      </div>
+    </div>
+
+    {#
+      Le relevé est un CACHE : dire d'où il date évite de prendre une semaine
+      oubliée pour une semaine creuse.
+    #}
+    {% if configured %}
+      <form method="post" action="{{ path('admin_sales_refresh') }}" class="form">
+        <input type="hidden" name="from" value="{{ from }}">
+        <input type="hidden" name="to" value="{{ to }}">
+        <div class="form-actions">
+          <button type="submit" class="button button--secondary">{{ 'admin.sales.refresh'|trans }}</button>
+        </div>
+        <p class="field__hint">
+          {% if range %}
+            {{ 'admin.sales.stored'|trans({ '%from%': range.from, '%to%': range.to, '%datetime%': range.fetchedAt|datetime_short }) }}
+          {% else %}
+            {{ 'admin.sales.neverFetched'|trans }}
+          {% endif %}
+        </p>
+      </form>
+    {% else %}
+      {{ ui.banner('warn', 'admin.pos.notConfigured'|trans) }}
+    {% endif %}
+  </section>
+
+  {% if products is empty %}
+    {{ ui.banner('info', 'admin.sales.empty'|trans) }}
+  {% else %}
+
+    {# ── Les quatre découpes ─────────────────────────────────────────────────
+       En onglets CSS, cette fois : quatre petits tableaux tiennent dans la
+       page, et la bascule doit être immédiate — on compare un jour de semaine
+       à une semaine du regard, pas en rechargeant. #}
+    <section class="card">
+      <div class="tabs">
+        {% for periode in periods %}
+          <input class="tabs__radio" type="radio" name="sales-tab"
+                 id="sales-tab-{{ periode.value }}" {{ loop.first ? 'checked' : '' }}>
+        {% endfor %}
+
+        <div class="tabs__bar">
+          {% for periode in periods %}
+            <label class="tabs__tab" for="sales-tab-{{ periode.value }}">
+              {{ ('admin.sales.periods.' ~ periode.value)|trans }}
+            </label>
+          {% endfor %}
+        </div>
+
+        {% for periode in periods %}
+          <section class="tabs__panel">
+            <p class="field__hint">{{ ('admin.sales.periodHints.' ~ periode.value)|trans }}</p>
+
+            <div class="table-scroll">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">{{ ('admin.sales.periods.' ~ periode.value)|trans }}</th>
+                    <th scope="col">{{ 'admin.sales.qty'|trans }}</th>
+                    <th scope="col">{{ 'admin.sales.days'|trans }}</th>
+                    <th scope="col">{{ 'admin.sales.perDay'|trans }}</th>
+                    <th scope="col">{{ 'admin.sales.revenue'|trans }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for case in breakdowns[periode.value] %}
+                    <tr>
+                      <th scope="row">
+                        {% if periode.value == 'WEEKDAY' %}
+                          {{ ('daysLong.' ~ case.key)|trans }}
+                        {% else %}
+                          {{ case.key }}
+                        {% endif %}
+                      </th>
+                      <td class="mins__cell">{{ case.quantity|qty }}</td>
+                      {#
+                        Le nombre de journées OBSERVÉES, et la moyenne qui en
+                        découle. « 716 le dimanche » ne veut rien dire tant
+                        qu'on ignore combien de dimanches : sur six semaines
+                        c'est 119 par dimanche, et c'est ce chiffre-là qui
+                        décide de la production.
+                      #}
+                      <td class="mins__cell muted">{{ case.days }}</td>
+                      <td class="mins__cell"><strong>{{ case.averagePerDay()|qty }}</strong></td>
+                      <td class="mins__cell muted">{{ case.revenue|qty }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        {% endfor %}
+      </div>
+    </section>
+
+    {# ── Le classement des produits ──────────────────────────────────────── #}
+    <section class="card">
+      <h2 class="card__title">{{ 'admin.sales.byProduct'|trans }}</h2>
+
+      <div class="table-scroll">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">{{ 'common.product'|trans }}</th>
+              <th scope="col">{{ 'admin.sales.qty'|trans }}</th>
+              <th scope="col">{{ 'admin.sales.days'|trans }}</th>
+              <th scope="col">{{ 'admin.sales.perDay'|trans }}</th>
+              <th scope="col">{{ 'admin.sales.revenue'|trans }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ligne in products %}
+              <tr>
+                <th scope="row" class="rcp__name">
+                  {#
+                    Le libellé LOCAL quand la fiche est rattachée, celui de la
+                    caisse sinon. Un article vendu mais jamais importé se voit
+                    ainsi, au lieu de manquer sans bruit.
+                  #}
+                  {% if known[ligne.externalId] is defined %}
+                    {{ product_label(known[ligne.externalId]) }}
+                  {% else %}
+                    {{ ligne.name }}
+                    {{ ui.badge('warn', 'admin.sales.notLinked'|trans) }}
+                  {% endif %}
+                </th>
+                <td class="mins__cell"><strong>{{ ligne.quantity|qty }}</strong></td>
+                <td class="mins__cell muted">{{ ligne.days }}</td>
+                <td class="mins__cell">{{ (ligne.days > 0 ? ligne.quantity / ligne.days : 0)|qty }}</td>
+                <td class="mins__cell muted">{{ ligne.revenue|qty }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% endif %}
+
+{% endblock %}

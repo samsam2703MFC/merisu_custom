@@ -7,6 +7,7 @@ namespace Merisu\Inventory\Adapter;
 use Merisu\Inventory\Domain\PosCategory;
 use Merisu\Inventory\Domain\PosCredentials;
 use Merisu\Inventory\Domain\PosItem;
+use Merisu\Inventory\Domain\PosSale;
 use Merisu\Inventory\Store\PosCredentialStore;
 use Symfony\Component\HttpClient\Exception\TransportException;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpExceptionInterface;
@@ -68,6 +69,15 @@ final class GoPosService implements PosServiceInterface
 
     private const TIMEOUT = 20.0;
 
+    /**
+     * Le rapport de ventes est LENT, et c'est normal.
+     *
+     * Six semaines de quarante produits font deux cent mille octets et une
+     * agrégation côté caisse. Vingt secondes suffisaient pour lire un
+     * catalogue ; elles coupaient le rapport au milieu.
+     */
+    private const REPORT_TIMEOUT = 120.0;
+
     /** L'adresse de production GoPOS, quand rien n'est réglé. */
     public const DEFAULT_BASE_URL = 'https://app.gopos.io';
 
@@ -82,6 +92,15 @@ final class GoPosService implements PosServiceInterface
         private readonly string $envOrganizationId = '',
         private readonly string $envBaseUrl = 'https://app.gopos.io',
         private readonly ?HttpClientInterface $http = null,
+        /**
+         * Fuseau de la boutique : la date d'une vente est CELLE DU COMPTOIR.
+         *
+         * EN DERNIER, et non à sa place logique près des autres réglages :
+         * l'insérer au milieu aurait décalé les arguments positionnels de tous
+         * les appels existants, et le client HTTP se serait retrouvé passé en
+         * fuseau horaire.
+         */
+        private readonly string $timezone = 'Europe/Warsaw',
     ) {
     }
 
@@ -202,6 +221,149 @@ final class GoPosService implements PosServiceInterface
         }
 
         return $articles;
+    }
+
+    /**
+     * Les ventes, produit par produit et jour par jour.
+     *
+     * ── Un seul appel, au grain le plus fin
+     *
+     * `groups=NONE,PRODUCT,CREATED_AT_DATE` rend un rapport imbriqué : le
+     * total, puis un sous-rapport par produit, puis un sous-rapport par
+     * journée. La caisse saurait grouper par mois ou par jour de semaine, mais
+     * quatre appels rendraient quatre vérités — faits à quatre instants sur un
+     * jeu de commandes qui bouge, leurs totaux ne s'additionneraient plus. Le
+     * reste s'agrège ici, où le mois est par construction la somme des jours.
+     *
+     * `NONE` vient EN TÊTE, comme la spécification le demande : sans lui, le
+     * rapport accepte le groupement et rend zéro sous-rapport.
+     *
+     * @return list<PosSale>
+     *
+     * @throws PosUnavailable
+     */
+    public function sales(string $from, string $to): array
+    {
+        if (!$this->isConfigured()) {
+            throw new PosUnavailable('admin.pos.notConfigured');
+        }
+
+        $identifiants = $this->credentials();
+        $url = rtrim($identifiants->baseUrl, '/') . '/api/v3/reports/order_items';
+
+        try {
+            $reponse = $this->client()->request('GET', $url, [
+                'headers' => ['Authorization' => 'Bearer ' . $this->token(), 'Accept' => 'application/json'],
+                'query' => [
+                    'organization_id' => $identifiants->organizationId,
+                    'groups' => 'NONE,PRODUCT,CREATED_AT_DATE',
+                    // Le format de la caisse encadre le T d'apostrophes. Ce
+                    // n'est pas une coquille de la documentation : sans elles,
+                    // l'intervalle est ignoré EN SILENCE et le rapport rend
+                    // tout l'historique — deux ans pris pour une semaine.
+                    'date_range' => $from . "'T'00:00:00," . $to . "'T'23:59:59",
+                ],
+                'timeout' => self::REPORT_TIMEOUT,
+            ]);
+
+            $statut = $reponse->getStatusCode();
+            $corps = $reponse->getContent(false);
+        } catch (TransportException | HttpExceptionInterface $e) {
+            throw new PosUnavailable('admin.pos.unreachable', $e->getMessage(), $e);
+        }
+
+        if ($statut >= 400) {
+            throw new PosUnavailable(
+                $statut === 401 || $statut === 403 ? 'admin.pos.accessRefused' : 'admin.pos.hostRefused',
+                self::detail($statut, $corps),
+            );
+        }
+
+        /*
+          Le rapport identifie une FAMILLE, pas un article.
+
+          `group_by_value.id` vaut 1 pour Traditional Regular, Traditional
+          Grande ET Traditional Extra ; 6 pour les trois Pistacchio. Ce n'est
+          pas l'identifiant de `/items` — c'est celui du groupe de produits.
+          S'y fier rattachait les 766 ventes du Traditional Extra à la fiche du
+          Traditional Regular : des chiffres faux, confiants, et qui auraient
+          piloté la production.
+
+          Seul le NOM distingue les tailles. On le rapproche donc du catalogue,
+          qui, lui, porte la vraie référence. Un appel de plus par relevé —
+          contre des ventes attribuées au hasard.
+        */
+        $referenceParNom = [];
+
+        foreach ($this->items() as $article) {
+            $referenceParNom[self::fold($article->name)] = $article->externalId;
+        }
+
+        return $this->readSales($this->decode($corps), $referenceParNom);
+    }
+
+    /** Un nom réduit à ce qui le rend comparable. */
+    private static function fold(string $nom): string
+    {
+        return mb_strtolower(trim(preg_replace('/\s+/u', ' ', $nom) ?? $nom));
+    }
+
+    /**
+     * Déplie le rapport imbriqué.
+     *
+     * @param array<string, mixed> $payload
+     * @param array<string, string> $referenceParNom nom replié => référence
+     *
+     * @return list<PosSale>
+     */
+    private function readSales(array $payload, array $referenceParNom): array
+    {
+        $fuseau = $this->timezone;
+        $ventes = [];
+
+        $rapports = is_array($payload['reports'] ?? null) ? $payload['reports'] : [];
+
+        foreach ($rapports as $rapport) {
+            $produits = is_array($rapport['sub_report'] ?? null) ? $rapport['sub_report'] : [];
+
+            foreach ($produits as $produit) {
+                if (!is_array($produit)) {
+                    continue;
+                }
+
+                $valeur = is_array($produit['group_by_value'] ?? null) ? $produit['group_by_value'] : [];
+                // `id` est délibérément ignoré : c'est celui du GROUPE, pas de
+                // l'article. Voir `sales()`.
+                $nom = is_string($valeur['name'] ?? null) ? $valeur['name'] : '';
+
+                if (trim($nom) === '') {
+                    continue;
+                }
+
+                /*
+                  La référence du CATALOGUE, retrouvée par le nom.
+
+                  À défaut — un article vendu puis retiré du catalogue — on
+                  garde une clé dérivée du nom plutôt que d'écarter la ligne :
+                  ces ventes ont eu lieu, elles comptent dans le total du mois,
+                  et l'écran les montre « non rattachées ». Les jeter aurait
+                  fait mentir la recette sans que rien ne le signale.
+                */
+                $reference = $referenceParNom[self::fold($nom)] ?? ('nom:' . self::fold($nom));
+
+                foreach (is_array($produit['sub_report'] ?? null) ? $produit['sub_report'] : [] as $journee) {
+                    $vente = is_array($journee)
+                        ? PosSale::fromReport($journee, $reference, $nom, $fuseau)
+                        : null;
+
+                    if ($vente !== null) {
+                        $ventes[] = $vente;
+                    }
+                }
+            }
+        }
+
+        return $ventes;
     }
 
     // ── Transport ───────────────────────────────────────────────────────────

@@ -39,4 +39,9 @@ final class NullPosService implements PosServiceInterface
     {
         throw new PosUnavailable('admin.pos.notConfigured');
     }
+
+    public function sales(string $from, string $to): array
+    {
+        throw new PosUnavailable('admin.pos.notConfigured');
+    }
 }

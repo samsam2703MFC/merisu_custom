@@ -111,6 +111,7 @@ nav:
     targets: 'Objectifs'
     products: Produits
     pos: 'Caisse'
+    sales: 'Ventes'
     categories: 'Catégories'
     parMatrix: Seuils
     weather: 'Météo'
@@ -263,6 +264,33 @@ admin:
         yours: 'Vous'
         noShop: 'La caisse n''indique pas à quelle boutique ce poste est rattaché : les chiffres de la boutique ne peuvent pas être affichés.'
         source: 'Chiffres issus de la caisse, jamais des stocks : ce module ne connaît ni les encaissements ni les tickets. Tant que la caisse n''est pas branchée, ce sont des valeurs de démonstration.'
+        subtitle: 'Ce qui s''est vendu, et quand.'
+        from: 'Du'
+        to: 'Au'
+        show: 'Afficher'
+        totalQty: 'Quantité vendue'
+        totalRevenue: 'Recette'
+        products: 'Produits vendus'
+        refresh: 'Actualiser depuis la caisse'
+        stored: 'Relevé du %from% au %to%, reçu le %datetime%.'
+        neverFetched: 'Aucun relevé en base.'
+        fetched: '%count% ligne(s) relevée(s).'
+        empty: 'Aucune vente sur cet intervalle. Actualisez depuis la caisse, ou élargissez les dates.'
+        byProduct: 'Par produit'
+        qty: 'Quantité'
+        days: 'Jours'
+        perDay: 'Moy./jour'
+        notLinked: 'Non rattaché'
+        periods:
+            DAY: 'Par jour'
+            WEEKDAY: 'Par jour de semaine'
+            WEEK: 'Par semaine'
+            MONTH: 'Par mois'
+        periodHints:
+            DAY: 'Le grain du relevé : une ligne par journée, la plus récente en tête.'
+            WEEKDAY: 'La question qui décide de la production : une boutique ne vend pas le mardi ce qu''elle vend le samedi. Lisez la colonne « Moy./jour » — c''est ce que fait UN mardi, pas la somme de six.'
+            WEEK: 'La maille où le bruit des jours s''efface et où une tendance apparaît.'
+            MONTH: 'Pour situer le mois en cours par rapport aux précédents.'
     targets:
         title: 'Objectifs par boutique'
         subtitle: 'Trois seuils par indicateur, mois par mois.'
@@ -691,6 +719,15 @@ days:
     FRI: Vendredi
     SAT: Samedi
     SUN: Dimanche
+
+daysLong:
+    1: 'Lundi'
+    2: 'Mardi'
+    3: 'Mercredi'
+    4: 'Jeudi'
+    5: 'Vendredi'
+    6: 'Samedi'
+    7: 'Dimanche'
 
 daysShort:
     MON: Lun

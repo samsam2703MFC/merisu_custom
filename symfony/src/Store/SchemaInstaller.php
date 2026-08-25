@@ -514,6 +514,38 @@ final class SchemaInstaller
         }
 
         /*
+          Ventes relevées dans la caisse, jour par jour et produit par produit.
+
+          En base, et non relues à chaque écran : le rapport de la caisse met
+          plusieurs secondes pour six semaines, et quatre écrans qui
+          l'interrogeraient chacun rendraient quatre vérités — faites à quatre
+          instants sur un jeu de commandes qui bouge.
+
+          C'est aussi une MÉMOIRE. La caisse garde son historique, mais la
+          moyenne des six dernières semaines dont vit le stock minimum a besoin
+          d'un relevé stable : recalculé chaque nuit sur des données mouvantes,
+          le plan de production aurait changé sans que rien ne l'explique.
+
+          Le couple (date, référence) EST la clé : deux relevés du même jour
+          pour le même article n'auraient aucun sens, et le second remplace le
+          premier — un rapport rejoué corrige, il n'additionne pas.
+        */
+        if (!\in_array('inv_sales_daily', $existing, true)) {
+            $t = $schema->createTable('inv_sales_daily');
+            $t->addColumn('date', 'string', ['length' => 10]);
+            // La référence de la CAISSE, pas l'identifiant local : c'est elle
+            // que le rapport rend, et le rattachement à la fiche se fait à la
+            // lecture. Un article vendu puis retiré du catalogue garde ainsi
+            // son historique.
+            $t->addColumn('product_ref', 'string', ['length' => 128]);
+            $t->addColumn('product_name', 'string', ['length' => 190, 'default' => '']);
+            $t->addColumn('quantity', 'float', ['default' => 0]);
+            $t->addColumn('revenue', 'float', ['default' => 0]);
+            $t->addColumn('fetched_at', 'string', ['length' => 32, 'default' => '']);
+            $t->setPrimaryKey(['date', 'product_ref']);
+        }
+
+        /*
           Modèles de composition — une recette écrite une fois, posée sur
           plusieurs produits.
 

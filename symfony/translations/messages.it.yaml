@@ -108,6 +108,7 @@ nav:
     targets: 'Obiettivi'
     products: Prodotti
     pos: 'Cassa'
+    sales: 'Vendite'
     categories: 'Categorie'
     parMatrix: Soglie
     weather: 'Meteo'
@@ -260,6 +261,33 @@ admin:
         yours: 'Tu'
         noShop: 'La cassa non indica a quale negozio appartiene questa postazione: i dati del negozio non possono essere mostrati.'
         source: 'Dati provenienti dalla cassa, mai dalle giacenze: questo modulo non conosce né gli incassi né gli scontrini. Finché la cassa non è collegata, sono valori dimostrativi.'
+        subtitle: 'Cosa si è venduto, e quando.'
+        from: 'Dal'
+        to: 'Al'
+        show: 'Mostra'
+        totalQty: 'Quantità venduta'
+        totalRevenue: 'Incasso'
+        products: 'Prodotti venduti'
+        refresh: 'Aggiorna dalla cassa'
+        stored: 'Rilevazione dal %from% al %to%, ricevuta il %datetime%.'
+        neverFetched: 'Nessuna rilevazione nel database.'
+        fetched: '%count% riga/e rilevata/e.'
+        empty: 'Nessuna vendita in questo intervallo. Aggiorna dalla cassa, o allarga le date.'
+        byProduct: 'Per prodotto'
+        qty: 'Quantità'
+        days: 'Giorni'
+        perDay: 'Media/giorno'
+        notLinked: 'Non collegato'
+        periods:
+            DAY: 'Per giorno'
+            WEEKDAY: 'Per giorno della settimana'
+            WEEK: 'Per settimana'
+            MONTH: 'Per mese'
+        periodHints:
+            DAY: 'Il grano della rilevazione: una riga per giornata, la più recente in testa.'
+            WEEKDAY: 'La domanda che decide la produzione: un negozio non vende il martedì ciò che vende il sabato. Leggi la colonna « Media/giorno » — è ciò che fa UN martedì, non la somma di sei.'
+            WEEK: 'La maglia in cui il rumore dei giorni svanisce e appare una tendenza.'
+            MONTH: 'Per situare il mese in corso rispetto ai precedenti.'
     targets:
         title: 'Obiettivi per negozio'
         subtitle: 'Tre soglie per indicatore, mese per mese.'
@@ -688,6 +716,15 @@ days:
     FRI: Venerdì
     SAT: Sabato
     SUN: Domenica
+
+daysLong:
+    1: 'Lunedì'
+    2: 'Martedì'
+    3: 'Mercoledì'
+    4: 'Giovedì'
+    5: 'Venerdì'
+    6: 'Sabato'
+    7: 'Domenica'
 
 daysShort:
     MON: Lun

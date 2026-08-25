@@ -108,6 +108,7 @@ nav:
     targets: 'Objetivos'
     products: Productos
     pos: 'Caja'
+    sales: 'Ventas'
     categories: 'Categorías'
     parMatrix: Umbrales
     weather: 'Meteorología'
@@ -260,6 +261,33 @@ admin:
         yours: 'Tú'
         noShop: 'La caja no indica a qué tienda pertenece este puesto: no se pueden mostrar las cifras de la tienda.'
         source: 'Cifras procedentes de la caja, nunca de las existencias: este módulo no conoce ni los cobros ni los tickets. Mientras la caja no esté conectada, son valores de demostración.'
+        subtitle: 'Lo que se ha vendido, y cuándo.'
+        from: 'Del'
+        to: 'Al'
+        show: 'Mostrar'
+        totalQty: 'Cantidad vendida'
+        totalRevenue: 'Ingresos'
+        products: 'Productos vendidos'
+        refresh: 'Actualizar desde la caja'
+        stored: 'Registro del %from% al %to%, recibido el %datetime%.'
+        neverFetched: 'Ningún registro en la base.'
+        fetched: '%count% línea(s) registrada(s).'
+        empty: 'Ninguna venta en este intervalo. Actualice desde la caja, o amplíe las fechas.'
+        byProduct: 'Por producto'
+        qty: 'Cantidad'
+        days: 'Días'
+        perDay: 'Media/día'
+        notLinked: 'Sin vincular'
+        periods:
+            DAY: 'Por día'
+            WEEKDAY: 'Por día de la semana'
+            WEEK: 'Por semana'
+            MONTH: 'Por mes'
+        periodHints:
+            DAY: 'El grano del registro: una línea por jornada, la más reciente arriba.'
+            WEEKDAY: 'La pregunta que decide la producción: una tienda no vende el martes lo que vende el sábado. Lea la columna « Media/día » — es lo que hace UN martes, no la suma de seis.'
+            WEEK: 'La malla donde el ruido de los días se borra y aparece una tendencia.'
+            MONTH: 'Para situar el mes en curso respecto a los anteriores.'
     targets:
         title: 'Objetivos por tienda'
         subtitle: 'Tres umbrales por indicador, mes a mes.'
@@ -688,6 +716,15 @@ days:
     FRI: Viernes
     SAT: Sábado
     SUN: Domingo
+
+daysLong:
+    1: 'Lunes'
+    2: 'Martes'
+    3: 'Miércoles'
+    4: 'Jueves'
+    5: 'Viernes'
+    6: 'Sábado'
+    7: 'Domingo'
 
 daysShort:
     MON: Lun

@@ -109,6 +109,10 @@ services:
             $envClientSecret: '%env(GOPOS_CLIENT_SECRET)%'
             $envOrganizationId: '%env(GOPOS_ORGANIZATION_ID)%'
             $envBaseUrl: '%env(GOPOS_BASE_URL)%'
+            # La date d'une vente est celle du COMPTOIR, pas d'UTC : une vente
+            # de 23 h à Varsovie tombe la veille en UTC, et la journée du lundi
+            # perdrait sa dernière heure au profit du dimanche.
+            $timezone: '%env(MERISU_TIMEZONE)%'
 
     Merisu\Inventory\Adapter\PosServiceInterface:
         alias: Merisu\Inventory\Adapter\GoPosService

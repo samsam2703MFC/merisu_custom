@@ -301,6 +301,101 @@ final class GoPosServiceTest extends TestCase
         self::assertSame('Merisù', $service->ping());
     }
 
+    // ── Les ventes ──────────────────────────────────────────────────────────
+
+    /**
+     * LE piège du rapport de ventes.
+     *
+     * `group_by_value.id` identifie une FAMILLE, pas un article : il vaut 1
+     * pour Traditional Regular, Grande ET Extra. S'y fier ne se contentait pas
+     * de mal étiqueter — la clé (date, référence) faisait que les trois
+     * tailles s'écrasaient l'une l'autre en base, et les trois quarts des
+     * ventes disparaissaient sans erreur. Seul le NOM distingue les tailles.
+     */
+    public function testLesVentesSeRattachentParLeNomEtNonParLIdentifiantDeFamille(): void
+    {
+        $jour = (new \DateTimeImmutable('2026-08-24 10:00:00', new \DateTimeZone('UTC')))->getTimestamp() * 1000;
+
+        $catalogue = ['data' => [
+            ['id' => 1, 'name' => 'Traditional Regular', 'type' => 'PRODUCT', 'status' => 'ENABLED'],
+            ['id' => 2, 'name' => 'Traditional Grande', 'type' => 'PRODUCT', 'status' => 'ENABLED'],
+        ]];
+
+        // Les deux tailles portent la MÊME famille — c'est ce que rend la caisse.
+        $rapport = ['reports' => [['sub_report' => [
+            self::famille('Traditional Regular', 1, $jour, 10.0),
+            self::famille('Traditional Grande', 1, $jour, 4.0),
+        ]]]];
+
+        $service = $this->service(function (string $methode, string $url) use ($catalogue, $rapport): MockResponse {
+            if (str_contains($url, '/oauth/token')) {
+                return new MockResponse('{"access_token":"jeton","expires_in":899}');
+            }
+
+            return new MockResponse(json_encode(
+                str_contains($url, '/reports/order_items') ? $rapport : $catalogue,
+                \JSON_THROW_ON_ERROR,
+            ));
+        });
+
+        $ventes = $service->sales('2026-08-24', '2026-08-24');
+
+        self::assertCount(2, $ventes);
+        // Deux références DISTINCTES : sans cela, la seconde écrasait la
+        // première en base et quatre ventes disparaissaient.
+        self::assertSame(['1', '2'], array_map(static fn ($v): string => $v->externalId, $ventes));
+        self::assertSame([10.0, 4.0], array_map(static fn ($v): float => $v->quantity, $ventes));
+    }
+
+    /**
+     * Un article vendu mais absent du catalogue garde ses ventes.
+     *
+     * Les jeter aurait fait mentir la recette du mois sans que rien ne le
+     * signale — et c'est un cas courant : frais de service, livraison,
+     * emballages, articles saisonniers retirés.
+     */
+    public function testUnArticleAbsentDuCatalogueGardeSesVentes(): void
+    {
+        $jour = (new \DateTimeImmutable('2026-08-24 10:00:00', new \DateTimeZone('UTC')))->getTimestamp() * 1000;
+
+        $service = $this->service(function (string $methode, string $url) use ($jour): MockResponse {
+            if (str_contains($url, '/oauth/token')) {
+                return new MockResponse('{"access_token":"jeton","expires_in":899}');
+            }
+
+            return new MockResponse(json_encode(
+                str_contains($url, '/reports/order_items')
+                    ? ['reports' => [['sub_report' => [self::famille('Dostawa', -1, $jour, 9.0)]]]]
+                    : ['data' => []],
+                \JSON_THROW_ON_ERROR,
+            ));
+        });
+
+        $ventes = $service->sales('2026-08-24', '2026-08-24');
+
+        self::assertCount(1, $ventes);
+        self::assertSame(9.0, $ventes[0]->quantity);
+        self::assertStringStartsWith('nom:', $ventes[0]->externalId);
+        self::assertSame('Dostawa', $ventes[0]->name);
+    }
+
+    /** Un sous-rapport de produit, tel que la caisse le rend. */
+    private static function famille(string $nom, int $familleId, int $jourMs, float $quantite): array
+    {
+        return [
+            'group_by_type' => 'PRODUCT',
+            'group_by_value' => ['name' => $nom, 'id' => (string) $familleId],
+            'sub_report' => [[
+                'group_by_type' => 'CREATED_AT_DATE',
+                'group_by_value' => ['name' => (string) $jourMs],
+                'aggregate' => ['sales' => [
+                    'product_quantity' => $quantite,
+                    'total_money' => ['amount' => $quantite * 10, 'currency' => 'PLN'],
+                ]],
+            ]],
+        ];
+    }
+
     /** Le secret ne figure jamais dans ce qui remonte à l'écran. */
     public function testLeSecretNApparaitPasDansLeRefus(): void
     {

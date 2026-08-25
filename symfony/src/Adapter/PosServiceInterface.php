@@ -67,4 +67,21 @@ interface PosServiceInterface
      * @throws PosUnavailable
      */
     public function items(): array;
+
+    /**
+     * Les ventes, produit par produit et jour par jour.
+     *
+     * Le grain le plus fin, et lui seul : le jour de semaine, la semaine et le
+     * mois s'en déduisent. Demander quatre groupements à la caisse aurait rendu
+     * quatre vérités, faites à quatre instants sur un jeu de commandes qui
+     * bouge, et dont les totaux ne s'additionneraient plus.
+     *
+     * @param string $from date de début, incluse (Y-m-d)
+     * @param string $to   date de fin, incluse (Y-m-d)
+     *
+     * @return list<\Merisu\Inventory\Domain\PosSale>
+     *
+     * @throws PosUnavailable
+     */
+    public function sales(string $from, string $to): array;
 }

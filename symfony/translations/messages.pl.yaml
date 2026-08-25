@@ -108,6 +108,7 @@ nav:
     targets: 'Cele'
     products: Produkty
     pos: 'Kasa'
+    sales: 'Sprzedaż'
     categories: 'Kategorie'
     parMatrix: Progi
     weather: 'Pogoda'
@@ -260,6 +261,33 @@ admin:
         yours: 'Ty'
         noShop: 'Kasa nie wskazuje, do którego sklepu należy to stanowisko: nie można wyświetlić danych sklepu.'
         source: 'Dane pochodzą z kasy, nigdy ze stanów magazynowych: ten moduł nie zna wpłat ani paragonów. Dopóki kasa nie jest podłączona, są to wartości demonstracyjne.'
+        subtitle: 'Co się sprzedało i kiedy.'
+        from: 'Od'
+        to: 'Do'
+        show: 'Pokaż'
+        totalQty: 'Sprzedana ilość'
+        totalRevenue: 'Przychód'
+        products: 'Sprzedane produkty'
+        refresh: 'Odśwież z kasy'
+        stored: 'Odczyt od %from% do %to%, pobrany %datetime%.'
+        neverFetched: 'Brak odczytu w bazie.'
+        fetched: 'Pobrano wierszy: %count%.'
+        empty: 'Brak sprzedaży w tym zakresie. Odśwież z kasy lub poszerz daty.'
+        byProduct: 'Według produktu'
+        qty: 'Ilość'
+        days: 'Dni'
+        perDay: 'Śr./dzień'
+        notLinked: 'Niepowiązany'
+        periods:
+            DAY: 'Dziennie'
+            WEEKDAY: 'Wg dnia tygodnia'
+            WEEK: 'Tygodniowo'
+            MONTH: 'Miesięcznie'
+        periodHints:
+            DAY: 'Najdrobniejsze ziarno: jeden wiersz na dzień, najnowszy na górze.'
+            WEEKDAY: 'Pytanie decydujące o produkcji: sklep nie sprzedaje we wtorek tego co w sobotę. Czytaj kolumnę „Śr./dzień” — to wynik JEDNEGO wtorku, nie suma sześciu.'
+            WEEK: 'Poziom, na którym szum dni znika i widać tendencję.'
+            MONTH: 'Aby umiejscowić bieżący miesiąc względem poprzednich.'
     targets:
         title: 'Cele według sklepu'
         subtitle: 'Trzy progi na wskaźnik, miesiąc po miesiącu.'
@@ -688,6 +716,15 @@ days:
     FRI: Piątek
     SAT: Sobota
     SUN: Niedziela
+
+daysLong:
+    1: 'Poniedziałek'
+    2: 'Wtorek'
+    3: 'Środa'
+    4: 'Czwartek'
+    5: 'Piątek'
+    6: 'Sobota'
+    7: 'Niedziela'
 
 daysShort:
     MON: Pon
