@@ -1,0 +1,38 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "title": "A · La chaîne", "x": 0, "y": 0, "w": 1200, "h": 980 },
+    { "file": "Semaine.dc.html", "title": "B · La semaine", "x": 1320, "y": 0, "w": 1400, "h": 980 },
+    { "file": "Bon.dc.html", "title": "C · Le bon de production", "x": 2840, "y": 0, "w": 794, "h": 1123, "print": "fixed" }
+  ],
+  "annotations": [
+    {
+      "id": "brief",
+      "x": 0,
+      "y": -190,
+      "w": 700,
+      "text": "Même scénario dans les trois : Wrocław Rynek, jeudi 27 août.\nBase 246,3 (les six derniers jeudis, chiffre réellement mesuré) × météo +3 % × objectif +8 % = 274 pièces.\nLes trois diffèrent par ce qu'elles mettent au premier plan, pas par le calcul."
+    },
+    {
+      "id": "note-a",
+      "x": 0,
+      "y": 1030,
+      "w": 380,
+      "text": "A — pour qui règle le système.\nLe calcul est déplié : chaque facteur montre sa source et le nombre de journées qui le fondent. Coût : trois écrans de lecture pour un seul jour."
+    },
+    {
+      "id": "note-b",
+      "x": 1320,
+      "y": 1030,
+      "w": 380,
+      "text": "B — pour qui commande la matière.\nLa semaine entière, donc une commande fournisseur au lieu de sept. Coût : le calcul disparaît derrière les nombres."
+    },
+    {
+      "id": "note-c",
+      "x": 2840,
+      "y": 1173,
+      "w": 380,
+      "text": "C — pour l'atelier à 7 h.\nUn A4 imprimable, un nombre, des cases à cocher, une ligne pour le reste d'hier et une signature. Coût : ne se règle pas, se lit."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}

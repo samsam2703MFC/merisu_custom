@@ -12,3 +12,8 @@ coverage/
 packages/server/uploads/
 packages/server/test-uploads/
 packages/web/dev-dist/
+
+# Le canevas assemblé des maquettes : 2,4 Mo d'éditeur empaqueté, reconstruit
+# à la demande depuis les .dc.html voisins. Ce sont EUX les sources.
+design/*.html
+!design/*.dc.html

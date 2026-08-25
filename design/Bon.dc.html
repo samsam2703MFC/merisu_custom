@@ -1,0 +1,112 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Montserrat:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: "Montserrat", -apple-system, "Segoe UI", sans-serif; background: #ffffff; color: #6F4E37; line-height: 1.5; }
+    a { color: #C4306A; } a:hover { color: #A82859; }
+  </style>
+</helmet>
+
+<!-- A4 à 96 ppp : 794 × 1123. Corps à 16px = 12pt, plancher d'impression. -->
+<div style="width: 794px; height: 1123px; box-sizing: border-box; padding: 48px 56px; background: #ffffff; display: flex; flex-direction: column;">
+
+  <!-- Entête -->
+  <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding-bottom: 18px; border-bottom: 3px solid #C4306A;">
+    <div>
+      <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.9rem; color: #6F4E37; line-height: 1.1;">Bon de production</div>
+      <div style="font-size: 16px; color: #8C715F; margin-top: 4px;">Wrocław Rynek · Poste laboratoire</div>
+    </div>
+    <div style="text-align: right;">
+      <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.5rem; color: #6F4E37; line-height: 1.1;">Jeudi 27 août</div>
+      <div style="font-size: 14px; color: #8C715F; margin-top: 4px;">Édité la veille à 22 h 04</div>
+    </div>
+  </div>
+
+  <!-- Le nombre -->
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 26px 28px; margin-top: 22px; background: #FBEEF3; border-radius: 16px;">
+    <div>
+      <div style="font-size: 14px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #A82859;">Objectif du jour</div>
+      <div style="font-size: 16px; color: #6F4E37; margin-top: 4px;">Six derniers jeudis, corrigés du temps annoncé<br>et de l'objectif d'août.</div>
+    </div>
+    <div style="text-align: right; flex: none;">
+      <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 5rem; line-height: .95; color: #C4306A;">274</div>
+      <div style="font-size: 15px; font-weight: 600; color: #A82859; letter-spacing: .04em;">TIRAMISU</div>
+    </div>
+  </div>
+
+  <!-- Répartition -->
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 18px;">
+    <div style="border: 1px solid #F2E6CC; border-radius: 16px; padding: 14px 16px;">
+      <div style="font-size: 14px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8C715F;">Regular</div>
+      <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 2.1rem; color: #6F4E37; line-height: 1.15;">123</div>
+    </div>
+    <div style="border: 1px solid #F2E6CC; border-radius: 16px; padding: 14px 16px;">
+      <div style="font-size: 14px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8C715F;">Grande</div>
+      <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 2.1rem; color: #6F4E37; line-height: 1.15;">96</div>
+    </div>
+    <div style="border: 1px solid #F2E6CC; border-radius: 16px; padding: 14px 16px;">
+      <div style="font-size: 14px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8C715F;">Extra</div>
+      <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 2.1rem; color: #6F4E37; line-height: 1.15;">55</div>
+    </div>
+  </div>
+
+  <!-- Mise en place -->
+  <div style="margin-top: 26px;">
+    <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.4rem; color: #6F4E37; margin-bottom: 10px;">Mise en place</div>
+
+    <div style="display: flex; flex-direction: column;">
+      <div style="display: grid; grid-template-columns: 28px 1fr 150px; align-items: center; gap: 14px; padding: 13px 0; border-bottom: 1px solid #EFE7DA;">
+        <span style="display: block; width: 22px; height: 22px; border: 2px solid #C4306A; border-radius: 6px;"></span>
+        <span style="font-size: 17px; font-weight: 600;">Crème mascarpone</span>
+        <span style="text-align: right; font-family: 'Playfair Display', Georgia, serif; font-size: 1.6rem; color: #6F4E37;">31,5 kg</span>
+      </div>
+      <div style="display: grid; grid-template-columns: 28px 1fr 150px; align-items: center; gap: 14px; padding: 13px 0; border-bottom: 1px solid #EFE7DA;">
+        <span style="display: block; width: 22px; height: 22px; border: 2px solid #C4306A; border-radius: 6px;"></span>
+        <span style="font-size: 17px; font-weight: 600;">Savoiardi</span>
+        <span style="text-align: right; font-family: 'Playfair Display', Georgia, serif; font-size: 1.6rem; color: #6F4E37;">727</span>
+      </div>
+      <div style="display: grid; grid-template-columns: 28px 1fr 150px; align-items: center; gap: 14px; padding: 13px 0; border-bottom: 1px solid #EFE7DA;">
+        <span style="display: block; width: 22px; height: 22px; border: 2px solid #C4306A; border-radius: 6px;"></span>
+        <span style="font-size: 17px; font-weight: 600;">Café infusé</span>
+        <span style="text-align: right; font-family: 'Playfair Display', Georgia, serif; font-size: 1.6rem; color: #6F4E37;">12,3 L</span>
+      </div>
+      <div style="display: grid; grid-template-columns: 28px 1fr 150px; align-items: center; gap: 14px; padding: 13px 0; border-bottom: 1px solid #EFE7DA;">
+        <span style="display: block; width: 22px; height: 22px; border: 2px solid #C4306A; border-radius: 6px;"></span>
+        <span style="font-size: 17px; font-weight: 600;">Cacao</span>
+        <span style="text-align: right; font-family: 'Playfair Display', Georgia, serif; font-size: 1.6rem; color: #6F4E37;">822 g</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reste d'hier -->
+  <div style="margin-top: 22px; padding: 16px 18px; background: #FDF3E0; border-radius: 16px;">
+    <div style="font-size: 15px; font-weight: 700; color: #A06800; margin-bottom: 6px;">À déduire de ce bon</div>
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px;">
+      <span style="font-size: 16px; color: #6F4E37;">Reste au comptage de clôture d'hier</span>
+      <span style="display: inline-block; min-width: 130px; border-bottom: 2px solid #A06800; height: 26px;"></span>
+    </div>
+    <div style="font-size: 14px; color: #A06800; margin-top: 8px;">À reporter avant de lancer la première fournée.</div>
+  </div>
+
+  <!-- Pied -->
+  <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid #F2E6CC; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px;">
+    <div style="font-size: 14px; color: #8C715F; max-width: 420px;">
+      Base 246,3 · météo +3 % · objectif +8 %.<br>
+      Le détail du calcul est dans Admin ▸ Gestion de production.
+    </div>
+    <div style="text-align: right;">
+      <div style="font-size: 14px; color: #8C715F; margin-bottom: 20px;">Produit et vérifié par</div>
+      <div style="width: 220px; border-bottom: 1px solid #6F4E37;"></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,150 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Montserrat:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: "Montserrat", -apple-system, "Segoe UI", sans-serif; background: #F8F3E8; color: #6F4E37; font-size: 16px; line-height: 1.55; }
+    a { color: #C4306A; } a:hover { color: #A82859; }
+    .jour { padding: 10px 8px; text-align: center; border-bottom: 1px solid #EFE7DA; font-variant-numeric: tabular-nums; }
+    .tete { padding: 10px 8px; text-align: center; border-bottom: 1px solid #F2E6CC; }
+  </style>
+</helmet>
+
+<div style="padding: 32px 32px 40px; background: #F8F3E8;">
+
+  <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 4px;">
+    <h1 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-weight: 500; font-size: 1.7rem; letter-spacing: -.01em; color: #6F4E37;">Gestion de production</h1>
+    <span style="font-size: .78rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #C4306A;">Proposition B · La semaine</span>
+  </div>
+  <p style="margin: 0 0 20px; color: #8C715F; font-size: .9rem;">Sept jours d'un coup d'œil. On commande la matière une fois pour la semaine, pas sept.</p>
+
+  <!-- Barre de sélection -->
+  <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 18px;">
+    <span style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 18px 6px 6px; background: #C4306A; color: #fff; border-radius: 999px; font-weight: 600;">
+      <span style="display: grid; place-items: center; width: 32px; height: 32px; border-radius: 12px; background: rgba(255,255,255,.22); font-family: 'Playfair Display', Georgia, serif;">W</span>
+      Wrocław Rynek
+    </span>
+    <span style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 18px 6px 6px; background: #ffffff; border-radius: 999px; font-weight: 600; box-shadow: 0 4px 16px rgba(111,78,55,.07);">
+      <span style="display: grid; place-items: center; width: 32px; height: 32px; border-radius: 12px; background: #F7F0DC; font-family: 'Playfair Display', Georgia, serif;">W</span>
+      Warszawa Nowy Świat
+    </span>
+    <span style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 18px 6px 6px; background: #ffffff; border-radius: 999px; font-weight: 600; box-shadow: 0 4px 16px rgba(111,78,55,.07);">
+      <span style="display: grid; place-items: center; width: 32px; height: 32px; border-radius: 12px; background: #F7F0DC; font-family: 'Playfair Display', Georgia, serif;">K</span>
+      Kraków Floriańska
+    </span>
+    <span style="margin-left: auto; display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; background: #ffffff; border-radius: 999px; font-weight: 600; box-shadow: 0 4px 16px rgba(111,78,55,.07);">Semaine du 24 au 30 août</span>
+  </div>
+
+  <!-- La grille -->
+  <div style="background: #ffffff; border-radius: 24px; padding: 20px; box-shadow: 0 4px 16px rgba(111,78,55,.07); margin-bottom: 16px;">
+    <table style="border-collapse: collapse; width: 100%; font-size: .92rem;">
+      <thead>
+        <tr>
+          <th style="padding: 10px 8px; text-align: left; border-bottom: 1px solid #F2E6CC; font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8C715F;">Jour</th>
+          <th class="tete" style="font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8C715F;">Lun 24</th>
+          <th class="tete" style="font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8C715F;">Mar 25</th>
+          <th class="tete" style="font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8C715F;">Mer 26</th>
+          <th class="tete" style="font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8C715F;">Jeu 27</th>
+          <th class="tete" style="font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8C715F;">Ven 28</th>
+          <th class="tete" style="font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8C715F;">Sam 29</th>
+          <th class="tete" style="font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8C715F;">Dim 30</th>
+          <th class="tete" style="font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #C4306A;">Semaine</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th style="padding: 10px 8px; text-align: left; border-bottom: 1px solid #EFE7DA; font-weight: 500; color: #8C715F; font-size: .84rem;">Météo annoncée</th>
+          <td class="jour" style="color: #8C715F; font-size: .82rem;">24° nuag.</td>
+          <td class="jour" style="color: #8C715F; font-size: .82rem;">26° soleil</td>
+          <td class="jour" style="color: #8C715F; font-size: .82rem;">27° soleil</td>
+          <td class="jour" style="color: #8C715F; font-size: .82rem;">28° soleil</td>
+          <td class="jour" style="color: #8C715F; font-size: .82rem;">31° canic.</td>
+          <td class="jour" style="color: #8C715F; font-size: .82rem;">30° soleil</td>
+          <td class="jour" style="color: #8C715F; font-size: .82rem;">22° pluie</td>
+          <td class="jour"></td>
+        </tr>
+        <tr>
+          <th style="padding: 10px 8px; text-align: left; border-bottom: 1px solid #EFE7DA; font-weight: 500; color: #8C715F; font-size: .84rem;">Correction</th>
+          <td class="jour" style="color: #B3261E; font-size: .84rem; font-weight: 600;">−3 %</td>
+          <td class="jour" style="color: #1F7A4D; font-size: .84rem; font-weight: 600;">+1 %</td>
+          <td class="jour" style="color: #1F7A4D; font-size: .84rem; font-weight: 600;">+1 %</td>
+          <td class="jour" style="color: #1F7A4D; font-size: .84rem; font-weight: 600;">+3 %</td>
+          <td class="jour" style="color: #1F7A4D; font-size: .84rem; font-weight: 600;">+3 %</td>
+          <td class="jour" style="color: #1F7A4D; font-size: .84rem; font-weight: 600;">+3 %</td>
+          <td class="jour" style="color: #B3261E; font-size: .84rem; font-weight: 600;">−1 %</td>
+          <td class="jour" style="color: #C4306A; font-size: .84rem; font-weight: 600;">+8 % obj.</td>
+        </tr>
+
+        <tr style="background: #FBEEF3;">
+          <th style="padding: 12px 8px; text-align: left; border-bottom: 1px solid #EFE7DA; font-family: 'Playfair Display', Georgia, serif; font-size: 1.05rem; color: #6F4E37;">À produire</th>
+          <td class="jour" style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.4rem; color: #6F4E37;">195</td>
+          <td class="jour" style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.4rem; color: #6F4E37;">254</td>
+          <td class="jour" style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.4rem; color: #6F4E37;">254</td>
+          <td class="jour" style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.4rem; color: #6F4E37;">274</td>
+          <td class="jour" style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.4rem; color: #6F4E37;">340</td>
+          <td class="jour" style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.4rem; color: #6F4E37;">489</td>
+          <td class="jour" style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.4rem; color: #6F4E37;">497</td>
+          <td class="jour" style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.7rem; color: #C4306A;">2 303</td>
+        </tr>
+
+        <tr>
+          <th style="padding: 10px 8px; text-align: left; border-bottom: 1px solid #EFE7DA; font-weight: 600; font-size: .88rem;">Regular</th>
+          <td class="jour">88</td><td class="jour">114</td><td class="jour">114</td><td class="jour">123</td>
+          <td class="jour">153</td><td class="jour">220</td><td class="jour">224</td>
+          <td class="jour" style="font-weight: 700;">1 036</td>
+        </tr>
+        <tr>
+          <th style="padding: 10px 8px; text-align: left; border-bottom: 1px solid #EFE7DA; font-weight: 600; font-size: .88rem;">Grande</th>
+          <td class="jour">68</td><td class="jour">89</td><td class="jour">89</td><td class="jour">96</td>
+          <td class="jour">119</td><td class="jour">171</td><td class="jour">174</td>
+          <td class="jour" style="font-weight: 700;">806</td>
+        </tr>
+        <tr>
+          <th style="padding: 10px 8px; text-align: left; border-bottom: 1px solid #EFE7DA; font-weight: 600; font-size: .88rem;">Extra</th>
+          <td class="jour">39</td><td class="jour">51</td><td class="jour">51</td><td class="jour">55</td>
+          <td class="jour">68</td><td class="jour">98</td><td class="jour">99</td>
+          <td class="jour" style="font-weight: 700;">461</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Bandeau matières -->
+  <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px;">
+    <div style="background: #ffffff; border-radius: 24px; padding: 18px 20px; box-shadow: 0 4px 16px rgba(111,78,55,.07);">
+      <div style="font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8C715F; margin-bottom: 4px;">Crème mascarpone</div>
+      <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 2rem; color: #6F4E37; line-height: 1.1;">264,9 kg</div>
+      <div style="color: #8C715F; font-size: .82rem; margin-top: 4px;">soit 37,8 kg par jour en moyenne</div>
+    </div>
+    <div style="background: #ffffff; border-radius: 24px; padding: 18px 20px; box-shadow: 0 4px 16px rgba(111,78,55,.07);">
+      <div style="font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8C715F; margin-bottom: 4px;">Savoiardi</div>
+      <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 2rem; color: #6F4E37; line-height: 1.1;">6 104</div>
+      <div style="color: #8C715F; font-size: .82rem; margin-top: 4px;">21 paquets de 300</div>
+    </div>
+    <div style="background: #ffffff; border-radius: 24px; padding: 18px 20px; box-shadow: 0 4px 16px rgba(111,78,55,.07);">
+      <div style="font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8C715F; margin-bottom: 4px;">Café</div>
+      <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 2rem; color: #6F4E37; line-height: 1.1;">103,2 L</div>
+      <div style="color: #8C715F; font-size: .82rem; margin-top: 4px;">à répartir sur les services</div>
+    </div>
+    <div style="background: #ffffff; border-radius: 24px; padding: 18px 20px; box-shadow: 0 4px 16px rgba(111,78,55,.07);">
+      <div style="font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8C715F; margin-bottom: 4px;">Cacao</div>
+      <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 2rem; color: #6F4E37; line-height: 1.1;">6,9 kg</div>
+      <div style="color: #8C715F; font-size: .82rem; margin-top: 4px;">pour la pluie finale</div>
+    </div>
+  </div>
+
+  <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+    <span style="display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 26px; border-radius: 999px; background: #C4306A; color: #fff; font-size: .85rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;">Figer la semaine</span>
+    <span style="display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 26px; border-radius: 999px; background: #F7F0DC; color: #6F4E37; font-size: .85rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;">Exporter la commande</span>
+    <span style="color: #8C715F; font-size: .84rem;">Dimanche s'appuie sur 6 dimanches ; les autres jours aussi. Aucun jour n'est extrapolé.</span>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

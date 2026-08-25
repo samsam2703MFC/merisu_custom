@@ -1,0 +1,173 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Montserrat:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: "Montserrat", -apple-system, "Segoe UI", sans-serif; background: #F8F3E8; color: #6F4E37; font-size: 16px; line-height: 1.55; }
+    a { color: #C4306A; } a:hover { color: #A82859; }
+  </style>
+</helmet>
+
+<div style="padding: 32px 32px 40px; background: #F8F3E8;">
+
+  <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 4px;">
+    <h1 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-weight: 500; font-size: 1.7rem; letter-spacing: -.01em; color: #6F4E37;">Gestion de production</h1>
+    <span style="font-size: .78rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #C4306A;">Proposition A · La chaîne</span>
+  </div>
+  <p style="margin: 0 0 20px; color: #8C715F; font-size: .9rem;">Chaque nombre montre d'où il vient. On peut le contester ligne par ligne.</p>
+
+  <!-- Sélection : boutique + jour -->
+  <div style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 20px;">
+    <div style="display: flex; flex-direction: column; gap: 4px;">
+      <span style="font-size: .78rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8C715F;">Boutique</span>
+      <div style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 6px 16px 6px 6px; background: #ffffff; border-radius: 999px; box-shadow: 0 4px 16px rgba(111,78,55,.07);">
+        <span style="display: grid; place-items: center; width: 32px; height: 32px; border-radius: 12px; background: linear-gradient(150deg, #C4306A, #A82859); color: #fff; font-family: 'Playfair Display', Georgia, serif; font-size: 1rem;">W</span>
+        <span style="font-weight: 600;">Wrocław Rynek</span>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 4px;">
+      <span style="font-size: .78rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8C715F;">Jour produit</span>
+      <div style="display: flex; align-items: center; min-height: 44px; padding: 0 20px; background: #ffffff; border-radius: 999px; font-weight: 600; box-shadow: 0 4px 16px rgba(111,78,55,.07);">Jeudi 27 août</div>
+    </div>
+  </div>
+
+  <!-- LA CHAÎNE -->
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: start;">
+
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+
+      <!-- Étape 1 -->
+      <div style="background: #ffffff; border-radius: 24px; padding: 16px 20px; box-shadow: 0 4px 16px rgba(111,78,55,.07);">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+          <div>
+            <div style="font-size: .78rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #8C715F;">1 · Base</div>
+            <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.15rem; color: #6F4E37;">Les six derniers jeudis</div>
+          </div>
+          <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 2rem; color: #6F4E37; font-variant-numeric: tabular-nums;">246,3</div>
+        </div>
+        <p style="margin: 8px 0 0; color: #8C715F; font-size: .84rem;">Moyenne des jeudis du 16 juillet au 20 août — 6 jeudis observés, aucun écarté. <a href="#" style="text-decoration: none; border-bottom: 1px solid rgba(196,48,106,.35);">Voir le détail</a></p>
+      </div>
+
+      <!-- Opérateur -->
+      <div style="display: flex; align-items: center; gap: 10px; padding-left: 20px;">
+        <span style="display: grid; place-items: center; width: 26px; height: 26px; border-radius: 999px; background: #F7F0DC; color: #6F4E37; font-weight: 700;">×</span>
+        <span style="font-size: .84rem; color: #8C715F;">corrigé par</span>
+      </div>
+
+      <!-- Étape 2 -->
+      <div style="background: #ffffff; border-radius: 24px; padding: 16px 20px; box-shadow: 0 4px 16px rgba(111,78,55,.07);">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+          <div>
+            <div style="font-size: .78rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #8C715F;">2 · Météo annoncée</div>
+            <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.15rem; color: #6F4E37;">28 °C, soleil</div>
+          </div>
+          <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 2rem; color: #1F7A4D; font-variant-numeric: tabular-nums;">+3 %</div>
+        </div>
+        <p style="margin: 8px 0 0; color: #8C715F; font-size: .84rem;">Tranche 25–30 °C, réglée dans <a href="#" style="text-decoration: none; border-bottom: 1px solid rgba(196,48,106,.35);">Seuils</a> d'après 20 journées observées.</p>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px; padding-left: 20px;">
+        <span style="display: grid; place-items: center; width: 26px; height: 26px; border-radius: 999px; background: #F7F0DC; color: #6F4E37; font-weight: 700;">×</span>
+        <span style="font-size: .84rem; color: #8C715F;">puis par</span>
+      </div>
+
+      <!-- Étape 3 -->
+      <div style="background: #ffffff; border-radius: 24px; padding: 16px 20px; box-shadow: 0 4px 16px rgba(111,78,55,.07);">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+          <div>
+            <div style="font-size: .78rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #8C715F;">3 · Objectif</div>
+            <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.15rem; color: #6F4E37;">Wrocław Rynek · août</div>
+          </div>
+          <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 2rem; color: #C4306A; font-variant-numeric: tabular-nums;">+8 %</div>
+        </div>
+        <p style="margin: 8px 0 0; color: #8C715F; font-size: .84rem;">Croissance visée, par boutique et par période. <a href="#" style="text-decoration: none; border-bottom: 1px solid rgba(196,48,106,.35);">Objectifs</a></p>
+      </div>
+
+      <!-- Résultat -->
+      <div style="background: linear-gradient(150deg, #C4306A, #A82859); border-radius: 24px; padding: 20px 24px; color: #ffffff; box-shadow: 0 4px 16px rgba(111,78,55,.07);">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+          <div>
+            <div style="font-size: .78rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; opacity: .85;">= À produire</div>
+            <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.15rem;">Tiramisu, toutes tailles</div>
+          </div>
+          <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 3rem; line-height: 1; font-variant-numeric: tabular-nums;">274</div>
+        </div>
+        <p style="margin: 10px 0 0; font-size: .84rem; opacity: .88;">246,3 × 1,03 × 1,08 = 273,96 — arrondi à l'entier supérieur.</p>
+      </div>
+    </div>
+
+    <!-- Ce que ça donne en matières -->
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+
+      <div style="background: #ffffff; border-radius: 24px; padding: 20px; box-shadow: 0 4px 16px rgba(111,78,55,.07);">
+        <h2 style="margin: 0 0 4px; font-family: 'Playfair Display', Georgia, serif; font-weight: 500; font-size: 1.3rem; color: #6F4E37;">Répartition par taille</h2>
+        <p style="margin: 0 0 14px; color: #8C715F; font-size: .84rem;">Selon le partage observé sur six semaines dans cette boutique.</p>
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: grid; grid-template-columns: 90px 1fr 62px; align-items: center; gap: 12px;">
+            <span style="font-weight: 600;">Regular</span>
+            <span style="display: block; height: 12px; border-radius: 999px; background: linear-gradient(90deg, #C4306A 45%, #F2E6CC 45%);"></span>
+            <span style="text-align: right; font-weight: 700; font-variant-numeric: tabular-nums;">123</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 90px 1fr 62px; align-items: center; gap: 12px;">
+            <span style="font-weight: 600;">Grande</span>
+            <span style="display: block; height: 12px; border-radius: 999px; background: linear-gradient(90deg, #C4306A 35%, #F2E6CC 35%);"></span>
+            <span style="text-align: right; font-weight: 700; font-variant-numeric: tabular-nums;">96</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 90px 1fr 62px; align-items: center; gap: 12px;">
+            <span style="font-weight: 600;">Extra</span>
+            <span style="display: block; height: 12px; border-radius: 999px; background: linear-gradient(90deg, #C4306A 20%, #F2E6CC 20%);"></span>
+            <span style="text-align: right; font-weight: 700; font-variant-numeric: tabular-nums;">55</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: #ffffff; border-radius: 24px; padding: 20px; box-shadow: 0 4px 16px rgba(111,78,55,.07);">
+        <h2 style="margin: 0 0 4px; font-family: 'Playfair Display', Georgia, serif; font-weight: 500; font-size: 1.3rem; color: #6F4E37;">À sortir de la réserve</h2>
+        <p style="margin: 0 0 14px; color: #8C715F; font-size: .84rem;">Calculé par les <a href="#" style="text-decoration: none; border-bottom: 1px solid rgba(196,48,106,.35);">compositions</a>, taille par taille.</p>
+
+        <div style="display: flex; flex-direction: column; gap: 0;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 11px 0; border-bottom: 1px solid #EFE7DA;">
+            <span style="font-weight: 600;">Crème mascarpone</span>
+            <span style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.5rem; color: #6F4E37; font-variant-numeric: tabular-nums;">31,5 kg</span>
+          </div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 11px 0; border-bottom: 1px solid #EFE7DA;">
+            <span style="font-weight: 600;">Savoiardi</span>
+            <span style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.5rem; color: #6F4E37; font-variant-numeric: tabular-nums;">727</span>
+          </div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 11px 0; border-bottom: 1px solid #EFE7DA;">
+            <span style="font-weight: 600;">Café</span>
+            <span style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.5rem; color: #6F4E37; font-variant-numeric: tabular-nums;">12,3 L</span>
+          </div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 11px 0;">
+            <span style="font-weight: 600;">Cacao</span>
+            <span style="font-family: 'Playfair Display', Georgia, serif; font-size: 1.5rem; color: #6F4E37; font-variant-numeric: tabular-nums;">822 g</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 12px; padding: 14px 18px; background: #FDF3E0; border-radius: 16px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A06800" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex: none;">
+          <path d="M12 9v4"></path><path d="M12 17h.01"></path>
+          <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path>
+        </svg>
+        <span style="font-size: .86rem; color: #A06800;">Le stock de clôture d'hier n'est pas encore saisi : ce nombre est une cible, pas un ordre de production.</span>
+      </div>
+
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <span style="display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 26px; border-radius: 999px; background: #C4306A; color: #fff; font-size: .85rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;">Figer le plan</span>
+        <span style="display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 26px; border-radius: 999px; background: #F7F0DC; color: #6F4E37; font-size: .85rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;">Imprimer le bon</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
