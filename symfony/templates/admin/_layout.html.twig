@@ -54,7 +54,7 @@
       { route: 'admin_weather',    label: 'nav.weather' }
     ] },
     { title: 'nav.groups.reporting', open: true, links: [
-      { route: 'admin_network',    label: 'nav.network' },
+      { route: 'admin_network',    label: 'nav.network', manager: true },
       { route: 'admin_sales',      label: 'nav.sales' },
       { route: 'admin_weather_sales', label: 'nav.weatherSales' },
       { route: 'admin_targets',    label: 'nav.targets' },
@@ -89,6 +89,27 @@
     boucle Twig ne survit pas à l'itération, et l'accumulateur repartirait de
     zéro à chaque tour.
   #}
+  {#
+    ── Le rail ne montre que ce qu'on peut OUVRIR
+
+    Un manager pilote ses boutiques ; la plupart des écrans d'administration
+    règlent le réseau et lui restent fermés. Les lui afficher quand même aurait
+    fait un menu dont la moitié rend 403 — on clique, on est refusé, et l'on
+    finit par douter de ses droits sur les écrans qui, eux, s'ouvrent.
+
+    Une entrée n'est ouverte au manager que si l'écran derrière FILTRE par
+    boutique. Marquer `manager: true` sans avoir posé le filtre lui livrerait
+    les chiffres des boutiques voisines : les deux se décident ensemble, et
+    c'est pourquoi ce drapeau est rare.
+
+    Une famille vidée par ce filtre disparaît : un intertitre seul, sans lien
+    dessous, ne dit rien à personne.
+  #}
+  {%- set navEstAdmin = current_user().isAdmin() -%}
+  {%- set navGroupes = navGroupes
+      |map(g => g|merge({ links: g.links|filter(l => navEstAdmin or l.manager|default(false)) }))
+      |filter(g => g.links|length > 0) -%}
+
   {%- set navRouteCourante = app.request.attributes.get('_route') -%}
   {%- set navCandidates = navGroupes
       |reduce((liste, groupe) => liste|merge(groupe.links|map(lien => lien.route)), [])

@@ -54,6 +54,7 @@ login:
     demoHint: 'admin / 000000 · consultant1 / 111111 · consultant2 / 222222'
 
 roles:
+    MANAGER: 'Kierownik'
     ADMIN: Administrator
     CONSULTANT: Sprzedawca
 
@@ -478,6 +479,7 @@ admin:
         unreachable: 'Kasa niedostępna.'
         badAnswer: 'Nieczytelna odpowiedź kasy: nic nie zostało pobrane.'
     team:
+        shopsNone: 'Brak zadeklarowanych sklepów. Utwórz je w Sklepach przed przypisaniem kogokolwiek.'
         workstationShop: 'Sklep stanowiska'
         workstationNoShop: '— nieprzypisane —'
         workstationShopHint: 'Liczenia, progi i delta są przypisane do stanowiska; sprzedaż do sklepu. To powiązanie pozwala je porównać. Bez niego odczyty tego stanowiska nie wchodzą do żadnej liczby per sklep.'

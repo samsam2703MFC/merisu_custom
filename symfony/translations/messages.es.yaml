@@ -54,6 +54,7 @@ login:
     demoHint: 'admin / 000000 · consultant1 / 111111 · consultant2 / 222222'
 
 roles:
+    MANAGER: 'Encargado'
     ADMIN: Administrador
     CONSULTANT: Vendedor
 
@@ -478,6 +479,7 @@ admin:
         unreachable: 'Caja inaccesible.'
         badAnswer: 'Respuesta ilegible de la caja: no se ha recuperado nada.'
     team:
+        shopsNone: 'Ninguna tienda declarada. Créalas en Tiendas antes de asignar a nadie.'
         workstationShop: 'Tienda del puesto'
         workstationNoShop: '— sin asignar —'
         workstationShopHint: 'Los recuentos, los umbrales y el delta están ligados al puesto; las ventas a la tienda. Es este vínculo lo que permite compararlos. Sin él, las lecturas de este puesto no entran en ninguna cifra por tienda.'

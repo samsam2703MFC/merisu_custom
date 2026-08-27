@@ -104,6 +104,27 @@ final class CurrentUser
         $this->requestStack->getSession()->set(self::SHOP_KEY, $shopId);
     }
 
+    /**
+     * Exige de PILOTER quelque chose : un manager ou un administrateur.
+     *
+     * Distinct de `requireAdmin()`, et c'est le point : l'admin règle le
+     * réseau, le manager pilote SES boutiques. Un écran qui laisse entrer un
+     * manager doit donc, sans exception, filtrer ce qu'il montre — sinon il
+     * lui livre les chiffres des boutiques voisines.
+     *
+     * @throws AccessDeniedHttpException
+     */
+    public function requireManager(): Consultant
+    {
+        $consultant = $this->requireConsultant();
+
+        if (!$consultant->role->canManage()) {
+            throw new AccessDeniedHttpException('MANAGER_REQUIRED');
+        }
+
+        return $consultant;
+    }
+
     /** @throws AccessDeniedHttpException si personne n'est connecté */
     public function requireConsultant(): Consultant
     {

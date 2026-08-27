@@ -47,7 +47,15 @@ final class AdminNetworkController extends AbstractController
     #[Route('', name: 'admin_network', methods: ['GET'])]
     public function index(Request $request): Response
     {
-        $this->currentUser->requireAdmin();
+        /*
+          Les MANAGERS entrent ici, et le filtre part dans le même geste.
+
+          Ouvrir l'accès sans filtrer aurait livré à un manager les chiffres
+          des boutiques voisines — exactement ce que le rôle est censé
+          empêcher. Les deux ne se séparent pas : c'est pourquoi ils sont
+          écrits l'un contre l'autre.
+        */
+        $pilote = $this->currentUser->requireManager();
 
         $aujourdhui = $this->inventory->today();
 
@@ -68,7 +76,23 @@ final class AdminNetworkController extends AbstractController
         $resultats = [];
         $couvert = 0;
 
-        foreach ($this->shops->all() as $boutique) {
+        $toutes = $this->shops->all();
+
+        /*
+          Le PÉRIMÈTRE de la personne.
+
+          Un admin voit tout. Un manager ne voit que ses boutiques — et un
+          manager sans affectation n'en voit AUCUNE, plutôt que toutes : une
+          liste vide veut dire « on ne lui en a pas encore donné », et la lire
+          comme une permission ouvrirait le réseau à quiconque est promu avant
+          qu'on ait rempli sa fiche.
+        */
+        $miennes = array_values(array_filter(
+            $toutes,
+            static fn (Shop $b): bool => $pilote->managesShop($b->id, $toutes),
+        ));
+
+        foreach ($miennes as $boutique) {
             $ligne = $ventes[$boutique->code] ?? ['quantity' => 0.0, 'revenue' => 0.0, 'days' => 0];
             $couvert += $ligne['days'] > 0 ? 1 : 0;
 
@@ -88,7 +112,14 @@ final class AdminNetworkController extends AbstractController
           taire aurait fait un total de réseau inférieur à la somme des ventes,
           sans que rien ne l'explique.
         */
-        $orphelines = $ventes[''] ?? null;
+        /*
+          Les relevés SANS boutique n'appartiennent à personne en particulier —
+          ce sont ceux d'avant le réseau. Ils regardent l'administrateur, qui
+          répond du total ; un manager n'a pas à en porter la charge, et les
+          lui montrer gonflerait son écran d'un chiffre qu'il ne peut ni
+          expliquer ni corriger.
+        */
+        $orphelines = $pilote->role->isAdmin() ? ($ventes[''] ?? null) : null;
 
         /*
           Les courbes.
@@ -105,7 +136,10 @@ final class AdminNetworkController extends AbstractController
         $parBoutiqueEtJour = [];
         $nomDe = [];
 
-        foreach ($this->shops->all() as $boutique) {
+        // Les courbes suivent le même périmètre que les cartes : un manager
+        // qui verrait la courbe d'une boutique absente de ses cartes lirait
+        // par le graphique ce que le tableau lui refuse.
+        foreach ($miennes as $boutique) {
             $nomDe[$boutique->code] = $boutique->name;
             $parBoutiqueEtJour[$boutique->name] = [];
         }
@@ -127,7 +161,7 @@ final class AdminNetworkController extends AbstractController
         $parBoutiqueEtJour = array_filter($parBoutiqueEtJour, static fn (array $j): bool => $j !== []);
 
         $objectifReseau = 0.0;
-        foreach ($this->shops->all() as $boutique) {
+        foreach ($miennes as $boutique) {
             $objectifReseau += $boutique->monthlyTarget * $prorata;
         }
 
@@ -144,8 +178,16 @@ final class AdminNetworkController extends AbstractController
             'results' => ShopResult::rank($resultats),
             'orphans' => $orphelines,
             'prorata' => $prorata,
-            'total' => array_sum(array_map(static fn (array $v): float => $v['quantity'], $ventes)),
-            'totalRevenue' => array_sum(array_map(static fn (array $v): float => $v['revenue'], $ventes)),
+            /*
+              Les totaux somment CE QU'ON MONTRE, pas le réseau.
+
+              Ils partaient de `$ventes`, qui porte toutes les caisses : un
+              manager aurait lu trois cartes et un total de neuf boutiques,
+              sans que rien ne signale l'écart — le pire des deux, puisque le
+              chiffre paraît cohérent avec la page.
+            */
+            'total' => array_sum(array_map(static fn (ShopResult $r): float => $r->quantity, $resultats)),
+            'totalRevenue' => array_sum(array_map(static fn (ShopResult $r): float => $r->revenue, $resultats)),
             'covered' => $couvert,
         ]);
     }

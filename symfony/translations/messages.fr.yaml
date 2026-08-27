@@ -57,6 +57,7 @@ login:
     demoHint: 'admin / 000000 · consultant1 / 111111 · consultant2 / 222222'
 
 roles:
+    MANAGER: 'Manager'
     ADMIN: Administrateur
     CONSULTANT: Vendeur
 
@@ -481,6 +482,7 @@ admin:
         unreachable: 'Caisse injoignable.'
         badAnswer: 'Réponse illisible de la caisse : rien n''a été repris.'
     team:
+        shopsNone: 'Aucune boutique déclarée. Créez-en dans Boutiques avant d''affecter quelqu''un.'
         workstationShop: 'Boutique du poste'
         workstationNoShop: '— non rattaché —'
         workstationShopHint: 'Les comptages, les seuils et le delta sont rattachés au poste ; les ventes à la boutique. C''est ce lien qui permet de les comparer. Sans lui, les relevés de ce poste n''entrent dans aucun chiffre par boutique.'

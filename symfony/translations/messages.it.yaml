@@ -54,6 +54,7 @@ login:
     demoHint: 'admin / 000000 · consultant1 / 111111 · consultant2 / 222222'
 
 roles:
+    MANAGER: 'Responsabile'
     ADMIN: Amministratore
     CONSULTANT: Venditore
 
@@ -478,6 +479,7 @@ admin:
         unreachable: 'Cassa irraggiungibile.'
         badAnswer: 'Risposta illeggibile dalla cassa: non è stato ripreso nulla.'
     team:
+        shopsNone: 'Nessun punto vendita dichiarato. Creane in Punti vendita prima di assegnare qualcuno.'
         workstationShop: 'Punto vendita della postazione'
         workstationNoShop: '— non collegata —'
         workstationShopHint: 'I conteggi, le soglie e il delta sono legati alla postazione; le vendite al punto vendita. È questo legame che permette di confrontarli. Senza, i rilievi di questa postazione non entrano in nessuna cifra per punto vendita.'

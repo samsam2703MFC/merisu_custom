@@ -28,7 +28,7 @@
     Bloc de champs partagé par la fiche existante et par la fiche vierge : deux
     copies divergeraient au premier ajout de champ.
   #}
-  {% macro fields(c, roles, locales, workstations, tiles, isNew) %}
+  {% macro fields(c, roles, locales, workstations, tiles, isNew, shopList) %}
     {% import 'components/_macros.html.twig' as ui %}
 
     <div class="checkbox-row">
@@ -144,12 +144,35 @@
       <p class="field__hint">{{ 'admin.team.tilesHint'|trans }}</p>
     </fieldset>
 
-    <div class="field">
-      <label class="field__label" for="shops-{{ c ? c.id : 'nouveau' }}">{{ 'admin.team.shops'|trans }}</label>
-      <input class="field__input" type="text" id="shops-{{ c ? c.id : 'nouveau' }}"
-             name="shops" list="team-shops" value="{{ c ? c.shops|join(', ') : '' }}">
+    {#
+      Les boutiques de la personne — des CASES, plus un champ libre.
+
+      Le champ libre ne pointait sur rien : « Merisù Centrum » tapé à la main
+      ne désignait aucune fiche, et deux orthographes faisaient deux boutiques.
+      Il n'a d'ailleurs jamais servi à rien — stocké, relu, consulté par aucun
+      écran. Il porte maintenant de vrais identifiants, et c'est ce qui permet
+      à un manager de ne voir que les siennes.
+    #}
+    <fieldset class="field seg">
+      <legend class="field__label">{{ 'admin.team.shops'|trans }}</legend>
+
+      {% if shopList is empty %}
+        <p class="field__hint">{{ 'admin.team.shopsNone'|trans }}</p>
+      {% else %}
+        <div class="checkbox-grid">
+          {% for boutique in shopList %}
+            <div class="checkbox-row">
+              <input type="checkbox" name="shops[]" value="{{ boutique.id }}"
+                     id="sh-{{ c ? c.id : 'nouveau' }}-{{ boutique.id }}"
+                     {{ c and boutique.id in c.shopIds(shopList) ? 'checked' : '' }}>
+              <label for="sh-{{ c ? c.id : 'nouveau' }}-{{ boutique.id }}">{{ boutique.name }}</label>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
       <p class="field__hint">{{ 'admin.team.shopsHint'|trans }}</p>
-    </div>
+    </fieldset>
 
     {#
       Code PIN — jamais relu.
@@ -192,7 +215,7 @@
       </summary>
 
       <form method="post" action="{{ path('admin_team_save', { id: c.id }) }}" class="form">
-        {{ _self.fields(c, roles, locales, workstations, tiles, false) }}
+        {{ _self.fields(c, roles, locales, workstations, tiles, false, shopList) }}
 
         <div class="form-actions">
           <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
@@ -220,7 +243,7 @@
     </summary>
 
     <form method="post" action="{{ path('admin_team_save', { id: 'nouveau' }) }}" class="form">
-      {{ _self.fields(null, roles, locales, workstations, tiles, true) }}
+      {{ _self.fields(null, roles, locales, workstations, tiles, true, shopList) }}
 
       <div class="form-actions">
         <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>

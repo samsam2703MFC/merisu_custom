@@ -52,6 +52,68 @@ final readonly class Consultant
     ) {
     }
 
+    /**
+     * Les boutiques de cette personne, ramenées à des IDENTIFIANTS.
+     *
+     * Le champ a longtemps porté du texte libre — « Merisù Centrum » — qui ne
+     * désignait aucune fiche. Il porte maintenant des identifiants, mais les
+     * anciennes valeurs sont encore en base et il serait malhonnête de les
+     * faire disparaître en silence : une affectation posée il y a six mois
+     * doit rester lisible.
+     *
+     * On accepte donc les deux, et l'on rapproche le texte du NOM d'une
+     * boutique — insensible à la casse et aux espaces, parce que c'est
+     * exactement ainsi que le champ libre a divergé.
+     *
+     * @param list<object{id: string, name: string}> $boutiques
+     *
+     * @return list<string>
+     */
+    public function shopIds(array $boutiques): array
+    {
+        $parId = [];
+        $parNom = [];
+
+        foreach ($boutiques as $boutique) {
+            $parId[$boutique->id] = $boutique->id;
+            $parNom[mb_strtolower(trim($boutique->name))] = $boutique->id;
+        }
+
+        $retenus = [];
+
+        foreach ($this->shops as $valeur) {
+            $texte = trim((string) $valeur);
+
+            $id = $parId[$texte] ?? $parNom[mb_strtolower($texte)] ?? null;
+
+            if ($id !== null && !\in_array($id, $retenus, true)) {
+                $retenus[] = $id;
+            }
+        }
+
+        return $retenus;
+    }
+
+    /**
+     * Cette personne pilote-t-elle cette boutique ?
+     *
+     * L'ADMIN, oui, partout : c'est ce que le rôle veut dire. Un manager SANS
+     * boutique affectée n'en pilote AUCUNE — et non « toutes ». La liste vide
+     * signifie « on ne lui en a pas encore donné », pas « le réseau entier » ;
+     * lire le vide comme une permission ouvrirait le réseau à quiconque est
+     * promu manager avant qu'on ait rempli sa fiche.
+     *
+     * @param list<object{id: string, name: string}> $boutiques
+     */
+    public function managesShop(string $shopId, array $boutiques): bool
+    {
+        if ($this->role->isAdmin()) {
+            return true;
+        }
+
+        return \in_array($shopId, $this->shopIds($boutiques), true);
+    }
+
     /** Nom affiché : prénom + nom, avec repli sur l'identifiant. */
     public function displayName(): string
     {

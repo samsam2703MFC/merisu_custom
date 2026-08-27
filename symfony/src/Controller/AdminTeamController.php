@@ -147,7 +147,11 @@ final class AdminTeamController extends AbstractController
                 $actif,
                 mb_substr(trim((string) $request->request->get('email', '')), 0, 190) ?: null,
                 null,
-                self::listeLibre((string) $request->request->get('shops', '')),
+                // Des cases cochées, donc une LISTE d'identifiants — et
+                // vérifiés contre les fiches : un identifiant forgé
+                // affecterait quelqu'un à une boutique qui n'existe pas, ce
+                // qui, pour un manager, se lirait comme un périmètre vide.
+                self::boutiquesCochees($request, $this->shops->all()),
                 $request->request->all()['workstations'] ?? [],
                 Locale::tryFromLoose((string) $request->request->get('locale')),
                 // Tuiles autorisées. Aucune case cochée = toutes : c'est
@@ -260,6 +264,23 @@ final class AdminTeamController extends AbstractController
      *
      * @return list<string>
      */
+    /**
+     * Les boutiques cochées, réduites à celles qui existent.
+     *
+     * @param list<\Merisu\Inventory\Domain\Shop> $connues
+     *
+     * @return list<string>
+     */
+    private static function boutiquesCochees(Request $request, array $connues): array
+    {
+        $ids = array_map(static fn ($b): string => $b->id, $connues);
+
+        return array_values(array_filter(
+            array_map(strval(...), (array) $request->request->all('shops')),
+            static fn (string $id): bool => \in_array($id, $ids, true),
+        ));
+    }
+
     private static function listeLibre(string $brut): array
     {
         $morceaux = preg_split('/[\r\n,;]+/', $brut) ?: [];
