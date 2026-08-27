@@ -29,6 +29,7 @@ common:
     from: Od
     to: Do
     apply: Zastosuj
+    back: 'Powrót'
     notDefined: 'Nie ustawiono'
     yes: Tak
     no: Nie
@@ -127,6 +128,7 @@ nav:
     weatherSales: 'Sprzedaż i pogoda'
     network: 'Sieć'
     reality: 'Kontrola rzeczywistości'
+    production: 'Zarządzanie produkcją'
     categories: 'Kategorie'
     parMatrix: Progi
     weather: 'Pogoda'
@@ -720,6 +722,42 @@ admin:
         subtitle: 'Wymagana liczba sztuk w magazynie, wg dnia i produktu.'
         productsInRows: 'Produkty w wierszach'
         daysInRows: 'Dni w wierszach'
+    production:
+        title: 'Zarządzanie produkcją'
+        subtitle: 'Ile produkować każdego dnia i co wyjąć z pojemników.'
+        target: 'Cel wzrostu'
+        targetShort: 'Cel'
+        targetHint: 'Stosowany po pogodzie. 0 = produkuj tyle, ile wskazuje trend.'
+        targetWhy: 'Ile chcemy zrobić ponad trend.'
+        daysAhead: 'Dni do zaplanowania'
+        totalPieces: 'Sztuki w okresie'
+        period: 'Planowany okres'
+        observed: 'Obserwowana sprzedaż'
+        observedHint: '%weeks% tygodni, do wczoraj'
+        base: 'Baza'
+        baseWhy: 'Średnia z %day%, na podstawie %count% obserwacji'
+        weather: 'Pogoda'
+        noWeatherDay: 'Brak prognozy na ten dzień'
+        toProduce: 'Do wyprodukowania'
+        pieces: '%count% szt.'
+        piecesShort: 'Sztuki'
+        share: 'Udział'
+        thin: 'słaba baza: %count% obserwacji'
+        printSheet: 'Zlecenie produkcyjne'
+        sheetTitle: 'Zlecenie produkcyjne'
+        sheetNoDay: 'Ten dzień nie należy do planowanego okresu.'
+        formula: 'Obliczenie'
+        done: 'Gotowe'
+        signedBy: 'Przygotował:'
+        materials: 'Surowce do wydania'
+        materialsHint: 'Na %count% sztuk okresu, wraz z recepturami.'
+        noDays: 'Brak dni do zaplanowania.'
+        noSalesTitle: 'Brak obserwowanej sprzedaży.'
+        noSalesHint: 'Baza pochodzi ze sprzedaży z ostatnich %weeks% tygodni. Bez niej plan pozostaje zerowy.'
+        noWeatherTitle: 'Brak prognozy pogody.'
+        noWeatherHint: 'Baza pozostaje poprawna, ale korekta pogodowa nie jest stosowana.'
+        noRecipeTitle: 'Produkty bez składu.'
+        noRecipeHint: 'Ich sztuki liczą się do sumy, ale surowce nie trafiają do zamówienia:'
     reality:
         title: 'Kontrola rzeczywistości'
         subtitle: 'Rzeczywisty food cost wobec teoretycznego: to, co wymyka się recepturze.'
@@ -965,6 +1003,13 @@ daysLong:
     5: 'Piątek'
     6: 'Sobota'
     7: 'Niedziela'
+    MON: 'Poniedziałek'
+    TUE: 'Wtorek'
+    WED: 'Środa'
+    THU: 'Czwartek'
+    FRI: 'Piątek'
+    SAT: 'Sobota'
+    SUN: 'Niedziela'
 
 daysShort:
     MON: Pon

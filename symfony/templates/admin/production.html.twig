@@ -1,0 +1,228 @@
+{#
+  Admin ▸ Gestion de production — combien produire, et de quoi.
+
+  Une carte par journée, dépliable sur le CALCUL qui la fonde. Le plan qu'on
+  ne peut pas expliquer ne se discute pas : l'atelier l'applique ou l'ignore,
+  et il choisit toujours de l'ignorer.
+#}
+{% extends 'admin/_layout.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'admin.production.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block admin_content %}
+
+  {{ ui.page_header('admin.production.title'|trans, 'admin.production.subtitle'|trans) }}
+
+  <section class="card">
+    <form method="get" action="{{ path('admin_production') }}" class="form">
+      <div class="field-grid">
+        {{ include('admin/_shop_filter.html.twig', { champId: 'prod-shop' }) }}
+
+        <div class="field">
+          <label class="field__label" for="prod-target">{{ 'admin.production.target'|trans }}</label>
+          <div class="prod-target">
+            <input class="field__input" type="number" step="any" min="-90" max="100"
+                   id="prod-target" name="objectif" value="{{ targetPercent }}">
+            <span class="muted">%</span>
+          </div>
+          <p class="field__hint">{{ 'admin.production.targetHint'|trans }}</p>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="prod-days">{{ 'admin.production.daysAhead'|trans }}</label>
+          <input class="field__input" type="number" min="1" max="14"
+                 id="prod-days" name="jours" value="{{ daysAhead }}">
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="button button--secondary">{{ 'common.apply'|trans }}</button>
+      </div>
+    </form>
+  </section>
+
+  {#
+    Les deux manques qui vident le plan, dits séparément.
+
+    Sans VENTES, pas de base : on ne sait pas ce qu'un mardi vend. Sans MÉTÉO,
+    la base reste juste mais la correction manque. Les confondre en un seul
+    « données incomplètes » laisserait chercher la mauvaise moitié.
+  #}
+  {% if not hasSales %}
+    <div class="banner banner--warn" role="status">
+      <strong>{{ 'admin.production.noSalesTitle'|trans }}</strong>
+      {{ 'admin.production.noSalesHint'|trans({ '%weeks%': weeks }) }}
+      <a class="banner__link" href="{{ path('admin_sales') }}">{{ 'nav.sales'|trans }}</a>
+    </div>
+  {% elseif not hasWeather %}
+    <div class="banner banner--info" role="status">
+      <strong>{{ 'admin.production.noWeatherTitle'|trans }}</strong>
+      {{ 'admin.production.noWeatherHint'|trans }}
+      <a class="banner__link" href="{{ path('admin_weather') }}">{{ 'nav.weather'|trans }}</a>
+    </div>
+  {% endif %}
+
+  {% if withoutRecipe is not empty %}
+    <div class="banner banner--warn" role="status">
+      <strong>{{ 'admin.production.noRecipeTitle'|trans }}</strong>
+      {{ 'admin.production.noRecipeHint'|trans }}
+      <span class="muted">{{ withoutRecipe|slice(0, 6)|join(' · ') }}{% if withoutRecipe|length > 6 %} …{% endif %}</span>
+      <a class="banner__link" href="{{ path('admin_compositions') }}">{{ 'nav.compositions'|trans }}</a>
+    </div>
+  {% endif %}
+
+  <div class="stats stats--compact">
+    <div class="stat">
+      <p class="stat__label">{{ 'admin.production.totalPieces'|trans }}</p>
+      <p class="stat__value">{{ forecast.totalPieces }}</p>
+    </div>
+    <div class="stat">
+      <p class="stat__label">{{ 'admin.production.period'|trans }}</p>
+      <p class="stat__value stat__value--sm prod-range">{{ from }} → {{ to }}</p>
+    </div>
+    <div class="stat">
+      <p class="stat__label">{{ 'admin.production.observed'|trans }}</p>
+      <p class="stat__value stat__value--sm prod-range">{{ observedFrom }} → {{ observedTo }}</p>
+      <p class="stat__hint">{{ 'admin.production.observedHint'|trans({ '%weeks%': weeks }) }}</p>
+    </div>
+  </div>
+
+  {# ── Les journées ─────────────────────────────────────────────────────── #}
+  {% for jour in forecast.days %}
+    <details class="card admin-item prod-day" {{ loop.first ? 'open' : '' }}>
+      <summary class="admin-item__summary">
+        <span class="admin-item__head">
+          {% if jour.kind %}{{ ui.icon(jour.kind.icon) }}{% endif %}
+          <span class="admin-item__name">
+            {{ ('daysLong.' ~ jour.dayOfWeek.value)|trans }}
+            <span class="muted">{{ jour.date }}</span>
+          </span>
+        </span>
+        <span class="admin-item__tags">
+          {% if not jour.isSolid %}
+            {{ ui.badge('warn', 'admin.production.thin'|trans({ '%count%': jour.observedDays })) }}
+          {% endif %}
+          {{ ui.badge('neutral', 'admin.production.pieces'|trans({ '%count%': jour.pieces })) }}
+        </span>
+      </summary>
+
+      {#
+        La CHAÎNE du calcul, facteur par facteur.
+
+        C'est le cœur de l'écran : « 42 pièces » ne se discute pas, « 34 de
+        base, +15 % parce qu'il fera chaud, +10 % d'objectif » se discute. Un
+        responsable qui n'est pas d'accord sait alors QUEL facteur corriger.
+      #}
+      <ol class="prod-chain">
+        <li class="prod-chain__step">
+          <span class="prod-chain__label">{{ 'admin.production.base'|trans }}</span>
+          <span class="prod-chain__value">{{ jour.base|qty }}</span>
+          <span class="prod-chain__why">
+            {{ 'admin.production.baseWhy'|trans({
+              '%day%': ('daysLong.' ~ jour.dayOfWeek.value)|trans,
+              '%count%': jour.observedDays,
+            }) }}
+          </span>
+        </li>
+
+        <li class="prod-chain__step{{ jour.hasWeather ? '' : ' prod-chain__step--off' }}">
+          <span class="prod-chain__label">{{ 'admin.production.weather'|trans }}</span>
+          <span class="prod-chain__value">
+            {% if jour.hasWeather %}{{ jour.weatherPercent > 0 ? '+' : '' }}{{ jour.weatherPercent|qty }} %{% else %}—{% endif %}
+          </span>
+          <span class="prod-chain__why">
+            {% if jour.band %}
+              {{ ('admin.parMatrix.bands.' ~ jour.band.value)|trans }}
+            {% elseif jour.kind %}
+              {{ ('admin.parMatrix.weathers.' ~ jour.kind.value)|trans }}
+            {% else %}
+              {{ 'admin.production.noWeatherDay'|trans }}
+            {% endif %}
+          </span>
+        </li>
+
+        <li class="prod-chain__step{{ targetPercent == 0 ? ' prod-chain__step--off' : '' }}">
+          <span class="prod-chain__label">{{ 'admin.production.targetShort'|trans }}</span>
+          <span class="prod-chain__value">
+            {{ jour.targetPercent > 0 ? '+' : '' }}{{ jour.targetPercent|qty }} %
+          </span>
+          <span class="prod-chain__why">{{ 'admin.production.targetWhy'|trans }}</span>
+        </li>
+
+        <li class="prod-chain__step prod-chain__step--total">
+          <span class="prod-chain__label">{{ 'admin.production.toProduce'|trans }}</span>
+          <span class="prod-chain__value">{{ jour.pieces }}</span>
+          <span class="prod-chain__why">{{ jour.formula }}</span>
+        </li>
+      </ol>
+
+      {# Le partage entre produits, au prorata de ce qui s'est VENDU. #}
+      {% set repartition = forecast.topProducts(jour.pieces, 12) %}
+      {% if repartition is not empty %}
+        <div class="table-scroll">
+          <table class="table prod-split">
+            <thead>
+              <tr>
+                <th scope="col">{{ 'common.product'|trans }}</th>
+                <th scope="col">{{ 'admin.production.share'|trans }}</th>
+                <th scope="col">{{ 'admin.production.piecesShort'|trans }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ligne in repartition %}
+                <tr>
+                  <th scope="row">{{ ligne.name }}</th>
+                  <td class="num">{{ ligne.share }} %</td>
+                  <td class="num"><strong>{{ ligne.pieces }}</strong></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+
+      <div class="form-actions">
+        <a class="button button--secondary"
+           href="{{ path('admin_production_sheet', {
+             date: jour.date,
+             objectif: targetPercent,
+             boutique: scopeSelected ? scopeSelected.code : '',
+           }) }}">
+          {{ 'admin.production.printSheet'|trans }}
+        </a>
+      </div>
+    </details>
+  {% else %}
+    {{ ui.banner('warn', 'admin.production.noDays'|trans) }}
+  {% endfor %}
+
+  {# ── Les matières à sortir, pour toute la période ──────────────────────── #}
+  {% if materials is not empty %}
+    <section class="card">
+      <h2 class="card__title">{{ 'admin.production.materials'|trans }}</h2>
+      <p class="field__hint">{{ 'admin.production.materialsHint'|trans({ '%count%': forecast.totalPieces }) }}</p>
+
+      <div class="table-scroll">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">{{ 'admin.compositions.material'|trans }}</th>
+              <th scope="col">{{ 'common.quantity'|trans }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for materialId, quantite in materials %}
+              {% set fiche = materialNames[materialId]|default(null) %}
+              <tr>
+                <th scope="row">{{ fiche ? product_label(fiche) : materialId }}</th>
+                <td class="num">{{ quantite|qty }} {{ fiche ? fiche.unit : '' }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% endif %}
+
+{% endblock %}

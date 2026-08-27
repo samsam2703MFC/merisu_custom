@@ -29,6 +29,7 @@ common:
     from: Dal
     to: Al
     apply: Applica
+    back: 'Indietro'
     notDefined: 'Non definito'
     yes: Sì
     no: 'No'
@@ -127,6 +128,7 @@ nav:
     weatherSales: 'Vendite e meteo'
     network: 'Rete'
     reality: 'Controllo di realtà'
+    production: 'Gestione produzione'
     categories: 'Categorie'
     parMatrix: Soglie
     weather: 'Meteo'
@@ -720,6 +722,42 @@ admin:
         subtitle: 'Pezzi richiesti in magazzino, per giorno e per prodotto.'
         productsInRows: 'Prodotti in righe'
         daysInRows: 'Giorni in righe'
+    production:
+        title: 'Gestione produzione'
+        subtitle: 'Quanto produrre ogni giorno e cosa prelevare dai contenitori.'
+        target: 'Obiettivo di crescita'
+        targetShort: 'Obiettivo'
+        targetHint: "Si applica dopo il meteo. 0 = produrre quanto indica la tendenza."
+        targetWhy: 'Quanto si vuole fare in più rispetto alla tendenza.'
+        daysAhead: 'Giorni da pianificare'
+        totalPieces: 'Pezzi nel periodo'
+        period: 'Periodo pianificato'
+        observed: 'Vendite osservate'
+        observedHint: '%weeks% settimane, fino a ieri'
+        base: 'Base'
+        baseWhy: 'Media dei %day%, su %count% osservazioni'
+        weather: 'Meteo'
+        noWeatherDay: 'Nessuna previsione per questo giorno'
+        toProduce: 'Da produrre'
+        pieces: '%count% pezzi'
+        piecesShort: 'Pezzi'
+        share: 'Quota'
+        thin: 'base esigua: %count% osservazioni'
+        printSheet: 'Ordine di produzione'
+        sheetTitle: 'Ordine di produzione'
+        sheetNoDay: 'Questo giorno non rientra nel periodo pianificato.'
+        formula: 'Calcolo'
+        done: 'Fatto'
+        signedBy: 'Preparato da:'
+        materials: 'Materie da prelevare'
+        materialsHint: 'Per i %count% pezzi del periodo, ricette comprese.'
+        noDays: 'Nessun giorno da pianificare.'
+        noSalesTitle: 'Nessuna vendita osservata.'
+        noSalesHint: 'La base viene dalle vendite delle ultime %weeks% settimane. Senza di esse il piano resta a zero.'
+        noWeatherTitle: 'Nessuna previsione meteo.'
+        noWeatherHint: 'La base resta corretta, ma la correzione meteo non si applica.'
+        noRecipeTitle: 'Prodotti senza composizione.'
+        noRecipeHint: "I loro pezzi contano nel totale, ma le loro materie non entrano nell'ordine:"
     reality:
         title: 'Controllo di realtà'
         subtitle: 'Il food cost reale rispetto al teorico: ciò che sfugge alla ricetta.'
@@ -965,6 +1003,13 @@ daysLong:
     5: 'Venerdì'
     6: 'Sabato'
     7: 'Domenica'
+    MON: 'Lunedì'
+    TUE: 'Martedì'
+    WED: 'Mercoledì'
+    THU: 'Giovedì'
+    FRI: 'Venerdì'
+    SAT: 'Sabato'
+    SUN: 'Domenica'
 
 daysShort:
     MON: Lun

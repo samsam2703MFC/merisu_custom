@@ -1,0 +1,80 @@
+{#
+  Le BON DE PRODUCTION — une journée, à imprimer et à porter au labo.
+
+  Ce qu'on y met est ce qu'on y FAIT : les pièces par produit, et de quoi
+  cocher au fur et à mesure. Rien des réglages qui ont servi à établir le
+  plan — ils n'aident plus une fois la décision prise, et une feuille chargée
+  ne se lit pas debout, les mains prises.
+
+  Le calcul figure quand même en bas, en petit : un bon imprimé le matin doit
+  pouvoir se relire le soir sans rouvrir l'écran qui l'a produit.
+#}
+{% extends 'base.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'admin.production.sheetTitle'|trans }} — {{ date }}{% endblock %}
+{% block nav %}{% endblock %}
+
+{% block content %}
+  <div class="print-toolbar">
+    <div class="print-toolbar__left">
+      <a class="button button--ghost" href="{{ path('admin_production') }}">
+        {{ ui.icon('arrow-left') }} {{ 'common.back'|trans }}
+      </a>
+      <p class="print-toolbar__title">{{ 'admin.production.sheetTitle'|trans }}</p>
+    </div>
+  </div>
+
+  <article class="sheet">
+    <header class="sheet__head">
+      <div>
+        <h1 class="sheet__title">{{ 'admin.production.sheetTitle'|trans }}</h1>
+        <p class="sheet__meta">
+          {% if day %}{{ ('daysLong.' ~ day.dayOfWeek.value)|trans }} · {% endif %}{{ date }}
+          {% if shop %} · {{ shop.name }}{% endif %}
+        </p>
+      </div>
+      <div class="sheet__total">
+        <span class="sheet__total-value">{{ pieces }}</span>
+        <span class="sheet__total-label">{{ 'admin.production.piecesShort'|trans }}</span>
+      </div>
+    </header>
+
+    {% if day is null %}
+      {{ ui.banner('warn', 'admin.production.sheetNoDay'|trans) }}
+    {% else %}
+      <div class="table-scroll">
+      <table class="table sheet__table">
+        <thead>
+          <tr>
+            <th scope="col">{{ 'common.product'|trans }}</th>
+            <th scope="col">{{ 'admin.production.piecesShort'|trans }}</th>
+            {# Une colonne VIDE, exprès : c'est là qu'on coche au crayon, bac
+               par bac. Sans elle, le bon se lit mais ne se suit pas. #}
+            <th scope="col" class="sheet__tick">{{ 'admin.production.done'|trans }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ligne in byProduct %}
+            <tr>
+              <th scope="row">{{ ligne.name }}</th>
+              <td class="num sheet__qty">{{ ligne.pieces }}</td>
+              <td class="sheet__tick"><span class="sheet__box"></span></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      </div>
+
+      <footer class="sheet__foot">
+        <p class="sheet__formula">
+          {{ 'admin.production.formula'|trans }} : {{ day.formula }}
+          {% if not day.isSolid %}
+            — {{ 'admin.production.thin'|trans({ '%count%': day.observedDays }) }}
+          {% endif %}
+        </p>
+        <p class="sheet__sign">{{ 'admin.production.signedBy'|trans }}</p>
+      </footer>
+    {% endif %}
+  </article>
+{% endblock %}

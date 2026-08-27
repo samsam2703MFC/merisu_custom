@@ -4821,3 +4821,111 @@ select:disabled, select.field__input:disabled { background-image: url("data:imag
   flex: 0 0 auto;
 }
 .rcp-add-component > form { margin-top: var(--space-3); }
+
+/* ── Gestion de production ────────────────────────────────────────────────
+   La CHAÎNE du calcul : un facteur par ligne, la raison à côté du nombre.
+   « 42 pièces » ne se discute pas ; « 34 de base, +15 % de chaleur » se
+   discute — et c'est ce qu'on veut d'un plan de production. */
+.prod-chain { list-style: none; margin: 0 0 var(--space-4); padding: 0; }
+
+.prod-chain__step {
+  display: grid;
+  grid-template-columns: 8rem 6rem 1fr;
+  gap: var(--space-2);
+  align-items: baseline;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+.prod-chain__label { font-weight: 600; color: var(--coffee); }
+.prod-chain__value { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.prod-chain__why { color: var(--text-muted); font-size: .85rem; }
+
+/* Un facteur qui ne joue PAS reste visible, en retrait : le retirer ferait
+   croire à un oubli, et l'on chercherait pourquoi la météo n'apparaît pas. */
+.prod-chain__step--off { opacity: .55; }
+
+.prod-chain__step--total {
+  border-bottom: none;
+  border-top: 2px solid var(--brand);
+  margin-top: var(--space-1);
+  font-size: 1.15rem;
+}
+.prod-chain__step--total .prod-chain__value { color: var(--brand); font-size: 1.6rem; }
+
+.prod-target { display: flex; align-items: center; gap: var(--space-2); }
+.prod-target .field__input { max-width: 7rem; }
+
+@media (max-width: 599px) {
+  /* Trois colonnes ne tiennent pas à 390 px : la raison passe SOUS le nombre
+     plutôt que de se comprimer en colonne de deux mots par ligne. */
+  .prod-chain__step { grid-template-columns: 1fr auto; }
+  .prod-chain__why { grid-column: 1 / -1; }
+}
+
+/* ── Le bon de production ─────────────────────────────────────────────────
+   Une feuille qui se punaise : peu de choses, grandes. */
+.sheet { max-width: 46rem; margin: 0 auto; padding: var(--space-4); }
+
+.sheet__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 2px solid var(--coffee);
+}
+.sheet__title { font-family: var(--font-display); font-size: 1.8rem; margin: 0; }
+.sheet__meta { color: var(--text-muted); margin-top: var(--space-1); }
+.sheet__total { text-align: right; }
+.sheet__total-value { display: block; font-family: var(--font-display); font-size: 3rem; line-height: 1; color: var(--brand); }
+.sheet__total-label { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); }
+
+.sheet__table { width: 100%; margin-top: var(--space-4); }
+.sheet__qty { font-size: 1.3rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* La case à cocher est DESSINÉE, pas un champ : on coche au crayon, sur le
+   plan de travail, les mains dans la farine. */
+.sheet__tick { text-align: center; width: 4rem; }
+.sheet__box {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--coffee);
+  border-radius: 4px;
+}
+
+.sheet__foot { margin-top: var(--space-5); padding-top: var(--space-3); border-top: 1px solid var(--border); }
+.sheet__formula { font-size: .8rem; color: var(--text-muted); }
+.sheet__sign { margin-top: var(--space-5); color: var(--text-muted); }
+
+@media print {
+  /* Les commandes d'écran ne s'impriment pas : elles ne servent qu'à mener
+     jusqu'ici, et sur le papier elles occupent la place du contenu. */
+  .print-toolbar { display: none; }
+  .sheet { max-width: none; padding: 0; }
+}
+
+/* Une tuile qui porte un INTERVALLE, pas un nombre.
+
+   `.stat__value` interdit le retour à la ligne — c'est juste pour « 2 107 »,
+   qu'on ne veut pas voir coupé en deux. Mais « 2026-08-27 → 2026-09-02 » n'est
+   pas un nombre : à 320 px il débordait de 90 px, hors de l'écran. */
+.prod-range { white-space: normal; font-size: 1rem; }
+
+/* Le volet d'une journée ne colle pas à son titre : la chaîne du calcul
+   commençait à zéro pixel sous le résumé, et les deux se lisaient comme un
+   seul bloc. */
+.prod-day > .prod-chain { margin-top: var(--space-3); }
+.prod-day > .prod-chain .prod-chain__step:first-child { padding-top: var(--space-2); }
+
+/* Le bon défile plutôt qu'il ne déborde : sur un téléphone, la colonne des
+   pièces et la case à cocher sortaient de l'écran, et l'on imprimait sans
+   jamais les avoir vues. */
+.sheet .table-scroll { overflow-x: auto; }
+.sheet__table { min-width: 22rem; }
+
+@media print {
+  /* À l'impression, rien ne défile : la feuille reprend sa pleine largeur. */
+  .sheet .table-scroll { overflow: visible; }
+  .sheet__table { min-width: 0; }
+}

@@ -75,7 +75,40 @@ final readonly class ProductionForecast
         array $dates,
         float $targetPercent,
         array $names = [],
+        ?array $producedRefs = null,
     ): self {
+        /*
+          Ce qui se PRODUIT, et rien d'autre.
+
+          La caisse ne vend pas que des tiramisu : elle encaisse aussi des
+          frais de service, des livraisons, des sacs. Ces lignes entraient dans
+          la base et dans le partage, si bien que le bon de production
+          demandait de fabriquer trois livraisons — on ne fabrique pas une
+          livraison, et une feuille qui le demande perd sa crédibilité entière.
+
+          La liste blanche vient du catalogue : une référence rattachée à une
+          fiche qui se FABRIQUE y entre, une fiche d'emballage ou de matière
+          n'y entre pas, et une référence rattachée à rien non plus — on ne
+          planifie pas la production de ce qu'on ne connaît pas.
+
+          `null` = pas de filtre, pour les appels qui n'ont pas de catalogue
+          sous la main : mieux vaut tout compter que ne rien rendre.
+        */
+        if ($producedRefs !== null) {
+            $garde = array_flip($producedRefs);
+
+            foreach ($salesByDate as $date => $lignes) {
+                $salesByDate[$date] = array_filter(
+                    $lignes,
+                    // `int|string` : une référence tout en chiffres devient une
+                    // clé entière en PHP, et la typer `string` ferait échouer la
+                    // journée entière sous `strict_types`.
+                    static fn (int|string $ref): bool => isset($garde[$ref]) || isset($garde[(string) $ref]),
+                    \ARRAY_FILTER_USE_KEY,
+                );
+            }
+        }
+
         // ── La base, jour de semaine par jour de semaine ────────────────────
         $parJour = [];
 
@@ -176,6 +209,50 @@ final readonly class ProductionForecast
         }
 
         return $repartition;
+    }
+
+    /**
+     * Les produits qui pèsent le plus, prêts à afficher.
+     *
+     * Rendus en LISTE, et non en table indexée par référence : `array_slice`
+     * renumérote les clés numériques, et les références de caisse en sont
+     * souvent — la table repartait alors de zéro et l'écran cherchait une
+     * référence « 0 » qui n'existe nulle part. Une liste de lignes complètes
+     * ne peut pas se désindexer.
+     *
+     * Les parts sont celles du partage OBSERVÉ, déjà triées du plus vendu au
+     * moins vendu : les premières lignes sont celles qui décident du plan.
+     *
+     * @return list<array{ref: string, name: string, share: float, pieces: int}>
+     */
+    public function topProducts(int $pieces, int $limit = 12): array
+    {
+        $repartition = $this->piecesByProduct($pieces);
+        $lignes = [];
+
+        foreach ($this->mix as $ref => $part) {
+            $n = $repartition[$ref] ?? 0;
+
+            // Un produit dont la part ne fait pas une pièce entière n'entre
+            // pas au bon : « 0 » sur une ligne de production ne se fabrique
+            // pas, et la ligne ne ferait qu'allonger la feuille.
+            if ($n <= 0) {
+                continue;
+            }
+
+            $lignes[] = [
+                'ref' => (string) $ref,
+                'name' => $this->names[$ref] ?? (string) $ref,
+                'share' => round($part * 100, 1),
+                'pieces' => $n,
+            ];
+
+            if (\count($lignes) >= max(1, $limit)) {
+                break;
+            }
+        }
+
+        return $lignes;
     }
 
     /**
