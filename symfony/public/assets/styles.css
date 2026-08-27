@@ -4515,3 +4515,96 @@ select:disabled, select.field__input:disabled { background-image: url("data:imag
 
 .natlegend__item { display: flex; align-items: center; gap: var(--space-2); }
 .natlegend__item .icon { width: 18px; height: 18px; color: var(--latte); flex: none; }
+
+/* ── Manuel opératoire ───────────────────────────────────────────────────── */
+
+/*
+  Consulté debout, une main occupée, devant une machine qui ne marche pas. Les
+  procédures arrivent dépliées ; c'est le contexte qui commande la forme.
+*/
+.proc { padding: var(--space-4) 0; border-top: 1px solid var(--border); }
+.proc:first-of-type { border-top: none; padding-top: var(--space-2); }
+
+.proc__title {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.25rem;
+  color: var(--coffee);
+}
+
+/* Le PROBLÈME d'abord, et signalé : on ne cherche pas un titre, on cherche ce
+   qu'on a sous les yeux. */
+.proc__problem { padding: var(--space-3); border-radius: var(--radius); background: var(--warn-bg); margin-bottom: var(--space-3); }
+.proc__solution { padding: var(--space-3); border-radius: var(--radius); background: var(--ok-bg); }
+
+.proc__label {
+  display: block;
+  margin-bottom: var(--space-1);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.proc__problem .proc__label { color: var(--warn); }
+.proc__solution .proc__label { color: var(--ok); }
+
+.proc__text { margin: 0; color: var(--text); line-height: 1.6; }
+
+/* Les photos font le travail que le texte ne fait pas. Assez grandes pour
+   montrer un geste, pas au point d'occuper l'écran seules. */
+.proc__shots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--space-3);
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+}
+.proc__shot {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--radius);
+  background: var(--cream-outline);
+}
+
+/* ── Manuel, côté administration ─────────────────────────────────────────── */
+
+.proc-field { margin-top: var(--space-5); }
+.proc-field__title {
+  margin: 0 0 var(--space-1);
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.1rem;
+  color: var(--coffee);
+}
+
+.proc-photos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-3);
+  list-style: none;
+  margin: var(--space-2) 0 var(--space-3);
+  padding: 0;
+}
+.proc-photos__item { display: flex; flex-direction: column; gap: var(--space-2); }
+.proc-photos__img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--radius);
+  background: var(--cream-outline);
+}
+
+/* La case de retrait porte son mot : une case seule sous une image ne dit pas
+   ce qu'elle fera, et on ne coche pas ce qu'on ne comprend pas. */
+.proc-photos__drop {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--touch);
+  font-size: .82rem;
+  color: var(--danger);
+}

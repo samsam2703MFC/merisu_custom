@@ -309,6 +309,13 @@
       {# Retour au menu. En SVG comme les autres : le glyphe « ← » changeait
          de taille et d'alignement selon la police disponible. #}
       <path d="M15 5.5 8.5 12l6.5 6.5"/>
+    {% elseif name == 'book' %}
+      {# Manuel opératoire : un cahier ouvert. Pas une ampoule ni un point
+         d'interrogation — on ne vient pas y chercher une idée, on vient y
+         chercher la marche à suivre. #}
+      <path d="M12 6.5C10.5 5.2 8.4 4.6 6 4.6H3.5v13H6c2.4 0 4.5.6 6 1.9"/>
+      <path d="M12 6.5c1.5-1.3 3.6-1.9 6-1.9h2.5v13H18c-2.4 0-4.5.6-6 1.9"/>
+      <path d="M12 6.5v13.9"/>
     {% elseif name == 'network' %}
       {# Réseau : des boutiques reliées entre elles. Un globe aurait dit « le
          monde » ; ce qu'on montre ici, ce sont les liens. #}

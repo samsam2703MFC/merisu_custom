@@ -109,6 +109,7 @@ nav:
         production: 'Production'
         system: 'Système'
     checklist: 'Check-list'
+    procedures: 'Manuel'
     dayNote: 'Note du jour'
     morning: Matin
     evening: Soir
@@ -207,6 +208,32 @@ produce:
     labelsTruncated: 'Planche limitée à %printed% étiquettes : %missing% n''ont pas été imprimées. Vérifiez le seuil du produit, puis relancez l''impression.'
 
 admin:
+    procedures:
+        title: 'Manuel opératoire'
+        subtitle: 'Un problème, ce qu''on fait, des photos.'
+        intro: 'Ce n''est pas la check-list. Celle-ci énumère ce qu''on fait chaque jour et se coche ; le manuel décrit ce qu''on fait quand quelque chose cloche, et se consulte.'
+        create: 'Ajouter une procédure'
+        empty: 'Aucune procédure pour l''instant. Ajoutez-en une ci-dessus.'
+        active: 'Visible au poste'
+        activeHint: 'Décochée, elle reste ici pour être finie, mais n''atteint pas le poste.'
+        topic: 'Rayon'
+        topicPlaceholder: 'Machine, Hygiène, Caisse…'
+        titleHint: 'Ce qu''on parcourt du regard en cherchant. Court.'
+        problem: 'Problème'
+        problemHint: 'Ce qu''on a sous les yeux. C''est cette description qui permet de reconnaître sa situation — « la crème a tranché » se reconnaît, « procédure 14 » non.'
+        solution: 'Marche à suivre'
+        solutionHint: 'Ce qu''on fait, dans l''ordre. Une ligne par geste se lit mieux qu''un paragraphe.'
+        photos: 'Photos'
+        photosHint: 'Elles font le travail que le texte ne fait pas : « le bac est monté trop haut » ne se décrit pas, il se montre. Celles qui sont là restent ; cochez pour en retirer une.'
+        addPhotos: 'Ajouter des photos'
+        photoCount: '%n% photo(s)'
+        photoRejected: 'Un fichier n''a pas été accepté : seules les images JPEG, PNG et WebP le sont. Le reste est enregistré.'
+        incomplete: 'Sans marche à suivre'
+        titleRequired: 'Donnez un titre à la procédure, dans au moins une langue.'
+        confirmDelete: 'Supprimer cette procédure ?'
+        deleted: 'Procédure supprimée.'
+        openManual: 'Voir le manuel du poste'
+        titleField: 'Titre'
     book:
         ingredients: 'Ingrédients'
         allergens: 'Allergènes'
@@ -1026,3 +1053,12 @@ signature:
     photoRequired: 'Ce point exige une photo.'
     photoRejected: 'Cette image n''a pas pu être enregistrée. Réessayez avec une photo prise depuis l''appareil.'
     throttled: 'Trop de tentatives. Patientez quelques minutes avant de réessayer.'
+
+
+procedures:
+    title: 'Manuel opératoire'
+    subtitle: 'Quoi faire quand quelque chose cloche.'
+    empty: 'Le manuel est vide pour l''instant. L''administration y ajoute les procédures.'
+    problem: 'Le problème'
+    solution: 'Ce qu''on fait'
+    noTopic: 'Divers'

@@ -180,6 +180,36 @@ final class SchemaInstaller
           Le nom EST la clé : c'est lui qui relie la catégorie aux produits, et
           deux lignes de même nom n'auraient aucun sens.
         */
+        /*
+          Le MANUEL OPÉRATOIRE : un problème, ce qu'on fait, et des photos.
+
+          Les textes sont en JSON par langue, comme la note du jour et les
+          points de check-list : le poste tourne en polonais, en italien, en
+          espagnol, et une procédure rédigée dans la seule langue de
+          l'administrateur ne serait pas lue par ceux à qui elle s'adresse.
+
+          Les photos aussi sont en JSON, et c'est un choix. Une table séparée
+          aurait donné un ordre stable et des lignes propres — mais elles n'ont
+          ni date, ni auteur, ni existence en dehors de leur procédure : ce sont
+          des illustrations, pas des enregistrements. Une colonne suffit, et
+          l'ordre est celui du tableau.
+        */
+        if (!\in_array('inv_procedure', $existing, true)) {
+            $t = $schema->createTable('inv_procedure');
+            $t->addColumn('id', 'string', ['length' => 64]);
+            $t->addColumn('title', 'text');             // JSON : { "fr": "…" }
+            $t->addColumn('problem', 'text');
+            $t->addColumn('solution', 'text');
+            $t->addColumn('photos', 'text', ['default' => '[]']);
+            // Rayon LIBRE, saisi à la main : les familles de pannes d'une
+            // boutique ne sont pas celles de la voisine, et les figer dans le
+            // code aurait imposé un déploiement pour en ajouter une.
+            $t->addColumn('topic', 'string', ['length' => 64, 'default' => '']);
+            $t->addColumn('sort_order', 'integer', ['default' => 0]);
+            $t->addColumn('active', 'boolean', ['default' => true]);
+            $t->setPrimaryKey(['id']);
+        }
+
         if (!\in_array('inv_category', $existing, true)) {
             $t = $schema->createTable('inv_category');
             $t->addColumn('name', 'string', ['length' => 64]);

@@ -106,6 +106,7 @@ nav:
         production: 'Produkcja'
         system: 'System'
     checklist: 'Lista kontrolna'
+    procedures: 'Instrukcja'
     dayNote: 'Notatka dnia'
     morning: Rano
     evening: Wieczór
@@ -204,6 +205,32 @@ produce:
     labelsTruncated: 'Arkusz ograniczony do %printed% etykiet: %missing% nie zostało wydrukowanych. Sprawdź próg produktu i wydrukuj ponownie.'
 
 admin:
+    procedures:
+        title: 'Instrukcja operacyjna'
+        subtitle: 'Problem, co robimy, zdjęcia.'
+        intro: 'To nie jest lista kontrolna. Tamta wylicza, co robimy codziennie, i się ją odhacza; instrukcja opisuje, co robić, gdy coś nie działa, i się ją czyta.'
+        create: 'Dodaj procedurę'
+        empty: 'Na razie brak procedur. Dodaj jedną powyżej.'
+        active: 'Widoczna przy stanowisku'
+        activeHint: 'Odznaczona zostaje tutaj do dokończenia, ale nie trafia na stanowisko.'
+        topic: 'Dział'
+        topicPlaceholder: 'Maszyna, Higiena, Kasa…'
+        titleHint: 'To, co przebiega się wzrokiem, szukając. Krótko.'
+        problem: 'Problem'
+        problemHint: 'To, co widać. Ten opis pozwala rozpoznać sytuację — „krem się zważył” się rozpoznaje, „procedura 14” nie.'
+        solution: 'Sposób postępowania'
+        solutionHint: 'Co robić, po kolei. Jedna linia na czynność czyta się lepiej niż akapit.'
+        photos: 'Zdjęcia'
+        photosHint: 'Robią to, czego nie robi tekst: „pojemnik jest za wysoko” się nie opisuje, tylko pokazuje. Istniejące zostają; zaznacz, by usunąć.'
+        addPhotos: 'Dodaj zdjęcia'
+        photoCount: '%n% zdjęć'
+        photoRejected: 'Jeden plik nie został przyjęty: tylko obrazy JPEG, PNG i WebP. Reszta została zapisana.'
+        incomplete: 'Bez sposobu postępowania'
+        titleRequired: 'Nadaj procedurze tytuł, w co najmniej jednym języku.'
+        confirmDelete: 'Usunąć tę procedurę?'
+        deleted: 'Procedura usunięta.'
+        openManual: 'Zobacz instrukcję stanowiska'
+        titleField: 'Tytuł'
     book:
         ingredients: 'Składniki'
         allergens: 'Alergeny'
@@ -1023,3 +1050,12 @@ signature:
     photoRequired: 'To zadanie wymaga zdjęcia.'
     photoRejected: 'Nie udało się zapisać tego obrazu. Spróbuj ponownie ze zdjęciem zrobionym aparatem.'
     throttled: 'Zbyt wiele prób. Odczekaj kilka minut.'
+
+
+procedures:
+    title: 'Instrukcja operacyjna'
+    subtitle: 'Co robić, gdy coś nie działa.'
+    empty: 'Instrukcja jest na razie pusta. Administracja dodaje do niej procedury.'
+    problem: 'Problem'
+    solution: 'Co robimy'
+    noTopic: 'Różne'

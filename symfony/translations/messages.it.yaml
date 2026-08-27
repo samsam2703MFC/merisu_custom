@@ -106,6 +106,7 @@ nav:
         production: 'Produzione'
         system: 'Sistema'
     checklist: 'Check-list'
+    procedures: 'Manuale'
     dayNote: 'Nota del giorno'
     morning: Mattina
     evening: Sera
@@ -204,6 +205,32 @@ produce:
     labelsTruncated: 'Foglio limitato a %printed% etichette: %missing% non sono state stampate. Verifica la soglia del prodotto, poi rilancia la stampa.'
 
 admin:
+    procedures:
+        title: 'Manuale operativo'
+        subtitle: 'Un problema, cosa si fa, delle foto.'
+        intro: 'Non è la check-list. Quella elenca ciò che si fa ogni giorno e si spunta; il manuale descrive cosa fare quando qualcosa non va, e si consulta.'
+        create: 'Aggiungi una procedura'
+        empty: 'Nessuna procedura per ora. Aggiungine una qui sopra.'
+        active: 'Visibile alla postazione'
+        activeHint: 'Deselezionata resta qui per essere completata, ma non arriva alla postazione.'
+        topic: 'Reparto'
+        topicPlaceholder: 'Macchina, Igiene, Cassa…'
+        titleHint: 'Ciò che si scorre con lo sguardo cercando. Breve.'
+        problem: 'Problema'
+        problemHint: 'Ciò che si ha davanti. È questa descrizione che permette di riconoscere la propria situazione — « la crema è impazzita » si riconosce, « procedura 14 » no.'
+        solution: 'Come procedere'
+        solutionHint: 'Cosa si fa, nell''ordine. Una riga per gesto si legge meglio di un paragrafo.'
+        photos: 'Foto'
+        photosHint: 'Fanno il lavoro che il testo non fa: « la vaschetta è montata troppo in alto » non si descrive, si mostra. Quelle presenti restano; spunta per rimuoverne una.'
+        addPhotos: 'Aggiungi foto'
+        photoCount: '%n% foto'
+        photoRejected: 'Un file non è stato accettato: solo immagini JPEG, PNG e WebP. Il resto è stato salvato.'
+        incomplete: 'Senza procedura'
+        titleRequired: 'Dai un titolo alla procedura, in almeno una lingua.'
+        confirmDelete: 'Eliminare questa procedura?'
+        deleted: 'Procedura eliminata.'
+        openManual: 'Vedi il manuale della postazione'
+        titleField: 'Titolo'
     book:
         ingredients: 'Ingredienti'
         allergens: 'Allergeni'
@@ -1023,3 +1050,12 @@ signature:
     photoRequired: 'Questo punto richiede una foto.'
     photoRejected: 'Non è stato possibile salvare questa immagine. Riprova con una foto scattata dalla fotocamera.'
     throttled: 'Troppi tentativi. Attendi qualche minuto prima di riprovare.'
+
+
+procedures:
+    title: 'Manuale operativo'
+    subtitle: 'Cosa fare quando qualcosa non va.'
+    empty: 'Il manuale è vuoto per ora. L''amministrazione vi aggiunge le procedure.'
+    problem: 'Il problema'
+    solution: 'Cosa si fa'
+    noTopic: 'Varie'

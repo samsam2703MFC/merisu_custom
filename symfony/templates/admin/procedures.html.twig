@@ -1,0 +1,186 @@
+{#
+  Admin ▸ Manuel opératoire.
+
+  Un problème, ce qu'on fait, des photos. Ce n'est pas la check-list : celle-ci
+  énumère ce qu'on fait chaque jour et se coche ; le manuel décrit ce qu'on
+  fait quand quelque chose cloche, et se consulte.
+#}
+{% extends 'admin/_layout.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'admin.procedures.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% macro fields(proc, locales, topics) %}
+  {% import 'components/_macros.html.twig' as ui %}
+
+  <div class="checkbox-row">
+    <input type="checkbox" id="pr-active-{{ proc.id }}" name="active" value="1"
+           {{ proc.active ? 'checked' : '' }}>
+    <label for="pr-active-{{ proc.id }}">{{ 'admin.procedures.active'|trans }}</label>
+  </div>
+  <p class="field__hint">{{ 'admin.procedures.activeHint'|trans }}</p>
+
+  <div class="field-grid">
+    <div class="field">
+      <label class="field__label" for="pr-topic-{{ proc.id }}">{{ 'admin.procedures.topic'|trans }}</label>
+      {#
+        Rayon LIBRE, avec les valeurs déjà employées en suggestion : figer une
+        liste aurait imposé un déploiement pour ajouter une famille de pannes,
+        et une liste déroulante vide au départ n'aide personne.
+      #}
+      <input class="field__input" type="text" id="pr-topic-{{ proc.id }}" name="topic"
+             maxlength="64" value="{{ proc.topic }}" list="pr-topics"
+             placeholder="{{ 'admin.procedures.topicPlaceholder'|trans }}">
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="pr-order-{{ proc.id }}">{{ 'common.order'|trans }}</label>
+      <input class="field__input" type="number" id="pr-order-{{ proc.id }}" name="sortOrder"
+             min="0" step="1" value="{{ proc.sortOrder }}">
+    </div>
+  </div>
+
+  {#
+    Les trois textes, dans les quatre langues. Le poste tourne en polonais, en
+    italien, en espagnol : une procédure rédigée dans la seule langue de
+    l'administrateur ne serait pas lue par ceux à qui elle s'adresse.
+  #}
+  {#
+    Le champ « Titre » porte la clé `titleField` et non `title` : celle-ci
+    nomme déjà l'ÉCRAN, et le libellé du champ aurait affiché « Manuel
+    opératoire » au-dessus de la case où l'on tape un titre de procédure.
+  #}
+  {% for champ, cle in { 'title': 'titleField', 'problem': 'problem', 'solution': 'solution' } %}
+    <section class="proc-field">
+      <h3 class="proc-field__title">{{ ('admin.procedures.' ~ cle)|trans }}</h3>
+      <p class="field__hint">{{ ('admin.procedures.' ~ champ ~ 'Hint')|trans }}</p>
+
+      {% for locale in locales %}
+        <div class="field">
+          <label class="field__label" for="pr-{{ champ }}-{{ locale.value }}-{{ proc.id }}">
+            {{ ('locales.' ~ locale.value)|trans }}
+          </label>
+          {% if champ == 'title' %}
+            <input class="field__input" type="text" name="{{ champ }}_{{ locale.value }}"
+                   id="pr-{{ champ }}-{{ locale.value }}-{{ proc.id }}" maxlength="190"
+                   value="{{ attribute(proc, champ)[locale.value]|default('') }}">
+          {% else %}
+            <textarea class="field__input" rows="3" name="{{ champ }}_{{ locale.value }}"
+                      id="pr-{{ champ }}-{{ locale.value }}-{{ proc.id }}">{{ attribute(proc, champ)[locale.value]|default('') }}</textarea>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </section>
+  {% endfor %}
+
+  {#
+    Les photos sont CUMULATIVES : celles qui sont là restent, celles qu'on
+    dépose s'ajoutent, et seules celles qu'on coche partent. Remplacer la liste
+    à chaque enregistrement aurait effacé trois photos parce qu'on corrigeait
+    une faute de frappe dans le titre.
+  #}
+  <section class="proc-field">
+    <h3 class="proc-field__title">{{ 'admin.procedures.photos'|trans }}</h3>
+    <p class="field__hint">{{ 'admin.procedures.photosHint'|trans }}</p>
+
+    {% if proc.hasPhotos %}
+      <ul class="proc-photos">
+        {% for chemin in proc.photos %}
+          <li class="proc-photos__item">
+            <img class="proc-photos__img" src="{{ asset(chemin) }}" alt="">
+            <label class="proc-photos__drop">
+              <input type="checkbox" name="removePhoto[]" value="{{ chemin }}">
+              <span>{{ 'common.delete'|trans }}</span>
+            </label>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <div class="field">
+      <label class="field__label" for="pr-photos-{{ proc.id }}">{{ 'admin.procedures.addPhotos'|trans }}</label>
+      <input class="field__input" type="file" id="pr-photos-{{ proc.id }}" name="photos[]"
+             accept="image/jpeg,image/png,image/webp" multiple>
+    </div>
+  </section>
+{% endmacro %}
+
+{% block admin_content %}
+  {{ ui.page_header('admin.procedures.title'|trans, 'admin.procedures.subtitle'|trans) }}
+
+  <div class="banner banner--info">{{ 'admin.procedures.intro'|trans }}</div>
+
+  <p class="form-actions">
+    <a class="button button--secondary" href="{{ path('procedures') }}">
+      {{ 'admin.procedures.openManual'|trans }}
+    </a>
+  </p>
+
+  {# Les rayons déjà employés, proposés plutôt que retapés. #}
+  <datalist id="pr-topics">
+    {% for rayon in topics %}<option value="{{ rayon }}"></option>{% endfor %}
+  </datalist>
+
+  <details class="card admin-new" {{ procedures is empty ? 'open' : '' }}>
+    <summary class="admin-new__summary">
+      {{ ui.icon('plus') }}
+      <span>{{ 'admin.procedures.create'|trans }}</span>
+    </summary>
+
+    <form method="post" action="{{ path('admin_procedure_create') }}" class="form" enctype="multipart/form-data">
+      {{ _self.fields(blank, locales, topics) }}
+      <div class="form-actions">
+        <button type="submit" class="button button--primary">{{ 'common.add'|trans }}</button>
+      </div>
+    </form>
+  </details>
+
+  {% if procedures is empty %}
+    {{ ui.banner('warn', 'admin.procedures.empty'|trans) }}
+  {% else %}
+    {% for proc in procedures %}
+      <details class="card admin-item" {{ proc.id == open ? 'open' : '' }}>
+        <summary class="admin-item__summary">
+          <span class="admin-item__head">
+            {% if proc.topic %}{{ ui.badge('neutral', proc.topic) }}{% endif %}
+            <span class="admin-item__name">{{ proc.titleText(locale) }}</span>
+          </span>
+
+          <span class="admin-item__tags">
+            {% if proc.hasPhotos %}
+              {{ ui.badge('neutral', 'admin.procedures.photoCount'|trans({ '%n%': proc.photos|length })) }}
+            {% endif %}
+            {#
+              Un titre sans marche à suivre est une promesse non tenue : on
+              l'ouvre en pleine panne pour y trouver une page blanche. Signalé
+              ici plutôt que découvert là-bas.
+            #}
+            {% if not proc.isUsable(locale) %}
+              {{ ui.badge('warn', 'admin.procedures.incomplete'|trans) }}
+            {% endif %}
+            {% if not proc.active %}{{ ui.badge('warn', 'common.inactive'|trans) }}{% endif %}
+          </span>
+        </summary>
+
+        <form method="post" action="{{ path('admin_procedure_save', { id: proc.id }) }}"
+              class="form" enctype="multipart/form-data">
+          {{ _self.fields(proc, locales, topics) }}
+          <div class="form-actions">
+            <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
+          </div>
+        </form>
+
+        {# Hors du formulaire principal : imbriquer deux formulaires est
+           interdit en HTML, et le navigateur en ignorerait un sans rien dire. #}
+        <form method="post" action="{{ path('admin_procedure_delete', { id: proc.id }) }}" class="form">
+          <div class="form-actions">
+            <button type="submit" class="button button--ghost"
+                    data-confirm="{{ 'admin.procedures.confirmDelete'|trans }}">
+              {{ 'common.delete'|trans }}
+            </button>
+          </div>
+        </form>
+      </details>
+    {% endfor %}
+  {% endif %}
+{% endblock %}

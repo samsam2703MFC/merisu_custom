@@ -166,6 +166,20 @@
       </span>
     </a>
 
+    {#
+      Le manuel, avec les CONSULTATIONS et non avec les tâches : il ne se fait
+      pas, il se lit — et pas tous les jours. Le ranger parmi les gestes du
+      jour l'aurait fait passer pour un oubli chaque fois qu'on ne l'ouvre pas.
+    #}
+    <a class="task task--secondary" href="{{ path('procedures') }}">
+      <span class="task__icon">{{ ui.icon('book') }}</span>
+
+      <span class="task__body">
+        <span class="task__label">{{ 'procedures.title'|trans }}</span>
+        <span class="task__meta">{{ 'procedures.subtitle'|trans }}</span>
+      </span>
+    </a>
+
   </div>
 
 {% endblock %}

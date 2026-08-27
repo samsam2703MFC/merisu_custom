@@ -106,6 +106,7 @@ nav:
         production: 'Producción'
         system: 'Sistema'
     checklist: 'Lista de control'
+    procedures: 'Manual'
     dayNote: 'Nota del día'
     morning: Mañana
     evening: Tarde
@@ -204,6 +205,32 @@ produce:
     labelsTruncated: 'Hoja limitada a %printed% etiquetas: %missing% no se han impreso. Revisa el umbral del producto y vuelve a imprimir.'
 
 admin:
+    procedures:
+        title: 'Manual operativo'
+        subtitle: 'Un problema, qué se hace, fotos.'
+        intro: 'No es la check-list. Esa enumera lo que se hace cada día y se marca; el manual describe qué hacer cuando algo falla, y se consulta.'
+        create: 'Añadir un procedimiento'
+        empty: 'Ningún procedimiento por ahora. Añade uno arriba.'
+        active: 'Visible en el puesto'
+        activeHint: 'Desmarcada se queda aquí para terminarla, pero no llega al puesto.'
+        topic: 'Sección'
+        topicPlaceholder: 'Máquina, Higiene, Caja…'
+        titleHint: 'Lo que se recorre con la vista al buscar. Corto.'
+        problem: 'Problema'
+        problemHint: 'Lo que se tiene delante. Esta descripción permite reconocer la situación — « la crema se ha cortado » se reconoce, « procedimiento 14 » no.'
+        solution: 'Cómo proceder'
+        solutionHint: 'Qué se hace, en orden. Una línea por gesto se lee mejor que un párrafo.'
+        photos: 'Fotos'
+        photosHint: 'Hacen el trabajo que el texto no hace: « la cubeta está montada demasiado alta » no se describe, se muestra. Las que están se quedan; marca para quitar una.'
+        addPhotos: 'Añadir fotos'
+        photoCount: '%n% foto(s)'
+        photoRejected: 'Un archivo no se aceptó: solo imágenes JPEG, PNG y WebP. El resto se ha guardado.'
+        incomplete: 'Sin procedimiento'
+        titleRequired: 'Da un título al procedimiento, en al menos un idioma.'
+        confirmDelete: '¿Eliminar este procedimiento?'
+        deleted: 'Procedimiento eliminado.'
+        openManual: 'Ver el manual del puesto'
+        titleField: 'Título'
     book:
         ingredients: 'Ingredientes'
         allergens: 'Alérgenos'
@@ -1023,3 +1050,12 @@ signature:
     photoRequired: 'Este punto exige una foto.'
     photoRejected: 'No se ha podido guardar esta imagen. Inténtelo con una foto tomada con la cámara.'
     throttled: 'Demasiados intentos. Espere unos minutos antes de reintentar.'
+
+
+procedures:
+    title: 'Manual operativo'
+    subtitle: 'Qué hacer cuando algo falla.'
+    empty: 'El manual está vacío por ahora. La administración añade los procedimientos.'
+    problem: 'El problema'
+    solution: 'Qué se hace'
+    noTopic: 'Varios'

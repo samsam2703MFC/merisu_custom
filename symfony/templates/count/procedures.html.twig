@@ -1,0 +1,62 @@
+{#
+  Le manuel opératoire, côté POSTE.
+
+  Consulté debout, une main occupée, devant une machine qui ne marche pas. Les
+  procédures arrivent donc DÉPLIÉES : une liste de titres à cliquer aurait
+  ajouté un geste au pire moment.
+
+  Le PROBLÈME est lisible avant la marche à suivre — on ne cherche pas
+  « procédure 14 », on cherche ce qu'on a sous les yeux.
+#}
+{% extends 'base.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'procedures.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block content %}
+  {{ ui.page_header('procedures.title'|trans, 'procedures.subtitle'|trans) }}
+
+  {% if total == 0 %}
+    {{ ui.banner('info', 'procedures.empty'|trans) }}
+  {% else %}
+    {% for rayon, liste in byTopic %}
+      <section class="card">
+        <h2 class="card__title">
+          {{ rayon is empty ? 'procedures.noTopic'|trans : rayon }}
+        </h2>
+
+        {% for proc in liste %}
+          <article class="proc">
+            <h3 class="proc__title">{{ proc.titleText(locale) }}</h3>
+
+            {% if proc.problemText(locale) is not empty %}
+              <div class="proc__problem">
+                <span class="proc__label">{{ 'procedures.problem'|trans }}</span>
+                <p class="proc__text">{{ proc.problemText(locale)|nl2br }}</p>
+              </div>
+            {% endif %}
+
+            <div class="proc__solution">
+              <span class="proc__label">{{ 'procedures.solution'|trans }}</span>
+              <p class="proc__text">{{ proc.solutionText(locale)|nl2br }}</p>
+            </div>
+
+            {#
+              Les photos font le travail que le texte ne fait pas : « le bac est
+              monté trop haut » ne se décrit pas, il se montre. `loading="lazy"`
+              parce qu'un manuel de quarante procédures pèserait autrement le
+              temps d'une connexion de boutique.
+            #}
+            {% if proc.hasPhotos %}
+              <ul class="proc__shots">
+                {% for chemin in proc.photos %}
+                  <li><img class="proc__shot" src="{{ asset(chemin) }}" alt="" loading="lazy"></li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </article>
+        {% endfor %}
+      </section>
+    {% endfor %}
+  {% endif %}
+{% endblock %}
