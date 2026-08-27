@@ -386,6 +386,77 @@ final class AdminCompositionController extends AbstractController
     }
 
     /**
+     * Crée une MATIÈRE PREMIÈRE ou un EMBALLAGE, sans quitter l'écran Recettes.
+     *
+     * Une matière ou un emballage est un produit comme un autre — il vit dans
+     * Produits, avec son prix d'achat. Mais l'exiger d'aller là-bas, le créer,
+     * revenir, retrouver la recette, était quatre gestes pour poser un
+     * ingrédient : on renonçait avant la fin. On le crée donc ICI, on retombe
+     * sur la recette qu'on éditait, et le nouvel ingrédient est déjà dans la
+     * liste, prêt à recevoir sa quantité.
+     *
+     * Seules ces deux natures : ce sont les seules qu'on ACHÈTE, donc les
+     * seules dont le prix se saisit d'un coup. Une recette se crée par « Créer
+     * une composition », un produit en vente dans Produits — chacun a son
+     * attirail, et le mêler ici aurait refait deux endroits pour la même chose.
+     */
+    #[Route('/composant', name: 'admin_component_create', methods: ['POST'], priority: 10)]
+    public function createComponent(Request $request): Response
+    {
+        $admin = $this->currentUser->requireAdmin();
+
+        $nom = trim((string) $request->request->get('name', ''));
+        $ouvrir = trim((string) $request->request->get('ouvrir', ''));
+
+        // La nature est CLOSE à deux valeurs : une requête forgée ne doit pas
+        // créer un produit en vente par cette porte, qui ne demande ni mode de
+        // comptage ni étiquette.
+        $nature = $request->request->get('nature') === ProductNature::Packaging->value
+            ? ProductNature::Packaging
+            : ProductNature::Raw;
+
+        if ($nom === '') {
+            $this->addFlash('error', 'admin.compositions.componentEmpty');
+
+            return $this->redirectToRoute('admin_compositions', $ouvrir !== '' ? ['ouvrir' => $ouvrir] : []);
+        }
+
+        $prix = max(0.0, (float) str_replace(',', '.', (string) $request->request->get('unitCost', '0')));
+
+        $slot = $this->store->nextProductSlot();
+
+        $this->store->saveProduct(new Product(
+            $slot['id'],
+            $slot['code'],
+            array_fill_keys(array_map(
+                static fn (Locale $l): string => $l->value,
+                Locale::all(),
+            ), mb_substr($nom, 0, 190)),
+            mb_substr(trim((string) $request->request->get('unit', 'pcs')), 0, 16) ?: 'pcs',
+            true,
+            0.0,
+            1.0,
+            RoundingMode::Ceil,
+            null,
+            $slot['sortOrder'],
+            nature: $nature,
+            unitCost: $prix,
+        ));
+
+        $this->store->audit($admin->id, $admin->role->value, 'COMPONENT_CREATED', null, null, [
+            'productId' => $slot['id'],
+            'code' => $slot['code'],
+            'nature' => $nature->value,
+        ]);
+
+        $this->addFlash('success', 'admin.compositions.componentCreated');
+
+        // On retombe sur la recette qu'on éditait : l'ingrédient neuf y est
+        // déjà, il ne reste qu'à lui donner sa quantité.
+        return $this->redirectToRoute('admin_compositions', $ouvrir !== '' ? ['ouvrir' => $ouvrir] : []);
+    }
+
+    /**
      * Supprime une composition.
      *
      * Deux gestes portent le même mot, et la différence tient à ce qu'on a

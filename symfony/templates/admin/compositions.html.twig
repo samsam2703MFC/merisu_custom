@@ -257,7 +257,6 @@
                   <th scope="col">{{ 'admin.compositions.material'|trans }}</th>
                   <th scope="col">{{ 'admin.compositions.unitPrice'|trans }}</th>
                   <th scope="col">{{ 'common.quantity'|trans }}</th>
-                  <th scope="col">{{ 'admin.compositions.perUnit'|trans }}</th>
                   <th scope="col">{{ 'admin.compositions.lineCost'|trans }}</th>
                 </tr>
               </thead>
@@ -287,7 +286,7 @@
                 {% for material in components|filter(m => m.id != product.id) %}
                   {% if loop.first or material.nature != components[loop.index0 - 1].nature %}
                     <tr class="rcp__group">
-                      <th colspan="5" scope="colgroup">
+                      <th colspan="4" scope="colgroup">
                         {{ ui.icon(material.nature.icon) }}
                         {{ ('admin.products.natures.' ~ material.nature.value)|trans }}
                       </th>
@@ -325,12 +324,6 @@
                       <span class="rcp__unit muted">{{ material.unit }}</span>
                     </td>
 
-                    {# Ce qui est réellement stocké, pour que la division par le
-                       rendement ne se fasse pas dans le noir. #}
-                    <td class="rcp__stored">
-                      {% if qty is not null %}{{ qty|qty }} {{ material.unit }}{% else %}—{% endif %}
-                    </td>
-
                     {# Le COÛT DE CETTE LIGNE dans la recette : prix unitaire ×
                        quantité. Rempli seulement quand la ligne est dans la
                        recette ET que la matière a un prix — c'est la somme de
@@ -350,6 +343,62 @@
             <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
           </div>
         </form>
+
+        {#
+          Créer un ingrédient SANS quitter l'écran.
+
+          Une matière ou un emballage absent de la liste se créait dans
+          Produits, quatre gestes plus loin ; on renonçait avant d'y arriver.
+          Ce volet le crée ici et retombe sur la recette, l'ingrédient déjà
+          posé dans le tableau. Hors du formulaire d'enregistrement : deux
+          formulaires imbriqués ne sont pas du HTML valable.
+        #}
+        <details class="rcp-add-component">
+          <summary>{{ ui.icon('plus') }} <span>{{ 'admin.compositions.addComponent'|trans }}</span></summary>
+
+          <form method="post" action="{{ path('admin_component_create') }}" class="form">
+            <input type="hidden" name="ouvrir" value="{{ product.id }}">
+
+            <div class="field-grid">
+              <div class="field">
+                <label class="field__label" for="cmp-name-{{ product.id }}">{{ 'admin.compositions.componentName'|trans }}</label>
+                <input class="field__input" type="text" id="cmp-name-{{ product.id }}" name="name"
+                       maxlength="190" required>
+              </div>
+              <div class="field">
+                <label class="field__label" for="cmp-unit-{{ product.id }}">{{ 'admin.products.unit'|trans }}</label>
+                <input class="field__input" type="text" id="cmp-unit-{{ product.id }}" name="unit"
+                       maxlength="16" value="kg">
+              </div>
+            </div>
+
+            <div class="field-grid">
+              <fieldset class="field seg">
+                <legend class="field__label">{{ 'admin.products.nature'|trans }}</legend>
+                <div class="seg__grid seg__grid--auto">
+                  <label class="seg__item">
+                    <input class="seg__radio" type="radio" name="nature" value="RAW" checked>
+                    <span class="seg__box">{{ ui.icon('nature-raw') }}<span class="seg__name">{{ 'admin.products.natures.RAW'|trans }}</span></span>
+                  </label>
+                  <label class="seg__item">
+                    <input class="seg__radio" type="radio" name="nature" value="PACKAGING">
+                    <span class="seg__box">{{ ui.icon('nature-packaging') }}<span class="seg__name">{{ 'admin.products.natures.PACKAGING'|trans }}</span></span>
+                  </label>
+                </div>
+              </fieldset>
+              <div class="field">
+                <label class="field__label" for="cmp-cost-{{ product.id }}">{{ 'admin.compositions.componentCost'|trans }}</label>
+                <input class="field__input" type="number" min="0" step="any" inputmode="decimal"
+                       id="cmp-cost-{{ product.id }}" name="unitCost" placeholder="0">
+                <p class="field__hint">{{ 'admin.compositions.componentCostHint'|trans }}</p>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="button button--secondary">{{ 'admin.compositions.componentAdd'|trans }}</button>
+            </div>
+          </form>
+        </details>
 
         {#
           HORS du formulaire d'enregistrement : deux formulaires imbriqués ne

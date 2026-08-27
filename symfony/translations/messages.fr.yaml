@@ -646,6 +646,13 @@ admin:
         yield: 'Pour combien d''unités'
         yieldHint: 'L''atelier pense en fournées : saisissez « 4 » de lait pour « 20 » parts, l''application ramène à l''unité. Laissez 1 si vos quantités sont déjà par %unit%.'
         howto: "Pour retirer un ingrédient, videz sa quantité. Pour en ajouter un, saisissez sa quantité sur sa ligne — une matière absente de la liste se crée d'abord dans"
+        addComponent: "Ajouter une matière première ou un emballage"
+        componentName: "Nom"
+        componentCost: "Prix d'achat, par unité"
+        componentCostHint: "Ce que coûte une unité à l'achat. 0 si vous ne le savez pas encore."
+        componentAdd: "Créer et ajouter"
+        componentCreated: "Ingrédient créé, ajoutez sa quantité."
+        componentEmpty: "Donnez un nom à l'ingrédient."
         badYield: 'Rendement nul ou négatif : rien n''a été enregistré, la recette précédente est intacte.'
         templates: 'Modèles de composition'
         templatesHint: 'Une gamme se décline en tailles, et la recette ne change qu''en quantité. Écrivez la règle une fois — « Regular = 100 g de crème, 2 biscuits, 34 ml de café, 3 g de cacao » — et posez-la sur tous les produits en Regular. Le modèle POSE ses matières et laisse les autres : la pâte de pistache propre au parfum reste en place.'

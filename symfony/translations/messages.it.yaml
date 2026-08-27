@@ -643,6 +643,13 @@ admin:
         yield: 'Per quante unità'
         yieldHint: 'Il laboratorio ragiona a infornate: inserisci « 4 » di latte per « 20 » porzioni, l''applicazione riporta all''unità. Lascia 1 se le quantità sono già per %unit%.'
         howto: "Per togliere un ingrediente, svuota la sua quantità. Per aggiungerne uno, inserisci la quantità sulla sua riga — una materia assente dall'elenco si crea prima in"
+        addComponent: "Aggiungi una materia prima o un imballaggio"
+        componentName: "Nome"
+        componentCost: "Prezzo d'acquisto, per unità"
+        componentCostHint: "Quanto costa un'unità all'acquisto. 0 se non lo sai ancora."
+        componentAdd: "Crea e aggiungi"
+        componentCreated: "Ingrediente creato, aggiungi la sua quantità."
+        componentEmpty: "Dai un nome all'ingrediente."
         badYield: 'Resa nulla o negativa: non è stato registrato nulla, la ricetta precedente è intatta.'
         templates: 'Modelli di composizione'
         templatesHint: 'Una gamma si declina in formati e la ricetta cambia solo nelle quantità. Scrivi la regola una volta — « Regular = 100 g di crema, 2 savoiardi, 34 ml di caffè, 3 g di cacao » — e applicala a tutti i prodotti Regular. Il modello POSA le sue materie e lascia le altre: la pasta di pistacchio propria del gusto resta al suo posto.'

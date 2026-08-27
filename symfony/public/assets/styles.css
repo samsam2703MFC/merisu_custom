@@ -4783,5 +4783,41 @@ select:disabled, select.field__input:disabled { background-image: url("data:imag
 }
 .reality-empty { text-align: center; color: var(--text-muted); font-style: italic; padding: var(--space-4); }
 .reality-allsales { margin-top: var(--space-3); font-size: .82rem; color: var(--text-muted); text-align: center; }
-.rcp__price, .rcp__linecost { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* Les colonnes de prix se serrent au contenu : à `width:100%`, la table
+   étalait cinq colonnes sur toute la largeur, un « — » de prix flottant seul
+   dans un grand vide, détaché de la matière qu'il chiffre. */
+.rcp { width: auto; min-width: 0; }
+.rcp__price, .rcp__linecost { width: 1%; white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
+.rcp__price { color: var(--latte); }
 .rcp__linecost strong { color: var(--coffee); }
+.rcp thead th { padding-left: var(--space-3); padding-right: var(--space-3); }
+
+/* ── Créer un ingrédient depuis l'écran Recettes ──────────────────────────
+   Un volet replié sous la table : le geste est occasionnel, et déplié en
+   permanence il aurait pesé plus lourd que la recette qu'il sert. */
+.rcp-add-component {
+  margin-top: var(--space-3);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  background: var(--bg);
+}
+.rcp-add-component > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--touch);
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--brand);
+  list-style: none;
+}
+.rcp-add-component > summary::-webkit-details-marker { display: none; }
+/* L'icône SANS taille explicite prenait toute la largeur de son conteneur :
+   un « + » de trois cents pixels au milieu de la fiche. */
+.rcp-add-component > summary .icon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+.rcp-add-component > form { margin-top: var(--space-3); }

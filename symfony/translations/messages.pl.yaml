@@ -643,6 +643,13 @@ admin:
         yield: 'Na ile sztuk'
         yieldHint: 'Kuchnia myśli wsadami: wpisz „4” mleka na „20” porcji, aplikacja przeliczy na sztukę. Zostaw 1, jeśli ilości są już na %unit%.'
         howto: "Aby usunąć składnik, wyczyść jego ilość. Aby dodać, wpisz ilość w jego wierszu — brakujący surowiec utwórz najpierw w"
+        addComponent: "Dodaj surowiec lub opakowanie"
+        componentName: "Nazwa"
+        componentCost: "Cena zakupu, za jednostkę"
+        componentCostHint: "Ile kosztuje jednostka przy zakupie. 0, jeśli jeszcze nie wiesz."
+        componentAdd: "Utwórz i dodaj"
+        componentCreated: "Składnik utworzony, dodaj jego ilość."
+        componentEmpty: "Nadaj nazwę składnikowi."
         badYield: 'Zerowa lub ujemna wydajność: nic nie zapisano, poprzednia receptura pozostaje nietknięta.'
         templates: 'Szablony składu'
         templatesHint: 'Gama dzieli się na rozmiary, a receptura zmienia się tylko ilościowo. Zapisz regułę raz — „Regular = 100 g kremu, 2 biszkopty, 34 ml kawy, 3 g kakao” — i nałóż ją na wszystkie produkty Regular. Szablon NAKŁADA swoje surowce i zostawia pozostałe: pasta pistacjowa danego smaku zostaje.'
