@@ -4019,7 +4019,8 @@ select:disabled, select.field__input:disabled { background-image: url("data:imag
 
 /* Assez large pour « Matière première » sans troncature, et pas davantage. */
 .cats__nature { width: 1%; }
-.cats__nature .field__input { min-width: 12.5rem; }
+/* Plus de liste déroulante à élargir : la colonne porte quatre icônes. */
+.cats__nature { white-space: nowrap; }
 
 .cats__count { width: 1%; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .cats__action { width: 1%; white-space: nowrap; }
@@ -4454,3 +4455,63 @@ select:disabled, select.field__input:disabled { background-image: url("data:imag
   .bookpage__label, .bookpage__foot, .bookpage__aka-item { color: #333; }
   .bookpage__text--todo { color: #000; }
 }
+
+/* ── Choix de nature, en icônes ──────────────────────────────────────────── */
+
+/*
+  Quatre icônes plutôt qu'une liste déroulante. La liste demandait deux gestes
+  — ouvrir, choisir — et cachait l'état des autres rayons : impossible de
+  parcourir la colonne du regard.
+
+  Ce sont les LIBELLÉS qui ne tenaient pas dans cette colonne, pas les boutons.
+  Sans eux, quatre cibles de 44 px passent, et c'est la légende en tête de
+  tableau qui dit ce que chaque icône signifie.
+*/
+.natpick { display: flex; gap: var(--space-1); border: 0; padding: 0; margin: 0; }
+
+.natpick__item { display: block; cursor: pointer; }
+
+.natpick__radio { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+.natpick__box {
+  display: grid;
+  place-items: center;
+  width: var(--touch);
+  height: var(--touch);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--latte);
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease),
+              color var(--dur) var(--ease);
+}
+
+.natpick__box .icon { width: 22px; height: 22px; }
+
+.natpick__radio:checked + .natpick__box {
+  border-color: var(--brand);
+  background: var(--brand-light);
+  color: var(--brand);
+}
+
+/* Le clavier doit voir ce que la souris voit : sans anneau, la tabulation
+   traverse quatre carrés sans que rien ne bouge. */
+.natpick__radio:focus-visible + .natpick__box { outline: 3px solid var(--brand); outline-offset: 2px; }
+
+/*
+  La légende, dite UNE fois pour tout le tableau. Répétée par ligne, elle
+  ramènerait le problème qu'on vient de résoudre.
+*/
+.natlegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  list-style: none;
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  font-size: .82rem;
+  color: var(--text-muted);
+}
+
+.natlegend__item { display: flex; align-items: center; gap: var(--space-2); }
+.natlegend__item .icon { width: 18px; height: 18px; color: var(--latte); flex: none; }

@@ -18,6 +18,23 @@
   {% if categories is empty %}
     {{ ui.banner('info', 'admin.categories.empty'|trans) }}
   {% else %}
+    {#
+      La légende, EN TÊTE DE TABLEAU et non répétée sur chaque ligne.
+
+      C'est elle qui autorise la colonne à ne porter que des icônes : dite une
+      fois, elle vaut pour les quinze rayons en dessous. Répétée par ligne,
+      elle ramènerait le problème qu'on vient de résoudre — des libellés qui ne
+      tiennent pas dans la colonne.
+    #}
+    <ul class="natlegend">
+      {% for nature in natures %}
+        <li class="natlegend__item">
+          {{ ui.icon(nature.icon) }}
+          <span>{{ ('admin.products.natures.' ~ nature.value)|trans }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+
     <form method="post" action="{{ path('admin_categories_save') }}" class="form">
       <div class="table-scroll">
         <table class="table cats">
@@ -63,16 +80,39 @@
                   repère.
                 #}
                 <td class="cats__nature">
-                  <label class="visually-hidden" for="nat-{{ loop.index }}">
-                    {{ 'admin.categories.natureOf'|trans({ '%name%': categorie.name }) }}
-                  </label>
-                  <select class="field__input" id="nat-{{ loop.index }}" name="nature[{{ categorie.name }}]">
+                  <fieldset class="natpick">
+                    <legend class="visually-hidden">
+                      {{ 'admin.categories.natureOf'|trans({ '%name%': categorie.name }) }}
+                    </legend>
+
+                    {#
+                      Quatre icônes plutôt qu'une liste déroulante. La liste
+                      demandait deux gestes — ouvrir, choisir — et cachait
+                      l'état des autres rayons : on ne pouvait pas parcourir la
+                      colonne du regard.
+
+                      Ce sont les LIBELLÉS qui ne tenaient pas dans cette
+                      colonne, pas les boutons. Sans eux, quatre cibles de
+                      44 px passent, et c'est la légende en tête de tableau qui
+                      dit ce que chaque icône signifie — une fois pour toutes
+                      les lignes plutôt qu'une fois par ligne.
+
+                      Chaque icône garde son intitulé pour le lecteur d'écran
+                      et au survol : sans texte, l'icône seule ne nomme rien.
+                    #}
                     {% for nature in natures %}
-                      <option value="{{ nature.value }}" {{ nature == categorie.nature ? 'selected' : '' }}>
-                        {{ ('admin.products.natures.' ~ nature.value)|trans }}
-                      </option>
+                      {% set libelle = ('admin.products.natures.' ~ nature.value)|trans %}
+                      <label class="natpick__item" title="{{ libelle }}">
+                        <input class="natpick__radio" type="radio"
+                               name="nature[{{ categorie.name }}]" value="{{ nature.value }}"
+                               {{ nature == categorie.nature ? 'checked' : '' }}>
+                        <span class="natpick__box">
+                          {{ ui.icon(nature.icon) }}
+                          <span class="visually-hidden">{{ libelle }}</span>
+                        </span>
+                      </label>
                     {% endfor %}
-                  </select>
+                  </fieldset>
 
                   {#
                     Un produit du rayon qui ne suit pas la nature du rayon : ce
