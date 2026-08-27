@@ -224,7 +224,18 @@
                   accumulée : un `set` posé dans une boucle Twig ne survit pas
                   à l'itération, et l'intertitre se répétait à chaque ligne.
                 #}
-                {% for material in components %}
+                {#
+                  Une fiche ne s'entre pas dans sa propre composition.
+
+                  Le sommet de l'assemblage est bien gardé — un produit en
+                  vente n'entre nulle part — mais une RECETTE figurait dans sa
+                  propre liste d'ingrédients : « Crème mascarpone » se
+                  proposait de consommer de la crème mascarpone. Rien ne
+                  parcourt les nomenclatures en profondeur, donc rien ne
+                  bouclait ; le résultat n'aurait été qu'un chiffre absurde,
+                  ce qui est pire qu'une erreur bruyante.
+                #}
+                {% for material in components|filter(m => m.id != product.id) %}
                   {% if loop.first or material.nature != components[loop.index0 - 1].nature %}
                     <tr class="rcp__group">
                       <th colspan="3" scope="colgroup">
