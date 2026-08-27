@@ -1053,7 +1053,17 @@ input[type="checkbox"] { width: 24px; height: 24px; min-height: 24px; accent-col
 
 .page-header__icon .icon { width: 24px; height: 24px; }
 
-.icon { display: block; }
+/*
+  La taille PAR DÉFAUT de toute icône — le garde-fou d'une famille de bugs.
+
+  Un SVG sans largeur prend celle de son conteneur : trois écrans ont déjà
+  affiché une icône de sept cents pixels parce que leur contexte avait oublié
+  sa règle (le « + » des recettes, puis l'éditeur de check-lists). Chaque
+  contexte qui veut plus grand le dit déjà — ses règles sont plus spécifiques
+  et gagnent — mais oublier une règle ne doit plus produire qu'une icône
+  ordinaire, jamais une icône géante.
+*/
+.icon { display: block; width: 20px; height: 20px; }
 
 @media (min-width: 600px) {
   .task-list { gap: 1rem; }
@@ -5043,3 +5053,37 @@ select:disabled, select.field__input:disabled { background-image: url("data:imag
 }
 .ck-days__today { background: var(--brand-light); color: var(--brand-dark); }
 .ck-days .icon { width: 16px; height: 16px; }
+
+
+/* ── Éditeur de check-lists : l'en-tête d'une liste ───────────────────────
+   Le résumé d'une liste : icône, nom, heure, badges — repliable sur ses
+   réglages. Ces classes existaient dans le gabarit SANS CSS : l'icône
+   explosait à la largeur de la carte et le triangle natif restait visible. */
+.cl-meta__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: var(--touch);
+  cursor: pointer;
+  list-style: none;
+}
+.cl-meta__summary::-webkit-details-marker { display: none; }
+
+.cl-meta__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.cl-meta__head .icon { flex: 0 0 auto; color: var(--brand); }
+
+.cl-meta__name {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--coffee);
+  overflow-wrap: anywhere;
+}
+
+.cl-meta > *:not(summary) { margin-top: var(--space-3); }
