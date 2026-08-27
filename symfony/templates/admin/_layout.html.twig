@@ -46,14 +46,14 @@
     jamais sur un écran dont l'entrée est cachée.
   #}
   {%- set navGroupes = [
-    { title: 'nav.groups.operations', open: true, links: [
+    { title: 'nav.groups.operations', links: [
       { route: 'admin_par_matrix', label: 'nav.parMatrix' },
       { route: 'admin_day_note',   label: 'nav.dayNote' },
       { route: 'admin_checklist',  label: 'nav.checklist' },
       { route: 'admin_procedures', label: 'nav.procedures' },
       { route: 'admin_weather',    label: 'nav.weather' }
     ] },
-    { title: 'nav.groups.reporting', open: true, links: [
+    { title: 'nav.groups.reporting', links: [
       { route: 'admin_network',    label: 'nav.network', manager: true },
       { route: 'admin_sales',      label: 'nav.sales' },
       { route: 'admin_weather_sales', label: 'nav.weatherSales' },
@@ -61,7 +61,7 @@
       { route: 'admin_delta',      label: 'nav.delta' },
       { route: 'admin_audit',      label: 'nav.audit' }
     ] },
-    { title: 'nav.groups.business', open: false, links: [
+    { title: 'nav.groups.business', links: [
       { route: 'admin_shops',      label: 'nav.shops' },
       { route: 'admin_team',       label: 'nav.team' },
       { route: 'admin_positions',  label: 'nav.positions' },
@@ -69,7 +69,7 @@
       { route: 'admin_categories', label: 'nav.categories' },
       { route: 'admin_compositions', label: 'nav.compositions' }
     ] },
-    { title: 'nav.groups.application', open: false, links: [
+    { title: 'nav.groups.application', links: [
       { route: 'admin_settings',   label: 'nav.settings' },
       { route: 'admin_cash',       label: 'nav.pos' },
       { route: 'admin_sync',       label: 'nav.sync' }
@@ -116,6 +116,23 @@
       |filter(route => navRouteCourante == route or navRouteCourante starts with route ~ '_') -%}
   {%- set navRouteActive = navCandidates|sort((a, b) => a|length <=> b|length)|last|default('') -%}
 
+  {#
+    Aucune famille n'est ouverte « par principe ».
+
+    Deux volets dépliés d'office faisaient 626 px de rail pour 588 px de
+    hauteur utile sur un portable : une barre de défilement apparaissait
+    dès l'ouverture de la page, sur la navigation elle-même. S'ouvre donc
+    la SEULE famille qui porte la page courante — celle dont on a besoin,
+    et jamais aucune autre.
+
+    Repli quand la page n'appartient à aucune famille : le rail s'ouvrirait
+    entièrement replié, sans une seule destination lisible.
+  #}
+  {%- set navPremiereRoute = navGroupes|length > 0 and (navGroupes|first).links|length > 0
+      ? (navGroupes|first).links|first.route
+      : '' -%}
+  {%- set navRouteOuvrante = navRouteActive != '' ? navRouteActive : navPremiereRoute -%}
+
   <div class="admin-shell">
     <nav class="admin-nav" aria-label="{{ 'nav.sections'|trans }}">
       {% for navGroupe in navGroupes %}
@@ -130,25 +147,26 @@
           d'écran l'annonce dans les deux formes, et c'est lui qui dit à quelle
           famille appartient le lien qu'on vient d'atteindre au clavier.
         #}
-        {%- set navGroupePorteLaPage = navGroupe.links|filter(l => l.route == navRouteActive)|length > 0 -%}
+        {%- set navGroupePorteLaPage = navGroupe.links|filter(l => l.route == navRouteOuvrante)|length > 0 -%}
 
-        <details class="admin-nav__group" {{ navGroupe.open or navGroupePorteLaPage ? 'open' : '' }}>
+        <details class="admin-nav__group" {{ navGroupePorteLaPage ? 'open' : '' }}>
           <summary class="admin-nav__title">
             <span>{{ navGroupe.title|trans }}</span>
-            {#
-              Le chevron ne paraît que sur les familles qu'on peut replier :
-              sur les autres il annoncerait un geste qui ne se passe pas.
-            #}
-            {% if not navGroupe.open %}
-              <svg class="admin-nav__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="m6 9 6 6 6-6"/>
-              </svg>
-            {% endif %}
+            {# Toutes les familles se replient désormais : toutes le disent. #}
+            <svg class="admin-nav__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m6 9 6 6 6-6"/>
+            </svg>
           </summary>
 
           {% for navEntree in navGroupe.links %}
+            {#
+              `aria-current` double la mise en valeur visuelle : sans lui, la
+              page courante se voit mais ne s'ENTEND pas, et l'on repart en
+              lecture d'écran sans savoir où l'on se trouve déjà.
+            #}
             <a class="admin-nav__link {{ navRouteActive == navEntree.route ? 'is-active' : '' }}"
+               {{ navRouteActive == navEntree.route ? 'aria-current="page"' : '' }}
                href="{{ path(navEntree.route) }}">{{ navEntree.label|trans }}</a>
           {% endfor %}
         </details>
