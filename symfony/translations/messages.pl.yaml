@@ -204,6 +204,19 @@ produce:
     labelsTruncated: 'Arkusz ograniczony do %printed% etykiet: %missing% nie zostało wydrukowanych. Sprawdź próg produktu i wydrukuj ponownie.'
 
 admin:
+    book:
+        ingredients: 'Składniki'
+        allergens: 'Alergeny'
+        shelfLife: 'Termin przydatności'
+        unit: 'Jednostka'
+        title: 'Book produktowy'
+        empty: 'Brak produktów na sprzedaż: book byłby pusty.'
+        toFill: 'do uzupełnienia'
+        days: '%n% dni'
+        code: 'Kod'
+        madeOf: 'Skład'
+        printedBy: 'Wydrukowane przez %who%'
+        open: 'Drukuj book'
     translate:
         button: 'Przetłumacz'
         hint: 'Uzupełnia PUSTE języki na podstawie wyświetlanego. Istniejące tłumaczenie nigdy nie zostaje nadpisane — aby je powtórzyć, wyczyść pole w danym języku.'

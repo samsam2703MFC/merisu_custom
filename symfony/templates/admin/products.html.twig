@@ -8,6 +8,15 @@
 
   {{ ui.page_header('admin.products.title'|trans, 'admin.products.subtitle'|trans) }}
 
+  {# Le book se tire depuis ici : c'est là qu'on tient les fiches dont il est
+     l'impression. Un écran de plus dans le rail pour un bouton n'aurait rien
+     ajouté. #}
+  <p class="form-actions">
+    <a class="button button--secondary" href="{{ path('admin_product_book') }}">
+      {{ 'admin.book.open'|trans }}
+    </a>
+  </p>
+
   <div class="banner banner--warn">{{ 'admin.products.placeholderWarning'|trans }}</div>
 
   {#

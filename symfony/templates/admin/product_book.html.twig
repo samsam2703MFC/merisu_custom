@@ -1,0 +1,129 @@
+{#
+  Le BOOK produit — une fiche par page, à imprimer et à relier.
+
+  Ce que la boutique pose sur le comptoir. Une page pleine par produit se
+  feuillette et se pointe du doigt ; une liste serrée tiendrait sur trois
+  feuilles et ne se consulterait pas.
+
+  Le bandeau d'impression et le sélecteur de langue disparaissent au tirage :
+  ce sont des commandes d'écran, pas du contenu de page.
+#}
+{% extends 'base.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'admin.book.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+{% block nav %}{% endblock %}
+
+{% block content %}
+  <div class="print-toolbar">
+    <div class="print-toolbar__left">
+      <a class="button button--ghost" href="{{ path('admin_products') }}">
+        {{ ui.icon('arrow-left') }} {{ 'common.back'|trans }}
+      </a>
+      <p class="print-toolbar__title">{{ 'admin.book.title'|trans }}</p>
+    </div>
+
+    {#
+      La langue du BOOK, choisie ici et non prise à l'écran : on imprime le
+      book polonais pour Wrocław sans changer la langue de son administration.
+    #}
+    <div class="print-toolbar__right">
+      {% for l in locales %}
+        <a class="button {{ l == locale ? 'button--primary' : 'button--ghost' }}"
+           href="{{ path('admin_product_book', { langue: l.value }) }}">{{ l.value|upper }}</a>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if products is empty %}
+    {{ ui.banner('warn', 'admin.book.empty'|trans) }}
+  {% else %}
+    {% for product in products %}
+      {% set recette = lines[product.id] ?? {} %}
+
+      <article class="bookpage">
+        <header class="bookpage__head">
+          <img class="bookpage__logo" src="{{ asset('assets/logo.png') }}" alt="{{ 'common.appName'|trans }}">
+          <span class="bookpage__cat">{{ product.category|default('—') }}</span>
+        </header>
+
+        <h1 class="bookpage__name">{{ product.label(locale) }}</h1>
+
+        {#
+          Les autres langues sous le nom : un client polonais devant un vendeur
+          italien, et c'est cette ligne qui règle la conversation.
+        #}
+        <p class="bookpage__aka">
+          {% for l in locales|filter(l => l != locale) %}
+            <span class="bookpage__aka-item"><b>{{ l.value|upper }}</b> {{ product.label(l) }}</span>
+          {% endfor %}
+        </p>
+
+        <div class="bookpage__grid">
+          <section class="bookpage__block">
+            <h2 class="bookpage__label">{{ 'admin.book.ingredients'|trans }}</h2>
+            {% set ing = product.ingredientsText(locale) %}
+            <p class="bookpage__text{{ ing is empty ? ' bookpage__text--todo' : '' }}">
+              {{ ing is empty ? 'admin.book.toFill'|trans : ing }}
+            </p>
+          </section>
+
+          {#
+            Les allergènes à part, et en évidence : la réglementation impose de
+            les faire ressortir, et c'est la seule ligne de cette page dont
+            l'erreur se paie.
+
+            Une case VIDE se lirait « aucun allergène » — une affirmation. On
+            imprime donc « à renseigner », qui n'affirme rien.
+          #}
+          <section class="bookpage__block bookpage__block--allergens">
+            <h2 class="bookpage__label">{{ 'admin.book.allergens'|trans }}</h2>
+            {% set alg = product.allergensText(locale) %}
+            <p class="bookpage__text{{ alg is empty ? ' bookpage__text--todo' : '' }}">
+              {{ alg is empty ? 'admin.book.toFill'|trans : alg }}
+            </p>
+          </section>
+        </div>
+
+        <div class="bookpage__facts">
+          <div class="bookpage__fact">
+            <span class="bookpage__label">{{ 'admin.book.shelfLife'|trans }}</span>
+            <span class="bookpage__value">
+              {% if product.shelfLifeDays > 0 %}
+                {{ 'admin.book.days'|trans({ '%n%': product.shelfLifeDays }) }}
+              {% else %}
+                —
+              {% endif %}
+            </span>
+          </div>
+
+          <div class="bookpage__fact">
+            <span class="bookpage__label">{{ 'admin.book.unit'|trans }}</span>
+            <span class="bookpage__value">{{ product.unit }}</span>
+          </div>
+
+          <div class="bookpage__fact">
+            <span class="bookpage__label">{{ 'admin.book.code'|trans }}</span>
+            <span class="bookpage__value">{{ product.code }}</span>
+          </div>
+        </div>
+
+        {% if recette is not empty %}
+          <section class="bookpage__block">
+            <h2 class="bookpage__label">{{ 'admin.book.madeOf'|trans }}</h2>
+            <ul class="bookpage__parts">
+              {% for materialId, qty in recette %}
+                <li>{{ componentNames[materialId]|default(materialId) }} <b>{{ qty|qty }}</b></li>
+              {% endfor %}
+            </ul>
+          </section>
+        {% endif %}
+
+        <footer class="bookpage__foot">
+          <span>{{ 'common.appName'|trans }}</span>
+          <span>{{ 'admin.book.printedBy'|trans({ '%who%': printedBy }) }}</span>
+        </footer>
+      </article>
+    {% endfor %}
+  {% endif %}
+{% endblock %}

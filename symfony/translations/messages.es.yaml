@@ -204,6 +204,19 @@ produce:
     labelsTruncated: 'Hoja limitada a %printed% etiquetas: %missing% no se han impreso. Revisa el umbral del producto y vuelve a imprimir.'
 
 admin:
+    book:
+        ingredients: 'Ingredientes'
+        allergens: 'Alérgenos'
+        shelfLife: 'Duración'
+        unit: 'Unidad'
+        title: 'Book de productos'
+        empty: 'Ningún producto a la venta: el book estaría vacío.'
+        toFill: 'por rellenar'
+        days: '%n% día(s)'
+        code: 'Código'
+        madeOf: 'Composición'
+        printedBy: 'Impreso por %who%'
+        open: 'Imprimir el book'
     translate:
         button: 'Traducir'
         hint: 'Completa los idiomas VACÍOS a partir del que se muestra. Una traducción ya escrita nunca se sustituye: para rehacerla, vacía el campo en el idioma correspondiente.'

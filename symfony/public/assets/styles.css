@@ -4352,3 +4352,105 @@ select:disabled, select.field__input:disabled { background-image: url("data:imag
 }
 
 .view-switch__item.is-active .view-switch__count { background: rgba(255, 255, 255, .25); color: #fff; }
+
+/* ── Book produit : une fiche par page ───────────────────────────────────── */
+
+/*
+  Ce que la boutique pose sur le comptoir. Une page pleine par produit se
+  feuillette et se pointe du doigt ; une liste serrée tiendrait sur trois
+  feuilles et ne se consulterait pas.
+*/
+.bookpage {
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow);
+  padding: var(--space-6);
+  margin-bottom: var(--space-5);
+  /* A4 à 96 ppp, moins les marges d'impression : la page à l'écran a la même
+     forme que la page qui sortira. */
+  min-height: 900px;
+  display: flex;
+  flex-direction: column;
+}
+
+.bookpage__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
+.bookpage__logo { height: 34px; width: auto; }
+.bookpage__cat {
+  font-size: .78rem; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--brand);
+}
+
+.bookpage__name {
+  margin: var(--space-5) 0 var(--space-2);
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 2.6rem;
+  line-height: 1.1;
+  color: var(--coffee);
+}
+
+/* Les autres langues sous le nom : un client polonais devant un vendeur
+   italien, et c'est cette ligne qui règle la conversation. */
+.bookpage__aka { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); margin: 0 0 var(--space-5); }
+.bookpage__aka-item { font-size: .9rem; color: var(--text-muted); }
+.bookpage__aka-item b { color: var(--latte); margin-right: .3rem; font-size: .75rem; }
+
+.bookpage__grid { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+
+.bookpage__block { border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-4); }
+
+/* Les allergènes ressortent : la réglementation l'impose, et c'est la seule
+   ligne de cette page dont l'erreur se paie. */
+.bookpage__block--allergens { border-color: var(--brand); background: var(--brand-light); }
+
+.bookpage__label {
+  margin: 0 0 var(--space-2);
+  font-size: .74rem; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--text-muted);
+}
+
+.bookpage__text { margin: 0; font-size: 1.05rem; line-height: 1.5; color: var(--text); }
+
+/* Ce qui MANQUE est dit. Une case vide se lirait « aucun allergène » — une
+   affirmation, et sur ce sujet une affirmation fausse se paie. */
+.bookpage__text--todo { color: var(--warn); font-style: italic; }
+
+.bookpage__facts { display: flex; flex-wrap: wrap; gap: var(--space-5); margin-top: var(--space-5); }
+.bookpage__fact { display: flex; flex-direction: column; gap: var(--space-1); }
+.bookpage__value { font-family: var(--font-display); font-size: 1.5rem; color: var(--coffee); }
+
+.bookpage__parts { margin: 0; padding-left: 1.1rem; color: var(--text); }
+.bookpage__parts li { margin-bottom: var(--space-1); }
+
+.bookpage__foot {
+  margin-top: auto; padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; gap: var(--space-4);
+  font-size: .78rem; color: var(--text-muted);
+}
+
+@media print {
+  /*
+    UNE fiche par feuille. Sans cette cassure, deux fiches se partagent une
+    page et le book cesse de se feuilleter — c'est toute la raison d'être de
+    la forme « une page par produit ».
+  */
+  .bookpage {
+    box-shadow: none;
+    border-radius: 0;
+    padding: 0;
+    margin: 0;
+    min-height: 0;
+    break-after: page;
+    page-break-after: always;
+  }
+  .bookpage:last-child { break-after: auto; page-break-after: auto; }
+
+  /* Au tirage, les aplats coûtent de l'encre pour rien : seuls le trait et le
+     gras portent l'information. */
+  .bookpage__block { border-color: #000; }
+  .bookpage__block--allergens { background: none; border-width: 2px; }
+  .bookpage__name, .bookpage__value, .bookpage__text { color: #000; }
+  .bookpage__label, .bookpage__foot, .bookpage__aka-item { color: #333; }
+  .bookpage__text--todo { color: #000; }
+}

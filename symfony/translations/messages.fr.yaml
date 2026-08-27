@@ -207,6 +207,19 @@ produce:
     labelsTruncated: 'Planche limitée à %printed% étiquettes : %missing% n''ont pas été imprimées. Vérifiez le seuil du produit, puis relancez l''impression.'
 
 admin:
+    book:
+        ingredients: 'Ingrédients'
+        allergens: 'Allergènes'
+        shelfLife: 'Durée de vie'
+        unit: 'Unité'
+        title: 'Book produit'
+        empty: 'Aucun produit en vente : le book serait vide.'
+        toFill: 'à renseigner'
+        days: '%n% jour(s)'
+        code: 'Code'
+        madeOf: 'Composition'
+        printedBy: 'Édité par %who%'
+        open: 'Imprimer le book'
     translate:
         button: 'Traduire'
         hint: 'Complète les langues VIDES à partir de celle affichée. Une traduction déjà écrite n''est jamais remplacée : pour la refaire, videz le champ dans la langue concernée.'

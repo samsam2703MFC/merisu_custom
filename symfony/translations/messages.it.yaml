@@ -204,6 +204,19 @@ produce:
     labelsTruncated: 'Foglio limitato a %printed% etichette: %missing% non sono state stampate. Verifica la soglia del prodotto, poi rilancia la stampa.'
 
 admin:
+    book:
+        ingredients: 'Ingredienti'
+        allergens: 'Allergeni'
+        shelfLife: 'Durata'
+        unit: 'Unità'
+        title: 'Book prodotti'
+        empty: 'Nessun prodotto in vendita: il book sarebbe vuoto.'
+        toFill: 'da compilare'
+        days: '%n% giorno/i'
+        code: 'Codice'
+        madeOf: 'Composizione'
+        printedBy: 'Stampato da %who%'
+        open: 'Stampa il book'
     translate:
         button: 'Traduci'
         hint: 'Completa le lingue VUOTE a partire da quella visualizzata. Una traduzione già scritta non viene mai sostituita: per rifarla, svuota il campo nella lingua interessata.'
