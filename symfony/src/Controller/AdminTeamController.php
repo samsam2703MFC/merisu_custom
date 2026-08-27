@@ -58,6 +58,10 @@ final class AdminTeamController extends AbstractController
             // Boutiques déjà citées, proposées en autocomplétion : sans elles,
             // « Merisù Centrum » finirait écrit de trois façons différentes.
             'shops' => $this->boutiquesConnues(),
+            // Les FICHES, et non les noms : le rattachement d'un poste vise un
+            // identifiant, là où le champ libre des consultants ne manipule
+            // que du texte.
+            'shopList' => $this->shops->all(),
             // Les tuiles du menu, proposées à cocher. Une liste FERMÉE : elles
             // correspondent aux écrans du poste, et il n'y a rien à y inventer.
             'tiles' => TaskTile::all(),
@@ -208,8 +212,16 @@ final class AdminTeamController extends AbstractController
 
         $identifiant = $id === 'nouveau' ? Store::uuid() : $id;
 
+        // La BOUTIQUE du poste, vérifiée contre les fiches existantes : un
+        // identifiant forgé rattacherait le poste à une boutique qui n'existe
+        // pas, et ses relevés disparaîtraient de tous les écrans filtrés sans
+        // que rien ne l'explique.
+        $boutique = trim((string) $request->request->get('shopId', ''));
+        $connues = array_map(static fn ($b): string => $b->id, $this->shops->all());
+        $boutique = \in_array($boutique, $connues, true) ? $boutique : '';
+
         $this->team->saveWorkstation(
-            new Workstation($identifiant, $nom, $request->request->getBoolean('active')),
+            new Workstation($identifiant, $nom, $request->request->getBoolean('active'), $boutique),
             max(0, (int) $request->request->get('sortOrder', 0)),
         );
 

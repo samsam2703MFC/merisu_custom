@@ -474,6 +474,9 @@ admin:
         unreachable: 'Kasa niedostępna.'
         badAnswer: 'Nieczytelna odpowiedź kasy: nic nie zostało pobrane.'
     team:
+        workstationShop: 'Sklep stanowiska'
+        workstationNoShop: '— nieprzypisane —'
+        workstationShopHint: 'Liczenia, progi i delta są przypisane do stanowiska; sprzedaż do sklepu. To powiązanie pozwala je porównać. Bez niego odczyty tego stanowiska nie wchodzą do żadnej liczby per sklep.'
         tiles: 'Dozwolone zadania'
         tilesHint: 'Żadne pole niezaznaczone = wszystkie zadania. Zaznaczenie ogranicza: menu stanowiska pokazuje tylko te, a pozostałe są odrzucane nawet po wpisaniu adresu. Aby całkowicie odsunąć osobę, odznacz „Aktywny” na górze karty.'
         title: 'Zespół'

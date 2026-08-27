@@ -253,6 +253,31 @@
           <input class="field__input" type="text" id="wsn-{{ poste.id }}" name="name" value="{{ poste.name }}">
         </div>
 
+        {#
+          La BOUTIQUE du poste — le chaînon qui manquait.
+
+          Les comptages, les plans figés, les seuils et le delta technique sont
+          rattachés à un POSTE ; les ventes, à une BOUTIQUE. Sans ce lien, un
+          réseau de trois boutiques ne pouvait comparer aucun de ces chiffres à
+          ses ventes.
+
+          « Non rattaché » reste possible et n'est pas une faute : une
+          installation d'une seule boutique n'a jamais eu à le dire. Les écrans
+          qui filtrent le signalent plutôt que de faire disparaître ses relevés.
+        #}
+        <div class="field">
+          <label class="field__label" for="wss-{{ poste.id }}">{{ 'admin.team.workstationShop'|trans }}</label>
+          <select class="field__input" id="wss-{{ poste.id }}" name="shopId">
+            <option value="">{{ 'admin.team.workstationNoShop'|trans }}</option>
+            {% for boutique in shopList %}
+              <option value="{{ boutique.id }}" {{ boutique.id == poste.shopId ? 'selected' : '' }}>
+                {{ boutique.name }}
+              </option>
+            {% endfor %}
+          </select>
+          <p class="field__hint">{{ 'admin.team.workstationShopHint'|trans }}</p>
+        </div>
+
         <div class="form-actions">
           <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
           <button type="submit" class="button button--ghost" form="delete-ws-{{ poste.id }}"

@@ -474,6 +474,9 @@ admin:
         unreachable: 'Caja inaccesible.'
         badAnswer: 'Respuesta ilegible de la caja: no se ha recuperado nada.'
     team:
+        workstationShop: 'Tienda del puesto'
+        workstationNoShop: '— sin asignar —'
+        workstationShopHint: 'Los recuentos, los umbrales y el delta están ligados al puesto; las ventas a la tienda. Es este vínculo lo que permite compararlos. Sin él, las lecturas de este puesto no entran en ninguna cifra por tienda.'
         tiles: 'Tareas permitidas'
         tilesHint: 'Ninguna casilla marcada = todas las tareas. Marcar restringe: el menú del puesto solo muestra estas, y las demás se rechazan incluso escribiendo su dirección. Para excluir del todo a alguien, desmarca «Activo» en la parte superior de la ficha.'
         title: 'Equipo'

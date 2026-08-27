@@ -474,6 +474,9 @@ admin:
         unreachable: 'Cassa irraggiungibile.'
         badAnswer: 'Risposta illeggibile dalla cassa: non è stato ripreso nulla.'
     team:
+        workstationShop: 'Punto vendita della postazione'
+        workstationNoShop: '— non collegata —'
+        workstationShopHint: 'I conteggi, le soglie e il delta sono legati alla postazione; le vendite al punto vendita. È questo legame che permette di confrontarli. Senza, i rilievi di questa postazione non entrano in nessuna cifra per punto vendita.'
         tiles: 'Attività consentite'
         tilesHint: 'Nessuna casella spuntata = tutte le attività. Spuntare limita: il menu della postazione mostra solo queste, e le altre vengono rifiutate anche digitandone l''indirizzo. Per escludere del tutto una persona, togli la spunta a «Attivo» in cima alla scheda.'
         title: 'Squadra'

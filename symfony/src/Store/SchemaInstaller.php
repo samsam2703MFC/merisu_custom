@@ -90,10 +90,14 @@ final class SchemaInstaller
         */
         if (!\in_array('inv_workstation', $existing, true)) {
             $t = $schema->createTable('inv_workstation');
+            // La BOUTIQUE du poste. C'est ce lien qui permet de comparer un
+            // comptage — rattaché au poste — aux ventes, rattachées à la
+            // boutique.
             $t->addColumn('id', 'string', ['length' => 64]);
             $t->addColumn('name', 'string', ['length' => 128]);
             $t->addColumn('active', 'boolean', ['default' => true]);
             $t->addColumn('sort_order', 'integer', ['default' => 0]);
+            $t->addColumn('shop_id', 'string', ['length' => 64, 'default' => '']);
             $t->setPrimaryKey(['id']);
         }
 
@@ -900,6 +904,13 @@ final class SchemaInstaller
                 // Ajoutée en même temps que celle des produits : une base
                 // installée avant n'a que des rayons de composition.
                 'nature' => "VARCHAR(16) DEFAULT 'COMPOSED' NOT NULL",
+            ],
+            'inv_workstation' => [
+                // Ajoutée pour le réseau : sans elle, un comptage — rattaché
+                // au poste — ne pouvait se comparer aux ventes, rattachées à
+                // la boutique. Vide sur une base en service : le poste n'est
+                // rattaché à rien, et les écrans le disent.
+                'shop_id' => "VARCHAR(64) DEFAULT '' NOT NULL",
             ],
             'inv_consultant' => [
                 // Tuiles du menu ouvertes à cette personne.

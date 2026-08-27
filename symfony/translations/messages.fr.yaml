@@ -477,6 +477,9 @@ admin:
         unreachable: 'Caisse injoignable.'
         badAnswer: 'Réponse illisible de la caisse : rien n''a été repris.'
     team:
+        workstationShop: 'Boutique du poste'
+        workstationNoShop: '— non rattaché —'
+        workstationShopHint: 'Les comptages, les seuils et le delta sont rattachés au poste ; les ventes à la boutique. C''est ce lien qui permet de les comparer. Sans lui, les relevés de ce poste n''entrent dans aucun chiffre par boutique.'
         tiles: 'Tâches autorisées'
         tilesHint: 'Aucune case cochée = toutes les tâches. Cocher restreint : le menu du poste ne montre plus que celles-ci, et les autres sont refusées même par leur adresse. Pour écarter quelqu''un tout à fait, décochez « Actif » en haut de la fiche.'
         title: 'Équipe'

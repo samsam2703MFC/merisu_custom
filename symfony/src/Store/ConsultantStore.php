@@ -42,6 +42,7 @@ final class ConsultantStore
                 (string) $r['id'],
                 (string) $r['name'],
                 (bool) $r['active'],
+                (string) ($r['shop_id'] ?? ''),
             ),
             $this->db->fetchAllAssociative($sql),
         );
@@ -51,12 +52,22 @@ final class ConsultantStore
     {
         $r = $this->db->fetchAssociative('SELECT * FROM inv_workstation WHERE id = ?', [$id]);
 
-        return $r === false ? null : new Workstation((string) $r['id'], (string) $r['name'], (bool) $r['active']);
+        return $r === false ? null : new Workstation(
+            (string) $r['id'],
+            (string) $r['name'],
+            (bool) $r['active'],
+            (string) ($r['shop_id'] ?? ''),
+        );
     }
 
     public function saveWorkstation(Workstation $poste, int $sortOrder = 0): void
     {
-        $data = ['name' => $poste->name, 'active' => $poste->active ? 1 : 0, 'sort_order' => $sortOrder];
+        $data = [
+            'name' => $poste->name,
+            'active' => $poste->active ? 1 : 0,
+            'sort_order' => $sortOrder,
+            'shop_id' => $poste->shopId,
+        ];
 
         if ($this->db->update('inv_workstation', $data, ['id' => $poste->id]) === 0) {
             $this->db->insert('inv_workstation', $data + ['id' => $poste->id]);
