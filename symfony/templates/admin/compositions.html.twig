@@ -258,6 +258,7 @@
                   <th scope="col">{{ 'admin.compositions.unitPrice'|trans }}</th>
                   <th scope="col">{{ 'common.quantity'|trans }}</th>
                   <th scope="col">{{ 'admin.compositions.lineCost'|trans }}</th>
+                  <th scope="col">{{ 'admin.compositions.lineShare'|trans }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -283,16 +284,31 @@
                   bouclait ; le résultat n'aurait été qu'un chiffre absurde,
                   ce qui est pire qu'une erreur bruyante.
                 #}
-                {% for material in components|filter(m => m.id != product.id) %}
-                  {% if loop.first or material.nature != components[loop.index0 - 1].nature %}
+                {#
+                  Un groupe par NATURE, en boucle explicite.
+
+                  L'intertitre se posait en comparant chaque ligne à la
+                  précédente — dans la liste NON filtrée, alors que la boucle
+                  parcourait la filtrée. Les index ne coïncidaient plus et
+                  « Matière première » réapparaissait au milieu de ses propres
+                  lignes, comme si un second groupe commençait.
+
+                  Boucler sur les natures supprime l'arithmétique d'index :
+                  chaque groupe est constitué avant d'être écrit, donc il ne
+                  peut plus se scinder.
+                #}
+                {% for nature in natures %}
+                  {% set groupe = components|filter(m => m.id != product.id and m.nature == nature) %}
+
+                  {% if groupe is not empty %}
                     <tr class="rcp__group">
-                      <th colspan="4" scope="colgroup">
-                        {{ ui.icon(material.nature.icon) }}
-                        {{ ('admin.products.natures.' ~ material.nature.value)|trans }}
+                      <th colspan="5" scope="colgroup">
+                        {{ ui.icon(nature.icon) }}
+                        {{ ('admin.products.natures.' ~ nature.value)|trans }}
                       </th>
                     </tr>
-                  {% endif %}
 
+                  {% for material in groupe %}
                   {% set qty = recette[material.id] ?? null %}
                   {% set uc = unitCosts[material.id]|default(null) %}
                   {% set uPrice = uc and uc.complete and uc.total > 0 ? uc.total : null %}
@@ -333,7 +349,26 @@
                         <strong>{{ (qty * uPrice)|qty }}</strong>
                       {% else %}—{% endif %}
                     </td>
+
+                    {#
+                      Ce que cette ligne pèse DANS la recette.
+
+                      Le coût en euros dit peu tant qu'on ne sait pas s'il fait
+                      deux pour cent du total ou soixante. C'est cette part qui
+                      désigne l'ingrédient à renégocier — et elle se lit d'un
+                      coup d'œil, là où comparer douze montants entre eux
+                      demande de les additionner de tête.
+                    #}
+                    <td class="rcp__share">
+                      {% set fiche = costs[product.id]|default(null) %}
+                      {% set total = fiche and fiche.total > 0 ? fiche.total : 0 %}
+                      {% if qty is not null and uPrice is not null and total > 0 %}
+                        {{ ((qty * uPrice) / total * 100)|round(1) }} %
+                      {% else %}—{% endif %}
+                    </td>
                   </tr>
+                  {% endfor %}
+                  {% endif %}
                 {% endfor %}
               </tbody>
             </table>
@@ -353,51 +388,150 @@
           posé dans le tableau. Hors du formulaire d'enregistrement : deux
           formulaires imbriqués ne sont pas du HTML valable.
         #}
-        <details class="rcp-add-component">
-          <summary>{{ ui.icon('plus') }} <span>{{ 'admin.compositions.addComponent'|trans }}</span></summary>
+        {#
+          Ajouter un ingrédient : on le CHERCHE, on ne le fait pas défiler.
 
-          <form method="post" action="{{ path('admin_component_create') }}" class="form">
-            <input type="hidden" name="ouvrir" value="{{ product.id }}">
+          La maison porte trente matières ; en trouver une dans le tableau
+          revenait à le parcourir. Ici on choisit la nature — elle borne la
+          recherche à une liste courte — puis on tape le nom, que le navigateur
+          filtre à la frappe. `<datalist>` fait cette recherche NATIVEMENT :
+          pas une ligne de JavaScript, comme le reste du module.
 
-            <div class="field-grid">
-              <div class="field">
-                <label class="field__label" for="cmp-name-{{ product.id }}">{{ 'admin.compositions.componentName'|trans }}</label>
-                <input class="field__input" type="text" id="cmp-name-{{ product.id }}" name="name"
-                       maxlength="190" required>
+          Les deux volets vivent dans le même formulaire, montrés l'un ou
+          l'autre par `:checked ~`. Leurs champs portent donc des noms
+          DIFFÉRENTS : à nom égal, le champ caché — vide — écraserait celui
+          qu'on vient de remplir. Le bouton radio, qui sert déjà à montrer le
+          bon volet, désigne aussi le bon champ.
+        #}
+        <details class="rcp-add">
+          <summary class="rcp-add__summary">
+            {{ ui.icon('plus') }} <span>{{ 'admin.compositions.addComponent'|trans }}</span>
+          </summary>
+
+          <div class="rcp-add__body">
+            <form method="post" action="{{ path('admin_composition_add_line', { id: product.id }) }}" class="form pick">
+              <input class="pick__radio" type="radio" name="nature" value="RAW"
+                     id="pick-raw-{{ product.id }}" checked>
+              <input class="pick__radio" type="radio" name="nature" value="PACKAGING"
+                     id="pick-pack-{{ product.id }}">
+
+              <div class="pick__bar" role="group">
+                <label class="pick__tab" for="pick-raw-{{ product.id }}">
+                  {{ ui.icon('nature-raw') }} {{ 'admin.products.natures.RAW'|trans }}
+                </label>
+                <label class="pick__tab" for="pick-pack-{{ product.id }}">
+                  {{ ui.icon('nature-packaging') }} {{ 'admin.products.natures.PACKAGING'|trans }}
+                </label>
               </div>
-              <div class="field">
-                <label class="field__label" for="cmp-unit-{{ product.id }}">{{ 'admin.products.unit'|trans }}</label>
-                <input class="field__input" type="text" id="cmp-unit-{{ product.id }}" name="unit"
-                       maxlength="16" value="kg">
-              </div>
-            </div>
 
-            <div class="field-grid">
-              <fieldset class="field seg">
-                <legend class="field__label">{{ 'admin.products.nature'|trans }}</legend>
-                <div class="seg__grid seg__grid--auto">
-                  <label class="seg__item">
-                    <input class="seg__radio" type="radio" name="nature" value="RAW" checked>
-                    <span class="seg__box">{{ ui.icon('nature-raw') }}<span class="seg__name">{{ 'admin.products.natures.RAW'|trans }}</span></span>
-                  </label>
-                  <label class="seg__item">
-                    <input class="seg__radio" type="radio" name="nature" value="PACKAGING">
-                    <span class="seg__box">{{ ui.icon('nature-packaging') }}<span class="seg__name">{{ 'admin.products.natures.PACKAGING'|trans }}</span></span>
-                  </label>
+              {% for nature in ['RAW', 'PACKAGING'] %}
+                {% set choix = components|filter(m => m.nature.value == nature) %}
+                <section class="pick__panel">
+                  {% if choix is empty %}
+                    <p class="field__hint">{{ 'admin.compositions.pickNone'|trans }}</p>
+                  {% else %}
+                    <div class="field-grid">
+                      <div class="field">
+                        <label class="field__label" for="pick-{{ nature }}-{{ product.id }}">
+                          {{ 'admin.compositions.pickSearch'|trans }}
+                        </label>
+                        <input class="field__input" type="text"
+                               id="pick-{{ nature }}-{{ product.id }}"
+                               name="{{ nature == 'RAW' ? 'pickRaw' : 'pickPackaging' }}"
+                               list="dl-{{ nature }}-{{ product.id }}"
+                               autocomplete="off"
+                               placeholder="{{ 'admin.compositions.pickPlaceholder'|trans }}">
+                        {#
+                          La liste porte le libellé de la LANGUE COURANTE ; le
+                          serveur, lui, accepte les quatre. Le vendeur polonais
+                          tape le sien même si l'écran est en français.
+                        #}
+                        <datalist id="dl-{{ nature }}-{{ product.id }}">
+                          {% for m in choix %}
+                            <option value="{{ product_label(m) }}">{{ m.unit }}</option>
+                          {% endfor %}
+                        </datalist>
+                        <p class="field__hint">{{ 'admin.compositions.pickHint'|trans }}</p>
+                      </div>
+
+                      <div class="field">
+                        <label class="field__label" for="pickqty-{{ nature }}-{{ product.id }}">
+                          {{ 'common.quantity'|trans }}
+                        </label>
+                        {#
+                          La quantité porte elle aussi un nom PAR VOLET.
+
+                          À nom égal, le champ du volet caché — vide — écrasait
+                          celui qu'on venait de remplir, et l'écran répondait
+                          « indiquez une quantité » à qui venait d'en saisir une.
+                        #}
+                        <input class="field__input" type="number" min="0" step="any" inputmode="decimal"
+                               id="pickqty-{{ nature }}-{{ product.id }}"
+                               name="{{ nature == 'RAW' ? 'qtyRaw' : 'qtyPackaging' }}" placeholder="0">
+                      </div>
+                    </div>
+                  {% endif %}
+                </section>
+              {% endfor %}
+
+              <div class="form-actions">
+                <button type="submit" class="button button--secondary">
+                  {{ 'admin.compositions.pickAdd'|trans }}
+                </button>
+              </div>
+            </form>
+
+            {#
+              Créer une matière qui n'existe pas encore — replié, parce que
+              c'est le geste rare : on choisit presque toujours dans la liste.
+            #}
+            <details class="rcp-add__new">
+              <summary>{{ 'admin.compositions.componentMissing'|trans }}</summary>
+
+              <form method="post" action="{{ path('admin_component_create') }}" class="form">
+                <input type="hidden" name="ouvrir" value="{{ product.id }}">
+
+                <div class="field-grid">
+                  <div class="field">
+                    <label class="field__label" for="cmp-name-{{ product.id }}">{{ 'admin.compositions.componentName'|trans }}</label>
+                    <input class="field__input" type="text" id="cmp-name-{{ product.id }}" name="name"
+                           maxlength="190" required>
+                  </div>
+                  <div class="field">
+                    <label class="field__label" for="cmp-unit-{{ product.id }}">{{ 'admin.products.unit'|trans }}</label>
+                    <input class="field__input" type="text" id="cmp-unit-{{ product.id }}" name="unit"
+                           maxlength="16" value="kg">
+                  </div>
                 </div>
-              </fieldset>
-              <div class="field">
-                <label class="field__label" for="cmp-cost-{{ product.id }}">{{ 'admin.compositions.componentCost'|trans }}</label>
-                <input class="field__input" type="number" min="0" step="any" inputmode="decimal"
-                       id="cmp-cost-{{ product.id }}" name="unitCost" placeholder="0">
-                <p class="field__hint">{{ 'admin.compositions.componentCostHint'|trans }}</p>
-              </div>
-            </div>
 
-            <div class="form-actions">
-              <button type="submit" class="button button--secondary">{{ 'admin.compositions.componentAdd'|trans }}</button>
-            </div>
-          </form>
+                <div class="field-grid">
+                  <fieldset class="field seg">
+                    <legend class="field__label">{{ 'admin.products.nature'|trans }}</legend>
+                    <div class="seg__grid seg__grid--auto">
+                      <label class="seg__item">
+                        <input class="seg__radio" type="radio" name="nature" value="RAW" checked>
+                        <span class="seg__box">{{ ui.icon('nature-raw') }}<span class="seg__name">{{ 'admin.products.natures.RAW'|trans }}</span></span>
+                      </label>
+                      <label class="seg__item">
+                        <input class="seg__radio" type="radio" name="nature" value="PACKAGING">
+                        <span class="seg__box">{{ ui.icon('nature-packaging') }}<span class="seg__name">{{ 'admin.products.natures.PACKAGING'|trans }}</span></span>
+                      </label>
+                    </div>
+                  </fieldset>
+                  <div class="field">
+                    <label class="field__label" for="cmp-cost-{{ product.id }}">{{ 'admin.compositions.componentCost'|trans }}</label>
+                    <input class="field__input" type="number" min="0" step="any" inputmode="decimal"
+                           id="cmp-cost-{{ product.id }}" name="unitCost" placeholder="0">
+                    <p class="field__hint">{{ 'admin.compositions.componentCostHint'|trans }}</p>
+                  </div>
+                </div>
+
+                <div class="form-actions">
+                  <button type="submit" class="button button--ghost">{{ 'admin.compositions.componentAdd'|trans }}</button>
+                </div>
+              </form>
+            </details>
+          </div>
         </details>
 
         {#

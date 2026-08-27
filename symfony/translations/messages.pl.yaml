@@ -642,10 +642,20 @@ admin:
         perUnit: 'Zapisane, na sztukę'
         unitPrice: 'Cena / jedn.'
         lineCost: 'Koszt pozycji'
+        lineShare: '% receptury'
         yield: 'Na ile sztuk'
         yieldHint: 'Kuchnia myśli wsadami: wpisz „4” mleka na „20” porcji, aplikacja przeliczy na sztukę. Zostaw 1, jeśli ilości są już na %unit%.'
         howto: "Aby usunąć składnik, wyczyść jego ilość. Aby dodać, wpisz ilość w jego wierszu — brakujący surowiec utwórz najpierw w"
         addComponent: "Dodaj surowiec lub opakowanie"
+        pickSearch: "Szukaj"
+        pickPlaceholder: "Wpisz pierwsze litery…"
+        pickHint: "Lista filtruje się podczas pisania. Nazwa działa we wszystkich czterech językach."
+        pickAdd: "Dodaj do receptury"
+        pickNone: "Nic nie wprowadzono w tej kategorii."
+        pickEmpty: "Wybierz składnik z listy."
+        pickUnknown: "Ten składnik nie istnieje w tej kategorii."
+        pickNoQty: "Podaj ilość."
+        componentMissing: "Składnik jeszcze nie istnieje?"
         componentName: "Nazwa"
         componentCost: "Cena zakupu, za jednostkę"
         componentCostHint: "Ile kosztuje jednostka przy zakupie. 0, jeśli jeszcze nie wiesz."

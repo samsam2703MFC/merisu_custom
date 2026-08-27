@@ -642,10 +642,20 @@ admin:
         perUnit: 'Registrato, per unità'
         unitPrice: 'Prezzo / unità'
         lineCost: 'Costo della riga'
+        lineShare: '% ricetta'
         yield: 'Per quante unità'
         yieldHint: 'Il laboratorio ragiona a infornate: inserisci « 4 » di latte per « 20 » porzioni, l''applicazione riporta all''unità. Lascia 1 se le quantità sono già per %unit%.'
         howto: "Per togliere un ingrediente, svuota la sua quantità. Per aggiungerne uno, inserisci la quantità sulla sua riga — una materia assente dall'elenco si crea prima in"
         addComponent: "Aggiungi una materia prima o un imballaggio"
+        pickSearch: "Cerca"
+        pickPlaceholder: "Digita le prime lettere…"
+        pickHint: "L'elenco si filtra mentre scrivi. Il nome funziona nelle quattro lingue."
+        pickAdd: "Aggiungi alla ricetta"
+        pickNone: "Nulla di registrato in questa natura."
+        pickEmpty: "Scegli un ingrediente dall'elenco."
+        pickUnknown: "Questo ingrediente non esiste in questa natura."
+        pickNoQty: "Indica una quantità."
+        componentMissing: "L'ingrediente non esiste ancora?"
         componentName: "Nome"
         componentCost: "Prezzo d'acquisto, per unità"
         componentCostHint: "Quanto costa un'unità all'acquisto. 0 se non lo sai ancora."

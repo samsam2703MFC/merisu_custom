@@ -457,6 +457,145 @@ final class AdminCompositionController extends AbstractController
     }
 
     /**
+     * Ajoute UNE ligne à une composition, choisie dans la liste existante.
+     *
+     * ── Chercher plutôt que faire défiler
+     *
+     * Le tableau porte toutes les matières de la maison ; en trouver une
+     * revenait à parcourir trente lignes. On la cherche donc par son nom, dans
+     * une liste native que le navigateur filtre à la frappe — sans une ligne de
+     * JavaScript, comme le reste du module.
+     *
+     * ── Le rapprochement se fait dans TOUTES les langues
+     *
+     * Une matière porte quatre libellés ; le vendeur polonais tape le sien,
+     * l'écran est en français. Refuser sa saisie parce qu'elle ne correspond
+     * pas au libellé affiché aurait fait d'un module multilingue un module
+     * français avec des traductions d'affichage.
+     *
+     * ── La NATURE choisie borne la recherche
+     *
+     * « Emballage » ne cherche pas parmi les matières : deux listes courtes
+     * valent mieux qu'une longue, et le choix de nature dit déjà ce qu'on
+     * cherche. Il borne donc la recherche plutôt que de la décorer.
+     */
+    #[Route('/{id}/ligne', name: 'admin_composition_add_line', methods: ['POST'], priority: 5)]
+    public function addLine(Request $request, string $id): Response
+    {
+        $admin = $this->currentUser->requireAdmin();
+
+        $produit = $this->store->product($id);
+        if ($produit === null || !$produit->nature->canHaveRecipe()) {
+            throw $this->createNotFoundException('PRODUCT_NOT_FOUND');
+        }
+
+        $nature = $request->request->get('nature') === ProductNature::Packaging->value
+            ? ProductNature::Packaging
+            : ProductNature::Raw;
+
+        /*
+          Deux champs, un par nature, et c'est la nature qui dit lequel lire.
+
+          Le volet caché reste dans le formulaire — sans JavaScript on ne peut
+          pas le retirer — et son champ vide écraserait l'autre s'ils portaient
+          le même nom. Chacun a donc le sien, et le bouton radio, qui sert déjà
+          à montrer le bon volet, désigne aussi le bon champ.
+        */
+        $saisie = trim((string) $request->request->get(
+            $nature === ProductNature::Packaging ? 'pickPackaging' : 'pickRaw',
+            '',
+        ));
+
+        // Même règle que pour le nom : un champ par volet, et la nature dit
+        // lequel lire. Le volet caché reste dans le formulaire.
+        $quantite = (float) str_replace(',', '.', (string) $request->request->get(
+            $nature === ProductNature::Packaging ? 'qtyPackaging' : 'qtyRaw',
+            '0',
+        ));
+
+        $retour = ['ouvrir' => $id];
+
+        if ($saisie === '') {
+            $this->addFlash('error', 'admin.compositions.pickEmpty');
+
+            return $this->redirectToRoute('admin_compositions', $retour);
+        }
+
+        $matiere = $this->resolveComponent($saisie, $nature);
+
+        if ($matiere === null) {
+            $this->addFlash('error', 'admin.compositions.pickUnknown');
+
+            return $this->redirectToRoute('admin_compositions', $retour);
+        }
+
+        if ($quantite <= 0) {
+            $this->addFlash('error', 'admin.compositions.pickNoQty');
+
+            return $this->redirectToRoute('admin_compositions', $retour);
+        }
+
+        /*
+          On AJOUTE, sans toucher au reste.
+
+          `replaceRecipe` écrit la composition entière : la relire d'abord est
+          ce qui distingue « ajouter une ligne » de « ne garder que celle-ci ».
+        */
+        $lignes = [];
+        foreach ($this->store->recipeLines([$id]) as $ligne) {
+            $lignes[$ligne->materialId] = $ligne->qtyPerUnit;
+        }
+
+        $lignes[$matiere->id] = $quantite;
+
+        $this->store->replaceRecipe($id, $lignes);
+        $this->store->audit($admin->id, $admin->role->value, 'RECIPE_LINE_ADDED', null, null, [
+            'productId' => $id,
+            'materialId' => $matiere->id,
+            'qty' => $quantite,
+        ]);
+
+        $this->addFlash('success', 'common.saved');
+
+        return $this->redirectToRoute('admin_compositions', $retour);
+    }
+
+    /**
+     * Retrouve un composant d'après ce qui a été tapé.
+     *
+     * Par le libellé dans N'IMPORTE QUELLE langue, puis par le code. Casse et
+     * espaces ignorés : c'est ainsi qu'une saisie diverge, et refuser
+     * « mascarpone » parce que la fiche dit « Mascarpone » n'aiderait personne.
+     */
+    private function resolveComponent(string $saisie, ProductNature $nature): ?Product
+    {
+        $cherche = self::flatten($saisie);
+
+        foreach ($this->store->products(activeOnly: true) as $candidat) {
+            if ($candidat->nature !== $nature) {
+                continue;
+            }
+
+            if (self::flatten($candidat->code) === $cherche) {
+                return $candidat;
+            }
+
+            foreach ($candidat->name as $libelle) {
+                if (self::flatten((string) $libelle) === $cherche) {
+                    return $candidat;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static function flatten(string $texte): string
+    {
+        return mb_strtolower(trim(preg_replace('/\s+/u', ' ', $texte) ?? $texte));
+    }
+
+    /**
      * Supprime une composition.
      *
      * Deux gestes portent le même mot, et la différence tient à ce qu'on a

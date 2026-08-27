@@ -645,10 +645,20 @@ admin:
         perUnit: 'Enregistré, par unité'
         unitPrice: 'Prix / unité'
         lineCost: 'Coût de la ligne'
+        lineShare: '% recette'
         yield: 'Pour combien d''unités'
         yieldHint: 'L''atelier pense en fournées : saisissez « 4 » de lait pour « 20 » parts, l''application ramène à l''unité. Laissez 1 si vos quantités sont déjà par %unit%.'
         howto: "Pour retirer un ingrédient, videz sa quantité. Pour en ajouter un, saisissez sa quantité sur sa ligne — une matière absente de la liste se crée d'abord dans"
         addComponent: "Ajouter une matière première ou un emballage"
+        pickSearch: "Chercher"
+        pickPlaceholder: "Tapez les premières lettres…"
+        pickHint: "La liste se filtre à la frappe. Le nom fonctionne dans les quatre langues."
+        pickAdd: "Ajouter à la recette"
+        pickNone: "Rien d'encodé dans cette nature."
+        pickEmpty: "Choisissez un ingrédient dans la liste."
+        pickUnknown: "Cet ingrédient n'existe pas dans cette nature."
+        pickNoQty: "Indiquez une quantité."
+        componentMissing: "L'ingrédient n'existe pas encore ?"
         componentName: "Nom"
         componentCost: "Prix d'achat, par unité"
         componentCostHint: "Ce que coûte une unité à l'achat. 0 si vous ne le savez pas encore."

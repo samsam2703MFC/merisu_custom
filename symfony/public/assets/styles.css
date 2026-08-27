@@ -4795,32 +4795,108 @@ select:disabled, select.field__input:disabled { background-image: url("data:imag
 /* ── Créer un ingrédient depuis l'écran Recettes ──────────────────────────
    Un volet replié sous la table : le geste est occasionnel, et déplié en
    permanence il aurait pesé plus lourd que la recette qu'il sert. */
-.rcp-add-component {
-  margin-top: var(--space-3);
+/* ── Ajouter un ingrédient à une recette ──────────────────────────────────
+   Un volet encadré, DÉTACHÉ des bords de la fiche. Il touchait le bord gauche
+   de la carte : le cadre en pointillé sortait de la zone de contenu et se
+   lisait comme un défaut d'affichage plutôt que comme un bloc. */
+.rcp-add {
+  margin: var(--space-4) 0 0;
   border: 1px dashed var(--border);
   border-radius: var(--radius);
-  padding: var(--space-3);
   background: var(--bg);
+  overflow: hidden;
 }
-.rcp-add-component > summary {
+.rcp-add__summary {
   display: flex;
   align-items: center;
   gap: var(--space-2);
   min-height: var(--touch);
+  padding: 0 var(--space-3);
   cursor: pointer;
   font-weight: 600;
   color: var(--brand);
   list-style: none;
 }
-.rcp-add-component > summary::-webkit-details-marker { display: none; }
+.rcp-add__summary::-webkit-details-marker { display: none; }
+
 /* L'icône SANS taille explicite prenait toute la largeur de son conteneur :
    un « + » de trois cents pixels au milieu de la fiche. */
-.rcp-add-component > summary .icon {
-  width: 20px;
-  height: 20px;
-  flex: 0 0 auto;
+.rcp-add__summary .icon { width: 20px; height: 20px; flex: 0 0 auto; }
+
+.rcp-add__body { padding: 0 var(--space-3) var(--space-3); }
+
+.rcp-add__new {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-soft);
 }
-.rcp-add-component > form { margin-top: var(--space-3); }
+.rcp-add__new > summary {
+  min-height: var(--touch);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: .85rem;
+}
+
+/* ── Le sélecteur : deux volets, un par nature ────────────────────────────
+   Les volets sont des <section> et la barre un <div> : `nth-of-type` compte
+   parmi les frères DE MÊME TYPE, et une barre en <div> occupait la place du
+   premier volet — le sélecteur s'affichait vide.
+   Les boutons radio servent DEUX fois : ils montrent le bon volet, et leur
+   valeur part au serveur pour dire quel champ lire. Sans JavaScript, le volet
+   caché reste dans le formulaire — c'est pourquoi ses champs portent un autre
+   nom, faute de quoi son champ vide écraserait celui qu'on vient de remplir. */
+.pick__radio { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+.pick__bar {
+  display: flex;
+  gap: var(--space-1);
+  margin-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border-soft);
+}
+.pick__tab {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--touch);
+  padding: 0 var(--space-3);
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-size: .85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.pick__tab .icon { width: 16px; height: 16px; flex: 0 0 auto; }
+
+@media (max-width: 400px) {
+  /* Deux onglets côte à côte débordaient de 21 px à 320 : « Matière première »
+     ne tient pas sur un rang à cette largeur. Ils se partagent la ligne et le
+     libellé passe à la ligne plutôt que de sortir de la carte. */
+  .pick__bar { display: grid; grid-template-columns: 1fr 1fr; }
+  .pick__tab { padding: 0 var(--space-2); white-space: normal; font-size: .78rem; line-height: 1.2; }
+}
+
+.pick__panel { display: none; }
+
+.pick__radio:nth-of-type(1):checked ~ .pick__bar .pick__tab:nth-child(1),
+.pick__radio:nth-of-type(2):checked ~ .pick__bar .pick__tab:nth-child(2) {
+  color: var(--brand);
+  border-bottom-color: var(--brand);
+}
+.pick__radio:nth-of-type(1):checked ~ .pick__panel:nth-of-type(1),
+.pick__radio:nth-of-type(2):checked ~ .pick__panel:nth-of-type(2) { display: block; }
+
+/* Le focus se voit sur l'onglet, le radio lui-même étant invisible. */
+.pick__radio:nth-of-type(1):focus-visible ~ .pick__bar .pick__tab:nth-child(1),
+.pick__radio:nth-of-type(2):focus-visible ~ .pick__bar .pick__tab:nth-child(2) {
+  outline: 2px solid var(--brand);
+  outline-offset: -2px;
+}
+
+/* La part d'une ligne dans le coût de la recette. */
+.rcp__share { width: 1%; white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; color: var(--plum); }
 
 /* ── Gestion de production ────────────────────────────────────────────────
    La CHAÎNE du calcul : un facteur par ligne, la raison à côté du nombre.
