@@ -35,6 +35,7 @@ use Merisu\Inventory\Service\ForecastService;
 use Merisu\Inventory\Service\InventoryService;
 use Merisu\Inventory\Service\MinimumStockService;
 use Merisu\Inventory\Service\PosImportService;
+use Merisu\Inventory\Service\ReportScope;
 use Merisu\Inventory\Service\ReportService;
 use Merisu\Inventory\Service\TranslationService;
 use Merisu\Inventory\Store\Store;
@@ -52,6 +53,7 @@ final class AdminController extends AbstractController
         private readonly Store $store,
         private readonly CurrentUser $currentUser,
         private readonly ReportService $reports,
+        private readonly ReportScope $scope,
         private readonly InventoryService $inventory,
         private readonly RecipeServiceInterface $recipes,
         private readonly ConsultantServiceInterface $consultants,
@@ -957,6 +959,7 @@ final class AdminController extends AbstractController
         }
 
         $products = $this->store->products();
+        $postes = $this->scope->workstationIds($request);
 
         /*
           Deux populations, deux façons d'obtenir un minimum — d'où deux
@@ -979,7 +982,19 @@ final class AdminController extends AbstractController
             'days' => DayOfWeek::all(),
             'values' => $values,
             'productsInRows' => $request->query->get('orientation') !== 'days',
-            'computed' => $this->minimums->forWeek($fabriques, $this->inventory->today(), null),
+            /*
+              Les minimums DÉDUITS suivent la boutique.
+
+              Les seuils saisis au-dessus sont ceux du réseau — c'est le choix
+              de cet écran, et il n'a pas changé. Mais ceux qu'on DÉDUIT
+              viennent de ce qui s'est écoulé : les calculer sur trois villes
+              ne décrit aucune des trois, et l'atelier de Wrocław lisait un
+              minimum gonflé par Cracovie.
+            */
+            'computed' => $this->minimums->forWeek($fabriques, $this->inventory->today(), $postes),
+            'scopeShops' => $this->scope->shops(),
+            'scopeSelected' => $this->scope->selected($request),
+            'scopeNoWorkstation' => $postes === [],
             // Le temps ATTENDU, jour par jour : il change d'un jour à l'autre,
             // et un réglage unique pour les sept ferait produire lundi comme
             // dimanche. C'est une PRÉVISION que l'atelier saisit.
@@ -1159,6 +1174,8 @@ final class AdminController extends AbstractController
 
         [$from, $to] = $this->parsePeriod($request);
 
+        $postes = $this->scope->workstationIds($request);
+
         $materials = [];
         foreach ($this->recipes->materials() as $material) {
             $materials[$material->id] = $material;
@@ -1167,9 +1184,24 @@ final class AdminController extends AbstractController
         return $this->render('admin/delta.html.twig', [
             'from' => $from,
             'to' => $to,
-            'report' => $this->reports->delta($from, $to),
-            'matrix' => $this->reports->matrix($from, $to),
+            /*
+              Le PÉRIMÈTRE, par les POSTES.
+
+              Les comptages ne portent pas de boutique : ils portent un poste,
+              et c'est `inv_workstation.shop_id` qui fait le pont. Filtrer
+              après coup aurait laissé l'écart se calculer sur le réseau entier
+              avant d'en montrer une part, et les totaux du bas n'auraient plus
+              été la somme du haut.
+            */
+            'report' => $this->reports->delta($from, $to, $postes),
+            'matrix' => $this->reports->matrix($from, $to, $postes),
             'materials' => $materials,
+            'scopeShops' => $this->scope->shops(),
+            'scopeSelected' => $this->scope->selected($request),
+            // Une boutique choisie SANS aucun poste rattaché rend un rapport
+            // vide, qui se lit « le filtre est cassé » plutôt que « il manque
+            // un rattachement ». On le dit avant les chiffres.
+            'scopeNoWorkstation' => $postes === [],
         ]);
     }
 
@@ -1238,11 +1270,18 @@ final class AdminController extends AbstractController
 
         [$from, $to] = $this->parsePeriod($request, 13);
 
+        $postes = $this->scope->workstationIds($request);
+
         return $this->render('admin/audit.html.twig', [
             'from' => $from,
             'to' => $to,
-            'entries' => $this->store->auditEntries($from, $to),
+            // Le journal suit le même pont : un manager n'a pas à lire les
+            // gestes posés dans une boutique qui n'est pas la sienne.
+            'entries' => $this->store->auditEntries($from, $to, $postes),
             'workstations' => $this->consultants->workstations(),
+            'scopeShops' => $this->scope->shops(),
+            'scopeSelected' => $this->scope->selected($request),
+            'scopeNoWorkstation' => $postes === [],
             'today' => $this->inventory->today(),
         ]);
     }

@@ -313,6 +313,30 @@
         </p>
       </section>
 
+      {#
+        Le sélecteur porte sur les minimums DÉDUITS seulement.
+
+        Les seuils saisis plus haut sont ceux du réseau — c'est le choix de cet
+        écran. Ceux d'en dessous se déduisent de ce qui s'est écoulé, et trois
+        villes additionnées ne décrivent aucune des trois. Le filtre est donc
+        posé ICI, contre les chiffres qu'il change, et non en tête de page où
+        il aurait paru gouverner aussi la grille de saisie.
+      #}
+      {% if scopeShops|length > 1 %}
+        <form class="filters" method="get" action="{{ path('admin_par_matrix') }}">
+          {# L'orientation du tableau survit au filtrage : c'est un réglage de
+             lecture, et le perdre à chaque changement de boutique obligerait à
+             le reposer à chaque fois. #}
+          <input type="hidden" name="orientation" value="{{ productsInRows ? 'products' : 'days' }}">
+          {{ include('admin/_shop_filter.html.twig', { champId: 'par-shop', scopeKey: 'id' }) }}
+          <div class="filters__actions">
+            <button type="submit" class="button button--secondary">{{ 'common.apply'|trans }}</button>
+          </div>
+        </form>
+      {% endif %}
+
+      {{ include('admin/_scope_warning.html.twig') }}
+
       {% if composedProducts is empty %}
         {{ ui.banner('info', 'admin.parMatrix.noComposed'|trans) }}
       {% else %}

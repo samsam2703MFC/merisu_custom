@@ -31,6 +31,7 @@
           <label class="field__label" for="to">{{ 'admin.sales.to'|trans }}</label>
           <input class="field__input" type="date" id="to" name="to" value="{{ to }}">
         </div>
+        {{ include('admin/_shop_filter.html.twig', { champId: 'sales-shop' }) }}
       </div>
       <div class="form-actions">
         <button type="submit" class="button button--secondary">{{ 'admin.sales.show'|trans }}</button>
@@ -62,6 +63,9 @@
       <form method="post" action="{{ path('admin_sales_refresh') }}" class="form">
         <input type="hidden" name="from" value="{{ from }}">
         <input type="hidden" name="to" value="{{ to }}">
+        {# La boutique voyage avec l'actualisation : sans elle, on revenait sur
+           « toutes » après avoir cliqué, sans l'avoir demandé. #}
+        <input type="hidden" name="boutique" value="{{ scopeSelected ? scopeSelected.code : '' }}">
         <div class="form-actions">
           <button type="submit" class="button button--secondary">{{ 'admin.sales.refresh'|trans }}</button>
         </div>

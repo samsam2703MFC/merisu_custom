@@ -12,7 +12,7 @@ use Merisu\Inventory\Domain\TargetMonth;
 use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Service\InventoryService;
 use Merisu\Inventory\Store\HrStore;
-use Merisu\Inventory\Store\ShopStore;
+use Merisu\Inventory\Service\ReportScope;
 use Merisu\Inventory\Store\Store;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -46,7 +46,7 @@ final class AdminTargetController extends AbstractController
         private readonly InventoryService $inventory,
         private readonly ShopRankingServiceInterface $ranking,
         private readonly ConsultantServiceInterface $consultants,
-        private readonly ShopStore $shops,
+        private readonly ReportScope $scope,
     ) {
     }
 
@@ -270,7 +270,12 @@ final class AdminTargetController extends AbstractController
         */
         $vues = [];
 
-        foreach ($this->shops->all() as $boutique) {
+        /*
+          Restreint au PÉRIMÈTRE de la personne, et non à tout le réseau : un
+          manager qui verrait les objectifs de Varsovie dans son sélecteur
+          pourrait les ouvrir, et les réécrire.
+        */
+        foreach ($this->scope->shops() as $boutique) {
             $vues[$boutique->name] = true;
         }
 
@@ -283,9 +288,52 @@ final class AdminTargetController extends AbstractController
           l'aurait rendu invisible — des chiffres en base que plus aucun écran
           ne sait afficher.
         */
-        foreach ($this->consultants->consultants() as $consultant) {
-            foreach ($consultant->shops as $boutique) {
-                $vues[$boutique] = true;
+        /*
+          Réservés à l'ADMINISTRATEUR. Un nom historique ne correspond à
+          aucune fiche : rien ne dit à quelle boutique il appartient, donc
+          rien ne permet de décider s'il est dans le périmètre d'un manager.
+          Dans le doute, il reste à celui qui répond du réseau entier.
+        */
+        if ($this->currentUser->isAdmin()) {
+            /*
+              Les IDENTIFIANTS n'ont rien à faire dans une liste de NOMS.
+
+              Ce champ portait du texte libre ; il porte maintenant des
+              identifiants, depuis que les affectations se cochent. Reversés
+              tels quels, ils s'affichaient comme des boutiques : le sélecteur
+              proposait « shop-4 » à côté de « Wrocław Rynek », c'est-à-dire la
+              même boutique deux fois, sous deux noms dont l'un ne veut rien
+              dire pour personne.
+
+              On ne garde donc que ce qui ne se rapporte à AUCUNE fiche : le
+              vrai texte historique, celui qu'on ne peut retrouver autrement.
+            */
+            // Cette branche n'est prise que par un administrateur, dont le
+            // périmètre EST le réseau entier : pas besoin d'une seconde
+            // lecture des boutiques pour retrouver la liste complète.
+            $reseau = $this->scope->shops();
+
+            foreach ($this->consultants->consultants() as $consultant) {
+                $resolus = $consultant->shopIds($reseau);
+
+                foreach ($consultant->shops as $boutique) {
+                    $texte = trim((string) $boutique);
+
+                    if ($texte === '' || \in_array($texte, $resolus, true)) {
+                        continue;
+                    }
+
+                    // Un nom qui désigne bien une boutique est déjà dans la
+                    // liste, sous sa forme actuelle : le reverser en ferait un
+                    // doublon le jour où la boutique sera renommée.
+                    foreach ($reseau as $fiche) {
+                        if (mb_strtolower($fiche->name) === mb_strtolower($texte)) {
+                            continue 2;
+                        }
+                    }
+
+                    $vues[$texte] = true;
+                }
             }
         }
 

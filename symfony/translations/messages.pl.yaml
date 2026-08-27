@@ -707,6 +707,12 @@ admin:
         subtitle: 'Wymagana liczba sztuk w magazynie, wg dnia i produktu.'
         productsInRows: 'Produkty w wierszach'
         daysInRows: 'Dni w wierszach'
+    scope:
+        noWorkstation: 'Do tego sklepu nie przypisano żadnego stanowiska.'
+        noWorkstationHint: "Inwentaryzacje, dziennik i wyliczone minima są powiązane ze stanowiskiem pracy. Dopóki żadne stanowisko nie należy do tego sklepu, te dane pozostaną puste. Przypisz je w sekcji Zespół."
+        shop: 'Sklep'
+        allShops: 'Wszystkie moje sklepy'
+        allShopsAdmin: 'Wszystkie sklepy'
     weatherSales:
         show: 'Pokaż'
         title: 'Sprzedaż i pogoda'

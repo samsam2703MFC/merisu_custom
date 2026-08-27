@@ -7,10 +7,12 @@ namespace Merisu\Inventory\Service;
 use Merisu\Inventory\Adapter\RecipeServiceInterface;
 use Merisu\Inventory\Domain\BusinessDate;
 use Merisu\Inventory\Domain\CountMoment;
+use Merisu\Inventory\Domain\DayOfWeek;
 use Merisu\Inventory\Domain\Delta;
 use Merisu\Inventory\Domain\Locale;
 use Merisu\Inventory\Domain\NetVariance;
 use Merisu\Inventory\Domain\Product;
+use Merisu\Inventory\Domain\Production;
 use Merisu\Inventory\Store\Store;
 
 /**
@@ -113,7 +115,7 @@ final class ReportService
      *     materialsWithoutRealData: list<string>, partial: bool
      * }
      */
-    public function delta(string $from, string $to, ?string $workstationId = null): array
+    public function delta(string $from, string $to, string|array|null $workstationId = null): array
     {
         $settings = $this->store->settings();
         $plans = $this->store->plansBetween($from, $to, $workstationId);
@@ -159,7 +161,7 @@ final class ReportService
      *     products: list<Product>, cells: array<string, array<string, array<string, float|null>>>
      * }
      */
-    public function matrix(string $from, string $to, ?string $workstationId = null): array
+    public function matrix(string $from, string $to, string|array|null $workstationId = null): array
     {
         $products = $this->store->products(activeOnly: true);
         $parMatrix = $this->store->parMatrix();
@@ -169,9 +171,24 @@ final class ReportService
             'workstationId' => $workstationId,
         ]));
 
+        /*
+          Les comptages sont SOMMÉS, pas écrasés.
+
+          Cette table indexait par date × produit × moment, une seule valeur
+          par case. Sur un poste unique c'était juste. Dès qu'une boutique en
+          compte deux — un comptoir et un labo —, la seconde saisie effaçait la
+          première : le stock d'un poste s'affichait comme celui de la
+          boutique, et rien ne signalait la moitié manquante.
+
+          `null` reste distinct de zéro : une case sans comptage ne doit pas se
+          lire « il n'y avait rien », sans quoi un poste non saisi ressemble à
+          un stock épuisé.
+        */
         $index = [];
         foreach ($counts as $count) {
-            $index[$count->date][$count->productId][$count->moment->value] = $count;
+            $case = &$index[$count->date][$count->productId][$count->moment->value];
+            $case = ($case ?? 0.0) + $count->qty;
+            unset($case);
         }
 
         $days = [];
@@ -186,25 +203,59 @@ final class ReportService
                 $opening = $dayCounts[CountMoment::Open0800->value] ?? null;
                 $closing = $dayCounts[CountMoment::Close2200->value] ?? null;
 
-                $required = \Merisu\Inventory\Domain\Production::resolveRequiredPieces(
-                    $parMatrix,
-                    $product->id,
-                    $day['dayOfWeek'],
-                    $workstationId,
-                );
-
                 $cells[$product->id][$day['date']] = [
-                    'required' => $required,
-                    'opening' => $opening?->qty,
-                    'closing' => $closing?->qty,
+                    'required' => self::requiredForScope(
+                        $parMatrix,
+                        $product->id,
+                        $day['dayOfWeek'],
+                        $workstationId,
+                    ),
+                    'opening' => $opening,
+                    'closing' => $closing,
                     'net' => $opening === null || $closing === null
                         ? null
-                        : round($opening->qty - $closing->qty, 9),
+                        : round($opening - $closing, 9),
                 ];
             }
         }
 
         return ['from' => $from, 'to' => $to, 'days' => $days, 'products' => $products, 'cells' => $cells];
+    }
+
+    /**
+     * Le seuil attendu sur le PÉRIMÈTRE, et non sur un poste.
+     *
+     * Un seuil se définit par poste. Quand le rapport en couvre plusieurs — le
+     * cas dès qu'une boutique a un comptoir et un labo —, « ce qu'il faut
+     * avoir » est la SOMME de ce qu'il faut à chacun : c'est la même maille
+     * que les comptages, qu'on vient d'additionner. Comparer une somme de
+     * stocks au seuil d'un seul poste aurait annoncé un surstock permanent.
+     *
+     * @param string|list<string>|null $workstationId
+     */
+    private static function requiredForScope(
+        array $parMatrix,
+        string $productId,
+        DayOfWeek $dayOfWeek,
+        string|array|null $workstationId,
+    ): ?float {
+        if (!\is_array($workstationId)) {
+            return Production::resolveRequiredPieces($parMatrix, $productId, $dayOfWeek, $workstationId);
+        }
+
+        $total = null;
+
+        foreach ($workstationId as $poste) {
+            $seuil = Production::resolveRequiredPieces($parMatrix, $productId, $dayOfWeek, $poste);
+
+            // `null` n'est pas zéro : un poste sans seuil n'en impose aucun, et
+            // le compter pour 0 aurait dilué le seuil réel des autres.
+            if ($seuil !== null) {
+                $total = ($total ?? 0.0) + $seuil;
+            }
+        }
+
+        return $total;
     }
 
     /** Export CSV du delta technique (§6 — export CSV/Excel). */

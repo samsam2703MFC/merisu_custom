@@ -448,6 +448,43 @@ final class Store
      *
      * @return list<InventoryCount>
      */
+    /**
+     * Un filtre sur UNE valeur, ou sur PLUSIEURS.
+     *
+     * Le multiboutique a fait passer tous les filtres de « une boutique » à
+     * « celles que je pilote ». Interroger code par code aurait fait autant de
+     * requêtes que de boutiques, puis obligé à recoller les résultats dans
+     * l'ordre des dates — un tri que SQL fait déjà, et qu'on aurait refait
+     * moins bien.
+     *
+     * Une liste VIDE ne remonte RIEN, et c'est le point : elle décrit un
+     * manager sans affectation, qui ne pilote aucune boutique. La lire comme
+     * « pas de filtre » aurait ouvert le réseau entier à celui qui n'a encore
+     * rien reçu — un vide qui se transforme en tout est la façon la plus
+     * discrète dont une règle d'accès s'inverse.
+     *
+     * @param string|list<string> $value
+     *
+     * @return array{0: string, 1: list<string>}
+     */
+    private static function inClause(string $column, string|array $value): array
+    {
+        if (!\is_array($value)) {
+            return [$column . ' = ?', [$value]];
+        }
+
+        $valeurs = array_values(array_unique($value));
+
+        if ($valeurs === []) {
+            return ['1 = 0', []];
+        }
+
+        return [
+            $column . ' IN (' . implode(', ', array_fill(0, \count($valeurs), '?')) . ')',
+            $valeurs,
+        ];
+    }
+
     public function counts(array $query): array
     {
         $where = [];
@@ -466,8 +503,9 @@ final class Store
             $params[] = $query['to'];
         }
         if (isset($query['workstationId'])) {
-            $where[] = 'workstation_id = ?';
-            $params[] = $query['workstationId'];
+            [$clause, $valeurs] = self::inClause('workstation_id', $query['workstationId']);
+            $where[] = $clause;
+            $params = [...$params, ...$valeurs];
         }
         if (isset($query['moment'])) {
             $where[] = 'moment = ?';
@@ -605,14 +643,15 @@ final class Store
      *
      * @return list<ProductionPlanRow>
      */
-    public function plansBetween(string $from, string $to, ?string $workstationId = null): array
+    public function plansBetween(string $from, string $to, string|array|null $workstationId = null): array
     {
         $sql = 'SELECT * FROM inv_production_plan WHERE for_date >= ? AND for_date <= ?';
         $params = [$from, $to];
 
         if ($workstationId !== null) {
-            $sql .= ' AND workstation_id = ?';
-            $params[] = $workstationId;
+            [$clause, $valeurs] = self::inClause('workstation_id', $workstationId);
+            $sql .= ' AND ' . $clause;
+            $params = [...$params, ...$valeurs];
         }
 
         return array_map($this->hydratePlan(...), $this->db->fetchAllAssociative($sql . ' ORDER BY for_date, product_id', $params));
@@ -650,14 +689,15 @@ final class Store
     // ── Consommation réelle de matières ─────────────────────────────────────
 
     /** @return list<MaterialMovement> */
-    public function materialMovements(string $from, string $to, ?string $workstationId = null): array
+    public function materialMovements(string $from, string $to, string|array|null $workstationId = null): array
     {
         $sql = 'SELECT * FROM inv_material_movement WHERE business_date >= ? AND business_date <= ?';
         $params = [$from, $to];
 
         if ($workstationId !== null) {
-            $sql .= ' AND workstation_id = ?';
-            $params[] = $workstationId;
+            [$clause, $valeurs] = self::inClause('workstation_id', $workstationId);
+            $sql .= ' AND ' . $clause;
+            $params = [...$params, ...$valeurs];
         }
 
         $rows = $this->db->fetchAllAssociative($sql . ' ORDER BY business_date, material_id', $params);
@@ -979,14 +1019,15 @@ final class Store
     }
 
     /** @return list<AuditEntry> */
-    public function auditEntries(string $from, string $to, ?string $workstationId = null, int $limit = 300): array
+    public function auditEntries(string $from, string $to, string|array|null $workstationId = null, int $limit = 300): array
     {
         $sql = 'SELECT * FROM inv_audit WHERE (business_date IS NULL OR (business_date >= ? AND business_date <= ?))';
         $params = [$from, $to];
 
         if ($workstationId !== null) {
-            $sql .= ' AND workstation_id = ?';
-            $params[] = $workstationId;
+            [$clause, $valeurs] = self::inClause('workstation_id', $workstationId);
+            $sql .= ' AND ' . $clause;
+            $params = [...$params, ...$valeurs];
         }
 
         $rows = $this->db->fetchAllAssociative($sql . ' ORDER BY at DESC LIMIT ' . max(1, $limit), $params);
@@ -1267,9 +1308,13 @@ final class Store
     /**
      * Les ventes gardées en base, sur un intervalle.
      *
+     * @param string|list<string>|null $shopCode une boutique, plusieurs, ou
+     *                                           `null` pour ne pas filtrer —
+     *                                           une liste VIDE ne rend rien
+     *
      * @return list<PosSale>
      */
-    public function sales(string $from, string $to, ?string $shopCode = null): array
+    public function sales(string $from, string $to, string|array|null $shopCode = null): array
     {
         $sql = 'SELECT * FROM inv_sales_daily WHERE date >= ? AND date <= ?';
         $params = [$from, $to];
@@ -1277,9 +1322,11 @@ final class Store
         // Null = TOUTES les boutiques. Une chaîne vide en est une valeur
         // légitime : c'est celle des relevés faits avant que le réseau
         // n'existe, et les confondre aurait fait disparaître l'historique.
+        // Une boutique, ou toutes celles qu'on pilote.
         if ($shopCode !== null) {
-            $sql .= ' AND shop_code = ?';
-            $params[] = $shopCode;
+            [$clause, $valeurs] = self::inClause('shop_code', $shopCode);
+            $sql .= ' AND ' . $clause;
+            $params = [...$params, ...$valeurs];
         }
 
         return array_map(

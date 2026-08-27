@@ -707,6 +707,12 @@ admin:
         subtitle: 'Piezas requeridas en stock, por día y por producto.'
         productsInRows: 'Productos en filas'
         daysInRows: 'Días en filas'
+    scope:
+        noWorkstation: 'Ninguna estación está asignada a esta tienda.'
+        noWorkstationHint: "Los recuentos, el registro y los mínimos calculados pasan por la estación de trabajo. Mientras ninguna estación pertenezca a esta tienda, estas cifras quedarán vacías. Asígnalas en Equipo."
+        shop: 'Tienda'
+        allShops: 'Todas mis tiendas'
+        allShopsAdmin: 'Todas las tiendas'
     weatherSales:
         show: 'Mostrar'
         title: 'Ventas y clima'

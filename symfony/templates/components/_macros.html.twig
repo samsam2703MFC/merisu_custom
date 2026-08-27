@@ -185,7 +185,17 @@
 {% endmacro %}
 
 {# Sélecteur de période, commun aux écrans de rapport. #}
-{% macro period_filter(route, from, to) %}
+{#
+  Le filtre de période, et la boutique avec lui.
+
+  `shops` et `selected` sont PASSÉS : une macro Twig ne voit rien du contexte
+  de la page, et les lire directement rendrait un « variable inexistante » sur
+  tout écran qui appelle la macro sans être un rapport.
+
+  Une liste vide ou d'une seule boutique n'affiche aucun sélecteur : un choix
+  qui n'en est pas un fait douter, on cherche ce qu'on rate.
+#}
+{% macro period_filter(route, from, to, shops = [], selected = null) %}
   <form class="filters" method="get" action="{{ path(route) }}">
     <div class="field">
       <label class="field__label" for="from">{{ 'common.from'|trans }}</label>
@@ -195,6 +205,21 @@
       <label class="field__label" for="to">{{ 'common.to'|trans }}</label>
       <input class="field__input" type="date" id="to" name="to" value="{{ to }}">
     </div>
+    {#
+      Le MÊME sélecteur que partout ailleurs, et non une seconde écriture :
+      c'est ainsi que les deux filtres de boutique avaient divergé la première
+      fois. `include` reçoit ses variables explicitement — une macro n'a pas de
+      contexte à transmettre.
+
+      La clé est l'IDENTIFIANT ici : comptages, journal et seuils passent par
+      le poste, qui porte `shop_id`. Les ventes, elles, passent par le code.
+    #}
+    {{ include('admin/_shop_filter.html.twig', {
+      champId: 'scope-shop',
+      scopeShops: shops,
+      scopeSelected: selected,
+      scopeKey: 'id',
+    }, with_context = false) }}
     <div class="filters__actions">
       <button type="submit" class="button button--secondary">{{ 'common.apply'|trans }}</button>
     </div>

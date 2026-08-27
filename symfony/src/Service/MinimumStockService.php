@@ -44,7 +44,7 @@ final class MinimumStockService
         array $products,
         DayOfWeek $dayOfWeek,
         string $today,
-        ?string $workstationId,
+        string|array|null $workstationId,
     ): array {
         return $this->forWeek($products, $today, $workstationId)[$dayOfWeek->value] ?? [];
     }
@@ -61,7 +61,7 @@ final class MinimumStockService
      *
      * @return array<string, array<string, MinimumStock|null>> [jour][produit]
      */
-    public function forWeek(array $products, string $today, ?string $workstationId): array
+    public function forWeek(array $products, string $today, string|array|null $workstationId): array
     {
         $parJour = [];
         $toutes = [];
@@ -128,7 +128,7 @@ final class MinimumStockService
      *
      * @return array<string, array<string, float|null>>
      */
-    private function netByDate(array $dates, ?string $workstationId): array
+    private function netByDate(array $dates, string|array|null $workstationId): array
     {
         if ($dates === []) {
             return [];
@@ -136,9 +136,19 @@ final class MinimumStockService
 
         $filtre = ['from' => min($dates), 'to' => max($dates)];
 
-        // Poste absent = toute la boutique. Les seuils de l'écran d'administration
-        // sont GLOBAUX : les calculer sur un seul poste sous-estimerait ce qui
-        // s'écoule là où il y en a plusieurs.
+        /*
+          Poste absent = TOUT LE PÉRIMÈTRE.
+
+          Ce filtre acceptait un poste ou rien, et « rien » voulait dire toute
+          la boutique — vrai tant qu'il n'y en avait qu'une. À trois boutiques,
+          « rien » est devenu tout le réseau : le minimum de Wrocław se
+          calculait sur ce qui s'écoule aussi à Cracovie, et un seuil déduit de
+          trois villes ne décrit aucune des trois.
+
+          Il accepte donc une LISTE de postes — ceux du périmètre demandé —, et
+          les calculer sur un seul poste sous-estimerait toujours ce qui
+          s'écoule là où il y en a plusieurs.
+        */
         if ($workstationId !== null) {
             $filtre['workstationId'] = $workstationId;
         }

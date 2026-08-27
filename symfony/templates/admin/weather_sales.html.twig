@@ -11,7 +11,7 @@
 
 {% block title %}{{ 'admin.weatherSales.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
 
-{% macro tableau(analyse, libelles, poses, minDays, portee, from, to, shopCode) %}
+{% macro tableau(analyse, libelles, poses, minDays, portee, from, to, shopCode) %}{# shopCode : le CODE de la boutique choisie, ou '' pour tout le périmètre #}
   {% import 'components/_macros.html.twig' as ui %}
 
   <div class="table-scroll">
@@ -111,19 +111,7 @@
         </div>
       </div>
 
-      {% if shops|length > 1 %}
-        <div class="field">
-          <label class="field__label" for="wx-shop">{{ 'nav.shops'|trans }}</label>
-          <select class="field__input" id="wx-shop" name="boutique">
-            <option value="">{{ 'admin.weatherSales.allShops'|trans }}</option>
-            {% for boutique in shops %}
-              <option value="{{ boutique.code }}" {{ boutique.code == shopCode ? 'selected' : '' }}>
-                {{ boutique.name }}
-              </option>
-            {% endfor %}
-          </select>
-        </div>
-      {% endif %}
+      {{ include('admin/_shop_filter.html.twig', { champId: 'wx-shop' }) }}
 
       <div class="form-actions">
         {# Secondaire : le bouton PRIMAIRE de cette page est celui qui écrit
@@ -180,13 +168,13 @@
     <section class="card">
       <h2 class="card__title">{{ 'admin.weatherSales.byTemperature'|trans }}</h2>
       <p class="field__hint">{{ 'admin.weatherSales.byTemperatureHint'|trans }}</p>
-      {{ _self.tableau(temperature, libellesBandes, currentBands, minDays, 'temperature', from, to, shopCode) }}
+      {{ _self.tableau(temperature, libellesBandes, currentBands, minDays, 'temperature', from, to, scopeSelected ? scopeSelected.code : '') }}
     </section>
 
     <section class="card">
       <h2 class="card__title">{{ 'admin.weatherSales.bySky'|trans }}</h2>
       <p class="field__hint">{{ 'admin.weatherSales.bySkyHint'|trans }}</p>
-      {{ _self.tableau(sky, libellesCiel, currentKinds, minDays, 'sky', from, to, shopCode) }}
+      {{ _self.tableau(sky, libellesCiel, currentKinds, minDays, 'sky', from, to, scopeSelected ? scopeSelected.code : '') }}
     </section>
 
     <section class="card">
@@ -198,7 +186,7 @@
         rappelle que la température n'explique pas tout.
       #}
       <p class="field__hint">{{ 'admin.weatherSales.byWeekdayHint'|trans }}</p>
-      {{ _self.tableau(weekday, libellesJours, {}, minDays, 'weekday', from, to, shopCode) }}
+      {{ _self.tableau(weekday, libellesJours, {}, minDays, 'weekday', from, to, scopeSelected ? scopeSelected.code : '') }}
     </section>
   {% endif %}
 {% endblock %}

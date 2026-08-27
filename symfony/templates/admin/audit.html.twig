@@ -48,7 +48,7 @@
   </section>
 
   <section class="card">
-    {{ ui.period_filter('admin_audit', from, to) }}
+    {{ ui.period_filter('admin_audit', from, to, scopeShops, scopeSelected) }}
 
     <div class="table-scroll">
       <table class="table">
@@ -89,5 +89,7 @@
       </table>
     </div>
   </section>
+
+  {{ include('admin/_scope_warning.html.twig') }}
 
 {% endblock %}

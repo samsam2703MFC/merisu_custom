@@ -710,6 +710,12 @@ admin:
         subtitle: 'Pièces requises en stock, par jour et par produit.'
         productsInRows: 'Produits en lignes'
         daysInRows: 'Jours en lignes'
+    scope:
+        noWorkstation: "Aucun poste n'est rattaché à cette boutique."
+        noWorkstationHint: "Les comptages, le journal et les minimums déduits passent par le poste de travail. Tant qu'aucun poste ne porte cette boutique, ces chiffres restent vides. Rattachez-les dans Équipe."
+        shop: 'Boutique'
+        allShops: 'Toutes mes boutiques'
+        allShopsAdmin: 'Toutes les boutiques'
     weatherSales:
         show: 'Afficher'
         title: 'Ventes & météo'

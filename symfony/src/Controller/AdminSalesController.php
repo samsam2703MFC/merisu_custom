@@ -14,6 +14,7 @@ use Merisu\Inventory\Domain\SalesPeriod;
 use Merisu\Inventory\Domain\SalesTrend;
 use Merisu\Inventory\Security\CurrentUser;
 use Merisu\Inventory\Service\InventoryService;
+use Merisu\Inventory\Service\ReportScope;
 use Merisu\Inventory\Store\Store;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -51,6 +52,7 @@ final class AdminSalesController extends AbstractController
         private readonly Store $store,
         private readonly InventoryService $inventory,
         private readonly SymfonyTranslator $i18n,
+        private readonly ReportScope $scope,
     ) {
     }
 
@@ -61,7 +63,17 @@ final class AdminSalesController extends AbstractController
 
         [$from, $to] = $this->interval($request);
 
-        $ventes = $this->store->sales($from, $to);
+        /*
+          Le PÉRIMÈTRE, appliqué dès la lecture.
+
+          Filtrer après coup aurait laissé les totaux, la tendance et les
+          quatre découpes se calculer sur le réseau entier avant d'en montrer
+          une part : les chiffres du bas n'auraient plus été la somme du haut,
+          et rien ne l'aurait signalé.
+        */
+        $boutiques = $this->scope->salesFilter($request);
+
+        $ventes = $this->store->sales($from, $to, $boutiques);
 
         // Le rattachement aux fiches locales se fait ICI, à la lecture : le
         // relevé garde la référence de la caisse, si bien qu'un article retiré
@@ -108,7 +120,9 @@ final class AdminSalesController extends AbstractController
           premiers du mois, et l'on aurait cessé de regarder l'indicateur.
         */
         $avant = SalesTrend::previous($from, $to);
-        $ventesAvant = $this->store->sales($avant['from'], $avant['to']);
+        // La comparaison porte sur le MÊME périmètre : une boutique comparée
+        // au réseau entier annoncerait une chute de 70 % tous les jours.
+        $ventesAvant = $this->store->sales($avant['from'], $avant['to'], $boutiques);
 
         $total = array_sum(array_map(static fn ($v): float => $v->quantity, $ventes));
         $recette = array_sum(array_map(static fn ($v): float => $v->revenue, $ventes));
@@ -124,6 +138,8 @@ final class AdminSalesController extends AbstractController
             'products' => SalesBreakdown::byProduct($ventes),
             'known' => $parReference,
             'range' => $this->store->salesRange(),
+            'scopeShops' => $this->scope->shops(),
+            'scopeSelected' => $this->scope->selected($request),
             'total' => $total,
             'revenue' => $recette,
             'previous' => $avant,
@@ -150,6 +166,21 @@ final class AdminSalesController extends AbstractController
 
         [$from, $to] = $this->interval($request);
 
+        /*
+          La boutique VOYAGE avec la redirection.
+
+          Elle ne change pas ce qu'on va chercher — la caisse est interrogée
+          telle qu'elle l'a toujours été —, mais elle décide de l'écran sur
+          lequel on retombe. Sans elle, actualiser depuis la vue d'une boutique
+          renvoyait sur « toutes », et l'on croyait le filtre cassé.
+        */
+        $retour = ['from' => $from, 'to' => $to];
+        $choisie = $this->scope->selected($request);
+
+        if ($choisie !== null) {
+            $retour['boutique'] = $choisie->code;
+        }
+
         try {
             $ventes = $this->pos->sales($from, $to);
         } catch (PosUnavailable $e) {
@@ -159,7 +190,7 @@ final class AdminSalesController extends AbstractController
                 $this->addFlash('error', ['key' => 'admin.pos.hostSaid', 'params' => ['%detail%' => $e->detail]]);
             }
 
-            return $this->redirectToRoute('admin_sales', ['from' => $from, 'to' => $to]);
+            return $this->redirectToRoute('admin_sales', $retour);
         }
 
         $ecrites = $this->store->saveSales($ventes);
@@ -172,7 +203,7 @@ final class AdminSalesController extends AbstractController
 
         $this->addFlash('success', ['key' => 'admin.sales.fetched', 'params' => ['%count%' => $ecrites]]);
 
-        return $this->redirectToRoute('admin_sales', ['from' => $from, 'to' => $to]);
+        return $this->redirectToRoute('admin_sales', $retour);
     }
 
     /**

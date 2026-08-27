@@ -1,0 +1,42 @@
+{#
+  Le sélecteur de boutique des rapports.
+
+  Un seul fichier pour les six écrans : le filtre s'écrivait déjà deux fois,
+  et deux formulations du même choix se répondent mal quand on passe d'un
+  rapport à l'autre en cherchant une explication.
+
+  MASQUÉ sous deux boutiques — pas parce qu'il gênerait, mais parce qu'un
+  choix qui n'en est pas un fait douter : on cherche ce qu'on rate.
+
+  `champId` est OBLIGATOIRE : deux sélecteurs sur la même page partageraient
+  leur `for`, et le libellé cesserait de désigner le champ qu'il nomme.
+#}
+{% if scopeShops|length > 1 %}
+  <div class="field">
+    <label class="field__label" for="{{ champId }}">{{ 'admin.scope.shop'|trans }}</label>
+    <select class="field__input" id="{{ champId }}" name="boutique">
+      {#
+        « Toutes » veut dire toutes CELLES QUE JE PILOTE, jamais tout le
+        réseau : pour un manager les deux ne coïncident pas. L'étiquette dit
+        donc la vérité de celui qui la lit — « toutes mes boutiques » pour un
+        manager, « toutes les boutiques » pour un administrateur, chez qui les
+        deux coïncident réellement.
+      #}
+      <option value="">
+        {{ (current_user().isAdmin() ? 'admin.scope.allShopsAdmin' : 'admin.scope.allShops')|trans }}
+      </option>
+      {% for boutique in scopeShops %}
+        {#
+          La valeur envoyée : le CODE pour les ventes, l'IDENTIFIANT pour les
+          objectifs — chaque table a la sienne. `attribute()` et non des
+          crochets : sur un objet, `boutique[clé]` cherche un ArrayAccess que
+          `Shop` n'implémente pas, et la page tombe.
+        #}
+        <option value="{{ attribute(boutique, scopeKey|default('code')) }}"
+                {{ scopeSelected is not null and scopeSelected.id == boutique.id ? 'selected' : '' }}>
+          {{ boutique.name }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+{% endif %}

@@ -707,6 +707,12 @@ admin:
         subtitle: 'Pezzi richiesti in magazzino, per giorno e per prodotto.'
         productsInRows: 'Prodotti in righe'
         daysInRows: 'Giorni in righe'
+    scope:
+        noWorkstation: 'Nessuna postazione è associata a questo negozio.'
+        noWorkstationHint: "I conteggi, il registro e i minimi calcolati passano dalla postazione di lavoro. Finché nessuna postazione appartiene a questo negozio, questi dati restano vuoti. Assegnale in Squadra."
+        shop: 'Negozio'
+        allShops: 'Tutti i miei negozi'
+        allShopsAdmin: 'Tutti i negozi'
     weatherSales:
         show: 'Mostra'
         title: 'Vendite e meteo'

@@ -14,8 +14,10 @@
   {{ ui.page_header('admin.delta.title'|trans, 'admin.delta.subtitle'|trans) }}
 
   <section class="card">
-    {{ ui.period_filter('admin_delta', from, to) }}
+    {{ ui.period_filter('admin_delta', from, to, scopeShops, scopeSelected) }}
   </section>
+
+  {{ include('admin/_scope_warning.html.twig') }}
 
   {% if report.partial %}
     <div class="banner banner--warn" role="status">

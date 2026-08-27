@@ -1,0 +1,19 @@
+{#
+  « Cette boutique n'a aucun poste. »
+
+  Les comptages, le journal et les minimums déduits ne portent pas de
+  boutique : ils portent un POSTE, rattaché à une boutique. Tant qu'aucun poste
+  ne porte celle qu'on a choisie, le rapport est vide — exactement, mais
+  silencieusement, et un rapport vide se lit « le filtre est cassé » plutôt que
+  « il manque un rattachement ».
+
+  Posé AVANT les chiffres, jamais après : on ne laisse pas conclure sur des
+  données absentes, puis expliquer.
+#}
+{% if scopeSelected is defined and scopeSelected is not null and scopeNoWorkstation|default(false) %}
+  <div class="banner banner--warn" role="status">
+    <strong>{{ 'admin.scope.noWorkstation'|trans }}</strong>
+    {{ 'admin.scope.noWorkstationHint'|trans }}
+    <a class="banner__link" href="{{ path('admin_team') }}">{{ 'nav.team'|trans }}</a>
+  </div>
+{% endif %}

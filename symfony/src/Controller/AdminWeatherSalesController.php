@@ -9,7 +9,7 @@ use Merisu\Inventory\Domain\TemperatureBand;
 use Merisu\Inventory\Domain\WeatherKind;
 use Merisu\Inventory\Domain\WeatherSalesAnalysis;
 use Merisu\Inventory\Security\CurrentUser;
-use Merisu\Inventory\Store\ShopStore;
+use Merisu\Inventory\Service\ReportScope;
 use Merisu\Inventory\Store\Store;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -46,7 +46,7 @@ final class AdminWeatherSalesController extends AbstractController
 {
     public function __construct(
         private readonly Store $store,
-        private readonly ShopStore $shops,
+        private readonly ReportScope $scope,
         private readonly CurrentUser $currentUser,
     ) {
     }
@@ -57,7 +57,8 @@ final class AdminWeatherSalesController extends AbstractController
         $this->currentUser->requireAdmin();
 
         [$depuis, $jusqu] = $this->range($request);
-        $boutique = $this->shopFilter($request);
+        $boutique = $this->scope->salesFilter($request);
+        $choisie = $this->scope->selected($request);
 
         $ventesParJour = $this->dailyTotals($depuis, $jusqu, $boutique);
         $journal = $this->store->weatherJournal($depuis, $jusqu);
@@ -99,8 +100,8 @@ final class AdminWeatherSalesController extends AbstractController
         return $this->render('admin/weather_sales.html.twig', [
             'from' => $depuis,
             'to' => $jusqu,
-            'shopCode' => $boutique,
-            'shops' => $this->shops->all(),
+            'scopeShops' => $this->scope->shops(),
+            'scopeSelected' => $this->scope->selected($request),
             'temperature' => $temperature,
             'sky' => $ciel,
             'weekday' => $semaine,
@@ -136,7 +137,7 @@ final class AdminWeatherSalesController extends AbstractController
         $admin = $this->currentUser->requireAdmin();
 
         [$depuis, $jusqu] = $this->range($request);
-        $boutique = $this->shopFilter($request);
+        $boutique = $this->scope->salesFilter($request);
         $quoi = (string) $request->request->get('scope', '');
 
         $ventesParJour = $this->dailyTotals($depuis, $jusqu, $boutique);
@@ -185,7 +186,9 @@ final class AdminWeatherSalesController extends AbstractController
             'scope' => $quoi,
             'from' => $depuis,
             'to' => $jusqu,
-            'shop' => $boutique,
+            // Le PÉRIMÈTRE réellement lu, pas le seul choix : c'est lui qui
+            // explique les taux qu'on vient d'écrire.
+            'shops' => $boutique,
             'applied' => $pose,
         ]);
 
@@ -197,7 +200,7 @@ final class AdminWeatherSalesController extends AbstractController
         return $this->redirectToRoute('admin_weather_sales', [
             'depuis' => $depuis,
             'jusqu' => $jusqu,
-            'boutique' => $boutique,
+            'boutique' => $choisie?->code ?? '',
         ]);
     }
 
@@ -210,7 +213,8 @@ final class AdminWeatherSalesController extends AbstractController
      *
      * @return array<string, array{units: float, revenue: float}>
      */
-    private function dailyTotals(string $from, string $to, ?string $shopCode): array
+    /** @param list<string>|null $shopCode */
+    private function dailyTotals(string $from, string $to, ?array $shopCode): array
     {
         $parJour = [];
 
@@ -244,24 +248,6 @@ final class AdminWeatherSalesController extends AbstractController
         // Un intervalle à l'envers ne rend rien et n'explique rien : on le
         // remet à l'endroit plutôt que d'afficher un tableau vide.
         return $depuis <= $jusqu ? [$depuis, $jusqu] : [$jusqu, $depuis];
-    }
-
-    /** La boutique demandée, ou null pour tout le réseau. */
-    private function shopFilter(Request $request): ?string
-    {
-        $demande = trim((string) ($request->query->get('boutique') ?? $request->request->get('boutique') ?? ''));
-
-        if ($demande === '') {
-            return null;
-        }
-
-        foreach ($this->shops->all() as $boutique) {
-            if ($boutique->code === $demande) {
-                return $demande;
-            }
-        }
-
-        return null;
     }
 
     /** Une date AAAA-MM-JJ, ou celle de repli. */
