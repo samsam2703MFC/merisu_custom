@@ -521,6 +521,8 @@ admin:
         noticeNoWorkstation: 'Compte sans poste habituel : la connexion au poste lui sera refusée tant que vous ne lui en aurez pas attribué un.'
     title: Administration
     products:
+        unitCost: 'Prix d''achat, par %unit%'
+        unitCostHint: 'Ce qu''on paie au fournisseur. Il sert au coût de revient des recettes qui l''emploient. Laissé vide, il n''est pas compté comme gratuit : les coûts qui en dépendent se déclarent incomplets.'
         tabs:
             identity: 'Identité'
             count: 'Comptage'
@@ -606,6 +608,14 @@ admin:
         NEAREST: 'Au plus proche'
         NONE: 'Aucun arrondi'
     compositions:
+        cost: 'Coût de revient, par unité'
+        costOf: 'Coût %n%'
+        costUnknown: 'Coût inconnu'
+        costMaterials: 'Matières'
+        costPackaging: 'Emballage'
+        costTotal: 'Total'
+        costWaste: 'Dont pertes'
+        costMissing: 'Coût incomplet : ces composants n''ont pas de prix d''achat — %list%. Un total amputé d''un ingrédient est plus dangereux qu''un total absent : il a l''air juste, et il est faux vers le bas.'
         views: 'Vues'
         viewRecipes: 'Recettes'
         viewSale: 'Produits en vente'

@@ -518,6 +518,8 @@ admin:
         noticeNoWorkstation: 'Account senza postazione abituale: l''accesso alla postazione gli sarà rifiutato finché non gliene assegni una.'
     title: Amministrazione
     products:
+        unitCost: 'Prezzo d''acquisto, per %unit%'
+        unitCostHint: 'Ciò che si paga al fornitore. Serve al costo delle ricette che lo impiegano. Lasciato vuoto, non è contato come gratuito: i costi che ne dipendono si dichiarano incompleti.'
         tabs:
             identity: 'Identità'
             count: 'Rilevazione'
@@ -603,6 +605,14 @@ admin:
         NEAREST: 'Al più vicino'
         NONE: 'Nessun arrotondamento'
     compositions:
+        cost: 'Costo di produzione, per unità'
+        costOf: 'Costo %n%'
+        costUnknown: 'Costo sconosciuto'
+        costMaterials: 'Materie'
+        costPackaging: 'Imballaggio'
+        costTotal: 'Totale'
+        costWaste: 'Di cui perdite'
+        costMissing: 'Costo incompleto: questi componenti non hanno un prezzo d''acquisto — %list%. Un totale amputato di un ingrediente è più pericoloso di un totale assente: sembra giusto, ed è falso per difetto.'
         views: 'Viste'
         viewRecipes: 'Ricette'
         viewSale: 'Prodotti in vendita'

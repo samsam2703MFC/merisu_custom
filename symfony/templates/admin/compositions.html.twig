@@ -198,6 +198,22 @@
 
           <span class="admin-item__tags">
             {#
+              Le coût dans le RÉSUMÉ : c'est le chiffre qu'on vient chercher,
+              et le lire sans déplier la fiche permet de parcourir la liste.
+
+              Incomplet, il n'est PAS affiché : un coût amputé d'un ingrédient
+              est plus dangereux qu'un coût absent, parce qu'il a l'air juste
+              et qu'il est faux vers le bas.
+            #}
+            {% set cout = costs[product.id]|default(null) %}
+            {% if cout %}
+              {% if cout.complete %}
+                {{ ui.badge('ok', 'admin.compositions.costOf'|trans({ '%n%': cout.total|qty })) }}
+              {% else %}
+                {{ ui.badge('warn', 'admin.compositions.costUnknown'|trans) }}
+              {% endif %}
+            {% endif %}
+            {#
               Le nombre de matières annoncé dès la liste repliée : c'est ce
               qu'on cherche du regard — la composition dont la recette n'a
               jamais été saisie, et dont le delta technique ne dira rien.
@@ -317,6 +333,58 @@
           effacées : le tiramisu se vend toujours, on refait sa recette. Le
           supprimer d'ici l'aurait retiré du catalogue.
         #}
+        {#
+          Le détail du coût, sous la composition qu'il chiffre.
+
+          Matière et emballage SÉPARÉS : ce ne sont pas les mêmes leviers — le
+          mascarpone se négocie, la barquette se change de modèle. Additionnés,
+          on ne verrait plus lequel des deux dérive.
+
+          Les pertes sont ISOLÉES bien qu'elles soient déjà comprises dans le
+          total : fondues dedans, elles deviennent invisibles et personne ne
+          cherche plus à les réduire — alors que c'est la seule part qu'un
+          geste d'atelier fait baisser sans rien renégocier.
+        #}
+        {% set cout = costs[product.id]|default(null) %}
+        {% if cout %}
+          <section class="cost">
+            <h3 class="cost__title">{{ 'admin.compositions.cost'|trans }}</h3>
+
+            {% if cout.complete %}
+              <div class="cost__grid">
+                <div class="cost__item">
+                  <span class="cost__label">{{ 'admin.compositions.costMaterials'|trans }}</span>
+                  <span class="cost__value">{{ cout.materials|qty }}</span>
+                </div>
+                <div class="cost__item">
+                  <span class="cost__label">{{ 'admin.compositions.costPackaging'|trans }}</span>
+                  <span class="cost__value">{{ cout.packaging|qty }}</span>
+                </div>
+                <div class="cost__item cost__item--total">
+                  <span class="cost__label">{{ 'admin.compositions.costTotal'|trans }}</span>
+                  <span class="cost__value">{{ cout.total|qty }}</span>
+                </div>
+                {% if cout.wasteShare is not null and cout.waste > 0 %}
+                  <div class="cost__item cost__item--waste">
+                    <span class="cost__label">{{ 'admin.compositions.costWaste'|trans }}</span>
+                    <span class="cost__value">
+                      {{ cout.waste|qty }} <small>({{ cout.wasteShare|number_format(1, ',', ' ') }} %)</small>
+                    </span>
+                  </div>
+                {% endif %}
+              </div>
+            {% else %}
+              {#
+                Ce qui MANQUE est nommé. « Coût inconnu » sans dire lequel des
+                douze ingrédients n'a pas de prix laisserait chercher.
+              #}
+              {{ ui.banner('warn', 'admin.compositions.costMissing'|trans({
+                '%list%': cout.missing|join(', ')
+              })) }}
+            {% endif %}
+          </section>
+        {% endif %}
+
         <form method="post" action="{{ path('admin_composition_delete', { id: product.id }) }}" class="form">
           <div class="form-actions">
             <button type="submit" class="button button--ghost"

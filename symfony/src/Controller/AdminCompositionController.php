@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Merisu\Inventory\Controller;
 
+use Merisu\Inventory\Domain\FoodCostCalculator;
 use Merisu\Inventory\Domain\Locale;
 use Merisu\Inventory\Domain\Product;
 use Merisu\Inventory\Domain\ProductNature;
@@ -129,10 +130,40 @@ final class AdminCompositionController extends AbstractController
             $vises[$modele->id] = $this->templates->targets($modele);
         }
 
+        /*
+          Le COÛT de chaque fiche.
+
+          Calculé ici pour tout l'écran, en une fois : le faire fiche par fiche
+          aurait relu la même nomenclature cinquante fois, et la descente à
+          travers les recettes n'est pas gratuite.
+
+          Toutes les fiches entrent dans le calculateur, pas seulement celles
+          qu'on affiche : une crème peut être un ingrédient sans figurer dans
+          la vue courante, et il faut bien la chiffrer pour chiffrer ce qui la
+          contient.
+        */
+        $parId = [];
+        foreach ($produits as $p) {
+            $parId[$p->id] = $p;
+        }
+
+        $nomenclatures = [];
+        foreach ($this->store->recipeLines() as $ligne) {
+            $nomenclatures[$ligne->productId][$ligne->materialId] = $ligne->qtyPerUnit;
+        }
+
+        $calculateur = new FoodCostCalculator($nomenclatures, $parId);
+
+        $couts = [];
+        foreach ($assembles as $p) {
+            $couts[$p->id] = $calculateur->costOf($p->id);
+        }
+
         $slot = $this->store->nextTemplateSlot();
 
         return $this->render('admin/compositions.html.twig', [
             'assembled' => $assembles,
+            'costs' => $couts,
             'view' => $vue,
             'counts' => $compte,
             'components' => $composants,

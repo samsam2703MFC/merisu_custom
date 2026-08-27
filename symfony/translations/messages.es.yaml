@@ -518,6 +518,8 @@ admin:
         noticeNoWorkstation: 'Cuenta sin puesto habitual: se le denegará la conexión al puesto hasta que le asigne uno.'
     title: Administración
     products:
+        unitCost: 'Precio de compra, por %unit%'
+        unitCostHint: 'Lo que se paga al proveedor. Sirve para el coste de las recetas que lo emplean. Dejado vacío, no se cuenta como gratis: los costes que dependen de él se declaran incompletos.'
         tabs:
             identity: 'Identidad'
             count: 'Recuento'
@@ -603,6 +605,14 @@ admin:
         NEAREST: 'Al más cercano'
         NONE: 'Sin redondeo'
     compositions:
+        cost: 'Coste de producción, por unidad'
+        costOf: 'Coste %n%'
+        costUnknown: 'Coste desconocido'
+        costMaterials: 'Materias'
+        costPackaging: 'Embalaje'
+        costTotal: 'Total'
+        costWaste: 'De ello mermas'
+        costMissing: 'Coste incompleto: estos componentes no tienen precio de compra — %list%. Un total al que le falta un ingrediente es más peligroso que un total ausente: parece correcto, y se queda corto.'
         views: 'Vistas'
         viewRecipes: 'Recetas'
         viewSale: 'Productos a la venta'

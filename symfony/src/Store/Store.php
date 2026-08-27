@@ -224,6 +224,7 @@ final class Store
             'supplier_source' => $product->supplierSource->value,
             'supplier_ref' => $product->supplierRef,
             'supplier_name' => $product->supplierName,
+            'unit_cost' => $product->unitCost,
         ];
 
         $exists = (int) $this->db->fetchOne('SELECT COUNT(*) FROM inv_product WHERE id = ?', [$product->id]) > 0;
@@ -1066,6 +1067,7 @@ final class Store
             SupplierSource::fromLoose($row['supplier_source'] ?? null),
             trim((string) ($row['supplier_ref'] ?? '')),
             trim((string) ($row['supplier_name'] ?? '')),
+            (float) ($row['unit_cost'] ?? 0),
         );
     }
 

@@ -518,6 +518,8 @@ admin:
         noticeNoWorkstation: 'Konto bez zwykłego stanowiska: logowanie na stanowisku będzie odrzucane, dopóki nie przypiszesz mu stanowiska.'
     title: Administracja
     products:
+        unitCost: 'Cena zakupu, za %unit%'
+        unitCostHint: 'To, co płacimy dostawcy. Służy do wyliczenia kosztu receptur, które go używają. Puste pole nie oznacza zera: koszty, które od niego zależą, zgłaszają się jako niepełne.'
         tabs:
             identity: 'Tożsamość'
             count: 'Spis'
@@ -603,6 +605,14 @@ admin:
         NEAREST: 'Do najbliższej'
         NONE: 'Bez zaokrąglenia'
     compositions:
+        cost: 'Koszt własny, na sztukę'
+        costOf: 'Koszt %n%'
+        costUnknown: 'Koszt nieznany'
+        costMaterials: 'Surowce'
+        costPackaging: 'Opakowanie'
+        costTotal: 'Razem'
+        costWaste: 'W tym straty'
+        costMissing: 'Koszt niepełny: te składniki nie mają ceny zakupu — %list%. Suma pozbawiona składnika jest groźniejsza niż jej brak: wygląda poprawnie, a jest zaniżona.'
         views: 'Widoki'
         viewRecipes: 'Receptury'
         viewSale: 'Produkty na sprzedaż'

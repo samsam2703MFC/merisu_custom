@@ -97,6 +97,19 @@ final readonly class Product
         public string $supplierRef = '',
         /** Nom du fournisseur — n'a de sens qu'en approvisionnement libre. */
         public string $supplierName = '',
+        /**
+         * Prix d'ACHAT, par unité de mesure — le kilo, le litre, la pièce.
+         *
+         * Il ne vaut que pour ce qu'on ACHÈTE : matière première et emballage.
+         * Une recette et un produit en vente tirent le leur de leur
+         * composition, et l'y saisir à la main aurait créé deux vérités qui
+         * divergent dès la première hausse du mascarpone.
+         *
+         * 0 = non renseigné, et c'est dit à l'écran plutôt que compté comme
+         * gratuit : un coût matière amputé d'un ingrédient est plus dangereux
+         * qu'un coût absent, parce qu'il a l'air juste.
+         */
+        public float $unitCost = 0.0,
     ) {
     }
 
@@ -194,6 +207,7 @@ final readonly class Product
             $changes['supplierSource'] ?? $this->supplierSource,
             $changes['supplierRef'] ?? $this->supplierRef,
             $changes['supplierName'] ?? $this->supplierName,
+            $changes['unitCost'] ?? $this->unitCost,
         );
     }
 }

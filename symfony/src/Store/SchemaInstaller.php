@@ -68,6 +68,9 @@ final class SchemaInstaller
             $t->addColumn('supplier_source', 'string', ['length' => 16, 'default' => 'CENTRAL']);
             $t->addColumn('supplier_ref', 'string', ['length' => 64, 'default' => '']);
             $t->addColumn('supplier_name', 'string', ['length' => 120, 'default' => '']);
+            // Prix d'ACHAT par unité de mesure. Ne vaut que pour ce qu'on
+            // achète ; les recettes tirent le leur de leur composition.
+            $t->addColumn('unit_cost', 'float', ['default' => 0]);
             $t->setPrimaryKey(['id']);
             $t->addUniqueIndex(['code'], 'inv_product_code');
         }
@@ -888,6 +891,10 @@ final class SchemaInstaller
                 'supplier_source' => "VARCHAR(16) DEFAULT 'CENTRAL' NOT NULL",
                 'supplier_ref' => "VARCHAR(64) DEFAULT '' NOT NULL",
                 'supplier_name' => "VARCHAR(120) DEFAULT '' NOT NULL",
+                // Ajoutée avec le coût matière. 0 sur les bases déjà en
+                // service : non renseigné, et l'écran le dit plutôt que de
+                // compter l'ingrédient comme gratuit.
+                'unit_cost' => 'FLOAT DEFAULT 0 NOT NULL',
             ],
             'inv_category' => [
                 // Ajoutée en même temps que celle des produits : une base

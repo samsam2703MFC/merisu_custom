@@ -438,6 +438,12 @@ final class AdminController extends AbstractController
             unit: mb_substr(trim((string) $request->request->get('unit', $base->unit)), 0, 16) ?: $base->unit,
             active: $request->request->getBoolean('active'),
             wasteFactor: $wasteFactor,
+            // Le prix d'achat n'est proposé que sur les matières et les
+            // emballages ; ailleurs le champ est absent du formulaire et la
+            // valeur existante doit survivre à l'enregistrement.
+            unitCost: $request->request->has('unitCost')
+                ? max(0.0, (float) str_replace(',', '.', (string) $request->request->get('unitCost', '0')))
+                : $base->unitCost,
             roundingStep: $roundingStep > 0 ? $roundingStep : $base->roundingStep,
             roundingMode: RoundingMode::tryFrom((string) $request->request->get('roundingMode')) ?? $base->roundingMode,
             recipeRef: trim((string) $request->request->get('recipeRef', '')) ?: null,

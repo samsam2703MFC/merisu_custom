@@ -288,6 +288,27 @@
              id="waste-{{ product.id }}" name="wasteFactor" value="{{ product.wasteFactor }}">
       <p class="field__hint">{{ 'admin.products.wasteFactorHint'|trans }}</p>
     </div>
+
+    {#
+      Le prix d'ACHAT, par unité de mesure.
+
+      Il ne vaut que pour ce qu'on achète — matière première et emballage. Une
+      recette et un produit en vente tirent le leur de leur composition ; le
+      saisir aussi ici aurait créé deux vérités qui divergent dès la première
+      hausse du mascarpone. Le champ n'apparaît donc que sur les deux natures
+      concernées.
+    #}
+    {% if product.nature.value in ['RAW', 'PACKAGING'] %}
+      <div class="field">
+        <label class="field__label" for="cost-{{ product.id }}">
+          {{ 'admin.products.unitCost'|trans({ '%unit%': product.unit }) }}
+        </label>
+        <input class="field__input" type="number" min="0" step="0.0001" inputmode="decimal"
+               id="cost-{{ product.id }}" name="unitCost" value="{{ product.unitCost ?: '' }}"
+               placeholder="—">
+        <p class="field__hint">{{ 'admin.products.unitCostHint'|trans }}</p>
+      </div>
+    {% endif %}
     <div class="field">
       <label class="field__label" for="step-{{ product.id }}">
         {{ 'admin.products.roundingStep'|trans }}
