@@ -80,6 +80,9 @@ on:
           - 'ventes-tout'
           - 'meteo-historique'
           - 'ventes-et-meteo'
+          # Crée la boutique de Poznań si elle n'existe pas encore. Sans risque
+          # et idempotent : relancé, il ne fait pas deux Poznań.
+          - 'boutique-poznan'
           # DESTRUCTIF : efface toutes les lignes de composition. Les fiches
           # produit restent. Placé en dernier pour qu'on ne le choisisse pas
           # d'un glissement de souris depuis « aucune ».
@@ -556,6 +559,11 @@ jobs:
           # champ libre valant « VIDER » se remplirait par habitude, et la
           # commande n'aurait plus de garde-fou du tout. Il faut choisir cette
           # option-là, explicitement, pour que l'effacement parte.
+          if [ "$QUOI" = "boutique-poznan" ]; then
+            echo "── Boutique : création de Poznań (si absente) ──"
+            "$PHP" bin/console merisu:boutique-poznan
+          fi
+
           if [ "$QUOI" = "compositions-vider" ]; then
             echo "── Compositions : effacement de toutes les lignes ──"
             "$PHP" bin/console merisu:compositions --confirmer=VIDER
