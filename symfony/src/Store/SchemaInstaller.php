@@ -550,6 +550,8 @@ final class SchemaInstaller
             $t->addColumn('sort_order', 'integer', ['default' => 0]);
             $t->addColumn('active', 'boolean', ['default' => true]);
             $t->addColumn('required', 'boolean', ['default' => true]);
+            $t->addColumn('requires_photo', 'boolean', ['default' => false]);
+            $t->addColumn('execution_time', 'string', ['length' => 5, 'default' => '']);
             $t->setPrimaryKey(['id']);
             $t->addIndex(['section', 'sort_order'], 'inv_checklist_by_section');
         }
@@ -930,6 +932,9 @@ final class SchemaInstaller
             'inv_checklist_item' => [
                 // Exigence de photo, réglée point par point en administration.
                 'requires_photo' => 'BOOLEAN DEFAULT 0 NOT NULL',
+                // Heure propre au point. Vide sur les bases déjà en service :
+                // le point reste à l'heure de son volet, comme avant.
+                'execution_time' => "VARCHAR(5) DEFAULT '' NOT NULL",
             ],
             'inv_checklist_entry' => [
                 // Le statut remplace le booléen « coché ». Les lignes déjà en

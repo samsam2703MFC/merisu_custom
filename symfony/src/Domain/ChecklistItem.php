@@ -37,7 +37,26 @@ final readonly class ChecklistItem
          * la photo partout la ferait bâcler partout.
          */
         public bool $requiresPhoto = false,
+        /**
+         * L'heure à laquelle CE point est attendu, au format HH:MM.
+         *
+         * Le volet porte déjà une heure — l'ouverture à 8 h, la fermeture à
+         * 22 h — mais tous ses points ne se font pas au même moment : on relève
+         * la température des vitrines à l'ouverture, on vérifie la propreté du
+         * labo une heure plus tard. Sans cette précision, l'ordre d'exécution
+         * tenait dans la tête de qui avait l'habitude.
+         *
+         * Vide = « à l'heure du volet ». C'est le cas ordinaire, et une heure
+         * imposée partout aurait obligé à en inventer une pour chaque point.
+         */
+        public string $executionTime = '',
     ) {
+    }
+
+    /** Ce point porte-t-il sa propre heure, distincte de celle du volet ? */
+    public function hasExecutionTime(): bool
+    {
+        return trim($this->executionTime) !== '';
     }
 
     /**
@@ -75,6 +94,7 @@ final readonly class ChecklistItem
             $changes['active'] ?? $this->active,
             $changes['required'] ?? $this->required,
             $changes['requiresPhoto'] ?? $this->requiresPhoto,
+            $changes['executionTime'] ?? $this->executionTime,
         );
     }
 }

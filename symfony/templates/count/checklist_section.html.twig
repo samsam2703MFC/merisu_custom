@@ -71,6 +71,16 @@
                   {{ ui.icon('camera') }}
                 </span>
               {% endif %}
+              {#
+                L'heure PROPRE au point, quand il en porte une.
+
+                Elle ne paraît que là : le volet affiche déjà la sienne en
+                tête, et la répéter sur chaque ligne aurait noyé celles qui
+                diffèrent — or ce sont justement celles-là qui comptent.
+              #}
+              {% if item.hasExecutionTime %}
+                <span class="ck-item__time">{{ item.executionTime }}</span>
+              {% endif %}
             </span>
 
             <span class="ck-item__meta muted">
@@ -93,10 +103,20 @@
             <span class="badge badge--{{ statut.badge }} ck-item__badge">
               {{ ('checklist.statuses.' ~ statut.value)|trans }}
             </span>
-          {% else %}
+          {% elseif date == today %}
             <a class="button button--primary ck-item__do" href="{{ path('checklist_point', { itemId: item.id }) }}">
               {{ 'checklist.do'|trans }}
             </a>
+          {% else %}
+            {#
+              Un jour passé ne se signe pas. Le bouton est RETIRÉ plutôt que
+              grisé : le serveur signe toujours pour aujourd'hui, si bien
+              qu'un bouton laissé là aurait pointé la mauvaise journée sans
+              que rien ne le dise.
+            #}
+            <span class="badge badge--neutral ck-item__badge">
+              {{ ('checklist.statuses.' ~ statut.value)|trans }}
+            </span>
           {% endif %}
         </li>
       {% endfor %}
@@ -104,7 +124,7 @@
   {% endif %}
 
   <div class="form-actions">
-    <a class="button button--secondary" href="{{ path('checklist') }}">
+    <a class="button button--secondary" href="{{ path('checklist', date == today ? {} : { date: date }) }}">
       <span class="button__icon">{{ ui.icon('arrow-left') }}</span>
       {{ 'checklist.backToLists'|trans }}
     </a>

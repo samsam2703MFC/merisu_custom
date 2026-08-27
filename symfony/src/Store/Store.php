@@ -763,6 +763,7 @@ final class Store
             'active' => $item->active ? 1 : 0,
             'required' => $item->required ? 1 : 0,
             'requires_photo' => $item->requiresPhoto ? 1 : 0,
+            'execution_time' => $item->executionTime,
         ];
 
         $exists = (int) $this->db->fetchOne('SELECT COUNT(*) FROM inv_checklist_item WHERE id = ?', [$item->id]) > 0;
@@ -1060,6 +1061,7 @@ final class Store
             // Colonne ajoutée avec la photo par point : absente d'une base
             // installée avant, et « pas d'exigence » y est la bonne réponse.
             (bool) ($row['requires_photo'] ?? false),
+            trim((string) ($row['execution_time'] ?? '')),
         );
     }
 

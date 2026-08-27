@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Merisu\Inventory\Controller;
 
 use Merisu\Inventory\Adapter\ConsultantServiceInterface;
+use Merisu\Inventory\Domain\BusinessDate;
 use Merisu\Inventory\Domain\ChecklistItem;
 use Merisu\Inventory\Domain\ChecklistSection;
 use Merisu\Inventory\Domain\ChecklistSignature;
@@ -66,15 +67,17 @@ final class ChecklistController extends AbstractController
     // ── Vue d'entrée : les volets et leur avancement ─────────────────────────
 
     #[Route('/check-list', name: 'checklist', methods: ['GET'])]
-    public function show(): Response
+    public function show(Request $request): Response
     {
         $this->currentUser->requireTile(TaskTile::Checklist);
 
-        $date = $this->inventory->today();
+        $aujourdhui = $this->inventory->today();
+        $date = self::pastDate($request, $aujourdhui);
         $workstationId = $this->currentUser->resolveWorkstation();
 
         return $this->render('count/checklist.html.twig', [
             'date' => $date,
+            'today' => $aujourdhui,
             'workstationId' => $workstationId,
             'sections' => $this->sections($date, $workstationId),
         ]);
@@ -83,7 +86,7 @@ final class ChecklistController extends AbstractController
     // ── Les points d'un volet ────────────────────────────────────────────────
 
     #[Route('/check-list/{section}', name: 'checklist_section', methods: ['GET'])]
-    public function section(string $section): Response
+    public function section(Request $request, string $section): Response
     {
         $this->currentUser->requireTile(TaskTile::Checklist);
 
@@ -92,13 +95,15 @@ final class ChecklistController extends AbstractController
             throw $this->createNotFoundException();
         }
 
-        $date = $this->inventory->today();
+        $aujourdhui = $this->inventory->today();
+        $date = self::pastDate($request, $aujourdhui);
         $workstationId = $this->currentUser->resolveWorkstation();
 
         foreach ($this->sections($date, $workstationId) as $bloc) {
             if ($bloc['section'] === $volet) {
                 return $this->render('count/checklist_section.html.twig', $bloc + [
                     'date' => $date,
+                    'today' => $aujourdhui,
                     'workstationId' => $workstationId,
                 ]);
             }
@@ -260,6 +265,29 @@ final class ChecklistController extends AbstractController
      *
      * @return list<array<string,mixed>>
      */
+    /**
+     * La journée regardée : aujourd'hui, ou un jour PASSÉ qu'on relit.
+     *
+     * Le futur est refusé — une check-list de demain n'a rien à montrer, et
+     * l'ouvrir laisserait croire qu'on peut la préparer d'avance. Une date
+     * illisible retombe sur aujourd'hui plutôt que d'échouer : on vient
+     * pointer, pas déboguer une URL.
+     *
+     * SIGNER reste réservé à aujourd'hui, et c'est le gabarit qui l'applique :
+     * ces lignes sont des pièces d'audit, et antidater une signature leur
+     * ôterait toute valeur de preuve.
+     */
+    private static function pastDate(Request $request, string $today): string
+    {
+        $demande = trim((string) $request->query->get('date', ''));
+
+        if ($demande === '' || !BusinessDate::isValid($demande) || $demande > $today) {
+            return $today;
+        }
+
+        return $demande;
+    }
+
     private function sections(string $date, string $workstationId): array
     {
         $items = $this->store->checklistItems(true);

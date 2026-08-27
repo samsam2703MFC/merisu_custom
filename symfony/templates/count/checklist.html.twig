@@ -24,6 +24,35 @@
     </div>
   </div>
 
+  {#
+    Relire une JOURNÉE PASSÉE.
+
+    La check-list du jour est ce qu'on vient faire ; celle d'hier est ce qu'on
+    vient vérifier — « qui a signé quoi, et à quelle heure ». Deux liens
+    suffisent : le futur n'existe pas ici, une check-list de demain n'a rien à
+    montrer et l'ouvrir laisserait croire qu'on peut la préparer d'avance.
+  #}
+  <nav class="ck-days" aria-label="{{ 'checklist.dayNav'|trans }}">
+    <a class="ck-days__step" href="{{ path('checklist', { date: date|day_before }) }}">
+      {{ ui.icon('arrow-left') }} {{ 'checklist.dayBefore'|trans }}
+    </a>
+
+    {% if date != today %}
+      <a class="ck-days__today" href="{{ path('checklist') }}">{{ 'checklist.backToToday'|trans }}</a>
+      <a class="ck-days__step" href="{{ path('checklist', { date: date|day_after }) }}">
+        {{ 'checklist.dayAfter'|trans }} {{ ui.icon('arrow-right') }}
+      </a>
+    {% endif %}
+  </nav>
+
+  {% if date != today %}
+    {#
+      Un jour passé se LIT, il ne se signe pas : ces lignes sont des pièces
+      d'audit, et antidater une signature leur ôterait toute valeur de preuve.
+    #}
+    {{ ui.banner('info', 'checklist.pastDay'|trans) }}
+  {% endif %}
+
   {% set aucunPoint = sections|reduce((total, s) => total + s.total, 0) == 0 %}
 
   {% if aucunPoint %}
@@ -31,7 +60,7 @@
   {% else %}
     <div class="ck-grid">
       {% for bloc in sections %}
-        <a class="card card--link ck-card" href="{{ path('checklist_section', { section: bloc.section.value }) }}">
+        <a class="card card--link ck-card" href="{{ path('checklist_section', date == today ? { section: bloc.section.value } : { section: bloc.section.value, date: date }) }}">
           <div class="ck-card__head">
             <h2 class="card__title">{{ bloc.section.labelKey|trans }}</h2>
             {% if bloc.time %}<span class="ck-card__time muted">{{ bloc.time }}</span>{% endif %}

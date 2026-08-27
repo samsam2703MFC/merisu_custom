@@ -5005,3 +5005,41 @@ select:disabled, select.field__input:disabled { background-image: url("data:imag
   .sheet .table-scroll { overflow: visible; }
   .sheet__table { min-width: 0; }
 }
+
+/* L'heure propre à un point de check-list. Discrète : c'est un repère dans la
+   journée, pas le sujet de la ligne — le point l'est. */
+.ck-item__time {
+  margin-left: var(--space-2);
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--cream-outline);
+  color: var(--coffee);
+  font-size: .72rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Naviguer d'une journée à l'autre sur la check-list. */
+.ck-days {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+.ck-days__step, .ck-days__today {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--touch);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius);
+  background: var(--cream-outline);
+  color: var(--coffee);
+  text-decoration: none;
+  font-size: .85rem;
+  font-weight: 600;
+}
+.ck-days__today { background: var(--brand-light); color: var(--brand-dark); }
+.ck-days .icon { width: 16px; height: 16px; }

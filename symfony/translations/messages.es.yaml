@@ -1063,6 +1063,11 @@ errors:
     UPLOAD_DIR_UNAVAILABLE: 'Carpeta de fotos no accesible.'
 
 checklist:
+    dayNav: "Cambiar de día"
+    dayBefore: "Día anterior"
+    dayAfter: "Día siguiente"
+    backToToday: "Hoy"
+    pastDay: "Día pasado: se puede releer, ya no se firma."
     signWithCode: 'Firme con su código'
     do: 'Hacer'
     confirm: 'Validar'
@@ -1113,6 +1118,8 @@ checklist:
         required: Obligatorio
         requiredHint: 'Un punto obligatorio debe marcarse para que la sección esté completa.'
         requiresPhoto: 'Exige una foto'
+        executionTime: "Hora del punto"
+        executionTimeHint: "Vacío = a la hora de la sección. Útil cuando un punto se hace más tarde."
         add: 'Añadir un punto'
         newLabel: 'Nuevo punto'
 

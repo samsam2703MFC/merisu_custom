@@ -139,6 +139,11 @@ final class AppExtension extends AbstractExtension
             new TwigFilter('datetime_short', $this->formatDateTime(...)),
             new TwigFilter('time_short', $this->formatTime(...)),
             new TwigFilter('long_date', $this->formatLongDate(...)),
+            // La veille et le lendemain d'une journée, pour naviguer d'un jour
+            // à l'autre. `BusinessDate` porte déjà la règle et ses tests ; la
+            // refaire en Twig aurait fait un second calendrier.
+            new TwigFilter('day_before', static fn (string $d): string => BusinessDate::previous($d)),
+            new TwigFilter('day_after', static fn (string $d): string => BusinessDate::next($d)),
         ];
     }
 

@@ -1063,6 +1063,11 @@ errors:
     UPLOAD_DIR_UNAVAILABLE: 'Katalog zdjęć niedostępny.'
 
 checklist:
+    dayNav: "Zmień dzień"
+    dayBefore: "Poprzedni"
+    dayAfter: "Następny"
+    backToToday: "Dziś"
+    pastDay: "Miniony dzień: można go przejrzeć, ale już nie podpisać."
     signWithCode: 'Podpisz swoim kodem'
     do: 'Wykonaj'
     confirm: 'Zatwierdź'
@@ -1113,6 +1118,8 @@ checklist:
         required: Obowiązkowy
         requiredHint: 'Punkt obowiązkowy musi być odhaczony, aby część była kompletna.'
         requiresPhoto: 'Wymaga zdjęcia'
+        executionTime: "Godzina zadania"
+        executionTimeHint: "Puste = o godzinie sekcji. Przydatne, gdy zadanie wykonuje się później."
         add: 'Dodaj punkt'
         newLabel: 'Nowy punkt'
 

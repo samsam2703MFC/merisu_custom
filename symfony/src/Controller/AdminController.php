@@ -249,6 +249,25 @@ final class AdminController extends AbstractController
      *
      * @param array{id: string, code: string, sortOrder: int} $slot
      */
+    /**
+     * L'heure d'un point de check-list, au format HH:MM.
+     *
+     * Vide reste vide — « à l'heure du volet », le cas ordinaire. Une valeur
+     * impossible est REFUSÉE plutôt qu'enregistrée : « 25:99 » sur un point
+     * d'ouverture le ferait paraître après la fermeture, et l'ordre de la
+     * journée est précisément ce que cette heure sert à fixer.
+     */
+    private static function checklistTime(mixed $valeur): string
+    {
+        $texte = trim((string) ($valeur ?? ''));
+
+        if ($texte === '') {
+            return '';
+        }
+
+        return preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $texte) === 1 ? $texte : '';
+    }
+
     private static function blankProduct(array $slot): Product
     {
         return new Product(
@@ -868,6 +887,9 @@ final class AdminController extends AbstractController
                 $item->active,
                 $item->required,
                 $item->requiresPhoto,
+                // Traduire un libellé ne touche pas à l'heure : sans ce
+                // report, chaque traduction l'aurait effacée.
+                $item->executionTime,
             ));
         }
 
@@ -943,6 +965,7 @@ final class AdminController extends AbstractController
                 (bool) ($champs['active'] ?? false),
                 (bool) ($champs['required'] ?? false),
                 (bool) ($champs['requiresPhoto'] ?? false),
+                self::checklistTime($champs['executionTime'] ?? null),
             ));
             ++$enregistres;
         }

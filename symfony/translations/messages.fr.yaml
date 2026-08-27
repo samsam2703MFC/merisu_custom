@@ -1066,6 +1066,11 @@ errors:
     UPLOAD_DIR_UNAVAILABLE: "Dossier de stockage des photos inaccessible."
 
 checklist:
+    dayNav: "Changer de journée"
+    dayBefore: "Veille"
+    dayAfter: "Lendemain"
+    backToToday: "Aujourd'hui"
+    pastDay: "Journée passée : elle se relit, elle ne se signe plus."
     signWithCode: 'Signez avec votre code'
     do: 'Faire'
     confirm: 'Valider'
@@ -1116,6 +1121,8 @@ checklist:
         required: Obligatoire
         requiredHint: "Un point obligatoire doit être coché pour que le volet soit complet."
         requiresPhoto: 'Exige une photo'
+        executionTime: "Heure du point"
+        executionTimeHint: "Vide = à l'heure du volet. Sert quand un point se fait plus tard dans la journée."
         add: 'Ajouter un point'
         newLabel: 'Nouveau point'
 

@@ -111,6 +111,22 @@
                {{ item is not null and item.requiresPhoto ? 'checked' : '' }}>
         <label for="p-{{ id }}">{{ 'checklist.admin.requiresPhoto'|trans }}</label>
       </div>
+
+      {#
+        L'heure propre au point.
+
+        Le volet porte déjà la sienne — 8 h à l'ouverture — mais tous ses
+        points ne se font pas au même moment. Vide = « à l'heure du volet »,
+        et c'est le cas ordinaire : imposer une heure partout obligerait à en
+        inventer une pour chaque point.
+      #}
+      <div class="field">
+        <label class="field__label" for="t-{{ id }}">{{ 'checklist.admin.executionTime'|trans }}</label>
+        <input class="field__input" type="time" id="t-{{ id }}"
+               name="item[{{ id }}][executionTime]"
+               value="{{ item is not null ? item.executionTime : '' }}">
+        <p class="field__hint">{{ 'checklist.admin.executionTimeHint'|trans }}</p>
+      </div>
     </div>
   </div>
 {% endmacro %}

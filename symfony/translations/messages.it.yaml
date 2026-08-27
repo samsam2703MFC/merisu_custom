@@ -1063,6 +1063,11 @@ errors:
     UPLOAD_DIR_UNAVAILABLE: 'Cartella delle foto non accessibile.'
 
 checklist:
+    dayNav: "Cambia giornata"
+    dayBefore: "Giorno prima"
+    dayAfter: "Giorno dopo"
+    backToToday: "Oggi"
+    pastDay: "Giornata passata: si rilegge, non si firma più."
     signWithCode: 'Firma con il tuo codice'
     do: 'Esegui'
     confirm: 'Conferma'
@@ -1113,6 +1118,8 @@ checklist:
         required: Obbligatorio
         requiredHint: 'Un punto obbligatorio deve essere spuntato perché la sezione sia completa.'
         requiresPhoto: 'Richiede una foto'
+        executionTime: "Ora del punto"
+        executionTimeHint: "Vuoto = all'ora della sezione. Utile quando un punto si fa più tardi."
         add: 'Aggiungi un punto'
         newLabel: 'Nuovo punto'
 
