@@ -1,0 +1,140 @@
+{#
+  Admin ▸ Suivi des tâches — ce qui a été fait, par qui, et ce qui traîne.
+
+  L'éditeur dit ce qu'il FAUT faire ; cet écran dit ce qui A ÉTÉ fait. La
+  règle d'affichage du module vaut ici plus qu'ailleurs : les problèmes
+  d'abord — un échec ne se cache pas sous le succès du poste voisin.
+#}
+{% extends 'admin/_layout.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'checklist.report.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% block admin_content %}
+
+  {{ ui.page_header('checklist.report.title'|trans, 'checklist.report.subtitle'|trans) }}
+
+  <section class="card">
+    <form method="get" action="{{ path('admin_checklist_report') }}" class="filters">
+      <div class="field">
+        <label class="field__label" for="rep-date">{{ 'common.date'|trans }}</label>
+        <input class="field__input" type="date" id="rep-date" name="date"
+               value="{{ date }}" max="{{ today }}">
+      </div>
+      {{ include('admin/_shop_filter.html.twig', { champId: 'rep-shop' }) }}
+      <div class="filters__actions">
+        <button type="submit" class="button button--secondary">{{ 'common.apply'|trans }}</button>
+      </div>
+    </form>
+
+    <nav class="ck-days" aria-label="{{ 'checklist.dayNav'|trans }}">
+      <a class="ck-days__step" href="{{ path('admin_checklist_report', { date: date|day_before, boutique: scopeSelected ? scopeSelected.id : '' }) }}">
+        {{ ui.icon('arrow-left') }} {{ 'checklist.dayBefore'|trans }}
+      </a>
+      {% if date != today %}
+        <a class="ck-days__today" href="{{ path('admin_checklist_report', { boutique: scopeSelected ? scopeSelected.id : '' }) }}">{{ 'checklist.backToToday'|trans }}</a>
+        <a class="ck-days__step" href="{{ path('admin_checklist_report', { date: date|day_after, boutique: scopeSelected ? scopeSelected.id : '' }) }}">
+          {{ 'checklist.dayAfter'|trans }} {{ ui.icon('arrow-right') }}
+        </a>
+      {% endif %}
+    </nav>
+  </section>
+
+  {{ include('admin/_scope_warning.html.twig') }}
+
+  {% for bloc in reviews %}
+    {% set revue = bloc.review %}
+    <section class="card">
+      <header class="card__header cl-report__head">
+        <h2 class="card__title">
+          {{ ui.icon(bloc.list.icon) }}
+          {{ checklist_title(bloc.list) }}
+          {% if bloc.list.hasExecutionTime %}<span class="muted">{{ bloc.list.executionTime }}</span>{% endif %}
+        </h2>
+        <span class="admin-item__tags">
+          {# Les PROBLÈMES d'abord : c'est ce qu'on vient chercher. #}
+          {% if revue.problems > 0 %}
+            {{ ui.badge('danger', 'checklist.report.problems'|trans({ '%count%': revue.problems })) }}
+          {% endif %}
+          {{ ui.badge(revue.complete ? 'ok' : 'neutral', revue.done ~ ' / ' ~ revue.total) }}
+        </span>
+      </header>
+
+      {% if revue.rows is empty %}
+        <p class="field__hint">{{ 'checklist.report.noItems'|trans }}</p>
+      {% else %}
+        <div class="table-scroll">
+          <table class="table cl-report">
+            <thead>
+              <tr>
+                <th scope="col">{{ 'checklist.report.point'|trans }}</th>
+                <th scope="col">{{ 'checklist.report.status'|trans }}</th>
+                <th scope="col">{{ 'checklist.report.signedBy'|trans }}</th>
+                <th scope="col">{{ 'checklist.report.detail'|trans }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in revue.rows %}
+                <tr class="cl-report__row--{{ row.status.value|lower }}">
+                  <th scope="row" class="cl-report__point">
+                    {{ checklist_text(row.item) }}
+                    {% if row.item.required %}<span class="ck-item__flag" title="{{ 'checklist.mandatory'|trans }}">★</span>{% endif %}
+                    {% if row.item.hasExecutionTime %}<span class="ck-item__time">{{ row.item.executionTime }}</span>{% endif %}
+                  </th>
+
+                  <td>
+                    <span class="badge badge--{{ row.status.badge }}">
+                      {{ ('checklist.statuses.' ~ row.status.value)|trans }}
+                    </span>
+                  </td>
+
+                  {#
+                    TOUTES les signatures, pas la dernière : deux postes ont pu
+                    signer le même point, et résumer n'est pas taire. Le poste
+                    n'est nommé que quand il y en a plusieurs — sinon il
+                    répéterait la même chose à chaque ligne.
+                  #}
+                  <td class="cl-report__who">
+                    {% for entry in row.entries %}
+                      <div>
+                        {{ consultantNames[entry.consultantId]|default(entry.consultantId) }}
+                        · {{ entry.checkedAt|time_short }}
+                        {% if multiWorkstation %}
+                          <span class="muted">({{ workstationNames[entry.workstationId]|default(entry.workstationId) }})</span>
+                        {% endif %}
+                      </div>
+                    {% else %}
+                      <span class="muted">—</span>
+                    {% endfor %}
+                  </td>
+
+                  <td class="cl-report__detail">
+                    {% for entry in row.entries %}
+                      {% if entry.note or entry.photoPath %}
+                        <div>
+                          {% if entry.note %}« {{ entry.note }} »{% endif %}
+                          {% if entry.photoPath %}
+                            <a href="{{ asset(entry.photoPath) }}" target="_blank" rel="noopener">{{ 'checklist.report.photo'|trans }}</a>
+                          {% endif %}
+                        </div>
+                      {% endif %}
+                    {% endfor %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+    </section>
+  {% else %}
+    {{ ui.banner('info', 'checklist.report.noLists'|trans) }}
+  {% endfor %}
+
+  <div class="form-actions">
+    <a class="button button--secondary" href="{{ path('admin_checklist') }}">
+      {{ 'checklist.report.editLink'|trans }}
+    </a>
+  </div>
+
+{% endblock %}

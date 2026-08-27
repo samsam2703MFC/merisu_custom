@@ -128,6 +128,7 @@ nav:
     weatherSales: 'Sprzedaż i pogoda'
     network: 'Sieć'
     reality: 'Kontrola rzeczywistości'
+    checklistReport: 'Przegląd zadań'
     production: 'Zarządzanie produkcją'
     categories: 'Kategorie'
     parMatrix: Progi
@@ -1063,6 +1064,18 @@ errors:
     UPLOAD_DIR_UNAVAILABLE: 'Katalog zdjęć niedostępny.'
 
 checklist:
+    report:
+        title: "Przegląd zadań"
+        subtitle: "Co zostało zrobione, przez kogo — i co zalega."
+        point: "Punkt"
+        status: "Status"
+        signedBy: "Podpisał(a)"
+        detail: "Notatka · zdjęcie"
+        problems: "%count% niepowodzeń"
+        photo: "zdjęcie"
+        noItems: "Ta lista nie ma aktywnych punktów."
+        noLists: "Brak aktywnych checklist. Utwórz jedną w edytorze."
+        editLink: "Edytuj checklisty"
     dayNav: "Zmień dzień"
     dayBefore: "Poprzedni"
     dayAfter: "Następny"

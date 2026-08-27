@@ -131,6 +131,7 @@ nav:
     weatherSales: 'Ventes & météo'
     network: 'Réseau'
     reality: 'Contrôle de réalité'
+    checklistReport: 'Suivi des tâches'
     production: 'Gestion de production'
     categories: 'Catégories'
     parMatrix: Seuils
@@ -1066,6 +1067,18 @@ errors:
     UPLOAD_DIR_UNAVAILABLE: "Dossier de stockage des photos inaccessible."
 
 checklist:
+    report:
+        title: "Suivi des tâches"
+        subtitle: "Ce qui a été fait, par qui — et ce qui traîne."
+        point: "Point"
+        status: "Statut"
+        signedBy: "Signé par"
+        detail: "Note · photo"
+        problems: "%count% échec(s)"
+        photo: "photo"
+        noItems: "Cette liste n'a aucun point actif."
+        noLists: "Aucune check-list active. Créez-en une dans l'éditeur."
+        editLink: "Modifier les check-lists"
     dayNav: "Changer de journée"
     dayBefore: "Veille"
     dayAfter: "Lendemain"

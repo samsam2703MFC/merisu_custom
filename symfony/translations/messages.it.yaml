@@ -128,6 +128,7 @@ nav:
     weatherSales: 'Vendite e meteo'
     network: 'Rete'
     reality: 'Controllo di realtà'
+    checklistReport: 'Verifica attività'
     production: 'Gestione produzione'
     categories: 'Categorie'
     parMatrix: Soglie
@@ -1063,6 +1064,18 @@ errors:
     UPLOAD_DIR_UNAVAILABLE: 'Cartella delle foto non accessibile.'
 
 checklist:
+    report:
+        title: "Verifica attività"
+        subtitle: "Cosa è stato fatto, da chi — e cosa resta."
+        point: "Punto"
+        status: "Stato"
+        signedBy: "Firmato da"
+        detail: "Nota · foto"
+        problems: "%count% fallimenti"
+        photo: "foto"
+        noItems: "Questa lista non ha punti attivi."
+        noLists: "Nessuna checklist attiva. Creane una nell'editor."
+        editLink: "Modifica le checklist"
     dayNav: "Cambia giornata"
     dayBefore: "Giorno prima"
     dayAfter: "Giorno dopo"

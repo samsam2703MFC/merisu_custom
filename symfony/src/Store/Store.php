@@ -870,6 +870,33 @@ final class Store
     }
 
     /** @return array<string,ChecklistEntry> Indexé par identifiant de point. */
+    /**
+     * Les signatures d'une journée sur PLUSIEURS postes — le suivi admin.
+     *
+     * En LISTE et non indexées par point : deux postes peuvent avoir signé le
+     * même point, et une table indexée n'en garderait qu'un. C'est au domaine
+     * (`ChecklistReview`) de les regrouper et de les résumer.
+     *
+     * Une liste de postes VIDE ne rend rien : elle décrit un manager dont la
+     * boutique n'a aucun poste rattaché, pas une absence de filtre.
+     *
+     * @param string|list<string> $workstationId
+     *
+     * @return list<ChecklistEntry>
+     */
+    public function checklistEntriesForDate(string $businessDate, string|array $workstationId): array
+    {
+        [$clause, $valeurs] = self::inClause('workstation_id', $workstationId);
+
+        $rows = $this->db->fetchAllAssociative(
+            'SELECT * FROM inv_checklist_entry WHERE business_date = ? AND ' . $clause
+            . ' ORDER BY checked_at',
+            [$businessDate, ...$valeurs],
+        );
+
+        return array_map($this->hydrateChecklistEntry(...), $rows);
+    }
+
     public function checklistEntries(string $businessDate, string $workstationId): array
     {
         $rows = $this->db->fetchAllAssociative(
@@ -880,25 +907,32 @@ final class Store
         $entries = [];
 
         foreach ($rows as $row) {
-            $entries[(string) $row['item_id']] = new ChecklistEntry(
-                (string) $row['id'],
-                (string) $row['business_date'],
-                (string) $row['workstation_id'],
-                (string) $row['item_id'],
-                // Repli sur l'ancien booléen : les lignes écrites avant les
-                // quatre statuts n'ont pas de colonne `status` renseignée, et
-                // « coché » y voulait dire « fait ».
-                ChecklistStatus::tryFromLoose($row['status'] ?? null)
-                    ?? ((bool) $row['checked'] ? ChecklistStatus::Done : ChecklistStatus::Pending),
-                (string) $row['consultant_id'],
-                (string) $row['checked_at'],
-                $row['note'] === null || $row['note'] === '' ? null : (string) $row['note'],
-                ($row['photo_path'] ?? '') === '' ? null : (string) $row['photo_path'],
-            );
+            $entries[(string) $row['item_id']] = $this->hydrateChecklistEntry($row);
         }
 
         return $entries;
     }
+
+    /** @param array<string,mixed> $row */
+    private function hydrateChecklistEntry(array $row): ChecklistEntry
+    {
+        return new ChecklistEntry(
+            (string) $row['id'],
+            (string) $row['business_date'],
+            (string) $row['workstation_id'],
+            (string) $row['item_id'],
+            // Repli sur l'ancien booléen : les lignes écrites avant les
+            // quatre statuts n'ont pas de colonne `status` renseignée, et
+            // « coché » y voulait dire « fait ».
+            ChecklistStatus::tryFromLoose($row['status'] ?? null)
+                ?? ((bool) $row['checked'] ? ChecklistStatus::Done : ChecklistStatus::Pending),
+            (string) $row['consultant_id'],
+            (string) $row['checked_at'],
+            $row['note'] === null || $row['note'] === '' ? null : (string) $row['note'],
+            ($row['photo_path'] ?? '') === '' ? null : (string) $row['photo_path'],
+        );
+    }
+
 
     /**
      * Enregistre l'état d'un point.

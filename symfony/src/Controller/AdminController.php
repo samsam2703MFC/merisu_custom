@@ -12,6 +12,7 @@ use Merisu\Inventory\Domain\BusinessDate;
 use Merisu\Inventory\Domain\CatalogueOrder;
 use Merisu\Inventory\Domain\Checklist;
 use Merisu\Inventory\Domain\ChecklistItem;
+use Merisu\Inventory\Domain\ChecklistReview;
 use Merisu\Inventory\Domain\ContainerType;
 use Merisu\Inventory\Domain\CountMode;
 use Merisu\Inventory\Domain\CountMoment;
@@ -787,6 +788,91 @@ final class AdminController extends AbstractController
     }
 
     // ── Check-list ──────────────────────────────────────────────────────────
+
+    /**
+     * Le SUIVI des tâches faites — le pendant lecture de l'éditeur.
+     *
+     * L'éditeur dit ce qu'il FAUT faire ; cet écran dit ce qui A ÉTÉ fait :
+     * qui a signé quoi, à quelle heure, avec quelle note et quelle photo — et
+     * surtout ce qui traîne ou a échoué, parce que c'est cela qu'un
+     * responsable vient chercher le matin.
+     *
+     * MANAGER compris, et scopé par les postes de ses boutiques : les
+     * signatures ne portent pas de boutique, elles portent un poste, et
+     * `inv_workstation.shop_id` fait le pont — le même que l'Écart et le
+     * Journal.
+     */
+    #[Route('/check-list/suivi', name: 'admin_checklist_report', methods: ['GET'])]
+    public function checklistReport(Request $request): Response
+    {
+        $this->currentUser->requireManager();
+
+        $aujourdhui = $this->inventory->today();
+
+        // Aujourd'hui ou un jour PASSÉ : une check-list de demain n'a rien à
+        // montrer, et l'ouvrir laisserait croire qu'on peut la remplir d'avance.
+        $date = trim((string) $request->query->get('date', ''));
+        if ($date === '' || !BusinessDate::isValid($date) || $date > $aujourdhui) {
+            $date = $aujourdhui;
+        }
+
+        $postes = $this->scope->workstationIds($request);
+        $signatures = $postes === [] ? [] : $this->store->checklistEntriesForDate($date, $postes);
+
+        $parListe = [];
+        foreach ($this->store->checklistItems(true) as $item) {
+            $parListe[$item->checklistId][] = $item;
+        }
+
+        /*
+          Une revue PAR LISTE, chacune résumée par le domaine.
+
+          Les signatures sont réparties d'abord : `ChecklistReview` reçoit les
+          points d'UNE liste et ne doit voir que leurs signatures — les lignes
+          d'une autre liste compteraient dans son résumé sans jamais paraître
+          dans ses rangées.
+        */
+        $revues = [];
+        foreach ($this->store->checklists(true) as $liste) {
+            $items = $parListe[$liste->id] ?? [];
+            $ids = array_flip(array_map(static fn ($i) => $i->id, $items));
+
+            $revues[] = [
+                'list' => $liste,
+                'review' => ChecklistReview::build(
+                    $items,
+                    array_values(array_filter(
+                        $signatures,
+                        static fn ($e): bool => isset($ids[$e->itemId]),
+                    )),
+                ),
+            ];
+        }
+
+        // Des NOMS, jamais des identifiants : « c-4 a signé à 8 h 12 » ne dit
+        // rien à personne, et cet écran existe pour être lu.
+        $nomsConsultants = [];
+        foreach ($this->consultants->consultants() as $c) {
+            $nomsConsultants[$c->id] = $c->displayName();
+        }
+
+        $nomsPostes = [];
+        foreach ($this->consultants->workstations() as $w) {
+            $nomsPostes[$w->id] = $w->name;
+        }
+
+        return $this->render('admin/checklist_report.html.twig', [
+            'date' => $date,
+            'today' => $aujourdhui,
+            'reviews' => $revues,
+            'consultantNames' => $nomsConsultants,
+            'workstationNames' => $nomsPostes,
+            'multiWorkstation' => \count($postes) > 1,
+            'scopeShops' => $this->scope->shops(),
+            'scopeSelected' => $this->scope->selected($request),
+            'scopeNoWorkstation' => $postes === [],
+        ]);
+    }
 
     #[Route('/check-list', name: 'admin_checklist', methods: ['GET'])]
     public function checklist(Request $request): Response

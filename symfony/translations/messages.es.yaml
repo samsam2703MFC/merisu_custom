@@ -128,6 +128,7 @@ nav:
     weatherSales: 'Ventas y clima'
     network: 'Red'
     reality: 'Control de realidad'
+    checklistReport: 'Seguimiento de tareas'
     production: 'Gestión de producción'
     categories: 'Categorías'
     parMatrix: Umbrales
@@ -1063,6 +1064,18 @@ errors:
     UPLOAD_DIR_UNAVAILABLE: 'Carpeta de fotos no accesible.'
 
 checklist:
+    report:
+        title: "Seguimiento de tareas"
+        subtitle: "Lo que se ha hecho, por quién — y lo que queda."
+        point: "Punto"
+        status: "Estado"
+        signedBy: "Firmado por"
+        detail: "Nota · foto"
+        problems: "%count% fallo(s)"
+        photo: "foto"
+        noItems: "Esta lista no tiene puntos activos."
+        noLists: "Ninguna checklist activa. Crea una en el editor."
+        editLink: "Editar las checklists"
     dayNav: "Cambiar de día"
     dayBefore: "Día anterior"
     dayAfter: "Día siguiente"

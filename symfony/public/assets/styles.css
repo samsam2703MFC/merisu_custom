@@ -5087,3 +5087,16 @@ select:disabled, select.field__input:disabled { background-image: url("data:imag
 }
 
 .cl-meta > *:not(summary) { margin-top: var(--space-3); }
+
+/* ── Suivi des tâches faites ──────────────────────────────────────────────
+   L'en-tête d'une liste : icône + nom + heure d'un côté, badges de l'autre. */
+.cl-report__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+.cl-report__head .card__title { display: flex; align-items: center; gap: var(--space-2); margin: 0; }
+
+.cl-report__point { text-align: left; }
+.cl-report__who, .cl-report__detail { text-align: left; font-size: .85rem; }
+.cl-report__detail { max-width: 22rem; overflow-wrap: anywhere; }
+
+/* Une ligne en ÉCHEC se voit avant d'être lue : c'est elle qu'on vient
+   chercher, et une teinte vaut mieux qu'un badge qu'il faut balayer. */
+.cl-report__row--failed th, .cl-report__row--failed td { background: var(--danger-bg); }
