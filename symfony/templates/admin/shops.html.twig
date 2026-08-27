@@ -123,7 +123,7 @@
 
     <div class="shop-logo-field">
       {% if shop.hasLogo %}
-        <img class="shop-pick__icon" src="{{ asset(shop.logoPath) }}" alt="">
+        <img class="shop-pick__icon" src="{{ asset(shop.iconPath) }}" alt="">
       {% else %}
         <span class="shop-pick__icon shop-pick__icon--letter" aria-hidden="true">{{ shop.initial }}</span>
       {% endif %}
@@ -132,7 +132,9 @@
         <input class="field__input" type="file" id="sh-logo-{{ shop.id }}" name="logo"
                accept="image/jpeg,image/png,image/webp">
 
-        {% if shop.hasLogo %}
+        {# La case « retirer » ne vaut que pour une image PERSONNALISÉE : un
+           défaut de ville ne se retire pas, il revient de lui-même. #}
+        {% if shop.hasCustomLogo %}
           <div class="checkbox-row">
             <input type="checkbox" id="sh-logo-rm-{{ shop.id }}" name="logoRemove" value="1">
             <label for="sh-logo-rm-{{ shop.id }}">{{ 'admin.shops.logoRemove'|trans }}</label>

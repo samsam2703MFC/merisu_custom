@@ -55,7 +55,7 @@
                    {{ boutique.id == selectedShop or (selectedShop is null and loop.first) ? 'checked' : '' }}>
             <label class="shop-pick__card" for="shop-{{ boutique.id }}">
               {% if boutique.hasLogo %}
-                <img class="shop-pick__icon" src="{{ asset(boutique.logoPath) }}" alt="">
+                <img class="shop-pick__icon" src="{{ asset(boutique.iconPath) }}" alt="">
               {% else %}
                 {# À défaut d'image, l'initiale — jamais un cadre vide, qui se
                    lit comme une image qui n'a pas fini de charger. #}
@@ -70,7 +70,7 @@
            n'est pas un choix, mais savoir où l'on compte reste utile. #}
         <p class="shop-pick__single">
           {% if shops[0].hasLogo %}
-            <img class="shop-pick__icon" src="{{ asset(shops[0].logoPath) }}" alt="">
+            <img class="shop-pick__icon" src="{{ asset(shops[0].iconPath) }}" alt="">
           {% endif %}
           <span class="shop-pick__name">{{ shops[0].name }}</span>
         </p>

@@ -105,9 +105,79 @@ final readonly class Shop
     ) {
     }
 
+    /**
+     * Logos de ville LIVRÉS avec l'application.
+     *
+     * Ce sont des marques posées dans `public/assets/shops`, versionnées comme
+     * le reste du code : elles apparaissent d'emblée, sur chaque déploiement,
+     * sans qu'un administrateur ait à téléverser quoi que ce soit. Une image
+     * chargée à la main dans la fiche boutique reste prioritaire — le défaut
+     * n'est qu'un point de départ, pas un plafond.
+     *
+     * La clé est la VILLE, pas le code de boutique : le code est
+     * auto-généré et diffère d'une installation à l'autre, tandis que le nom
+     * porte la ville, qui, elle, désigne le même monument partout.
+     */
+    private const CITY_LOGOS = [
+        'krakow' => 'assets/shops/krakow.webp',
+        'wroclaw' => 'assets/shops/wroclaw.webp',
+        'poznan' => 'assets/shops/poznan.webp',
+    ];
+
     public function hasLogo(): bool
     {
+        return $this->iconPath() !== '';
+    }
+
+    /**
+     * Le chemin de l'image à montrer — la personnalisée, ou le défaut de ville.
+     *
+     * Une image téléversée gagne toujours : c'est un choix explicite. À défaut,
+     * on cherche une ville CONNUE dans le nom, diacritiques mis à plat — « Rynek »
+     * de « Wrocław Rynek » ne doit pas empêcher de reconnaître Wrocław, et le ł
+     * ne doit pas non plus. Aucune correspondance : chaîne vide, et l'écran
+     * retombe sur l'initiale, jamais sur un cadre brisé.
+     */
+    public function iconPath(): string
+    {
+        $custom = trim($this->logoPath);
+
+        if ($custom !== '') {
+            return $custom;
+        }
+
+        $nom = self::flatten($this->name);
+
+        foreach (self::CITY_LOGOS as $ville => $chemin) {
+            if ($nom !== '' && str_contains($nom, $ville)) {
+                return $chemin;
+            }
+        }
+
+        return '';
+    }
+
+    /** A-t-on chargé une image À LA MAIN, par-delà le défaut de ville ? */
+    public function hasCustomLogo(): bool
+    {
         return trim($this->logoPath) !== '';
+    }
+
+    /**
+     * Un nom ramené à l'ASCII minuscule : « Wrocław » → « wroclaw ».
+     *
+     * Les logos de ville sont une poignée de clés fixes ; les faire dépendre
+     * de l'accent ou de la casse exacts du nom saisi les aurait rendus muets à
+     * la première variation — et il y en a toujours une.
+     */
+    private static function flatten(string $name): string
+    {
+        $bas = mb_strtolower(trim($name));
+
+        $accents = ['ł' => 'l', 'ó' => 'o', 'ń' => 'n', 'ą' => 'a', 'ę' => 'e',
+                    'ś' => 's', 'ż' => 'z', 'ź' => 'z', 'ć' => 'c'];
+
+        return strtr($bas, $accents);
     }
 
     /**
