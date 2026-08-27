@@ -100,6 +100,10 @@ adminLogin:
 nav:
     sections: 'Sezioni'
     groups:
+        operations: 'Gestione quotidiana'
+        reporting: 'Reportistica'
+        business: 'Parametri attività'
+        application: 'Parametri applicazione'
         shop: 'Negozio'
         catalogue: 'Catalogo'
         sales: 'Vendite'

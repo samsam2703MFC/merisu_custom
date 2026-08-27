@@ -221,6 +221,16 @@ p { margin: 0 0 var(--space-2); }
   margin: 0;
 }
 
+/*
+  Sur téléphone, les familles ne se replient pas : le menu y est une suite de
+  pastilles, et un volet fermé y cacherait des entrées sans qu'un intertitre
+  visible n'annonce ce qu'il contient. Le marqueur du <details> disparaît, et
+  le contenu reste affiché quoi qu'il arrive.
+*/
+.admin-nav__group > summary { list-style: none; }
+.admin-nav__group > summary::-webkit-details-marker { display: none; }
+.admin-nav__group:not([open]) > .admin-nav__link { display: inline-flex; }
+
 /* Pilules Merisù : crème par défaut, framboise = section active. */
 .admin-nav__link {
   min-height: var(--touch);
@@ -300,7 +310,9 @@ p { margin: 0 0 var(--space-2); }
     height: auto;
     overflow: visible;
     clip-path: none;
-    margin: var(--space-4) 0 var(--space-1);
+    /* Resserré : ouvrir une famille de paramètres repassait le rail à 788 px
+       sur un écran de 800, et le défilement revenait. */
+    margin: var(--space-3) 0 var(--space-1);
     padding: 0 var(--space-3);
     font-size: .68rem;
     font-weight: 700;
@@ -313,14 +325,49 @@ p { margin: 0 0 var(--space-2); }
   }
   .admin-nav__title:first-child { margin-top: 0; }
 
+  /*
+    Sur ORDINATEUR, l'intertitre redevient le résumé d'un volet : il se clique.
+    Il garde exactement la même allure qu'avant — c'est un titre, pas un
+    bouton — et gagne seulement le chevron et la cible tactile.
+  */
+  .admin-nav__group > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    cursor: pointer;
+    min-height: 1.8rem;
+    border-radius: var(--radius);
+    transition: color var(--dur) var(--ease);
+  }
+  .admin-nav__group > summary:hover { color: var(--brand-dark); }
+  .admin-nav__group > summary:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+
+  /* Les familles toujours ouvertes n'ont pas de chevron : le curseur ne doit
+     pas y promettre un geste qui ne se passe pas. */
+  .admin-nav__group[open] > summary:not(:has(.admin-nav__chevron)) { cursor: default; }
+
+  .admin-nav__chevron { width: 14px; height: 14px; flex: none; transition: transform var(--dur) var(--ease); }
+  .admin-nav__group[open] > summary .admin-nav__chevron { transform: rotate(180deg); }
+
+  /*
+    Le rail ne défile plus.
+
+    Vingt liens à plat faisaient 1080 px : il défilait à toutes les hauteurs
+    d'écran, y compris en 1080. Les paramètres repliés, il tient. `auto` reste
+    en dernier recours — un réseau qui ajouterait dix écrans doit encore
+    pouvoir les atteindre.
+  */
+  .admin-nav__group:not([open]) > .admin-nav__link { display: none; }
+
   /* Des lignes, plus des pastilles : dans une colonne, la pilule crème
      redessine seize fois le même contour et le regard n'y trouve plus le
      titre. Le fond ne se pose que sur la section ouverte. */
   .admin-nav__link {
     display: flex;
     width: 100%;
-    min-height: 2.4rem;
-    margin-bottom: 2px;
+    min-height: 2.2rem;
+    margin-bottom: 1px;
     padding: .4rem var(--space-3);
     border: 1px solid transparent;
     border-radius: var(--radius);

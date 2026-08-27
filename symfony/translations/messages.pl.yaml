@@ -100,6 +100,10 @@ adminLogin:
 nav:
     sections: 'Sekcje'
     groups:
+        operations: 'Eksploatacja'
+        reporting: 'Raporty'
+        business: 'Ustawienia biznesowe'
+        application: 'Ustawienia aplikacji'
         shop: 'Sklep'
         catalogue: 'Katalog'
         sales: 'Sprzedaż'

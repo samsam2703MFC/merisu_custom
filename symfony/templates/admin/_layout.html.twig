@@ -28,36 +28,51 @@
 {% extends 'base.html.twig' %}
 
 {% block content %}
+  {#
+    ── Quatre familles, dans l'ordre où l'on s'en sert
+
+    EXPLOITATION d'abord : ce qu'on ouvre tous les jours. REPORTING ensuite :
+    ce qu'on regarde pour décider. Puis les PARAMÈTRES, séparés en deux — ce
+    qui décrit le MÉTIER (les boutiques, les gens, le catalogue) et ce qui
+    règle l'APPLICATION (la caisse, les remontées). Les mélanger obligeait à
+    chercher « Produits » entre « Caisse » et « Historique ».
+
+    Les deux familles de paramètres se REPLIENT. Vingt liens à plat faisaient
+    1080 px de rail — il défilait à toutes les hauteurs d'écran, y compris en
+    1080. Or on règle un paramètre une fois par mois et l'on ouvre Seuils tous
+    les matins : ce sont les paramètres qui se rangent, pas l'exploitation.
+
+    Le volet qui contient la page courante s'ouvre tout seul : on ne se retrouve
+    jamais sur un écran dont l'entrée est cachée.
+  #}
   {%- set navGroupes = [
-    { title: 'nav.groups.shop', links: [
+    { title: 'nav.groups.operations', open: true, links: [
+      { route: 'admin_par_matrix', label: 'nav.parMatrix' },
+      { route: 'admin_day_note',   label: 'nav.dayNote' },
+      { route: 'admin_checklist',  label: 'nav.checklist' },
+      { route: 'admin_procedures', label: 'nav.procedures' },
+      { route: 'admin_weather',    label: 'nav.weather' }
+    ] },
+    { title: 'nav.groups.reporting', open: true, links: [
+      { route: 'admin_network',    label: 'nav.network' },
+      { route: 'admin_sales',      label: 'nav.sales' },
+      { route: 'admin_weather_sales', label: 'nav.weatherSales' },
+      { route: 'admin_targets',    label: 'nav.targets' },
+      { route: 'admin_delta',      label: 'nav.delta' },
+      { route: 'admin_audit',      label: 'nav.audit' }
+    ] },
+    { title: 'nav.groups.business', open: false, links: [
       { route: 'admin_shops',      label: 'nav.shops' },
       { route: 'admin_team',       label: 'nav.team' },
       { route: 'admin_positions',  label: 'nav.positions' },
-    ] },
-    { title: 'nav.groups.catalogue', links: [
       { route: 'admin_products',   label: 'nav.products' },
       { route: 'admin_categories', label: 'nav.categories' },
       { route: 'admin_compositions', label: 'nav.compositions' }
     ] },
-    { title: 'nav.groups.sales', links: [
-      { route: 'admin_network',    label: 'nav.network' },
-      { route: 'admin_sales',      label: 'nav.sales' },
-      { route: 'admin_weather_sales', label: 'nav.weatherSales' },
-      { route: 'admin_targets',    label: 'nav.targets' }
-    ] },
-    { title: 'nav.groups.production', links: [
-      { route: 'admin_par_matrix', label: 'nav.parMatrix' },
-      { route: 'admin_weather',    label: 'nav.weather' },
-      { route: 'admin_checklist',  label: 'nav.checklist' },
-      { route: 'admin_procedures', label: 'nav.procedures' },
-      { route: 'admin_day_note',   label: 'nav.dayNote' }
-    ] },
-    { title: 'nav.groups.system', links: [
+    { title: 'nav.groups.application', open: false, links: [
       { route: 'admin_settings',   label: 'nav.settings' },
       { route: 'admin_cash',       label: 'nav.pos' },
-      { route: 'admin_delta',      label: 'nav.delta' },
-      { route: 'admin_sync',       label: 'nav.sync' },
-      { route: 'admin_audit',      label: 'nav.audit' }
+      { route: 'admin_sync',       label: 'nav.sync' }
     ] }
   ] -%}
 
@@ -84,16 +99,38 @@
     <nav class="admin-nav" aria-label="{{ 'nav.sections'|trans }}">
       {% for navGroupe in navGroupes %}
         {#
+          Un `<details>` par famille, replié ou non selon ce qu'elle contient.
+
+          Repliable SANS JavaScript, comme tout le module. Et le volet qui
+          porte la page courante s'ouvre de lui-même : on ne se retrouve jamais
+          sur un écran dont l'entrée est cachée.
+
           L'intertitre est MASQUÉ sur téléphone, jamais retiré : un lecteur
           d'écran l'annonce dans les deux formes, et c'est lui qui dit à quelle
           famille appartient le lien qu'on vient d'atteindre au clavier.
         #}
-        <p class="admin-nav__title">{{ navGroupe.title|trans }}</p>
+        {%- set navGroupePorteLaPage = navGroupe.links|filter(l => l.route == navRouteActive)|length > 0 -%}
 
-        {% for navEntree in navGroupe.links %}
-          <a class="admin-nav__link {{ navRouteActive == navEntree.route ? 'is-active' : '' }}"
-             href="{{ path(navEntree.route) }}">{{ navEntree.label|trans }}</a>
-        {% endfor %}
+        <details class="admin-nav__group" {{ navGroupe.open or navGroupePorteLaPage ? 'open' : '' }}>
+          <summary class="admin-nav__title">
+            <span>{{ navGroupe.title|trans }}</span>
+            {#
+              Le chevron ne paraît que sur les familles qu'on peut replier :
+              sur les autres il annoncerait un geste qui ne se passe pas.
+            #}
+            {% if not navGroupe.open %}
+              <svg class="admin-nav__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
+            {% endif %}
+          </summary>
+
+          {% for navEntree in navGroupe.links %}
+            <a class="admin-nav__link {{ navRouteActive == navEntree.route ? 'is-active' : '' }}"
+               href="{{ path(navEntree.route) }}">{{ navEntree.label|trans }}</a>
+          {% endfor %}
+        </details>
       {% endfor %}
     </nav>
 

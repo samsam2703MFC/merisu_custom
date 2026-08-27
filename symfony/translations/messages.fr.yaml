@@ -103,6 +103,10 @@ adminLogin:
 nav:
     sections: 'Sections'
     groups:
+        operations: 'Exploitation'
+        reporting: 'Pilotage'
+        business: 'Paramètres métier'
+        application: 'Paramètres application'
         shop: 'Boutique'
         catalogue: 'Catalogue'
         sales: 'Ventes'
