@@ -1120,6 +1120,17 @@ checklist:
         requiresPhoto: 'Richiede una foto'
         executionTime: "Ora del punto"
         executionTimeHint: "Vuoto = all'ora della sezione. Utile quando un punto si fa più tardi."
+        create: "Crea una checklist"
+        name: "Nome"
+        nameHint: "Lo stesso nome nelle quattro lingue per iniziare; poi si può ritradurre."
+        listTime: "Ora della sezione"
+        listTimeHint: "Indicativa. Vuoto: nessun'ora — come il controllo qualità."
+        icon: "Icona"
+        listActive: "Proposta in postazione"
+        nameEmpty: "Dai un nome alla checklist."
+        deleteRefused: "Questa checklist contiene ancora dei punti: spostali o eliminali prima."
+        confirmDelete: "Eliminare questa checklist?"
+        deleteHint: "Possibile solo finché non contiene alcun punto."
         add: 'Aggiungi un punto'
         newLabel: 'Nuovo punto'
 

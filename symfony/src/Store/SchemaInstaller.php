@@ -542,6 +542,19 @@ final class SchemaInstaller
         // Deux tables, comme pour les comptages : le référentiel des points
         // (administrable) d'un côté, ce qui a été coché de l'autre. Les mêler
         // rendrait impossible de renommer un point sans réécrire l'historique.
+        if (!\in_array('inv_checklist', $existing, true)) {
+            // Les check-lists elles-mêmes — le vocabulaire des volets, devenu
+            // donnée. Les trois historiques s'y amorcent à la première lecture.
+            $t = $schema->createTable('inv_checklist');
+            $t->addColumn('id', 'string', ['length' => 64]);
+            $t->addColumn('name', 'text');              // JSON : { "fr": "…", "pl": "…" }
+            $t->addColumn('icon', 'string', ['length' => 32, 'default' => 'checklist']);
+            $t->addColumn('execution_time', 'string', ['length' => 5, 'default' => '']);
+            $t->addColumn('sort_order', 'integer', ['default' => 0]);
+            $t->addColumn('active', 'boolean', ['default' => true]);
+            $t->setPrimaryKey(['id']);
+        }
+
         if (!\in_array('inv_checklist_item', $existing, true)) {
             $t = $schema->createTable('inv_checklist_item');
             $t->addColumn('id', 'string', ['length' => 64]);

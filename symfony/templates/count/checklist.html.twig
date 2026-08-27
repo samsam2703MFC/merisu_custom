@@ -60,9 +60,9 @@
   {% else %}
     <div class="ck-grid">
       {% for bloc in sections %}
-        <a class="card card--link ck-card" href="{{ path('checklist_section', date == today ? { section: bloc.section.value } : { section: bloc.section.value, date: date }) }}">
+        <a class="card card--link ck-card" href="{{ path('checklist_section', date == today ? { section: bloc.checklist.id } : { section: bloc.checklist.id, date: date }) }}">
           <div class="ck-card__head">
-            <h2 class="card__title">{{ bloc.section.labelKey|trans }}</h2>
+            <h2 class="card__title">{{ checklist_title(bloc.checklist) }}</h2>
             {% if bloc.time %}<span class="ck-card__time muted">{{ bloc.time }}</span>{% endif %}
           </div>
 

@@ -1123,6 +1123,17 @@ checklist:
         requiresPhoto: 'Exige une photo'
         executionTime: "Heure du point"
         executionTimeHint: "Vide = à l'heure du volet. Sert quand un point se fait plus tard dans la journée."
+        create: "Créer une check-list"
+        name: "Nom"
+        nameHint: "Le même nom dans les quatre langues pour commencer ; il se retraduit ensuite."
+        listTime: "Heure du volet"
+        listTimeHint: "Indicative. Vide : pas d'heure — comme le contrôle qualité."
+        icon: "Icône"
+        listActive: "Proposée au poste"
+        nameEmpty: "Donnez un nom à la check-list."
+        deleteRefused: "Cette check-list porte encore des points : déplacez-les ou supprimez-les d'abord."
+        confirmDelete: "Supprimer cette check-list ?"
+        deleteHint: "Possible seulement tant qu'elle ne porte aucun point."
         add: 'Ajouter un point'
         newLabel: 'Nouveau point'
 

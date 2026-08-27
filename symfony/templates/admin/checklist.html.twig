@@ -14,26 +14,138 @@
 
   {{ ui.page_header('checklist.admin.title'|trans, 'checklist.admin.intro'|trans) }}
 
+  {#
+    Créer une check-list — en tête, comme partout : c'est le seul geste de la
+    page qui ne modifie rien d'existant. Hors du grand formulaire : deux
+    formulaires imbriqués ne sont pas du HTML valable.
+  #}
+  <details class="card admin-new">
+    <summary class="admin-new__summary">
+      {{ ui.icon('plus') }}
+      <span>{{ 'checklist.admin.create'|trans }}</span>
+    </summary>
+
+    <form method="post" action="{{ path('admin_checklist_create') }}" class="form">
+      <div class="field-grid">
+        <div class="field">
+          <label class="field__label" for="cl-new-name">{{ 'checklist.admin.name'|trans }}</label>
+          <input class="field__input" type="text" id="cl-new-name" name="name" maxlength="120" required>
+          <p class="field__hint">{{ 'checklist.admin.nameHint'|trans }}</p>
+        </div>
+        <div class="field">
+          <label class="field__label" for="cl-new-time">{{ 'checklist.admin.listTime'|trans }}</label>
+          <input class="field__input" type="time" id="cl-new-time" name="executionTime">
+          <p class="field__hint">{{ 'checklist.admin.listTimeHint'|trans }}</p>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="button button--primary">{{ 'common.add'|trans }}</button>
+      </div>
+    </form>
+  </details>
+
+  {#
+    Le réglage d'une check-list vit dans SON formulaire, hors de celui des
+    points : le nom et l'heure du volet ne s'enregistrent pas avec les lignes,
+    et un seul bouton pour les deux aurait fait deviner lequel écrit quoi.
+  #}
+  {% for liste in checklists %}
+    {% set items = itemsByChecklist[liste.id]|default([]) %}
+
+    <section class="card{{ liste.active ? '' : ' admin-item--off' }}">
+      <details class="cl-meta">
+        <summary class="cl-meta__summary">
+          <span class="cl-meta__head">
+            {{ ui.icon(liste.icon) }}
+            <span class="cl-meta__name">{{ checklist_title(liste) }}</span>
+            {% if liste.hasExecutionTime %}<span class="muted">{{ liste.executionTime }}</span>{% endif %}
+          </span>
+          <span class="admin-item__tags">
+            {% if not liste.active %}{{ ui.badge('warn', 'admin.team.inactive'|trans) }}{% endif %}
+            {{ ui.badge('neutral', items|length ~ '') }}
+          </span>
+        </summary>
+
+        <form method="post" action="{{ path('admin_checklist_meta', { id: liste.id }) }}" class="form cl-meta__form">
+          <div class="field-grid">
+            {% for locale in locales %}
+              <div class="field">
+                <label class="field__label" for="cl-name-{{ liste.id }}-{{ locale.value }}">
+                  {{ 'checklist.admin.name'|trans }} ({{ locale.value|upper }})
+                </label>
+                <input class="field__input" type="text" maxlength="120"
+                       id="cl-name-{{ liste.id }}-{{ locale.value }}"
+                       name="name_{{ locale.value }}"
+                       value="{{ liste.name[locale.value]|default('') }}">
+              </div>
+            {% endfor %}
+
+            <div class="field">
+              <label class="field__label" for="cl-time-{{ liste.id }}">{{ 'checklist.admin.listTime'|trans }}</label>
+              <input class="field__input" type="time" id="cl-time-{{ liste.id }}"
+                     name="executionTime" value="{{ liste.executionTime }}">
+            </div>
+
+            <fieldset class="field seg">
+              <legend class="field__label">{{ 'checklist.admin.icon'|trans }}</legend>
+              <div class="seg__grid seg__grid--auto">
+                {% for icone in icons %}
+                  <label class="seg__item">
+                    <input class="seg__radio" type="radio" name="icon" value="{{ icone }}"
+                           {{ icone == liste.icon ? 'checked' : '' }}>
+                    <span class="seg__box">{{ ui.icon(icone) }}</span>
+                  </label>
+                {% endfor %}
+              </div>
+            </fieldset>
+          </div>
+
+          <div class="checkbox-row">
+            <input type="checkbox" id="cl-active-{{ liste.id }}" name="active" value="1"
+                   {{ liste.active ? 'checked' : '' }}>
+            <label for="cl-active-{{ liste.id }}">{{ 'checklist.admin.listActive'|trans }}</label>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="button button--secondary">{{ 'common.save'|trans }}</button>
+          </div>
+        </form>
+
+        {% if items is empty %}
+          <form method="post" action="{{ path('admin_checklist_delete', { id: liste.id }) }}" class="form">
+            <div class="form-actions">
+              <button type="submit" class="button button--ghost"
+                      data-confirm="{{ 'checklist.admin.confirmDelete'|trans }}">
+                {{ 'common.delete'|trans }}
+              </button>
+            </div>
+            <p class="field__hint">{{ 'checklist.admin.deleteHint'|trans }}</p>
+          </form>
+        {% endif %}
+      </details>
+    </section>
+  {% endfor %}
+
   <form method="post" action="{{ path('admin_checklist_save') }}">
 
-    {% for section in sections %}
-      {% set items = itemsBySection[section.value] %}
+    {% for liste in checklists %}
+      {% set items = itemsByChecklist[liste.id]|default([]) %}
 
       <section class="card">
         <header class="card__header">
-          <h2 class="card__title">{{ section.labelKey|trans }}</h2>
+          <h2 class="card__title">{{ checklist_title(liste) }}</h2>
           {{ ui.badge('neutral', items|length ~ '') }}
         </header>
 
         {% for item in items %}
-          {{ _self.ligne(item.id, item, section, locales) }}
+          {{ _self.ligne(item.id, item, liste.id, locales) }}
         {% endfor %}
 
         {#
           Une ligne vierge par volet : ajouter un point ne demande donc ni
           bouton ni JavaScript. Laissée vide, elle est simplement ignorée.
         #}
-        {{ _self.ligne(newIds[section.value], null, section, locales) }}
+        {{ _self.ligne(newIds[liste.id], null, liste.id, locales) }}
       </section>
     {% endfor %}
 
@@ -64,9 +176,9 @@
   Une ligne de réglage. `item` vaut null pour la ligne d'ajout : les champs
   sont alors vides et le point n'est créé que si un libellé est saisi.
 #}
-{% macro ligne(id, item, section, locales) %}
+{% macro ligne(id, item, checklistId, locales) %}
   <div class="admin-row{{ item is null ? ' admin-row--new' : '' }}">
-    <input type="hidden" name="item[{{ id }}][section]" value="{{ section.value }}">
+    <input type="hidden" name="item[{{ id }}][section]" value="{{ checklistId }}">
 
     <div class="field-grid">
       {% for locale in locales %}

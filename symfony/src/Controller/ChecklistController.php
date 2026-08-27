@@ -6,8 +6,8 @@ namespace Merisu\Inventory\Controller;
 
 use Merisu\Inventory\Adapter\ConsultantServiceInterface;
 use Merisu\Inventory\Domain\BusinessDate;
+use Merisu\Inventory\Domain\Checklist;
 use Merisu\Inventory\Domain\ChecklistItem;
-use Merisu\Inventory\Domain\ChecklistSection;
 use Merisu\Inventory\Domain\ChecklistSignature;
 use Merisu\Inventory\Domain\ChecklistStatus;
 use Merisu\Inventory\Domain\TaskTile;
@@ -90,17 +90,14 @@ final class ChecklistController extends AbstractController
     {
         $this->currentUser->requireTile(TaskTile::Checklist);
 
-        $volet = ChecklistSection::tryFromLoose($section);
-        if ($volet === null) {
-            throw $this->createNotFoundException();
-        }
+        $voulu = strtoupper(trim($section));
 
         $aujourdhui = $this->inventory->today();
         $date = self::pastDate($request, $aujourdhui);
         $workstationId = $this->currentUser->resolveWorkstation();
 
         foreach ($this->sections($date, $workstationId) as $bloc) {
-            if ($bloc['section'] === $volet) {
+            if ($bloc['checklist']->id === $voulu) {
                 return $this->render('count/checklist_section.html.twig', $bloc + [
                     'date' => $date,
                     'today' => $aujourdhui,
@@ -128,8 +125,18 @@ final class ChecklistController extends AbstractController
         $workstationId = $this->currentUser->resolveWorkstation();
         $entry = $this->store->checklistEntries($date, $workstationId)[$itemId] ?? null;
 
+        // La fiche de la check-list, pour nommer le volet en tête : son nom
+        // est une donnée, il ne se déduit plus d'une clé de traduction.
+        $liste = null;
+        foreach ($this->store->checklists() as $candidate) {
+            if ($candidate->id === $item->checklistId) {
+                $liste = $candidate;
+            }
+        }
+
         return $this->render('count/checklist_point.html.twig', [
             'item' => $item,
+            'checklist' => $liste,
             'entry' => $entry,
             'date' => $date,
             'signedBy' => $entry === null ? null : $this->consultants->consultant($entry->consultantId)?->displayName(),
@@ -220,7 +227,7 @@ final class ChecklistController extends AbstractController
 
         $this->addFlash('success', 'checklist.signed');
 
-        return $this->redirectToRoute('checklist_section', ['section' => $item->section->value]);
+        return $this->redirectToRoute('checklist_section', ['section' => $item->checklistId]);
     }
 
     /**
@@ -292,14 +299,13 @@ final class ChecklistController extends AbstractController
     {
         $items = $this->store->checklistItems(true);
         $entries = $this->store->checklistEntries($date, $workstationId);
-        $settings = $this->store->settings();
 
         $sections = [];
 
-        foreach (ChecklistSection::all() as $section) {
+        foreach ($this->store->checklists(true) as $liste) {
             $ofSection = array_values(array_filter(
                 $items,
-                static fn (ChecklistItem $i): bool => $i->section === $section,
+                static fn (ChecklistItem $i): bool => $i->checklistId === $liste->id,
             ));
 
             $lignes = [];
@@ -333,16 +339,15 @@ final class ChecklistController extends AbstractController
             ));
 
             $sections[] = [
-                'section' => $section,
-                // L'heure prévue vient des paramètres généraux : le volet
-                // d'ouverture s'attend à l'heure d'ouverture, celui de
-                // fermeture à l'heure de fermeture. Le contrôle qualité n'a
-                // pas d'heure imposée, et n'en affiche donc aucune.
-                'time' => match ($section) {
-                    ChecklistSection::Opening => $settings->openingTime,
-                    ChecklistSection::Closing => $settings->closingTime,
-                    default => null,
-                },
+                'checklist' => $liste,
+                /*
+                  L'heure vient de la CHECK-LIST elle-même, plus des paramètres
+                  généraux. C'était leur source quand les volets étaient figés ;
+                  une liste que l'administrateur crée porte la sienne, et les
+                  trois historiques ont hérité de celle des paramètres au
+                  moment de l'amorçage.
+                */
+                'time' => $liste->hasExecutionTime() ? $liste->executionTime : null,
                 'rows' => $lignes,
                 'total' => \count($lignes),
                 'done' => $faits,

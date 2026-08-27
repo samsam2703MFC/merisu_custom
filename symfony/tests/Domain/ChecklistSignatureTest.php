@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Merisu\Inventory\Tests\Domain;
 
 use Merisu\Inventory\Domain\ChecklistItem;
-use Merisu\Inventory\Domain\ChecklistSection;
 use Merisu\Inventory\Domain\ChecklistSignature;
 use Merisu\Inventory\Domain\ChecklistStatus;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -15,7 +14,7 @@ final class ChecklistSignatureTest extends TestCase
 {
     private static function point(bool $photo = false): ChecklistItem
     {
-        return new ChecklistItem('p1', ChecklistSection::Opening, ['fr' => 'Vitrine'], 1, true, true, $photo);
+        return new ChecklistItem('p1', 'OPENING', ['fr' => 'Vitrine'], 1, true, true, $photo);
     }
 
     public function testUneSignatureCompleteEstRecevable(): void

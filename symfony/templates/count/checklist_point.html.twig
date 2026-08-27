@@ -33,7 +33,7 @@
 
     <header class="sign__head">
       <p class="sign__eyebrow">
-        {{ item.section.labelKey|trans }}
+        {{ checklist ? checklist_title(checklist) : '' }}
       </p>
       <h1 class="sign__title">{{ checklist_text(item) }}</h1>
 
@@ -166,7 +166,7 @@
   </form>
 
   <div class="form-actions form-actions--centered">
-    <a class="button button--ghost" href="{{ path('checklist_section', { section: item.section.value }) }}">
+    <a class="button button--ghost" href="{{ path('checklist_section', { section: item.checklistId }) }}">
       {{ 'common.cancel'|trans }}
     </a>
   </div>

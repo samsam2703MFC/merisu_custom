@@ -7,9 +7,9 @@ namespace Merisu\Inventory\Store;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Merisu\Inventory\Domain\AuditEntry;
+use Merisu\Inventory\Domain\Checklist;
 use Merisu\Inventory\Domain\ChecklistEntry;
 use Merisu\Inventory\Domain\ChecklistItem;
-use Merisu\Inventory\Domain\ChecklistSection;
 use Merisu\Inventory\Domain\ChecklistStatus;
 use Merisu\Inventory\Domain\ContainerType;
 use Merisu\Inventory\Domain\CountMode;
@@ -738,6 +738,91 @@ final class Store
     // ── Check-list ──────────────────────────────────────────────────────────
 
     /** @return list<ChecklistItem> */
+    /**
+     * Les check-lists — le vocabulaire des volets, devenu donnée.
+     *
+     * Table VIDE = base d'avant la conversion : on y inscrit les trois volets
+     * historiques, sous LEURS identifiants (OPENING, CLOSING, QUALITY), si
+     * bien que les points existants — et les signatures déjà posées —
+     * retrouvent leur volet sans migration. Les noms sont écrits dans les
+     * quatre langues, repris des traductions qui les portaient ; les heures
+     * reprennent celles des paramètres, qui étaient jusqu'ici leur source.
+     *
+     * @return list<Checklist>
+     */
+    public function checklists(bool $activeOnly = false): array
+    {
+        if ((int) $this->db->fetchOne('SELECT COUNT(*) FROM inv_checklist') === 0) {
+            $reglages = $this->settings();
+
+            $historiques = [
+                ['OPENING', ['fr' => 'Ouverture', 'pl' => 'Otwarcie', 'it' => 'Apertura', 'es' => 'Apertura'], 'sunrise', $reglages->openingTime],
+                ['CLOSING', ['fr' => 'Fermeture', 'pl' => 'Zamknięcie', 'it' => 'Chiusura', 'es' => 'Cierre'], 'moon', $reglages->closingTime],
+                ['QUALITY', ['fr' => 'Contrôle qualité', 'pl' => 'Kontrola jakości', 'it' => 'Controllo qualità', 'es' => 'Control de calidad'], 'shield', ''],
+            ];
+
+            foreach ($historiques as $rang => [$id, $noms, $icone, $heure]) {
+                $this->db->insert('inv_checklist', [
+                    'id' => $id,
+                    'name' => json_encode($noms, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+                    'icon' => $icone,
+                    'execution_time' => $heure,
+                    'sort_order' => $rang,
+                    'active' => 1,
+                ]);
+            }
+        }
+
+        $sql = 'SELECT * FROM inv_checklist'
+            . ($activeOnly ? ' WHERE active = 1' : '')
+            . ' ORDER BY sort_order, id';
+
+        return array_map(
+            static fn (array $r): Checklist => new Checklist(
+                (string) $r['id'],
+                json_decode((string) $r['name'], true) ?: [],
+                (string) ($r['icon'] ?? 'checklist'),
+                trim((string) ($r['execution_time'] ?? '')),
+                (int) ($r['sort_order'] ?? 0),
+                (bool) ($r['active'] ?? true),
+            ),
+            $this->db->fetchAllAssociative($sql),
+        );
+    }
+
+    public function saveChecklist(Checklist $liste): void
+    {
+        $data = [
+            'name' => json_encode($liste->name, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+            'icon' => $liste->icon,
+            'execution_time' => $liste->executionTime,
+            'sort_order' => $liste->sortOrder,
+            'active' => $liste->active ? 1 : 0,
+        ];
+
+        if ($this->db->update('inv_checklist', $data, ['id' => $liste->id]) === 0) {
+            $this->db->insert('inv_checklist', $data + ['id' => $liste->id]);
+        }
+    }
+
+    /**
+     * Supprime une check-list, sauf si des points s'y rattachent encore.
+     *
+     * Les effacer avec elle emporterait leurs signatures — des pièces d'audit.
+     * On refuse : l'administrateur déplace ou supprime ses points d'abord, et
+     * une liste qu'on ne veut plus voir se DÉSACTIVE.
+     */
+    public function deleteChecklist(string $id): bool
+    {
+        if ((int) $this->db->fetchOne('SELECT COUNT(*) FROM inv_checklist_item WHERE section = ?', [$id]) > 0) {
+            return false;
+        }
+
+        $this->db->delete('inv_checklist', ['id' => $id]);
+
+        return true;
+    }
+
     public function checklistItems(bool $activeOnly = false): array
     {
         $sql = 'SELECT * FROM inv_checklist_item'
@@ -757,7 +842,9 @@ final class Store
     public function saveChecklistItem(ChecklistItem $item): void
     {
         $data = [
-            'section' => $item->section->value,
+            // La colonne garde son nom : elle portait « OPENING », elle porte
+            // l'identifiant de la check-list — les trois historiques ont le même.
+            'section' => $item->checklistId,
             'label' => json_encode($item->label, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
             'sort_order' => $item->sortOrder,
             'active' => $item->active ? 1 : 0,
@@ -1053,7 +1140,7 @@ final class Store
     {
         return new ChecklistItem(
             (string) $row['id'],
-            ChecklistSection::tryFromLoose((string) $row['section']) ?? ChecklistSection::Opening,
+            strtoupper(trim((string) $row['section'])) ?: 'OPENING',
             json_decode((string) $row['label'], true) ?: [],
             (int) $row['sort_order'],
             (bool) $row['active'],

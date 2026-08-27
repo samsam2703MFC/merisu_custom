@@ -9,7 +9,7 @@
 {% extends 'base.html.twig' %}
 {% import 'components/_macros.html.twig' as ui %}
 
-{% block title %}{{ section.labelKey|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+{% block title %}{{ checklist_title(checklist) }} — {{ 'common.appName'|trans }}{% endblock %}
 
 {% block content %}
 
@@ -20,7 +20,7 @@
   <div class="page-header page-header--with-icon">
     <span class="page-header__icon">{{ ui.icon('checklist') }}</span>
     <div class="page-header__text">
-      <h1 class="page-header__title">{{ section.labelKey|trans }}</h1>
+      <h1 class="page-header__title">{{ checklist_title(checklist) }}</h1>
       <p class="page-header__subtitle">
         {% if time %}{{ time }} · {% endif %}{{ date|long_date }}
       </p>

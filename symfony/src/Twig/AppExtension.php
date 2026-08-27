@@ -10,6 +10,7 @@ use Merisu\Inventory\Adapter\Material;
 use Merisu\Inventory\Adapter\ShopRankingServiceInterface;
 use Merisu\Inventory\Adapter\Workstation;
 use Merisu\Inventory\Domain\BusinessDate;
+use Merisu\Inventory\Domain\Checklist;
 use Merisu\Inventory\Domain\ChecklistItem;
 use Merisu\Inventory\Domain\DayNote;
 use Merisu\Inventory\Domain\ContainerQuantity;
@@ -50,6 +51,9 @@ final class AppExtension extends AbstractExtension
             new TwigFunction('product_label', $this->productLabel(...)),
             new TwigFunction('material_label', $this->materialLabel(...)),
             new TwigFunction('checklist_text', $this->checklistText(...)),
+            // Le NOM d'une check-list, dans la langue de l'écran. C'est une
+            // donnée, comme un libellé de produit — pas une clé de traduction.
+            new TwigFunction('checklist_title', $this->checklistTitle(...)),
             new TwigFunction('use_by', $this->useBy(...)),
             new TwigFunction('product_ingredients', $this->productIngredients(...)),
             new TwigFunction('product_allergens', $this->productAllergens(...)),
@@ -153,6 +157,11 @@ final class AppExtension extends AbstractExtension
     }
 
     /** Libellé d'un point de check-list, même repli que les produits. */
+    public function checklistTitle(Checklist $liste): string
+    {
+        return $liste->text($this->locale(), $this->store->settings()->defaultLocale);
+    }
+
     public function checklistText(ChecklistItem $item): string
     {
         return $item->text($this->locale(), $this->store->settings()->defaultLocale);

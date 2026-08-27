@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Merisu\Inventory\Command;
 
 use Merisu\Inventory\Domain\ChecklistItem;
-use Merisu\Inventory\Domain\ChecklistSection;
 use Merisu\Inventory\Domain\DayNote;
 use Merisu\Inventory\Domain\DayOfWeek;
 use Merisu\Inventory\Domain\Product;
@@ -49,9 +48,9 @@ final class SeedCommand extends Command
      * @var array<string, list<string>>
      */
     private const PLACEHOLDER_CHECKLIST = [
-        ChecklistSection::Opening->value => ['Point d\'ouverture 1', 'Point d\'ouverture 2'],
-        ChecklistSection::Closing->value => ['Point de fermeture 1', 'Point de fermeture 2'],
-        ChecklistSection::Quality->value => ['Contrôle qualité 1', 'Contrôle qualité 2'],
+        'OPENING' => ['Point d\'ouverture 1', 'Point d\'ouverture 2'],
+        'CLOSING' => ['Point de fermeture 1', 'Point de fermeture 2'],
+        'QUALITY' => ['Contrôle qualité 1', 'Contrôle qualité 2'],
     ];
 
     /**
@@ -173,7 +172,7 @@ final class SeedCommand extends Command
                 foreach ($labels as $rang => $label) {
                     $this->store->saveChecklistItem(new ChecklistItem(
                         strtolower($section) . '-' . ($rang + 1),
-                        ChecklistSection::from($section),
+                        $section,
                         ['fr' => $label, 'pl' => $label, 'it' => $label, 'es' => $label],
                         $rang + 1,
                         true,

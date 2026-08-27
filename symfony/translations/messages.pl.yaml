@@ -1120,6 +1120,17 @@ checklist:
         requiresPhoto: 'Wymaga zdjęcia'
         executionTime: "Godzina zadania"
         executionTimeHint: "Puste = o godzinie sekcji. Przydatne, gdy zadanie wykonuje się później."
+        create: "Utwórz checklistę"
+        name: "Nazwa"
+        nameHint: "Na początek ta sama nazwa we wszystkich czterech językach; potem można ją przetłumaczyć."
+        listTime: "Godzina sekcji"
+        listTimeHint: "Orientacyjna. Puste: bez godziny — jak kontrola jakości."
+        icon: "Ikona"
+        listActive: "Widoczna na stanowisku"
+        nameEmpty: "Nadaj nazwę checkliście."
+        deleteRefused: "Ta checklista ma jeszcze zadania: najpierw je przenieś lub usuń."
+        confirmDelete: "Usunąć tę checklistę?"
+        deleteHint: "Możliwe tylko, dopóki nie zawiera żadnych zadań."
         add: 'Dodaj punkt'
         newLabel: 'Nowy punkt'
 

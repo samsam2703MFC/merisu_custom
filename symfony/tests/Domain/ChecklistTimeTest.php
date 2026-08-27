@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Merisu\Inventory\Tests\Domain;
 
 use Merisu\Inventory\Domain\ChecklistItem;
-use Merisu\Inventory\Domain\ChecklistSection;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -20,7 +19,7 @@ final class ChecklistTimeTest extends TestCase
     {
         return new ChecklistItem(
             'p1',
-            ChecklistSection::Opening,
+            'OPENING',
             ['fr' => 'Relever les vitrines'],
             0,
             true,

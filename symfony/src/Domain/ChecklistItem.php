@@ -20,7 +20,17 @@ final readonly class ChecklistItem
      */
     public function __construct(
         public string $id,
-        public ChecklistSection $section,
+        /**
+         * La check-list à laquelle ce point appartient — par IDENTIFIANT.
+         *
+         * C'était une énumération à trois valeurs ; les check-lists sont
+         * devenues des données, et le point désigne la sienne comme une ligne
+         * en désigne une autre : par sa clé. Les identifiants historiques
+         * (OPENING, CLOSING, QUALITY) sont ceux des trois lignes amorcées, si
+         * bien que les points déjà signés retrouvent leur volet sans
+         * migration.
+         */
+        public string $checklistId,
         public array $label,
         public int $sortOrder,
         public bool $active,
@@ -88,7 +98,7 @@ final readonly class ChecklistItem
     {
         return new self(
             $changes['id'] ?? $this->id,
-            $changes['section'] ?? $this->section,
+            $changes['checklistId'] ?? $this->checklistId,
             $changes['label'] ?? $this->label,
             $changes['sortOrder'] ?? $this->sortOrder,
             $changes['active'] ?? $this->active,

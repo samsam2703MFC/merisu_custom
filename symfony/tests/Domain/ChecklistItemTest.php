@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Merisu\Inventory\Tests\Domain;
 
+use Merisu\Inventory\Domain\Checklist;
 use Merisu\Inventory\Domain\ChecklistItem;
-use Merisu\Inventory\Domain\ChecklistSection;
 use Merisu\Inventory\Domain\Locale;
 use PHPUnit\Framework\TestCase;
 
@@ -18,7 +18,7 @@ final class ChecklistItemTest extends TestCase
 {
     private function item(array $labels): ChecklistItem
     {
-        return new ChecklistItem('ouverture-1', ChecklistSection::Opening, $labels, 1, true);
+        return new ChecklistItem('ouverture-1', 'OPENING', $labels, 1, true);
     }
 
     public function testRendLeLibelleDeLaLangueDemandee(): void
@@ -58,27 +58,39 @@ final class ChecklistItemTest extends TestCase
         self::assertSame('ouverture-1', $this->item([])->text(Locale::Fr));
     }
 
-    public function testChaqueVoletAUneIconeEtUnLibelle(): void
+    /**
+     * Les volets sont devenus des DONNÉES : ces trois tests remplaçent ceux de
+     * l'énumération disparue. Ce qui reste à garantir, c'est le nom multilingue
+     * et son repli — le même contrat que les libellés de produits.
+     */
+    public function testUneChecklistSeNommeDansLaLangueDemandee(): void
     {
-        foreach (ChecklistSection::all() as $section) {
-            self::assertNotSame('', $section->icon());
-            self::assertStringStartsWith('checklist.sections.', $section->labelKey());
-        }
+        $liste = new Checklist('CL-1', ['fr' => 'Réception', 'pl' => 'Przyjęcie']);
+
+        self::assertSame('Réception', $liste->text(Locale::Fr));
+        self::assertSame('Przyjęcie', $liste->text(Locale::Pl));
+        // Langue absente : repli sur la langue par défaut, comme les produits.
+        self::assertSame('Réception', $liste->text(Locale::It));
     }
 
-    public function testLesTroisVoletsSontDansLOrdreDeLaJournee(): void
+    public function testUneChecklistSansAucunNomRendSonIdentifiant(): void
     {
-        self::assertSame(
-            [ChecklistSection::Opening, ChecklistSection::Closing, ChecklistSection::Quality],
-            ChecklistSection::all(),
-        );
+        // Jamais une ligne vide : l'administrateur doit voir qu'un nom manque.
+        self::assertSame('CL-2', (new Checklist('CL-2', []))->text(Locale::Fr));
     }
 
-    public function testLaSectionSeLitSansEgardALaCasse(): void
+    public function testLHeureDUneChecklistEstFacultative(): void
     {
-        self::assertSame(ChecklistSection::Quality, ChecklistSection::tryFromLoose(' quality '));
-        self::assertNull(ChecklistSection::tryFromLoose('INCONNU'));
-        self::assertNull(ChecklistSection::tryFromLoose(null));
+        self::assertFalse((new Checklist('CL-3', ['fr' => 'Qualité']))->hasExecutionTime());
+        self::assertTrue((new Checklist('CL-4', ['fr' => 'Ouverture'], executionTime: '08:00'))->hasExecutionTime());
+    }
+
+    public function testLesIconesProposeesSontCellesQueLApplicationDessine(): void
+    {
+        // Une icône hors liste afficherait un carré vide sur la carte du
+        // vendeur ; la liste est close et non vide, c'est tout son contrat.
+        self::assertNotEmpty(Checklist::icons());
+        self::assertContains('checklist', Checklist::icons());
     }
 
     public function testWithNeTouchePasALOriginal(): void

@@ -10,8 +10,8 @@ use Merisu\Inventory\Adapter\ShopRankingServiceInterface;
 use Merisu\Inventory\Adapter\TranslationUnavailable;
 use Merisu\Inventory\Domain\BusinessDate;
 use Merisu\Inventory\Domain\CatalogueOrder;
+use Merisu\Inventory\Domain\Checklist;
 use Merisu\Inventory\Domain\ChecklistItem;
-use Merisu\Inventory\Domain\ChecklistSection;
 use Merisu\Inventory\Domain\ContainerType;
 use Merisu\Inventory\Domain\CountMode;
 use Merisu\Inventory\Domain\CountMoment;
@@ -793,26 +793,32 @@ final class AdminController extends AbstractController
     {
         $this->currentUser->requireAdmin();
 
-        $parSection = [];
-        foreach (ChecklistSection::all() as $section) {
-            $parSection[$section->value] = [];
+        $listes = $this->store->checklists();
+
+        $parListe = [];
+        foreach ($listes as $liste) {
+            $parListe[$liste->id] = [];
         }
 
         foreach ($this->store->checklistItems() as $item) {
-            $parSection[$item->section->value][] = $item;
+            // Un point dont la liste a disparu reste VISIBLE, dans un volet
+            // « orphelins » : le cacher ferait croire qu'il n'existe plus,
+            // alors que ses signatures existent toujours.
+            $parListe[$item->checklistId][] = $item;
         }
 
         // Un identifiant neuf par volet pour la ligne d'ajout : le réutiliser
         // ou le tirer au sort dans le gabarit risquerait d'écraser un point.
         $nouveaux = [];
-        foreach (ChecklistSection::all() as $section) {
-            $nouveaux[$section->value] = strtolower($section->value) . '-' . Store::uuid();
+        foreach (array_keys($parListe) as $id) {
+            $nouveaux[$id] = strtolower($id) . '-' . Store::uuid();
         }
 
         return $this->render('admin/checklist.html.twig', [
-            'sections' => ChecklistSection::all(),
-            'itemsBySection' => $parSection,
+            'checklists' => $listes,
+            'itemsByChecklist' => $parListe,
             'newIds' => $nouveaux,
+            'icons' => Checklist::icons(),
             'locales' => $this->shownLocales($request),
         ]);
     }
@@ -847,6 +853,124 @@ final class AdminController extends AbstractController
      * masse change vraiment quelque chose — une check-list d'ouverture compte
      * une quinzaine de points, soit quarante-cinq libellés à retaper.
      */
+    /**
+     * Crée une check-list.
+     *
+     * Le même nom dans les quatre langues pour commencer, comme une recette :
+     * c'est un nom d'atelier, et trois langues laissées vides feraient des
+     * volets sans titre chez le vendeur polonais. Il se retraduit ensuite par
+     * le bouton de traduction de l'écran.
+     */
+    #[Route('/check-list/nouvelle', name: 'admin_checklist_create', methods: ['POST'], priority: 10)]
+    public function createChecklist(Request $request): Response
+    {
+        $admin = $this->currentUser->requireAdmin();
+
+        $nom = trim((string) $request->request->get('name', ''));
+
+        if ($nom === '') {
+            $this->addFlash('error', 'checklist.admin.nameEmpty');
+
+            return $this->redirectToRoute('admin_checklist');
+        }
+
+        /*
+          L'identifiant vient du hasard, pas du nom : un nom se retape, et un
+          identifiant qui en dériverait changerait au premier renommage — en
+          emportant le rattachement de tous les points signés.
+        */
+        $id = 'CL-' . strtoupper(substr(Store::uuid(), 0, 8));
+
+        $dernier = 0;
+        foreach ($this->store->checklists() as $liste) {
+            $dernier = max($dernier, $liste->sortOrder);
+        }
+
+        $this->store->saveChecklist(new Checklist(
+            $id,
+            array_fill_keys(array_map(static fn (Locale $l): string => $l->value, Locale::all()), mb_substr($nom, 0, 120)),
+            'checklist',
+            self::checklistTime($request->request->get('executionTime')),
+            $dernier + 1,
+            true,
+        ));
+
+        $this->store->audit($admin->id, $admin->role->value, 'CHECKLIST_CREATED', null, null, ['id' => $id]);
+        $this->addFlash('success', 'common.saved');
+
+        return $this->redirectToRoute('admin_checklist');
+    }
+
+    /**
+     * Règle une check-list : nom (langue de l'écran), heure, icône, active.
+     */
+    #[Route('/check-list/liste/{id}', name: 'admin_checklist_meta', methods: ['POST'], priority: 10)]
+    public function saveChecklistMeta(Request $request, string $id): Response
+    {
+        $admin = $this->currentUser->requireAdmin();
+
+        $liste = null;
+        foreach ($this->store->checklists() as $candidate) {
+            if ($candidate->id === $id) {
+                $liste = $candidate;
+            }
+        }
+
+        if ($liste === null) {
+            throw $this->createNotFoundException();
+        }
+
+        /*
+          Seule la langue de l'écran se saisit ; les autres restent en place —
+          la même fusion que les libellés de produits, et pour la même raison :
+          enregistrer une fiche en français ne doit pas effacer le polonais.
+        */
+        $noms = $liste->name;
+        foreach ($this->shownLocales($request) as $locale) {
+            $saisi = trim((string) $request->request->get('name_' . $locale->value, ''));
+            if ($saisi !== '') {
+                $noms[$locale->value] = mb_substr($saisi, 0, 120);
+            }
+        }
+
+        $icone = (string) $request->request->get('icon', $liste->icon);
+
+        $this->store->saveChecklist($liste->with(
+            name: $noms,
+            // L'icône vient d'une liste close : une valeur forgée afficherait
+            // un carré vide sur chaque carte du vendeur.
+            icon: \in_array($icone, Checklist::icons(), true) ? $icone : $liste->icon,
+            executionTime: self::checklistTime($request->request->get('executionTime')),
+            active: $request->request->getBoolean('active'),
+        ));
+
+        $this->store->audit($admin->id, $admin->role->value, 'CHECKLIST_META_UPDATED', null, null, ['id' => $id]);
+        $this->addFlash('success', 'common.saved');
+
+        return $this->redirectToRoute('admin_checklist');
+    }
+
+    /**
+     * Supprime une check-list VIDE. Refusé sinon : effacer ses points
+     * emporterait leurs signatures, qui sont des pièces d'audit.
+     */
+    #[Route('/check-list/liste/{id}/supprimer', name: 'admin_checklist_delete', methods: ['POST'], priority: 10)]
+    public function deleteChecklist(string $id): Response
+    {
+        $admin = $this->currentUser->requireAdmin();
+
+        if (!$this->store->deleteChecklist($id)) {
+            $this->addFlash('error', 'checklist.admin.deleteRefused');
+
+            return $this->redirectToRoute('admin_checklist');
+        }
+
+        $this->store->audit($admin->id, $admin->role->value, 'CHECKLIST_DELETED', null, null, ['id' => $id]);
+        $this->addFlash('success', 'common.saved');
+
+        return $this->redirectToRoute('admin_checklist');
+    }
+
     #[Route('/check-list/traduire', name: 'admin_checklist_translate', methods: ['POST'])]
     public function translateChecklist(Request $request): Response
     {
@@ -881,7 +1005,7 @@ final class AdminController extends AbstractController
         foreach ($this->store->checklistItems() as $item) {
             $this->store->saveChecklistItem(new ChecklistItem(
                 $item->id,
-                $item->section,
+                $item->checklistId,
                 $resultat['fields'][$item->id],
                 $item->sortOrder,
                 $item->active,
@@ -954,12 +1078,21 @@ final class AdminController extends AbstractController
                 continue;
             }
 
-            $section = ChecklistSection::tryFromLoose((string) ($champs['section'] ?? ''))
-                ?? ChecklistSection::Opening;
+            /*
+              La check-list visée, VALIDÉE contre la base : le champ vient du
+              formulaire, et un identifiant forgé créerait un volet fantôme
+              que l'écran vendeur ne montre nulle part.
+            */
+            $listeId = strtoupper(trim((string) ($champs['section'] ?? '')));
+            $connues = array_map(static fn ($l) => $l->id, $this->store->checklists());
+
+            if (!\in_array($listeId, $connues, true)) {
+                continue;
+            }
 
             $this->store->saveChecklistItem(new ChecklistItem(
                 $id,
-                $section,
+                $listeId,
                 $labels,
                 (int) ($champs['sortOrder'] ?? 0),
                 (bool) ($champs['active'] ?? false),
