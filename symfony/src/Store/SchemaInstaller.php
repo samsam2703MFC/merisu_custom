@@ -71,6 +71,7 @@ final class SchemaInstaller
             // Prix d'ACHAT par unité de mesure. Ne vaut que pour ce qu'on
             // achète ; les recettes tirent le leur de leur composition.
             $t->addColumn('unit_cost', 'float', ['default' => 0]);
+            $t->addColumn('needs_recipe', 'boolean', ['default' => false]);
             $t->setPrimaryKey(['id']);
             $t->addUniqueIndex(['code'], 'inv_product_code');
         }
@@ -899,6 +900,10 @@ final class SchemaInstaller
                 // service : non renseigné, et l'écran le dit plutôt que de
                 // compter l'ingrédient comme gratuit.
                 'unit_cost' => 'FLOAT DEFAULT 0 NOT NULL',
+                // Ajoutée avec la case « nécessite une recette » : 0 sur les
+                // bases déjà en service — aucun produit n'en réclame une tant
+                // qu'on ne l'a pas cochée.
+                'needs_recipe' => 'BOOLEAN DEFAULT 0 NOT NULL',
             ],
             'inv_category' => [
                 // Ajoutée en même temps que celle des produits : une base

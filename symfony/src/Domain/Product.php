@@ -110,6 +110,17 @@ final readonly class Product
          * qu'un coût absent, parce qu'il a l'air juste.
          */
         public float $unitCost = 0.0,
+        /**
+         * Ce produit RÉCLAME une recette.
+         *
+         * Une recette (nature RECIPE) en porte toujours une ; un produit en
+         * vente, non — la plupart des tiramisu se vendent sans qu'on ait saisi
+         * ce qu'ils consomment. Cette case, posée dans Produits, dit « celui-ci
+         * en a besoin » : il rejoint alors l'écran Recettes, au lieu de se
+         * perdre parmi les quarante autres produits en vente. Sans elle, on
+         * devait deviner lesquels composer.
+         */
+        public bool $needsRecipe = false,
     ) {
     }
 
@@ -208,6 +219,7 @@ final readonly class Product
             $changes['supplierRef'] ?? $this->supplierRef,
             $changes['supplierName'] ?? $this->supplierName,
             $changes['unitCost'] ?? $this->unitCost,
+            $changes['needsRecipe'] ?? $this->needsRecipe,
         );
     }
 }

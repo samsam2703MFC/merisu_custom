@@ -243,13 +243,22 @@
             <p class="field__hint">{{ 'admin.compositions.yieldHint'|trans({ '%unit%': product.unit }) }}</p>
           </div>
 
+          {# Comment on retire, comment on ajoute — dit une fois, au-dessus du
+             tableau, plutôt que deviné. #}
+          <p class="field__hint rcp__howto">
+            {{ 'admin.compositions.howto'|trans }}
+            <a href="{{ path('admin_products') }}">{{ 'nav.products'|trans }}</a>.
+          </p>
+
           <div class="table-scroll">
             <table class="table rcp">
               <thead>
                 <tr>
                   <th scope="col">{{ 'admin.compositions.material'|trans }}</th>
+                  <th scope="col">{{ 'admin.compositions.unitPrice'|trans }}</th>
                   <th scope="col">{{ 'common.quantity'|trans }}</th>
                   <th scope="col">{{ 'admin.compositions.perUnit'|trans }}</th>
+                  <th scope="col">{{ 'admin.compositions.lineCost'|trans }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -278,7 +287,7 @@
                 {% for material in components|filter(m => m.id != product.id) %}
                   {% if loop.first or material.nature != components[loop.index0 - 1].nature %}
                     <tr class="rcp__group">
-                      <th colspan="3" scope="colgroup">
+                      <th colspan="5" scope="colgroup">
                         {{ ui.icon(material.nature.icon) }}
                         {{ ('admin.products.natures.' ~ material.nature.value)|trans }}
                       </th>
@@ -286,10 +295,20 @@
                   {% endif %}
 
                   {% set qty = recette[material.id] ?? null %}
+                  {% set uc = unitCosts[material.id]|default(null) %}
+                  {% set uPrice = uc and uc.complete and uc.total > 0 ? uc.total : null %}
                   <tr>
                     <th scope="row" class="rcp__name">
                       <label for="q-{{ product.id }}-{{ material.id }}">{{ product_label(material) }}</label>
                     </th>
+
+                    {# Le PRIX D'UNE UNITÉ de la matière : le tarif d'achat pour
+                       une matière, le coût descendu pour une sous-recette.
+                       « — » quand il manque un tarif : un « 0 » se lirait
+                       « gratuit », ce qui n'est pas « non renseigné ». #}
+                    <td class="rcp__price">
+                      {% if uPrice is not null %}{{ uPrice|qty }} <span class="muted">/ {{ material.unit }}</span>{% else %}—{% endif %}
+                    </td>
 
                     <td class="rcp__qty">
                       {#
@@ -310,6 +329,16 @@
                        rendement ne se fasse pas dans le noir. #}
                     <td class="rcp__stored">
                       {% if qty is not null %}{{ qty|qty }} {{ material.unit }}{% else %}—{% endif %}
+                    </td>
+
+                    {# Le COÛT DE CETTE LIGNE dans la recette : prix unitaire ×
+                       quantité. Rempli seulement quand la ligne est dans la
+                       recette ET que la matière a un prix — c'est la somme de
+                       ces cellules, plus les pertes, qui fait le total du bas. #}
+                    <td class="rcp__linecost">
+                      {% if qty is not null and uPrice is not null %}
+                        <strong>{{ (qty * uPrice)|qty }}</strong>
+                      {% else %}—{% endif %}
                     </td>
                   </tr>
                 {% endfor %}

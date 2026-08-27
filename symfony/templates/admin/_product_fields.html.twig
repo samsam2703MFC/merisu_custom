@@ -178,6 +178,29 @@
 
       <p class="field__hint">{{ 'admin.products.natureHint'|trans }}</p>
     </fieldset>
+
+    {#
+      « Ce produit nécessite une recette. »
+
+      Montrée pour ce qui PEUT en porter une — un produit en vente. Une recette
+      en a toujours une, une matière n'en a pas : la case n'aurait là aucun
+      sens. Cochée, le produit rejoint l'écran Recettes, au lieu de se perdre
+      parmi les autres produits en vente.
+
+      Le drapeau caché dit au contrôleur que la case était sur le formulaire :
+      sans lui, une case décochée serait indiscernable d'un écran qui ne la
+      porte pas, et un décochage volontaire ne s'enregistrerait jamais.
+    #}
+    {% if product.nature.canHaveRecipe %}
+      <input type="hidden" name="needsRecipePresent" value="1">
+      <div class="checkbox-row">
+        <input type="checkbox" id="needs-recipe-{{ product.id }}" name="needsRecipe" value="1"
+               {{ product.needsRecipe ? 'checked' : '' }}>
+        <label for="needs-recipe-{{ product.id }}">{{ 'admin.products.needsRecipe'|trans }}</label>
+      </div>
+      <p class="field__hint">{{ 'admin.products.needsRecipeHint'|trans }}</p>
+    {% endif %}
+
     {#
       Rythme de comptage : à quels moments, et combien de fois par semaine.
 

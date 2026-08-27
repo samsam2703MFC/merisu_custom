@@ -547,6 +547,8 @@ admin:
         categoryNone: 'Bez kategorii'
         nature: 'Rodzaj'
         natureHint: 'Czym jest pozycja. Surowce i opakowania się KUPUJE: ich próg ustawia się ręcznie. Receptury i produkty na sprzedaż się WYTWARZA: ich minimum wynika z rozchodu i trafiają do planu produkcji. Produkt na sprzedaż składa się z pozostałych trzech.'
+        needsRecipe: 'Ten produkt wymaga receptury'
+        needsRecipeHint: "Zaznaczony, pojawia się na ekranie Receptury, aby otrzymać swój skład, zamiast gubić się wśród innych produktów w sprzedaży."
         purchasedShelf: 'Dział kupowany'
         schedule: 'Rytm spisu'
         countMorning: 'Przy otwarciu'
@@ -636,8 +638,11 @@ admin:
         count: '%count% surowców'
         material: 'Surowiec'
         perUnit: 'Zapisane, na sztukę'
+        unitPrice: 'Cena / jedn.'
+        lineCost: 'Koszt pozycji'
         yield: 'Na ile sztuk'
         yieldHint: 'Kuchnia myśli wsadami: wpisz „4” mleka na „20” porcji, aplikacja przeliczy na sztukę. Zostaw 1, jeśli ilości są już na %unit%.'
+        howto: "Aby usunąć składnik, wyczyść jego ilość. Aby dodać, wpisz ilość w jego wierszu — brakujący surowiec utwórz najpierw w"
         badYield: 'Zerowa lub ujemna wydajność: nic nie zapisano, poprzednia receptura pozostaje nietknięta.'
         templates: 'Szablony składu'
         templatesHint: 'Gama dzieli się na rozmiary, a receptura zmienia się tylko ilościowo. Zapisz regułę raz — „Regular = 100 g kremu, 2 biszkopty, 34 ml kawy, 3 g kakao” — i nałóż ją na wszystkie produkty Regular. Szablon NAKŁADA swoje surowce i zostawia pozostałe: pasta pistacjowa danego smaku zostaje.'

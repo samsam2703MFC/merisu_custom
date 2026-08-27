@@ -85,16 +85,24 @@ final class AdminCompositionController extends AbstractController
         */
         $vue = $request->query->get('voir') === 'vente' ? 'vente' : 'recettes';
 
+        /*
+          Ce qui compte comme « recette » sur cet écran.
+
+          Une nature RECIPE, bien sûr — mais aussi tout produit en vente qu'on
+          a COCHÉ « nécessite une recette » dans Produits. C'est le sens de la
+          case : le faire remonter ici, au lieu de le laisser parmi les
+          quarante autres produits en vente où on ne le retrouvait pas.
+        */
+        $porteRecette = static fn (Product $p): bool => $p->nature === ProductNature::Recipe || $p->needsRecipe;
+
         $compte = ['recettes' => 0, 'vente' => 0];
         foreach ($assembles as $p) {
-            $compte[$p->nature === ProductNature::Recipe ? 'recettes' : 'vente']++;
+            $compte[$porteRecette($p) ? 'recettes' : 'vente']++;
         }
 
         $assembles = array_values(array_filter(
             $assembles,
-            static fn (Product $p): bool => $vue === 'recettes'
-                ? $p->nature === ProductNature::Recipe
-                : $p->nature !== ProductNature::Recipe,
+            static fn (Product $p): bool => $vue === 'recettes' ? $porteRecette($p) : !$porteRecette($p),
         ));
 
         // Ce qui peut y ENTRER : emballages, recettes et matières — tout sauf
@@ -159,11 +167,27 @@ final class AdminCompositionController extends AbstractController
             $couts[$p->id] = $calculateur->costOf($p->id);
         }
 
+        /*
+          Le coût d'UNE unité de chaque composant.
+
+          La question posée à l'écran — « combien coûte la recette ? » — ne se
+          répond pas sans dire d'abord combien coûte CHAQUE ingrédient. Le même
+          calculateur les chiffre : une matière achetée rend son tarif, une
+          sous-recette descend jusqu'aux siennes. Sans cette colonne, le total
+          tombait du ciel, et l'on ne savait pas lequel des ingrédients le
+          faisait monter.
+        */
+        $coutsUnitaires = [];
+        foreach ($composants as $m) {
+            $coutsUnitaires[$m->id] = $calculateur->costOf($m->id);
+        }
+
         $slot = $this->store->nextTemplateSlot();
 
         return $this->render('admin/compositions.html.twig', [
             'assembled' => $assembles,
             'costs' => $couts,
+            'unitCosts' => $coutsUnitaires,
             'view' => $vue,
             'counts' => $compte,
             'components' => $composants,

@@ -547,6 +547,8 @@ admin:
         categoryNone: 'Sin clasificar'
         nature: 'Naturaleza'
         natureHint: 'Lo que la línea ES. Las materias y los envases se COMPRAN: su umbral se fija a mano. Las recetas y los productos en venta se FABRICAN: su mínimo se deduce de lo consumido y entran en el plan de producción. Un producto en venta se ensambla a partir de los otros tres.'
+        needsRecipe: 'Este producto necesita una receta'
+        needsRecipeHint: "Marcado, aparece en la pantalla Recetas para recibir su composición, en vez de perderse entre los demás productos en venta."
         purchasedShelf: 'Sección comprada'
         schedule: 'Ritmo de recuento'
         countMorning: 'En la apertura'
@@ -636,8 +638,11 @@ admin:
         count: '%count% materias'
         material: 'Materia'
         perUnit: 'Registrado, por unidad'
+        unitPrice: 'Precio / unidad'
+        lineCost: 'Coste de la línea'
         yield: 'Para cuántas unidades'
         yieldHint: 'El obrador piensa en hornadas: introduzca «4» de leche para «20» raciones, la aplicación lo reduce a la unidad. Deje 1 si sus cantidades ya son por %unit%.'
+        howto: "Para quitar un ingrediente, vacía su cantidad. Para añadir uno, escribe su cantidad en su fila — una materia ausente de la lista se crea primero en"
         badYield: 'Rendimiento nulo o negativo: no se ha registrado nada, la receta anterior queda intacta.'
         templates: 'Modelos de composición'
         templatesHint: 'Una gama se declina en tamaños y la receta solo cambia en cantidad. Escriba la regla una vez — « Regular = 100 g de crema, 2 bizcochos, 34 ml de café, 3 g de cacao » — y aplíquela a todos los productos Regular. El modelo POSA sus materias y deja las demás: la pasta de pistacho propia del sabor permanece.'

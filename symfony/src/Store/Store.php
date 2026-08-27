@@ -225,6 +225,7 @@ final class Store
             'supplier_ref' => $product->supplierRef,
             'supplier_name' => $product->supplierName,
             'unit_cost' => $product->unitCost,
+            'needs_recipe' => $product->needsRecipe ? 1 : 0,
         ];
 
         $exists = (int) $this->db->fetchOne('SELECT COUNT(*) FROM inv_product WHERE id = ?', [$product->id]) > 0;
@@ -1109,6 +1110,7 @@ final class Store
             trim((string) ($row['supplier_ref'] ?? '')),
             trim((string) ($row['supplier_name'] ?? '')),
             (float) ($row['unit_cost'] ?? 0),
+            (bool) ($row['needs_recipe'] ?? false),
         );
     }
 

@@ -500,6 +500,14 @@ final class AdminController extends AbstractController
             ),
             supplierRef: mb_substr(trim((string) $request->request->get('supplierRef', '')), 0, 64),
             supplierName: mb_substr(trim((string) $request->request->get('supplierName', '')), 0, 120),
+            // « Ce produit nécessite une recette ». Une case décochée ne
+            // s'envoie pas, indiscernable d'un champ absent ; un drapeau caché
+            // dit que la case ÉTAIT sur le formulaire, pour qu'un décochage
+            // volontaire s'enregistre sans qu'un écran où la case n'existe pas
+            // (une matière première) ne l'efface au passage.
+            needsRecipe: $request->request->getBoolean('needsRecipePresent')
+                ? $request->request->getBoolean('needsRecipe')
+                : $base->needsRecipe,
         );
     }
 
