@@ -563,6 +563,10 @@ admin:
         NEAREST: 'Do najbliższej'
         NONE: 'Bez zaokrąglenia'
     compositions:
+        views: 'Widoki'
+        viewRecipes: 'Receptury'
+        viewSale: 'Produkty na sprzedaż'
+        noRecipesYet: 'Na razie żadnej receptury. Utwórz jedną powyżej — krem, syrop, nasączony biszkopt. Produkty na sprzedaż są w drugim widoku.'
         title: 'Receptury'
         subtitle: 'Ile zużywa jedna sztuka produktu.'
         intro: 'To dane, z których żyje delta techniczna: teoria = wyprodukowano × ilość na sztukę, porównana z rzeczywistym spisem surowców. Bez receptury produkt nie pojawi się w żadnej rozbieżności.'

@@ -149,10 +149,34 @@
     Sans matière première déclarée, il n'y a rien à mettre dans une recette.
     Le dire ici évite de chercher pourquoi les fiches sont vides.
   #}
+  {#
+    Deux vues. Les recettes d'abord — c'est le nom de l'écran, et c'est ce
+    qu'on vient y régler. Les produits en vente restent atteignables : leur
+    composition doit bien se saisir quelque part, et le delta technique en
+    dépend.
+
+    Des liens et non un script : la vue tient dans l'adresse, elle se
+    partage et se recharge.
+  #}
+  <nav class="view-switch" aria-label="{{ 'admin.compositions.views'|trans }}">
+    <a class="view-switch__item{{ view == 'recettes' ? ' is-active' : '' }}"
+       href="{{ path('admin_compositions') }}">
+      {{ 'admin.compositions.viewRecipes'|trans }}
+      <span class="view-switch__count">{{ counts.recettes }}</span>
+    </a>
+    <a class="view-switch__item{{ view == 'vente' ? ' is-active' : '' }}"
+       href="{{ path('admin_compositions', { voir: 'vente' }) }}">
+      {{ 'admin.compositions.viewSale'|trans }}
+      <span class="view-switch__count">{{ counts.vente }}</span>
+    </a>
+  </nav>
+
   {% if components is empty %}
     {{ ui.banner('warn', 'admin.compositions.noMaterials'|trans) }}
   {% elseif assembled is empty %}
-    {{ ui.banner('warn', 'admin.compositions.noCompositions'|trans) }}
+    {{ ui.banner('warn', (view == 'recettes'
+      ? 'admin.compositions.noRecipesYet'
+      : 'admin.compositions.noCompositions')|trans) }}
   {% else %}
     {% for product in assembled %}
       {% set recette = lines[product.id] ?? {} %}

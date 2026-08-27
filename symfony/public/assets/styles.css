@@ -4312,3 +4312,43 @@ select:disabled, select.field__input:disabled { background-image: url("data:imag
 .nchart-legend__mark { display: block; width: 14px; height: 3px; border-radius: 999px; flex: none; }
 .nchart-legend__mark--total { height: 4px; background: var(--coffee); }
 .nchart-legend__mark--target { background: repeating-linear-gradient(90deg, var(--latte) 0 5px, transparent 5px 9px); }
+
+/* ── Bascule de vue ──────────────────────────────────────────────────────── */
+
+/*
+  Des LIENS, pas un script : la vue tient dans l'adresse, elle se partage et
+  survit à un rechargement. Le compteur est ce qui compte — une vue cachée
+  sans son nombre se lit comme une fonction disparue.
+*/
+.view-switch { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-4); }
+
+.view-switch__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--touch);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text);
+  font-size: .85rem;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: var(--shadow);
+}
+
+.view-switch__item.is-active { background: var(--brand); color: #fff; }
+
+.view-switch__count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.6rem;
+  padding: 0 .35rem;
+  border-radius: var(--radius-pill);
+  background: var(--cream-outline);
+  color: var(--coffee);
+  font-size: .78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.view-switch__item.is-active .view-switch__count { background: rgba(255, 255, 255, .25); color: #fff; }

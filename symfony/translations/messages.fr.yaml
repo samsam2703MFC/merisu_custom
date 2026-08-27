@@ -566,6 +566,10 @@ admin:
         NEAREST: 'Au plus proche'
         NONE: 'Aucun arrondi'
     compositions:
+        views: 'Vues'
+        viewRecipes: 'Recettes'
+        viewSale: 'Produits en vente'
+        noRecipesYet: 'Aucune recette pour l''instant. Créez-en une ci-dessus — la crème, le sirop, le biscuit imbibé. Les produits en vente, eux, sont dans l''autre vue.'
         title: 'Recettes'
         subtitle: 'Ce qu''une unité de produit consomme.'
         intro: 'C''est la donnée dont vit le delta technique : théorique = produit × quantité par unité, comparé au réel relevé sur les matières. Sans recette, un produit n''apparaît dans aucun écart.'

@@ -70,6 +70,32 @@ final class AdminCompositionController extends AbstractController
             static fn (Product $p): bool => $p->nature->canHaveRecipe(),
         ));
 
+        /*
+          ── Deux vues, et les RECETTES par défaut
+
+          L'écran s'appelle Recettes ; il listait pourtant les cinquante
+          produits en vente à la suite, la plupart sans composition. On
+          cherchait sa crème au milieu de quarante-neuf tiramisu.
+
+          Les produits en vente ne DISPARAISSENT pas — leur composition doit
+          bien se saisir quelque part, et le delta technique en dépend. Ils
+          passent derrière un second onglet, dont le compteur dit combien ils
+          sont : caché sans compteur, on croirait la fonction perdue.
+        */
+        $vue = $request->query->get('voir') === 'vente' ? 'vente' : 'recettes';
+
+        $compte = ['recettes' => 0, 'vente' => 0];
+        foreach ($assembles as $p) {
+            $compte[$p->nature === ProductNature::Recipe ? 'recettes' : 'vente']++;
+        }
+
+        $assembles = array_values(array_filter(
+            $assembles,
+            static fn (Product $p): bool => $vue === 'recettes'
+                ? $p->nature === ProductNature::Recipe
+                : $p->nature !== ProductNature::Recipe,
+        ));
+
         // Ce qui peut y ENTRER : emballages, recettes et matières — tout sauf
         // le produit en vente, sommet de l'assemblage.
         $composants = array_values(array_filter(
@@ -107,6 +133,8 @@ final class AdminCompositionController extends AbstractController
 
         return $this->render('admin/compositions.html.twig', [
             'assembled' => $assembles,
+            'view' => $vue,
+            'counts' => $compte,
             'components' => $composants,
             'natures' => ProductNature::all(),
             'lines' => $parProduit,

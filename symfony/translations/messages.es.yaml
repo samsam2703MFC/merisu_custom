@@ -563,6 +563,10 @@ admin:
         NEAREST: 'Al más cercano'
         NONE: 'Sin redondeo'
     compositions:
+        views: 'Vistas'
+        viewRecipes: 'Recetas'
+        viewSale: 'Productos a la venta'
+        noRecipesYet: 'Ninguna receta por ahora. Crea una arriba — la crema, el sirope, el bizcocho empapado. Los productos a la venta están en la otra vista.'
         title: 'Recetas'
         subtitle: 'Lo que consume una unidad de producto.'
         intro: 'Es el dato del que vive el delta técnico: teórico = producido × cantidad por unidad, comparado con lo real medido en las materias. Sin receta, un producto no aparece en ninguna desviación.'
