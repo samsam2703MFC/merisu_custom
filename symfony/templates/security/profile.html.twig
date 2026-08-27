@@ -21,7 +21,13 @@
       <div class="profile__identity">
         <h1 class="profile__name">{{ c.displayName }}</h1>
         <p class="profile__role">
-          {{ ui.badge(c.role.isAdmin ? 'danger' : 'neutral', ('roles.' ~ c.role.value)|trans) }}
+          {#
+            Le rôle porte la MÊME couleur que dans la liste Équipe : prune pour
+            l'admin, vert pour le manager. Un même rôle changeait de couleur
+            d'un écran à l'autre — rouge ici, prune là-bas —, et deux teintes
+            pour une seule chose font douter qu'il s'agisse de la même.
+          #}
+          {{ ui.badge(c.role.isAdmin ? 'info' : (c.role.isManager ? 'ok' : 'neutral'), ('roles.' ~ c.role.value)|trans) }}
         </p>
       </div>
     </header>
@@ -65,10 +71,12 @@
         </div>
       {% endif %}
 
-      {% if c.shops is not empty %}
+      {% if shopNames is not empty %}
         <div class="profile__field">
           <dt>{{ 'profile.shops'|trans }}</dt>
-          <dd>{{ c.shops|join(' · ') }}</dd>
+          {# Des NOMS, jamais « shop-5 » : l'identifiant interne ne dit rien à
+             la personne qui se lit. Résolu dans le contrôleur. #}
+          <dd>{{ shopNames|join(' · ') }}</dd>
         </div>
       {% endif %}
 

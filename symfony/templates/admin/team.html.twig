@@ -209,7 +209,17 @@
           <span class="admin-item__name">{{ c.displayName }}</span>
         </span>
         <span class="admin-item__tags">
-          {% if c.role.isAdmin %}{{ ui.badge('info', 'roles.ADMIN'|trans) }}{% endif %}
+          {#
+            Le rôle se lit dans la liste, MANAGER compris.
+
+            L'admin portait seul un badge ; un manager n'était distinguable
+            d'un vendeur par rien, alors qu'il voit le réseau et les rapports.
+            Or c'est justement dans cette liste qu'on vérifie qui a reçu quel
+            pouvoir — un accès élevé qui ne se voit pas est un accès qu'on
+            oublie d'avoir donné.
+          #}
+          {% if c.role.isAdmin %}{{ ui.badge('info', 'roles.ADMIN'|trans) }}
+          {% elseif c.role.isManager %}{{ ui.badge('ok', 'roles.MANAGER'|trans) }}{% endif %}
           {% if not c.active %}{{ ui.badge('warn', 'admin.team.inactive'|trans) }}{% endif %}
         </span>
       </summary>
