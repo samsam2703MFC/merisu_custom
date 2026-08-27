@@ -4707,3 +4707,79 @@ select:disabled, select.field__input:disabled { background-image: url("data:imag
 .cost__item--total .cost__value { color: var(--brand); }
 .cost__item--waste .cost__value { color: var(--warn); }
 .cost__value small { font-size: .8rem; font-family: var(--font); }
+
+/* ── Contrôle de réalité (food cost réel vs théorique) ─────────────────────
+   La jauge est un demi-cercle rendu côté serveur : trois zones de gravité
+   sous une aiguille. `pathLength` fait le remplissage en pourcentage, sans
+   JavaScript ni calcul d'extrémité dans le gabarit. */
+.reality-hero { display: grid; gap: var(--space-4); }
+
+.reality-gauge {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4) var(--space-6);
+}
+.reality-gauge svg { width: min(280px, 100%); height: auto; }
+
+.reality-gauge__zone { fill: none; stroke-width: 12; }
+/* Les zones sont des teintes DOUCES : elles disent l'échelle, sans se
+   disputer l'œil avec l'aiguille qui, elle, porte la mesure. */
+.reality-gauge__zone--ok { stroke: color-mix(in srgb, var(--ok) 32%, var(--bg)); }
+.reality-gauge__zone--warn { stroke: color-mix(in srgb, var(--warn) 34%, var(--bg)); }
+.reality-gauge__zone--danger { stroke: color-mix(in srgb, var(--danger) 34%, var(--bg)); }
+
+.reality-gauge__fill {
+  fill: none;
+  stroke-width: 12;
+  stroke-linecap: round;
+  transition: stroke-dasharray var(--dur) var(--ease);
+}
+.reality-gauge__fill--ok { stroke: var(--ok); }
+.reality-gauge__fill--warn { stroke: var(--warn); }
+.reality-gauge__fill--danger { stroke: var(--danger); }
+
+.reality-gauge__tick { stroke: var(--bg); stroke-width: 2; }
+.reality-gauge__needle { stroke: var(--bg); stroke-width: 2.5; }
+.reality-gauge__needle--ok { fill: var(--ok); }
+.reality-gauge__needle--warn { fill: var(--warn); }
+.reality-gauge__needle--danger { fill: var(--danger); }
+
+.reality-gauge__read { text-align: center; min-width: 8rem; }
+.reality-gauge__value {
+  font-family: var(--font-display);
+  font-size: 2.6rem;
+  line-height: 1;
+  font-weight: 700;
+}
+.reality-gauge__value--ok { color: var(--ok); }
+.reality-gauge__value--warn { color: var(--warn); }
+.reality-gauge__value--danger { color: var(--danger); }
+.reality-gauge__value--muted { color: var(--text-muted); }
+.reality-gauge__caption {
+  margin-top: var(--space-1);
+  font-size: .8rem;
+  color: var(--text-muted);
+  max-width: 12rem;
+}
+
+.stat__hint { margin-top: 2px; font-size: .72rem; color: var(--text-muted); }
+
+/* L'écart en argent porte sa gravité : un « +12 € » rouge se remarque là où le
+   même chiffre en noir se perdrait dans la colonne. */
+.reality-delta--ok { color: var(--ok); }
+.reality-delta--warn { color: var(--warn); }
+.reality-delta--danger { color: var(--danger); font-weight: 700; }
+.reality-delta--unknown { color: var(--text-muted); }
+.reality-table .num { font-variant-numeric: tabular-nums; }
+
+.banner__link {
+  display: inline-block;
+  margin-top: var(--space-1);
+  font-weight: 600;
+  color: inherit;
+  text-decoration: underline;
+}
+.reality-empty { text-align: center; color: var(--text-muted); font-style: italic; padding: var(--space-4); }
+.reality-allsales { margin-top: var(--space-3); font-size: .82rem; color: var(--text-muted); text-align: center; }

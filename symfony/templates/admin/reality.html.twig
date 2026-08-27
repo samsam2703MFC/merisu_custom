@@ -1,0 +1,263 @@
+{#
+  Admin ▸ Contrôle de réalité — food cost réel face au théorique.
+
+  Règle d'affichage du module : l'incomplétude se dit AVANT les chiffres. Ici
+  elle compte double, car un « réel » absent ne se devine pas — une jauge vide
+  et une jauge à zéro se ressemblent pour qui ne lit pas l'état.
+#}
+{% extends 'admin/_layout.html.twig' %}
+{% import 'components/_macros.html.twig' as ui %}
+
+{% block title %}{{ 'admin.reality.title'|trans }} — {{ 'common.appName'|trans }}{% endblock %}
+
+{% macro severity_badge(check) %}
+  {% import 'components/_macros.html.twig' as ui %}
+  {% if check.severity.value == 'unknown' %}
+    {{ ui.badge('neutral', 'admin.reality.noReal'|trans) }}
+  {% else %}
+    {{ ui.badge(check.severity.value, check.deviationPercent is not null
+        ? (check.deviationPercent > 0 ? '+' : '') ~ check.deviationPercent ~ ' %'
+        : 'admin.reality.noTheo'|trans) }}
+  {% endif %}
+{% endmacro %}
+
+{% macro row(label, check) %}
+  {% import 'components/_macros.html.twig' as ui %}
+  <tr>
+    <th scope="row">{{ label }}</th>
+    <td class="num">{{ check.theoretical|qty }}</td>
+    <td class="num">{{ check.hasReal ? check.real|qty : '—' }}</td>
+    <td class="num">
+      {% if check.deviation is not null %}
+        <span class="reality-delta reality-delta--{{ check.severity.value }}">
+          {{ check.deviation > 0 ? '+' : '' }}{{ check.deviation|qty }}
+        </span>
+      {% else %}—{% endif %}
+    </td>
+    <td>{{ _self.severity_badge(check) }}</td>
+  </tr>
+{% endmacro %}
+
+{% block admin_content %}
+
+  {{ ui.page_header('admin.reality.title'|trans, 'admin.reality.subtitle'|trans) }}
+
+  <section class="card">
+    <form method="get" action="{{ path('admin_reality') }}" class="form">
+      <div class="field-grid">
+        <div class="field">
+          <label class="field__label" for="from">{{ 'common.from'|trans }}</label>
+          <input class="field__input" type="date" id="from" name="from" value="{{ from }}">
+        </div>
+        <div class="field">
+          <label class="field__label" for="to">{{ 'common.to'|trans }}</label>
+          <input class="field__input" type="date" id="to" name="to" value="{{ to }}">
+        </div>
+        {{ include('admin/_shop_filter.html.twig', { champId: 'reality-shop' }) }}
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="button button--secondary">{{ 'common.apply'|trans }}</button>
+      </div>
+    </form>
+  </section>
+
+  {{ include('admin/_scope_warning.html.twig') }}
+
+  {#
+    Les deux manques qui vident la jauge, dits chacun pour ce qu'il est.
+
+    Sans RECETTE, pas de théorique : on ne sait pas ce qu'une vente aurait dû
+    coûter. Sans CONSOMMATION relevée, pas de réel : on ne sait pas ce qui a
+    été utilisé. Les confondre en un seul « données incomplètes » laisserait
+    l'atelier corriger la mauvaise moitié.
+  #}
+  {% if not hasRecipes %}
+    <div class="banner banner--warn" role="status">
+      <strong>{{ 'admin.reality.noRecipesTitle'|trans }}</strong>
+      {{ 'admin.reality.noRecipesHint'|trans }}
+      <a class="banner__link" href="{{ path('admin_compositions') }}">{{ 'nav.compositions'|trans }}</a>
+    </div>
+  {% endif %}
+
+  {% if not hasReal %}
+    <div class="banner banner--info" role="status">
+      <strong>{{ 'admin.reality.noRealTitle'|trans }}</strong>
+      {{ 'admin.reality.noRealHint'|trans }}
+      <a class="banner__link" href="{{ path('admin_delta') }}">{{ 'nav.delta'|trans }}</a>
+    </div>
+  {% elseif daysMissingReal > 0 %}
+    <div class="banner banner--warn" role="status">
+      <strong>{{ 'admin.reality.partialTitle'|trans }}</strong>
+      {{ 'admin.reality.partialHint'|trans({ '%count%': daysMissingReal }) }}
+    </div>
+  {% endif %}
+
+  {# ── La jauge ─────────────────────────────────────────────────────────── #}
+  <section class="card reality-hero">
+    <div class="reality-gauge">
+      <svg viewBox="0 0 200 112" role="img"
+           aria-label="{{ overall.hasReal
+              ? 'admin.reality.gaugeLabel'|trans({ '%pct%': overall.deviationPercent ?? '?' })
+              : 'admin.reality.noReal'|trans }}">
+        {# La graduation : trois zones, vert / ambre / rouge, posées sous
+           l'aiguille. `pathLength=100` fait tomber les bornes en pourcentage. #}
+        <path d="{{ gauge.arc }}" class="reality-gauge__zone reality-gauge__zone--ok"
+              pathLength="100" stroke-dasharray="{{ (tolerance / scaleMax * 100)|round(2) }} 100"/>
+        <path d="{{ gauge.arc }}" class="reality-gauge__zone reality-gauge__zone--warn"
+              pathLength="100"
+              stroke-dasharray="{{ ((tolerance * 3 - tolerance) / scaleMax * 100)|round(2) }} 100"
+              stroke-dashoffset="-{{ (tolerance / scaleMax * 100)|round(2) }}"/>
+        <path d="{{ gauge.arc }}" class="reality-gauge__zone reality-gauge__zone--danger"
+              pathLength="100"
+              stroke-dasharray="{{ (100 - tolerance * 3 / scaleMax * 100)|round(2) }} 100"
+              stroke-dashoffset="-{{ (tolerance * 3 / scaleMax * 100)|round(2) }}"/>
+
+        {# Le remplissage courant, dans la couleur de la gravité. #}
+        {% if overall.hasReal %}
+          <path d="{{ gauge.arc }}" class="reality-gauge__fill reality-gauge__fill--{{ overall.severity.value }}"
+                pathLength="100" stroke-dasharray="{{ gauge.fillLength|round(2) }} 100"/>
+          {% for tick in gauge.ticks %}
+            <line x1="{{ tick.x1 }}" y1="{{ tick.y1 }}" x2="{{ tick.x2 }}" y2="{{ tick.y2 }}"
+                  class="reality-gauge__tick"/>
+          {% endfor %}
+          <circle cx="{{ gauge.needleX }}" cy="{{ gauge.needleY }}" r="5"
+                  class="reality-gauge__needle reality-gauge__needle--{{ overall.severity.value }}"/>
+        {% endif %}
+      </svg>
+
+      <div class="reality-gauge__read">
+        {% if overall.hasReal and overall.deviationPercent is not null %}
+          <p class="reality-gauge__value reality-gauge__value--{{ overall.severity.value }}">
+            {{ overall.deviationPercent > 0 ? '+' : '' }}{{ overall.deviationPercent }} %
+          </p>
+          <p class="reality-gauge__caption">{{ 'admin.reality.deviationCaption'|trans }}</p>
+        {% else %}
+          <p class="reality-gauge__value reality-gauge__value--muted">—</p>
+          <p class="reality-gauge__caption">{{ 'admin.reality.noReal'|trans }}</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="stats stats--compact">
+      {#
+        Sans relevé, la tuile théorique porte TOUTES les ventes — le seul
+        chiffre disponible, informatif. Dès qu'un relevé existe, elle passe aux
+        JOURS RELEVÉS, pour que théorique, réel et écart parlent des mêmes
+        journées et ne se contredisent pas.
+      #}
+      <div class="stat">
+        <p class="stat__label">{{ 'admin.reality.theoretical'|trans }}</p>
+        <p class="stat__value stat__value--sm">{{ (hasReal ? theoretical : theoreticalAll)|qty }}</p>
+        {% set fc = hasReal ? theoreticalFoodCost : foodCostAll %}
+        {% if fc is not null %}
+          <p class="stat__hint">{{ 'admin.reality.foodCost'|trans({ '%pct%': fc }) }}</p>
+        {% endif %}
+      </div>
+      <div class="stat">
+        <p class="stat__label">{{ 'admin.reality.real'|trans }}</p>
+        <p class="stat__value stat__value--sm">{{ real is not null ? real|qty : '—' }}</p>
+        {% if realFoodCost is not null %}
+          <p class="stat__hint">{{ 'admin.reality.foodCost'|trans({ '%pct%': realFoodCost }) }}</p>
+        {% endif %}
+      </div>
+      <div class="stat">
+        <p class="stat__label">{{ 'admin.reality.gap'|trans }}</p>
+        <p class="stat__value stat__value--sm reality-delta--{{ overall.severity.value }}">
+          {% if overall.deviation is not null %}{{ overall.deviation > 0 ? '+' : '' }}{{ overall.deviation|qty }}{% else %}—{% endif %}
+        </p>
+      </div>
+    </div>
+
+    {# Quand la comparaison porte sur les jours relevés, le théorique de TOUTES
+       les ventes reste rappelé ici : sa question est distincte, il ne disparaît
+       pas pour autant. #}
+    {% if hasReal and theoreticalAll > 0 %}
+      <p class="reality-allsales">
+        {{ 'admin.reality.allSales'|trans({ '%amount%': theoreticalAll|qty, '%pct%': foodCostAll ?? '—' }) }}
+      </p>
+    {% endif %}
+  </section>
+
+  {# ── Jour / Semaine / Mois ────────────────────────────────────────────── #}
+  <section class="card">
+    <div class="tabs">
+      <input class="tabs__radio" type="radio" name="reality-grain" id="grain-day" checked>
+      <input class="tabs__radio" type="radio" name="reality-grain" id="grain-week">
+      <input class="tabs__radio" type="radio" name="reality-grain" id="grain-month">
+
+      <div class="tabs__bar">
+        <label class="tabs__tab" for="grain-day">{{ 'admin.reality.byDay'|trans }}</label>
+        <label class="tabs__tab" for="grain-week">{{ 'admin.reality.byWeek'|trans }}</label>
+        <label class="tabs__tab" for="grain-month">{{ 'admin.reality.byMonth'|trans }}</label>
+      </div>
+
+      <section class="tabs__panel">
+        <div class="table-scroll">
+          <table class="table reality-table">
+            <thead>
+              <tr>
+                <th scope="col">{{ 'common.date'|trans }}</th>
+                <th scope="col" class="num">{{ 'admin.reality.theoShort'|trans }}</th>
+                <th scope="col" class="num">{{ 'admin.reality.realShort'|trans }}</th>
+                <th scope="col" class="num">{{ 'admin.reality.gap'|trans }}</th>
+                <th scope="col">{{ 'admin.reality.deviation'|trans }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for jour in days %}
+                {{ _self.row(jour.date, jour.check) }}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="tabs__panel">
+        <div class="table-scroll">
+          <table class="table reality-table">
+            <thead>
+              <tr>
+                <th scope="col">{{ 'admin.reality.week'|trans }}</th>
+                <th scope="col" class="num">{{ 'admin.reality.theoShort'|trans }}</th>
+                <th scope="col" class="num">{{ 'admin.reality.realShort'|trans }}</th>
+                <th scope="col" class="num">{{ 'admin.reality.gap'|trans }}</th>
+                <th scope="col">{{ 'admin.reality.deviation'|trans }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for semaine in weeks %}
+                {{ _self.row(semaine.label, semaine.check) }}
+              {% else %}
+                <tr><td colspan="5" class="reality-empty">{{ 'admin.reality.nothingMeasured'|trans }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="tabs__panel">
+        <div class="table-scroll">
+          <table class="table reality-table">
+            <thead>
+              <tr>
+                <th scope="col">{{ 'admin.reality.month'|trans }}</th>
+                <th scope="col" class="num">{{ 'admin.reality.theoShort'|trans }}</th>
+                <th scope="col" class="num">{{ 'admin.reality.realShort'|trans }}</th>
+                <th scope="col" class="num">{{ 'admin.reality.gap'|trans }}</th>
+                <th scope="col">{{ 'admin.reality.deviation'|trans }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for mois in months %}
+                {{ _self.row(mois.label, mois.check) }}
+              {% else %}
+                <tr><td colspan="5" class="reality-empty">{{ 'admin.reality.nothingMeasured'|trans }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </section>
+
+{% endblock %}

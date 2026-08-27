@@ -129,6 +129,7 @@ nav:
     sales: 'Ventes'
     weatherSales: 'Ventes & météo'
     network: 'Réseau'
+    reality: 'Contrôle de réalité'
     categories: 'Catégories'
     parMatrix: Seuils
     weather: 'Météo'
@@ -710,6 +711,33 @@ admin:
         subtitle: 'Pièces requises en stock, par jour et par produit.'
         productsInRows: 'Produits en lignes'
         daysInRows: 'Jours en lignes'
+    reality:
+        title: 'Contrôle de réalité'
+        subtitle: "Le food cost réel face au théorique : ce qui échappe à la recette."
+        theoretical: 'Coût théorique'
+        real: 'Coût réel'
+        gap: 'Écart'
+        deviation: 'Dérive'
+        deviationCaption: 'Écart réel / théorique sur la période'
+        theoShort: 'Théorique'
+        realShort: 'Réel'
+        foodCost: 'Food cost %pct% %'
+        byDay: 'Jour'
+        byWeek: 'Semaine'
+        byMonth: 'Mois'
+        week: 'Semaine'
+        month: 'Mois'
+        noReal: 'Non relevé'
+        noTheo: 'Sans vente'
+        noRecipesTitle: 'Aucune recette chiffrée.'
+        noRecipesHint: "Le coût théorique se déduit des recettes. Tant qu'aucune composition n'est saisie, il reste nul."
+        noRealTitle: 'Aucune consommation relevée.'
+        noRealHint: 'La jauge compare le réel au théorique. Sans relevé de consommation, le réel manque et la jauge reste vide.'
+        partialTitle: 'Relevé partiel.'
+        partialHint: "%count% jour(s) avec des ventes n'ont aucun relevé de consommation : leur réel manque au total."
+        nothingMeasured: 'Aucun jour relevé sur la période.'
+        allSales: 'Théorique de toutes les ventes : %amount% (food cost %pct% %)'
+        gaugeLabel: 'Dérive réel / théorique : %pct% %'
     scope:
         noWorkstation: "Aucun poste n'est rattaché à cette boutique."
         noWorkstationHint: "Les comptages, le journal et les minimums déduits passent par le poste de travail. Tant qu'aucun poste ne porte cette boutique, ces chiffres restent vides. Rattachez-les dans Équipe."
