@@ -87,6 +87,9 @@ on:
           # réponses localhost) pour diagnostiquer un site injoignable de
           # l'extérieur. Ne modifie rien.
           - 'diagnostic-serveur'
+          # RÉINSTALLATION : re-clone l'application SEULEMENT si son dossier a
+          # disparu, puis déploie. Ne touche JAMAIS une installation présente.
+          - 'reinstaller'
           # DESTRUCTIF : efface toutes les lignes de composition. Les fiches
           # produit restent. Placé en dernier pour qu'on ne le choisisse pas
           # d'un glissement de souris depuis « aucune ».
@@ -175,6 +178,12 @@ jobs:
           PHP_BIN: ${{ vars.DEPLOY_PHP_BIN || 'php' }}
           BRANCHE: ${{ github.ref_name }}
           COMMIT: ${{ github.sha }}
+          # Réinstallation demandée ? Le clone n'est recréé que dans ce cas —
+          # un déploiement ordinaire garde sa sécurité « je ne crée rien ».
+          REINSTALL: ${{ inputs.maintenance == 'reinstaller' && '1' || '0' }}
+          # Dépôt PUBLIC : pas un secret, et le serveur sait déjà l'atteindre
+          # puisqu'il en tire les mises à jour.
+          REPO_URL: https://github.com/samsam2703MFC/merisu_custom.git
         run: |
           set -euo pipefail
 
@@ -193,12 +202,21 @@ jobs:
           # .env.local, var/ (base de données) et public/uploads/ survivent.
           ssh -i ~/.ssh/id_deploiement -p "$PORT" -o BatchMode=yes \
               "$USER@$HOST" bash -euo pipefail -s -- \
-              "$APP_PATH" "$BRANCHE" "$COMMIT" "$PHP_BIN" <<'DISTANT'
-          APP_PATH="$1"; BRANCHE="$2"; COMMIT="$3"; PHP_BIN="$4"
+              "$APP_PATH" "$BRANCHE" "$COMMIT" "$PHP_BIN" "$REPO_URL" "$REINSTALL" <<'DISTANT'
+          APP_PATH="$1"; BRANCHE="$2"; COMMIT="$3"; PHP_BIN="$4"; REPO_URL="$5"; REINSTALL="${6:-0}"
 
           # DEPLOY_PATH est masqué dans le journal : sans ce diagnostic, une
           # valeur erronée ne produit qu'un « cd: ***: No such file » muet.
           # On dit donc ce que le serveur voit, lui n'est pas masqué.
+          if [ ! -d "$APP_PATH" ] && [ "$REINSTALL" = "1" ]; then
+            echo "▸ RÉINSTALLATION : le dossier est absent, on recrée le clone"
+            # Le parent doit exister — /var/www est là ; on ne crée que la
+            # feuille. `git clone` refuse d'écrire dans un dossier non vide,
+            # donc il ne peut pas écraser une install par mégarde.
+            mkdir -p "$(dirname "$APP_PATH")"
+            git clone "$REPO_URL" "$APP_PATH"
+          fi
+
           if [ ! -d "$APP_PATH" ]; then
             echo "✗ DEPLOY_PATH ne désigne aucun dossier sur ce serveur." >&2
             echo "  Le dossier attendu est absent — l'application a été déplacée ou effacée." >&2
@@ -593,6 +611,18 @@ jobs:
             ls -la "$1/symfony/public/.htaccess" 2>&1 || echo "  pas de .htaccess"
             echo "── Espace disque ──"
             df -h "$1" 2>&1 | tail -1 || true
+          fi
+
+          if [ "$QUOI" = "reinstaller" ]; then
+            echo "── Après réinstallation : l'alias Apache /merisu existe-t-il ? ──"
+            if grep -rlis "/merisu" /etc/apache2/ 2>/dev/null; then
+              echo "  alias /merisu : présent dans la conf Apache"
+            else
+              echo "  ⚠ alias /merisu : ABSENT de /etc/apache2 — le vhost a été retiré"
+              echo "    en même temps que le dossier. Le site restera 404 tant que"
+              echo "    l'alias ne sera pas restauré à la main (provisioning)."
+            fi
+            printf '  localhost /merisu/connexion : ' ; curl -s -o /dev/null -w '%{http_code}\n' --max-time 10 "http://127.0.0.1/merisu/connexion" 2>&1 || true
           fi
 
           if [ "$QUOI" = "boutique-poznan" ]; then
