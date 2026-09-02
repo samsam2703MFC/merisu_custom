@@ -201,9 +201,19 @@ jobs:
           # On dit donc ce que le serveur voit, lui n'est pas masqué.
           if [ ! -d "$APP_PATH" ]; then
             echo "✗ DEPLOY_PATH ne désigne aucun dossier sur ce serveur." >&2
-            echo "  Dépôts trouvés :" >&2
-            find /var/www /opt /srv /root /home -maxdepth 4 -type d -name symfony \
-                 -exec test -d '{}'/bin ';' -print 2>/dev/null | sed 's|/symfony$|  ← à mettre dans DEPLOY_PATH|' >&2
+            echo "  Le dossier attendu est absent — l'application a été déplacée ou effacée." >&2
+            echo "  ── Ce qui EXISTE de la chaîne de dossiers ──" >&2
+            d="$APP_PATH"
+            while [ "$d" != "/" ] && [ -n "$d" ]; do
+              if [ -d "$d" ]; then echo "  présent : $d" >&2; echo "    → contenu :" >&2; ls -la "$d" 2>&1 | sed "s/^/      /" >&2; break; fi
+              echo "  absent  : $d" >&2
+              d=$(dirname "$d")
+            done
+            echo "  ── Clones symfony/ trouvés ailleurs ──" >&2
+            find /var/www /opt /srv /root /home -maxdepth 5 -type d -name symfony \
+                 -exec test -d '{}'/bin ';' -print 2>/dev/null | sed 's|/symfony$|  ← candidat pour DEPLOY_PATH|' >&2 || true
+            echo "  ── Espace disque ──" >&2
+            df -h / 2>&1 | sed "s/^/    /" >&2 || true
             exit 1
           fi
 
