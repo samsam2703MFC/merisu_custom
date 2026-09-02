@@ -83,6 +83,10 @@ on:
           # Crée la boutique de Poznań si elle n'existe pas encore. Sans risque
           # et idempotent : relancé, il ne fait pas deux Poznań.
           - 'boutique-poznan'
+          # LECTURE SEULE : imprime l'état d'Apache (vhosts, alias merisu,
+          # réponses localhost) pour diagnostiquer un site injoignable de
+          # l'extérieur. Ne modifie rien.
+          - 'diagnostic-serveur'
           # DESTRUCTIF : efface toutes les lignes de composition. Les fiches
           # produit restent. Placé en dernier pour qu'on ne le choisisse pas
           # d'un glissement de souris depuis « aucune ».
@@ -559,6 +563,28 @@ jobs:
           # champ libre valant « VIDER » se remplirait par habitude, et la
           # commande n'aurait plus de garde-fou du tout. Il faut choisir cette
           # option-là, explicitement, pour que l'effacement parte.
+          if [ "$QUOI" = "diagnostic-serveur" ]; then
+            echo "── Apache : service ──"
+            systemctl is-active apache2 2>&1 || true
+            echo "── Carte des vhosts ──"
+            apache2ctl -S 2>&1 || sudo apache2ctl -S 2>&1 || true
+            echo "── Sites activés ──"
+            ls -1 /etc/apache2/sites-enabled/ 2>/dev/null || true
+            echo "── Où « merisu » apparait dans la conf Apache ──"
+            grep -rlis merisu /etc/apache2/ 2>/dev/null || echo "(nulle part dans /etc/apache2)"
+            echo "── Réponses localhost (port 80) ──"
+            printf '  /merisu/connexion : ' ; curl -s -o /dev/null -w '%{http_code}\n' --max-time 10 "http://127.0.0.1/merisu/connexion" 2>&1 || true
+            printf '  /merisu/          : ' ; curl -s -o /dev/null -w '%{http_code}\n' --max-time 10 "http://127.0.0.1/merisu/" 2>&1 || true
+            printf '  racine /          : ' ; curl -s -o /dev/null -w '%{http_code}\n' --max-time 10 "http://127.0.0.1/" 2>&1 || true
+            echo "── Le dossier de l'application ──"
+            [ -d "$1/symfony/public" ] && echo "  $1/symfony/public : présent ($(ls -1 "$1/symfony/public" | wc -l) entrées)" || echo "  $1/symfony/public : ABSENT"
+            [ -f "$1/symfony/public/index.php" ] && echo "  index.php : présent" || echo "  index.php : ABSENT"
+            echo "── .htaccess et droits ──"
+            ls -la "$1/symfony/public/.htaccess" 2>&1 || echo "  pas de .htaccess"
+            echo "── Espace disque ──"
+            df -h "$1" 2>&1 | tail -1 || true
+          fi
+
           if [ "$QUOI" = "boutique-poznan" ]; then
             echo "── Boutique : création de Poznań (si absente) ──"
             "$PHP" bin/console merisu:boutique-poznan
