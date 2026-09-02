@@ -269,7 +269,15 @@ jobs:
 
           if [ "$FRESH" != "1" ]; then
             echo "▸ Récupération depuis GitHub"
-            git fetch --prune origin "$BRANCHE"
+            # On NE passe PAS par « origin » : la réinstallation l'a remis en
+            # SSH (git@github.com), et la clé de déploiement du serveur ne peut
+            # plus s'y authentifier — « Permission denied (publickey) ». On
+            # récupère donc explicitement via l'URL HTTPS au jeton du run, qui
+            # a le droit `contents: read`. Le jeton reste hors des logs (masqué
+            # par Actions) et n'est jamais écrit dans un remote.
+            git fetch "https://x-access-token:${GH_TOKEN}@github.com/samsam2703MFC/merisu_custom.git" \
+              "$BRANCHE" 2>/dev/null \
+              || git fetch --prune origin "$BRANCHE"
           fi
 
           echo "▸ Alignement sur $COMMIT"
