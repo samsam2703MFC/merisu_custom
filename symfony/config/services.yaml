@@ -164,6 +164,9 @@ services:
             # Explicite ici pour que l'autowiring n'aille pas y placer un
             # service PSR-18 arrivé par une autre dépendance.
             $transporter: null
+            # La saisie d'écran l'emporte sur les variables ci-dessus et
+            # survit à une réinstallation qui repart sur un `.env.local` neuf.
+            $store: '@Merisu\Inventory\Store\AiCredentialStore'
 
     Merisu\Inventory\Adapter\AutoTranslatorInterface:
         alias: Merisu\Inventory\Adapter\ClaudeTranslator

@@ -10,6 +10,7 @@ use Anthropic\Core\Exceptions\APIStatusException;
 use Anthropic\Messages\TextBlock;
 use Anthropic\RequestOptions;
 use Merisu\Inventory\Domain\Locale;
+use Merisu\Inventory\Store\AiCredentialStore;
 use Psr\Http\Client\ClientInterface;
 
 /**
@@ -66,21 +67,44 @@ final class ClaudeTranslator implements AutoTranslatorInterface
     private ?Client $client = null;
 
     /**
-     * @param string               $apiKey      clé d'API — vide = non configuré
-     * @param string               $model       identifiant de modèle
+     * @param string               $apiKey      clé d'environnement — vide = non configuré
+     * @param string               $model       modèle d'environnement
      * @param ClientInterface|null $transporter client HTTP imposé (tests)
+     * @param AiCredentialStore|null $store      la saisie d'écran, qui l'emporte
      */
     public function __construct(
         #[\SensitiveParameter]
         private readonly string $apiKey = '',
         private readonly string $model = self::DEFAULT_MODEL,
         private readonly ?ClientInterface $transporter = null,
+        private readonly ?AiCredentialStore $store = null,
     ) {
     }
 
     public function isConfigured(): bool
     {
-        return trim($this->apiKey) !== '';
+        return trim($this->effectiveKey()) !== '';
+    }
+
+    /**
+     * La clé en vigueur : l'écran d'abord, l'environnement ensuite.
+     *
+     * Le store n'est pas là dans les tests, qui passent la clé au constructeur.
+     * En production, une clé saisie à l'écran survit à une réinstallation qui
+     * repart sur un `.env.local` neuf ; la variable d'environnement reste le
+     * recours quand rien n'a été saisi.
+     */
+    private function effectiveKey(): string
+    {
+        $saisis = $this->store?->stored();
+
+        return $saisis !== null && $saisis->isComplete() ? $saisis->apiKey : $this->apiKey;
+    }
+
+    /** Le modèle en vigueur : celui de l'écran s'il a été choisi, sinon l'environnement. */
+    private function effectiveModel(): string
+    {
+        return $this->store?->stored()?->model ?? $this->model;
     }
 
     public function translate(array $texts, Locale $source, array $targets, string $context): array
@@ -97,7 +121,7 @@ final class ClaudeTranslator implements AutoTranslatorInterface
             $message = $this->client()->messages->create(
                 maxTokens: self::MAX_TOKENS,
                 messages: [['role' => 'user', 'content' => self::prompt($texts, $source, $targets, $context)]],
-                model: $this->model,
+                model: $this->effectiveModel(),
                 outputConfig: ['format' => ['type' => 'json_schema', 'schema' => self::schema($texts, $targets)]],
                 system: self::SYSTEM,
                 requestOptions: RequestOptions::with(timeout: self::TIMEOUT_SECONDS),
@@ -136,7 +160,7 @@ final class ClaudeTranslator implements AutoTranslatorInterface
     private function client(): Client
     {
         return $this->client ??= new Client(
-            apiKey: $this->apiKey,
+            apiKey: $this->effectiveKey(),
             requestOptions: $this->transporter !== null
                 ? RequestOptions::with(transporter: $this->transporter)
                 : null,

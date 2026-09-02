@@ -39,6 +39,7 @@ use Merisu\Inventory\Service\PosImportService;
 use Merisu\Inventory\Service\ReportScope;
 use Merisu\Inventory\Service\ReportService;
 use Merisu\Inventory\Service\TranslationService;
+use Merisu\Inventory\Store\AiCredentialStore;
 use Merisu\Inventory\Store\Store;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -63,6 +64,8 @@ final class AdminController extends AbstractController
         private readonly ForecastService $forecast,
         private readonly PosImportService $posImport,
         private readonly TranslationService $translations,
+        // La clé de traduction assistée, saisie à l'écran et écrite en base.
+        private readonly AiCredentialStore $aiCredentials,
         // Le traducteur de l'INTERFACE, pas celui des libellés : il ne sert
         // qu'à nommer les langues dans les messages de compte rendu
         // (« écrit en polonais, italien »), qui n'ont pas leur place dans un
@@ -1366,9 +1369,15 @@ final class AdminController extends AbstractController
     {
         $this->currentUser->requireAdmin();
 
+        $ai = $this->aiCredentials->stored();
+
         return $this->render('admin/settings.html.twig', [
             'settings' => $this->store->settings(),
             'locales' => $this->shownLocales($request),
+            // Jamais la clé elle-même : seulement si une clé d'écran est posée,
+            // et le modèle visé — un réglage, qui se relit sans risque.
+            'ai_key_set' => $ai !== null && $ai->isComplete(),
+            'ai_model' => $ai?->model ?? \Merisu\Inventory\Domain\AiCredentials::DEFAULT_MODEL,
         ]);
     }
 
@@ -1410,6 +1419,50 @@ final class AdminController extends AbstractController
         ));
 
         $this->store->audit($admin->id, $admin->role->value, 'SETTINGS_UPDATED');
+        $this->addFlash('success', 'common.saved');
+
+        return $this->redirectToRoute('admin_settings');
+    }
+
+    /**
+     * La clé de traduction assistée, saisie et écrite en base (chiffrée).
+     *
+     * Le champ vide ne l'efface pas : on ne réaffiche jamais la clé, personne
+     * ne peut donc la relire pour la retaper, et corriger le seul modèle
+     * effacerait une clé irrécupérable. Pour l'ôter, il y a le bouton dédié.
+     */
+    #[Route('/parametres/traduction', name: 'admin_settings_ai', methods: ['POST'])]
+    public function saveAiCredentials(Request $request): Response
+    {
+        $admin = $this->currentUser->requireAdmin();
+
+        try {
+            $this->aiCredentials->save(
+                (string) $request->request->get('aiApiKey', ''),
+                (string) $request->request->get('aiModel', ''),
+            );
+        } catch (\RuntimeException) {
+            // Chiffrement indisponible (ext-sodium retirée, APP_SECRET vide) :
+            // on refuse d'écrire une clé en clair plutôt que de la trahir.
+            $this->addFlash('error', 'admin.translate.secretBoxUnavailable');
+
+            return $this->redirectToRoute('admin_settings');
+        }
+
+        $this->store->audit($admin->id, $admin->role->value, 'AI_CREDENTIALS_UPDATED');
+        $this->addFlash('success', 'common.saved');
+
+        return $this->redirectToRoute('admin_settings');
+    }
+
+    /** Ôte la clé d'écran : la variable d'environnement reprend la main. */
+    #[Route('/parametres/traduction/effacer', name: 'admin_settings_ai_clear', methods: ['POST'])]
+    public function clearAiCredentials(): Response
+    {
+        $admin = $this->currentUser->requireAdmin();
+
+        $this->aiCredentials->clear();
+        $this->store->audit($admin->id, $admin->role->value, 'AI_CREDENTIALS_CLEARED');
         $this->addFlash('success', 'common.saved');
 
         return $this->redirectToRoute('admin_settings');

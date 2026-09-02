@@ -82,18 +82,17 @@
   </section>
 
   {#
-    État de la traduction assistée — en LECTURE seule.
+    Traduction assistée — clé d'API, saisie et écrite en base (chiffrée).
 
-    La clé ne se saisit pas ici, et c'est délibéré : un champ de saisie
-    suppose un champ d'affichage, et l'écran d'administration deviendrait
-    l'endroit d'où l'on relit une clé d'API. Elle vit côté serveur, où seul
-    l'accès au serveur la livre.
-
-    Mais l'état, lui, se dit : sans cette ligne, un administrateur qui ne
-    trouve pas le bouton « Traduire » n'a aucun moyen de savoir s'il manque
-    une clé ou s'il regarde au mauvais endroit.
+    La clé ne se réaffiche JAMAIS : le champ repart vide à chaque visite, et
+    l'enregistrer vide ne l'efface pas — c'est le bouton « Effacer » qui l'ôte.
+    Sans cela, corriger le seul modèle effacerait une clé que personne ne peut
+    relire pour la retaper. L'état, lui, se dit : il évite qu'un administrateur
+    cherche en vain le bouton « Traduire » sans savoir s'il manque une clé.
   #}
   <section class="card">
+    <h2 class="card__title">{{ 'admin.translate.title'|trans }}</h2>
+
     <div class="field">
       <span class="field__label">{{ 'admin.translate.state'|trans }}</span>
 
@@ -102,9 +101,45 @@
       {% else %}
         {{ ui.badge('warn', 'admin.translate.disabled'|trans) }}
       {% endif %}
-
-      <p class="field__hint">{{ 'admin.translate.stateHint'|trans }}</p>
     </div>
+
+    <form method="post" action="{{ path('admin_settings_ai') }}" class="form">
+      <div class="field-grid">
+        <div class="field">
+          <label class="field__label" for="aiApiKey">{{ 'admin.translate.apiKey'|trans }}</label>
+          <input class="field__input" type="password" id="aiApiKey" name="aiApiKey"
+                 autocomplete="off" placeholder="{{ (ai_key_set ? 'admin.translate.apiKeySet' : 'admin.translate.apiKeyNone')|trans }}">
+          <p class="field__hint">{{ 'admin.translate.apiKeyHint'|trans }}</p>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="aiModel">{{ 'admin.translate.model'|trans }}</label>
+          <input class="field__input" type="text" id="aiModel" name="aiModel"
+                 value="{{ ai_model }}" list="ai-models" placeholder="claude-opus-5">
+          <datalist id="ai-models">
+            {% for m in ['claude-opus-5', 'claude-sonnet-5', 'claude-haiku-4-5'] %}
+              <option value="{{ m }}"></option>
+            {% endfor %}
+          </datalist>
+          <p class="field__hint">{{ 'admin.translate.modelHint'|trans }}</p>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="button button--primary">{{ 'common.save'|trans }}</button>
+      </div>
+    </form>
+
+    {# Bouton d'effacement à part : un formulaire imbriqué n'existe pas en
+       HTML, et mêler « enregistrer » et « effacer » dans un seul invite à
+       l'accident. #}
+    {% if ai_key_set %}
+      <form method="post" action="{{ path('admin_settings_ai_clear') }}" class="form form--inline">
+        <button type="submit" class="button button--secondary button--small">
+          {{ 'admin.translate.clear'|trans }}
+        </button>
+      </form>
+    {% endif %}
   </section>
 
 {% endblock %}

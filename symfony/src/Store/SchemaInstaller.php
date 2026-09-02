@@ -466,6 +466,22 @@ final class SchemaInstaller
         }
 
         /*
+          La clé de traduction assistée, saisie en administration.
+
+          Une seule ligne, comme la météo : la clé chiffrée l'emporte sur la
+          variable d'environnement, et survit à une réinstallation qui repart
+          sur un `.env.local` neuf. Le modèle est un réglage relisible.
+        */
+        if (!\in_array('inv_ai_credential', $existing, true)) {
+            $t = $schema->createTable('inv_ai_credential');
+            $t->addColumn('id', 'smallint');
+            $t->addColumn('api_key', 'text', ['notnull' => false]);
+            $t->addColumn('model', 'string', ['length' => 64, 'default' => 'claude-opus-5']);
+            $t->addColumn('updated_at', 'string', ['length' => 32, 'default' => '']);
+            $t->setPrimaryKey(['id']);
+        }
+
+        /*
           Le temps OBSERVÉ, jour par jour — le journal météo.
 
           À ne pas confondre avec la prévision : celle-ci annonce sept jours et
