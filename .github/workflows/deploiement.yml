@@ -110,6 +110,10 @@ jobs:
     name: Mettre à jour le serveur
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Lecture seule du dépôt : le jeton du run sert de repli pour re-cloner
+    # une installation effacée quand la clé SSH du serveur n'est pas là.
+    permissions:
+      contents: read
 
     steps:
       - name: Préparer la connexion SSH
@@ -181,9 +185,11 @@ jobs:
           # Réinstallation demandée ? Le clone n'est recréé que dans ce cas —
           # un déploiement ordinaire garde sa sécurité « je ne crée rien ».
           REINSTALL: ${{ inputs.maintenance == 'reinstaller' && '1' || '0' }}
-          # Dépôt PUBLIC : pas un secret, et le serveur sait déjà l'atteindre
-          # puisqu'il en tire les mises à jour.
-          REPO_URL: https://github.com/samsam2703MFC/merisu_custom.git
+          # Le dépôt est PRIVÉ. Le serveur en tirait ses mises à jour par une
+          # clé SSH de déploiement ; on re-clone donc en SSH, avec un repli sur
+          # le jeton éphémère de ce run si la clé n'est pas (ou plus) là.
+          REPO_SSH: git@github.com:samsam2703MFC/merisu_custom.git
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
 
@@ -202,19 +208,37 @@ jobs:
           # .env.local, var/ (base de données) et public/uploads/ survivent.
           ssh -i ~/.ssh/id_deploiement -p "$PORT" -o BatchMode=yes \
               "$USER@$HOST" bash -euo pipefail -s -- \
-              "$APP_PATH" "$BRANCHE" "$COMMIT" "$PHP_BIN" "$REPO_URL" "$REINSTALL" <<'DISTANT'
-          APP_PATH="$1"; BRANCHE="$2"; COMMIT="$3"; PHP_BIN="$4"; REPO_URL="$5"; REINSTALL="${6:-0}"
+              "$APP_PATH" "$BRANCHE" "$COMMIT" "$PHP_BIN" "$REPO_SSH" "$REINSTALL" "$GH_TOKEN" <<'DISTANT'
+          APP_PATH="$1"; BRANCHE="$2"; COMMIT="$3"; PHP_BIN="$4"; REPO_SSH="$5"; REINSTALL="${6:-0}"; GH_TOKEN="${7:-}"
 
           # DEPLOY_PATH est masqué dans le journal : sans ce diagnostic, une
           # valeur erronée ne produit qu'un « cd: ***: No such file » muet.
           # On dit donc ce que le serveur voit, lui n'est pas masqué.
+          FRESH=0
           if [ ! -d "$APP_PATH" ] && [ "$REINSTALL" = "1" ]; then
             echo "▸ RÉINSTALLATION : le dossier est absent, on recrée le clone"
             # Le parent doit exister — /var/www est là ; on ne crée que la
             # feuille. `git clone` refuse d'écrire dans un dossier non vide,
             # donc il ne peut pas écraser une install par mégarde.
             mkdir -p "$(dirname "$APP_PATH")"
-            git clone "$REPO_URL" "$APP_PATH"
+
+            # SSH d'abord : c'est la voie native du serveur, et elle laisse un
+            # remote propre pour tous les déploiements suivants. `accept-new`
+            # évite que la vérification de la clé d'hôte bloque en mode batch.
+            if GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new -o BatchMode=yes" \
+                 git clone --branch "$BRANCHE" "$REPO_SSH" "$APP_PATH" 2>/tmp/clone_ssh.log; then
+              echo "  clone SSH réussi (clé de déploiement du serveur)"
+            else
+              echo "  clone SSH indisponible : $(tail -1 /tmp/clone_ssh.log 2>/dev/null)"
+              echo "  bascule sur le jeton temporaire du run"
+              rm -rf "$APP_PATH"
+              git clone --branch "$BRANCHE" \
+                "https://x-access-token:${GH_TOKEN}@github.com/samsam2703MFC/merisu_custom.git" "$APP_PATH"
+              # Le jeton expire avec ce run ; on le retire quand même du remote
+              # pour ne rien laisser en clair. Le remote repart en SSH.
+              git -C "$APP_PATH" remote set-url origin "$REPO_SSH"
+            fi
+            FRESH=1
           fi
 
           if [ ! -d "$APP_PATH" ]; then
@@ -243,10 +267,14 @@ jobs:
             exit 1
           fi
 
-          echo "▸ Récupération depuis GitHub"
-          git fetch --prune origin "$BRANCHE"
+          if [ "$FRESH" != "1" ]; then
+            echo "▸ Récupération depuis GitHub"
+            git fetch --prune origin "$BRANCHE"
+          fi
 
           echo "▸ Alignement sur $COMMIT"
+          # Après un clone neuf, la pointe de branche EST déjà le commit visé ;
+          # ce checkout est alors purement local et n'a pas besoin du réseau.
           git checkout -B "$BRANCHE" "$COMMIT"
 
           echo "▸ Déploiement"
